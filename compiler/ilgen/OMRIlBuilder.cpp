@@ -28,6 +28,7 @@
 #include "compile/Compilation.hpp"
 #include "compile/Method.hpp"
 #include "compile/SymbolReferenceTable.hpp"
+#include "compile/VirtualGuard.hpp"
 #include "control/Recompilation.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/FrontEnd.hpp"
@@ -2269,6 +2270,35 @@ OMR::IlBuilder::IfThenElse(TR::IlBuilder **thenPath, TR::IlBuilder **elsePath, T
    // all paths possibly merge back here
    appendBlock(mergeBlock);
    }
+
+int32_t
+OMR::IlBuilder::NOPGuard(TR::IlBuilder **guardedPath, TR::IlBuilder **guardFailedPath)
+   {
+   static int32_t runtimeAssumptionNumber = 0;
+
+   TR_ASSERT(guardedPath != NULL || guardFailedPath != NULL, "NoppedGuard needs both guardedPath and guardFailedPath");
+   *guardedPath = createBuilderIfNeeded(*guardedPath);
+   *guardFailedPath = createBuilderIfNeeded(*guardFailedPath);
+
+   TR::TreeTop *failedPathEntry = (*guardFailedPath)->getEntry()->getEntry();
+   TR::Node *guard = comp()->createDummyGuard(comp(), -1, failedPathEntry->getNode(), failedPathEntry);
+   genTreeTop(guard);
+
+   // need to add edge to guardFailedPath explicitly, other edges are already taken care of
+   cfg()->addEdge(_currentBlock, (*guardFailedPath)->getEntry());
+
+   TR::Block *mergeBlock = emptyBlock();
+
+   AppendBuilder(*guardedPath);
+   appendGoto(mergeBlock);
+
+   AppendBuilder(*guardFailedPath);
+
+   appendBlock(mergeBlock);
+
+   return runtimeAssumptionNumber++;
+   }
+
 
 void
 OMR::IlBuilder::Switch(const char *selectionVar,

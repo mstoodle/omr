@@ -343,6 +343,7 @@ public:
       {
       IfThenElse(thenPath, NULL, condition);
       }
+   virtual int32_t NOPGuard(TR::IlBuilder **guardedPath, TR::IlBuilder **guardFailedPath);
    void Switch(const char *selectionVar,
                TR::IlBuilder **defaultBuilder,
                uint32_t numCases,
