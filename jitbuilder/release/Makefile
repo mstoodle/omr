@@ -173,6 +173,13 @@ FieldAddress.o: src/FieldAddress.cpp src/FieldAddress.hpp
 	$(CXX) -o $@ $(CXXFLAGS) $<
 
 
+guards : libjitbuilder.a Guards.o
+	$(CXX) -g -fno-rtti -o $@ Guards.o $(JITBUILDER_LINK_FLAGS)
+
+Guards.o: src/Guards.cpp src/Guards.hpp
+	$(CXX) -o $@ $(CXXFLAGS) $<
+
+
 issupportedtype : libjitbuilder.a IsSupportedType.o
 	$(CXX) -g -fno-rtti -o $@ IsSupportedType.o $(JITBUILDER_LINK_FLAGS)
 
