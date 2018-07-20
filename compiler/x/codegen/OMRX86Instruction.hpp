@@ -505,7 +505,7 @@ class X86FenceInstruction : public TR::Instruction
    };
 
 
-#ifdef J9_PROJECT_SPECIFIC
+//#ifdef J9_PROJECT_SPECIFIC
 class X86VirtualGuardNOPInstruction : public TR::X86LabelInstruction
    {
    private:
@@ -548,7 +548,7 @@ class X86VirtualGuardNOPInstruction : public TR::X86LabelInstruction
    virtual bool usesRegister(TR::Register *reg);
    virtual bool refsRegister(TR::Register *reg);
    };
-#endif
+//#endif
 
 class X86ImmInstruction : public TR::Instruction
    {
@@ -3048,11 +3048,9 @@ TR::X86LabelInstruction  * generateConditionalJumpInstruction(TR_X86OpCodes op, 
 
 TR::X86FenceInstruction  * generateFenceInstruction(TR_X86OpCodes op, TR::Node *, TR::Node *, TR::CodeGenerator *cg);
 
-#ifdef J9_PROJECT_SPECIFIC
 TR::X86VirtualGuardNOPInstruction  * generateVirtualGuardNOPInstruction(TR::Node *, TR_VirtualGuardSite *site, TR::RegisterDependencyConditions  *deps, TR::CodeGenerator *cg);
 TR::X86VirtualGuardNOPInstruction  * generateVirtualGuardNOPInstruction(TR::Node *, TR_VirtualGuardSite *site, TR::RegisterDependencyConditions  *deps, TR::LabelSymbol *symbol, TR::CodeGenerator *cg);
 TR::X86VirtualGuardNOPInstruction  * generateVirtualGuardNOPInstruction(TR::Instruction *i, TR::Node *, TR_VirtualGuardSite *site, TR::RegisterDependencyConditions  *deps, TR::LabelSymbol *symbol, TR::CodeGenerator *cg);
-#endif
 
 TR::X86RegImmInstruction  * generateRegImmInstruction(TR_X86OpCodes op, TR::Node *, TR::Register * reg1, int32_t imm, TR::RegisterDependencyConditions  * cond, TR::CodeGenerator *cg);
 TR::X86RegImmInstruction  * generateRegImmInstruction(TR_X86OpCodes op, TR::Node *, TR::Register * reg1, int32_t imm, TR::CodeGenerator *cg, int32_t reloKind=TR_NoRelocation);

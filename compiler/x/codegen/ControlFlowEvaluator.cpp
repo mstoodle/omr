@@ -2270,17 +2270,18 @@ TR::Register *OMR::X86::TreeEvaluator::sucmpleEvaluator(TR::Node *node, TR::Code
 
 static bool virtualGuardHelper(TR::Node *node, TR::CodeGenerator *cg)
    {
-#ifdef J9_PROJECT_SPECIFIC
    if (!(node->isNopableInlineGuard() || node->isOSRGuard()) || !cg->getSupportsVirtualGuardNOPing())
       return false;
 
    TR::Compilation *comp = cg->comp();
    TR_VirtualGuard *virtualGuard = comp->findVirtualGuardInfo(node);
 
+#if J9_PROJECT_SPECIFIC
    if (!((comp->performVirtualGuardNOPing() || node->isHCRGuard() || node->isOSRGuard() || cg->needClassAndMethodPointerRelocations()) &&
          comp->isVirtualGuardNOPingRequired(virtualGuard)) &&
          virtualGuard->canBeRemoved())
       return false;
+#endif
 
    if (   node->getOpCodeValue() != TR::ificmpne
        && node->getOpCodeValue() != TR::ifacmpne
@@ -2296,6 +2297,7 @@ static bool virtualGuardHelper(TR::Node *node, TR::CodeGenerator *cg)
       }
 
    TR_VirtualGuardSite *site = NULL;
+#ifdef J9_PROJECT_SPECIFIC
    if (node->isSideEffectGuard())
       {
       site = comp->addSideEffectNOPSite();
@@ -2328,6 +2330,7 @@ static bool virtualGuardHelper(TR::Node *node, TR::CodeGenerator *cg)
          }
       }
    else
+#endif
       {
       site = virtualGuard->addNOPSite();
       }
@@ -2386,9 +2389,6 @@ static bool virtualGuardHelper(TR::Node *node, TR::CodeGenerator *cg)
       }
 
    return true;
-#else
-   return false;
-#endif
    }
 
 void

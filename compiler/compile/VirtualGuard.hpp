@@ -244,10 +244,8 @@ class TR_VirtualGuard
    void                    setCannotBeRemoved() { _cannotBeRemoved = true; }
    bool                    canBeRemoved(bool ignoreMerged=false)   { return ignoreMerged ? !_cannotBeRemoved : !(_cannotBeRemoved || _mergedWithHCRGuard || _mergedWithOSRGuard); }
 
-#ifdef J9_PROJECT_SPECIFIC
    TR_VirtualGuardSite *addNOPSite();
    List<TR_VirtualGuardSite> &getNOPSites()   { return _sites; }
-#endif
 
    TR::SymbolReference *getSymbolReference() { return _guardedMethod; }
    void setSymbolReference(TR::SymbolReference* sr) { _guardedMethod = sr; }
@@ -272,9 +270,7 @@ class TR_VirtualGuard
 
    private:
 
-#ifdef J9_PROJECT_SPECIFIC
    List<TR_VirtualGuardSite> _sites;
-#endif
    TR_VirtualGuardTestType   _test;
    TR_VirtualGuardKind       _kind;
    int16_t                   _calleeIndex;
@@ -302,5 +298,26 @@ class TR_VirtualGuard
    TR::KnownObjectTable::Index _mutableCallSiteEpoch;
    TR_ByteCodeInfo           _bcInfo;
    };
+
+class TR_VirtualGuardSite
+   {
+   public:
+   TR_ALLOC(TR_Memory::VirtualGuardSiteInfo);
+   TR_VirtualGuardSite() : _location(0), _location2(0), _destination(0) {}
+
+   uint8_t* getLocation() { return _location; }
+   uint8_t* getLocation2() { return _location2; }
+   uint8_t* &getDestination() { return _destination; }
+
+   void setLocation(uint8_t *location) { _location = location; }
+   void setLocation2(uint8_t *location2) { _location2 = location2; }
+   void setDestination(uint8_t *dest) { _destination = dest; }
+
+   private:
+   uint8_t *_location;
+   uint8_t *_location2;      // used when ordered pair relocations are needed
+   uint8_t *_destination;
+   };
+
 
 #endif

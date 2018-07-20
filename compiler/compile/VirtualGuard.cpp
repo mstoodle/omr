@@ -57,9 +57,7 @@ TR_VirtualGuard::TR_VirtualGuard(TR_VirtualGuardTestType test, TR_VirtualGuardKi
    : _test(test), _kind(kind), _guardedMethod((callNode && callNode->getOpCode().hasSymbolReference()) ? callNode->getSymbolReference() : NULL),
      _thisClass(thisClass), _callNode(0), _calleeIndex(calleeIndex), _cannotBeRemoved(false), _byteCodeIndex(0),
      _innerAssumptions(comp->trMemory()),
-#ifdef J9_PROJECT_SPECIFIC
      _sites(comp->trMemory()),
-#endif
      _mutableCallSiteObject(0),_mutableCallSiteEpoch(0),
      _evalChildren(true), _mergedWithHCRGuard(false), _mergedWithOSRGuard(false),
      _guardNode(guardNode), _currentInlinedSiteIndex(currentSiteIndex)
@@ -95,9 +93,7 @@ TR_VirtualGuard::TR_VirtualGuard(TR_VirtualGuardTestType test, TR_VirtualGuardKi
      _calleeIndex(callNode->getByteCodeInfo().getCallerIndex()),
      _byteCodeIndex(callNode->getByteCodeInfo().getByteCodeIndex()),
      _innerAssumptions(comp->trMemory()),
-#ifdef J9_PROJECT_SPECIFIC
      _sites(comp->trMemory()),
-#endif
      _guardNode(guardNode), _currentInlinedSiteIndex(currentSiteIndex)
    {
    if (kind==TR_SideEffectGuard)
@@ -119,7 +115,6 @@ TR_VirtualGuard::TR_VirtualGuard(TR_VirtualGuardTestType test, TR_VirtualGuardKi
 
    }
 
-#ifdef J9_PROJECT_SPECIFIC
 TR_VirtualGuardSite *
 TR_VirtualGuard::addNOPSite()
    {
@@ -130,7 +125,6 @@ TR_VirtualGuard::addNOPSite()
    _sites.add(site);
    return site;
    }
-#endif
 
 TR::Node*
 TR_VirtualGuard::createRubyInlineGuard

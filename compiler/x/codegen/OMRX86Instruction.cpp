@@ -4332,7 +4332,6 @@ generateFenceInstruction(TR_X86OpCodes op, TR::Node * node, TR::Node * fenceNode
    return new (cg->trHeapMemory()) TR::X86FenceInstruction(op, node, fenceNode, cg);
    }
 
-#ifdef J9_PROJECT_SPECIFIC
 TR::X86VirtualGuardNOPInstruction  *
 generateVirtualGuardNOPInstruction(TR::Node * node, TR_VirtualGuardSite *site, TR::RegisterDependencyConditions  *deps, TR::CodeGenerator *cg)
    {
@@ -4362,7 +4361,6 @@ bool TR::X86VirtualGuardNOPInstruction::usesRegister(TR::Register *reg)
 
 bool TR::X86VirtualGuardNOPInstruction::defsRegister(TR::Register *reg) { return usesRegister(reg); }
 bool TR::X86VirtualGuardNOPInstruction::refsRegister(TR::Register *reg) { return usesRegister(reg); }
-#endif
 
 TR::X86RegImmInstruction  *
 generateRegImmInstruction(TR_X86OpCodes                       op,

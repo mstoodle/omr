@@ -751,9 +751,7 @@ public:
    void print(TR::FILE *, TR::X86BoundaryAvoidanceInstruction *);
    void print(TR::FILE *, TR::X86PatchableCodeAlignmentInstruction *);
    void print(TR::FILE *, TR::X86FenceInstruction *);
-#ifdef J9_PROJECT_SPECIFIC
    void print(TR::FILE *, TR::X86VirtualGuardNOPInstruction *);
-#endif
    void print(TR::FILE *, TR::X86ImmInstruction *);
    void print(TR::FILE *, TR::X86ImmSnippetInstruction *);
    void print(TR::FILE *, TR::X86ImmSymInstruction *);

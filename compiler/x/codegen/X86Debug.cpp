@@ -87,11 +87,9 @@ TR_Debug::printx(TR::FILE *pOutFile, TR::Instruction  * instr)
       case TR::Instruction::IsPatchableCodeAlignment:
          print(pOutFile, (TR::X86PatchableCodeAlignmentInstruction  *)instr);
          break;
-#ifdef J9_PROJECT_SPECIFIC
       case TR::Instruction::IsVirtualGuardNOP:
          print(pOutFile, (TR::X86VirtualGuardNOPInstruction  *)instr);
          break;
-#endif
       case TR::Instruction::IsFence:
          print(pOutFile, (TR::X86FenceInstruction  *)instr);
          break;
@@ -618,7 +616,6 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86FenceInstruction  * instr)
    trfflush(pOutFile);
    }
 
-#ifdef J9_PROJECT_SPECIFIC
 void
 TR_Debug::print(TR::FILE *pOutFile, TR::X86VirtualGuardNOPInstruction  * instr)
    {
@@ -633,7 +630,6 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86VirtualGuardNOPInstruction  * instr)
    dumpDependencies(pOutFile, instr);
    trfflush(pOutFile);
    }
-#endif
 
 void
 TR_Debug::print(TR::FILE *pOutFile, TR::X86ImmInstruction  * instr)
