@@ -112,7 +112,9 @@ main(int argc, char *argv[])
    x=10;    y=0;    total++; if (func(x, y) == 42)    pass++;
    x=0;     y=10;   total++; if (func(x, y) == 42)    pass++;
    x=500;   y=499;  total++; if (func(x, y) == 42)    pass++;
-   // fire mb->assumption()
+
+   invalidateJitAssumption(mb.assumption());
+
    x=30;    y=10;   total++; if (func(x, y) == (x-y)) pass++;
    x=10;    y=0;    total++; if (func(x, y) == (x-y)) pass++;
    x=100;   y=99;   total++; if (func(x, y) == (x-y)) pass++;

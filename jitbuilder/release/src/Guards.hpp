@@ -27,8 +27,6 @@
  * This file can generate code samples for how to use guards
  */
 
-#include "ilgen/MethodBuilder.hpp"
-
 namespace TR { class TypeDictionary; }
 
 typedef int32_t (GuardMethodFunction)(int32_t, int32_t);
@@ -38,10 +36,10 @@ class GuardMethod : public TR::MethodBuilder
    public:
    GuardMethod(TR::TypeDictionary *types);
    virtual bool buildIL();
-   int32_t getAssumption() { return _assumption; }
+   JitAssumption assumption() { return _assumption; }
 
    private:
-   int32_t _assumption;
+   JitAssumption _assumption;
    };
 
 #endif // !defined(GUARDS_INCL)
