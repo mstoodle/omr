@@ -24,7 +24,9 @@
 
 namespace TR { class MethodBuilder; }
 class TR_Memory;
+typedef uint32_t JitAssumption;
 
 extern "C" bool initializeJit();
 extern "C" uint32_t compileMethodBuilder(TR::MethodBuilder *m, uint8_t **entry);
+extern "C" void invalidateJitAssumption(JitAssumption assumption);
 extern "C" void shutdownJit();

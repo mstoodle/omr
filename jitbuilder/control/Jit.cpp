@@ -201,6 +201,15 @@ compileMethodBuilder(TR::MethodBuilder *m, uint8_t **entry)
    return rc;
    }
 
+typedef uint32_t JitAssumption;
+
+extern "C"
+void
+invalidateJitAssumption(JitAssumption assumption)
+   {
+   // do nothing for now
+   }
+
 extern "C"
 void
 shutdownJit()
