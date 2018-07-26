@@ -408,6 +408,22 @@ TR_RuntimeAssumptionTable::reclaimAssumptions(void *md, bool reclaimPrePrologueA
 #endif
    }
 
+void
+TR_RuntimeAssumptionTable::notifyUserAssumptionTrigger(TR_FrontEnd *vm,
+                                                       uint32_t assumptionTriggered)
+   {
+   OMR::CriticalSection notifyUserTriggerEvent(assumptionTableMutex);
+   OMR::RuntimeAssumption **headPtr = getBucketPtr(RuntimeAssumptionOnUserTrigger, hashCode((uintptrj_t)assumptionTriggered));
+   TR::PatchNOPedGuardSiteOnUserTrigger *cursor = (TR::PatchNOPedGuardSiteOnUserTrigger *)(*headPtr);
+   TR::PatchNOPedGuardSiteOnUserTrigger *prev   = 0;
+   while (cursor)
+      {
+      TR::PatchNOPedGuardSiteOnUserTrigger *next = (TR::PatchNOPedGuardSiteOnUserTrigger*)cursor->getNext();
+      cursor->compensate(vm, 0, 0);
+      prev = cursor;
+      cursor = next;
+      }
+   }
 
 void
 TR_RuntimeAssumptionTable::notifyClassUnloadEvent(TR_FrontEnd *vm, bool isSMP,
@@ -504,6 +520,20 @@ TR_UnloadedClassPicSite::compensate(TR_FrontEnd *, bool isSMP, void *)
 #endif
    //printf("---###--- unloaded class PIC location %p\n", _picLocation);
    //fprintf(stderr, "---###--- unloaded class PIC\n");
+   }
+
+void
+TR::PatchNOPedGuardSite::dumpInfo()
+   {
+   OMR::RuntimeAssumption::dumpInfo("TR::PatchNOPedGuardSite");
+   TR_VerboseLog::write(" location=%p destination=%p", _location, _destination);
+   }
+
+void
+TR::PatchNOPedGuardSiteOnUserTrigger::dumpInfo()
+   {
+   OMR::RuntimeAssumption::dumpInfo("TR::PatchNOPedGuardSiteForUserTrigger");
+   TR_VerboseLog::write(" assumption=%d, picLocation=%p dest=%p", getAssumptionID(), getLocation(), getDestination() );
    }
 
 void
