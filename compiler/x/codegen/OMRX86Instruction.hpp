@@ -505,7 +505,6 @@ class X86FenceInstruction : public TR::Instruction
    };
 
 
-//#ifdef J9_PROJECT_SPECIFIC
 class X86VirtualGuardNOPInstruction : public TR::X86LabelInstruction
    {
    private:
@@ -548,7 +547,6 @@ class X86VirtualGuardNOPInstruction : public TR::X86LabelInstruction
    virtual bool usesRegister(TR::Register *reg);
    virtual bool refsRegister(TR::Register *reg);
    };
-//#endif
 
 class X86ImmInstruction : public TR::Instruction
    {
