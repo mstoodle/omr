@@ -345,6 +345,9 @@ OMR::IlBuilder::pullInBuilderTrees(TR::IlBuilder *builder,
          printBlock(innerBlocks[i]);
          }
       _blocks[copyBlock] = innerBlocks[i];
+
+      if (_isCold)
+         _blocks[copyBlock]->setIsCold();
       }
 
    *currentBlock += innerNumBlocks;
@@ -391,6 +394,8 @@ OMR::IlBuilder::connectTrees()
             TraceIL("[ %p ] Block entry %p becomes block B%d\n", this, entry->_block, currentBlock);
             printBlock(entry->_block);
             }
+         if (_isCold)
+            entry->_block->setIsCold();
          blocks[currentBlock++] = entry->_block;
          firstTree = entry->_block->getEntry();
          newLastTree = entry->_block->getExit();
@@ -2293,6 +2298,7 @@ OMR::IlBuilder::NOPGuard(TR::IlBuilder **guardedPath, TR::IlBuilder **guardFaile
    appendGoto(mergeBlock);
 
    AppendBuilder(*guardFailedPath);
+   (*guardFailedPath)->_isCold = true;
 
    appendBlock(mergeBlock);
 

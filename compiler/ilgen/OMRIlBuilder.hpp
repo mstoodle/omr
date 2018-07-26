@@ -97,7 +97,8 @@ public:
       _partOfSequence(false),
       _connectedTrees(false),
       _comesBack(true),
-      _isHandler(false)
+      _isHandler(false),
+      _isCold(false)
       {
       }
    IlBuilder(TR::IlBuilder *source);
@@ -406,6 +407,11 @@ protected:
     * @brief returns true if this IlBuilder object is a handler for an exception edge
     */
    bool                          _isHandler;
+
+   /**
+    * @brief indicates all blocks created under this builder should be marked as cold
+    */
+   bool                          _isCold;
 
    virtual bool buildIL() { return true; }
 
