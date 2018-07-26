@@ -272,7 +272,7 @@ class TR_VirtualGuard
    TR::Node *getGuardNode() { return _guardNode; }
    void setGuardNode(TR::Node *guardNode) { _guardNode = guardNode; }
 
-   uint32_t assumptionID() { return _assumptionID; }
+   uint32_t getAssumptionID() { return _assumptionID; }
    void setAssumptionID(uint32_t assumptionID) { _assumptionID = assumptionID ;}
 
    private:
