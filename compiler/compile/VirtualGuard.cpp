@@ -460,6 +460,17 @@ TR_VirtualGuard::createDummyGuard(TR::Compilation *comp, int16_t calleeIndex, TR
    return guard;
    }
 
+TR::Node *
+TR_VirtualGuard::createUserNopGuard(TR::Compilation * comp, TR::TreeTop *destination, uint32_t assumptionID)
+   {
+   TR::Node *guard = createDummyOrSideEffectGuard(comp, NULL, destination);
+   setGuardKind(guard, TR_UserNopGuard, comp);
+   TR_VirtualGuard *vguard=new (comp->trHeapMemory()) TR_VirtualGuard(TR_NonoverriddenTest, TR_UserNopGuard, comp, destination->getNode(), guard, comp->getCurrentInlinedSiteIndex());
+   vguard->dontGenerateChildrenCode();
+   vguard->setAssumptionID(assumptionID);
+   return guard;
+   }
+
 TR_VirtualGuard *
 TR_VirtualGuard::createGuardedDevirtualizationGuard
 (TR_VirtualGuardKind kind, TR::Compilation * comp, TR::Node * callNode)
@@ -568,6 +579,9 @@ TR_VirtualGuard::setGuardKind(TR::Node * node, TR_VirtualGuardKind kind, TR::Com
          break;
       case TR_BreakpointGuard:
          node->setIsBreakpointGuard();
+         break;
+      case TR_UserNopGuard:
+         node->setIsNonoverriddenGuard();
          break;
       default:
          TR_ASSERT(kind == TR_NonoverriddenGuard, "Expected TR_NonoverriddenGuard(%d); found %d", (int)TR_NonoverriddenGuard, kind);

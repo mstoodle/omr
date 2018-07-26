@@ -59,7 +59,8 @@ enum TR_VirtualGuardKind
    TR_InnerGuard,
    TR_ArrayStoreCheckGuard,
    TR_OSRGuard,
-   TR_BreakpointGuard
+   TR_BreakpointGuard,
+   TR_UserNopGuard
    };
 
 enum TR_VirtualGuardTestType
@@ -161,6 +162,8 @@ class TR_VirtualGuard
 
    static TR::Node *createDummyGuard(TR::Compilation *, int16_t, TR::Node *, TR::TreeTop *);
 
+   static TR::Node *createUserNopGuard(TR::Compilation *, TR::TreeTop *, uint32_t);
+
    static TR_VirtualGuard *createGuardedDevirtualizationGuard(TR_VirtualGuardKind, TR::Compilation *, TR::Node *callNode);
 
    static TR_VirtualGuard *createArrayStoreCheckGuard(TR::Compilation *, TR::Node *node, TR_OpaqueClassBlock *clazz);
@@ -197,6 +200,7 @@ class TR_VirtualGuard
          {
          case TR_MutableCallSiteTargetGuard:
          case TR_InterfaceGuard:
+         case TR_UserNopGuard:
             return true;
          default:
             return false;
@@ -205,7 +209,7 @@ class TR_VirtualGuard
 
    bool indirectsTheThisPointer()
       {
-      if (_kind == TR_HCRGuard)
+      if (_kind == TR_HCRGuard || _kind == TR_UserNopGuard)
          return false;
 
       switch (_test)
@@ -268,6 +272,9 @@ class TR_VirtualGuard
    TR::Node *getGuardNode() { return _guardNode; }
    void setGuardNode(TR::Node *guardNode) { _guardNode = guardNode; }
 
+   uint32_t assumptionID() { return _assumptionID; }
+   void setAssumptionID(uint32_t assumptionID) { _assumptionID = assumptionID ;}
+
    private:
 
    List<TR_VirtualGuardSite> _sites;
@@ -297,6 +304,9 @@ class TR_VirtualGuard
    uintptrj_t                *_mutableCallSiteObject;
    TR::KnownObjectTable::Index _mutableCallSiteEpoch;
    TR_ByteCodeInfo           _bcInfo;
+
+   // Only used for UserNopGuard
+   uint32_t                  _assumptionID;
    };
 
 class TR_VirtualGuardSite

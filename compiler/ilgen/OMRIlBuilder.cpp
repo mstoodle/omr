@@ -2274,14 +2274,14 @@ OMR::IlBuilder::IfThenElse(TR::IlBuilder **thenPath, TR::IlBuilder **elsePath, T
 int32_t
 OMR::IlBuilder::NOPGuard(TR::IlBuilder **guardedPath, TR::IlBuilder **guardFailedPath)
    {
-   static int32_t runtimeAssumptionNumber = 0;
+   static uint32_t runtimeAssumptionNumber = 0;
 
    TR_ASSERT(guardedPath != NULL || guardFailedPath != NULL, "NoppedGuard needs both guardedPath and guardFailedPath");
    *guardedPath = createBuilderIfNeeded(*guardedPath);
    *guardFailedPath = createBuilderIfNeeded(*guardFailedPath);
 
    TR::TreeTop *failedPathEntry = (*guardFailedPath)->getEntry()->getEntry();
-   TR::Node *guard = comp()->createDummyGuard(comp(), -1, failedPathEntry->getNode(), failedPathEntry);
+   TR::Node *guard = comp()->createUserNopGuard(comp(), failedPathEntry, runtimeAssumptionNumber);
    genTreeTop(guard);
 
    // need to add edge to guardFailedPath explicitly, other edges are already taken care of
