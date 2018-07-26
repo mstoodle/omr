@@ -127,5 +127,5 @@ main(int argc, char *argv[])
    else
       cout << pass << " out of " << total << " passed\n";
 
-   return pass - total; // == 0 if all passed
+   return total - pass;
    }
