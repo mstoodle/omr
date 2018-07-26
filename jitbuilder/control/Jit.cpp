@@ -207,7 +207,8 @@ extern "C"
 void
 invalidateJitAssumption(JitAssumption assumption)
    {
-   // do nothing for now
+   auto fe = JitBuilder::FrontEnd::instance();
+   fe->persistentMemory()->getPersistentInfo()->getRuntimeAssumptionTable()->notifyUserAssumptionTrigger(fe, assumption);
    }
 
 extern "C"
