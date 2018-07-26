@@ -55,5 +55,6 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     $(JIT_OMR_DIRTY_DIR)/z/codegen/OMRCodeGenerator.cpp  \
     $(JIT_OMR_DIRTY_DIR)/z/codegen/OMRCodeGenPhase.cpp \
     $(JIT_OMR_DIRTY_DIR)/z/env/OMRDebugEnv.cpp \
+    $(JIT_OMR_DIRTY_DIR)/z/runtime/VirtualGuardRuntime.cpp \
     $(JIT_PRODUCT_DIR)/z/codegen/JBCodeGenerator.cpp \
     $(JIT_PRODUCT_DIR)/z/codegen/Evaluator.cpp

@@ -50,5 +50,6 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     $(JIT_OMR_DIRTY_DIR)/p/codegen/OMRRegisterIterator.cpp \
     $(JIT_OMR_DIRTY_DIR)/p/env/OMRCPU.cpp \
     $(JIT_OMR_DIRTY_DIR)/p/env/OMRDebugEnv.cpp \
+    $(JIT_OMR_DIRTY_DIR)/p/runtime/VirtualGuardRuntime.spp \
     $(JIT_PRODUCT_DIR)/p/codegen/Evaluator.cpp
 
