@@ -100,6 +100,7 @@
 #include "ras/IlVerifier.hpp"                  // for TR::IlVerifier
 #include "control/Recompilation.hpp"           // for TR_Recompilation, etc
 #include "runtime/CodeCacheExceptions.hpp"
+#include "runtime/OMRRuntimeAssumptions.hpp"   // for TR::SentinelRuntimeAssumption
 #include "ilgen/IlGen.hpp"                     // for TR_IlGenerator
 #include "env/RegionProfiler.hpp"              // for TR::RegionProfiler
 // this ratio defines how full the alias memory region is allowed to become before
@@ -303,8 +304,8 @@ OMR::Compilation::Compilation(
       {
 #ifdef J9_PROJECT_SPECIFIC
       _transientCHTable = NULL;
-      _metadataAssumptionList = NULL;
 #endif
+      _metadataAssumptionList = NULL;
       _symRefTab = NULL;
       _methodSymbol = NULL;
       _codeGenerator = NULL;
@@ -316,19 +317,17 @@ OMR::Compilation::Compilation(
 
 #ifdef J9_PROJECT_SPECIFIC
    _transientCHTable = new (_trMemory->trHeapMemory()) TR_CHTable(_trMemory);
-   _metadataAssumptionList = NULL;
 #endif
+   _metadataAssumptionList = NULL;
    _symRefTab = new (_trMemory->trHeapMemory()) TR::SymbolReferenceTable(_method->maxBytecodeIndex(), self());
    _compilationNodes = new (_trMemory->trHeapMemory()) TR::NodePool(self(), self()->allocator());
 
-#ifdef J9_PROJECT_SPECIFIC
    // The following must stay before the first assumption gets created which could happen
    // while the PersistentMethodInfo is allocated during codegen creation
    // Access to this list must be performed with assumptionTableMutex in hand
    //
    if (!options.getOption(TR_DisableFastAssumptionReclamation))
       _metadataAssumptionList = new (m->trPersistentMemory()) TR::SentinelRuntimeAssumption();
-#endif
 
    //Random fields must be set before allocating codegen
    _primaryRandom = new (m->trHeapMemory()) TR_RandomGenerator(options.getRandomSeed());
