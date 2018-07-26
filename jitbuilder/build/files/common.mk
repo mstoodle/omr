@@ -218,6 +218,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     $(JIT_OMR_DIRTY_DIR)/runtime/Runtime.cpp \
     $(JIT_OMR_DIRTY_DIR)/runtime/RuntimeAssumptionTable.cpp \
     $(JIT_OMR_DIRTY_DIR)/runtime/Trampoline.cpp \
+    $(JIT_OMR_DIRTY_DIR)/runtime/OMRRuntimeAssumptions.cpp \
     $(JIT_OMR_DIRTY_DIR)/control/CompileMethod.cpp \
     $(JIT_OMR_DIRTY_DIR)/env/OMRIO.cpp \
     $(JIT_OMR_DIRTY_DIR)/env/OMRKnownObjectTable.cpp \
