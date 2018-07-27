@@ -36,10 +36,10 @@ class GuardMethod : public TR::MethodBuilder
    public:
    GuardMethod(TR::TypeDictionary *types);
    virtual bool buildIL();
-   JitAssumption assumption() { return _assumption; }
+   TR::JitAssumption assumption() { return _assumption; }
 
    private:
-   JitAssumption _assumption;
+   TR::JitAssumption _assumption;
    };
 
 #endif // !defined(GUARDS_INCL)
