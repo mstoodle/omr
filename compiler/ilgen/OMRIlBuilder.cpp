@@ -2276,17 +2276,23 @@ OMR::IlBuilder::IfThenElse(TR::IlBuilder **thenPath, TR::IlBuilder **elsePath, T
    appendBlock(mergeBlock);
    }
 
-int32_t
-OMR::IlBuilder::NOPGuard(TR::IlBuilder **guardedPath, TR::IlBuilder **guardFailedPath)
+TR::JitAssumption
+OMR::IlBuilder::NOPGuard(TR::IlBuilder **guardedPath, TR::IlBuilder **guardFailedPath, TR::JitAssumption assumptionID)
    {
-   static uint32_t runtimeAssumptionNumber = 0;
+   static TR::JitAssumption runtimeAssumptionNumber = 1;
 
    TR_ASSERT(guardedPath != NULL || guardFailedPath != NULL, "NoppedGuard needs both guardedPath and guardFailedPath");
+   TR_ASSERT(assumptionID < runtimeAssumptionNumber, "Error: can only reuse already defined assumption IDs");
+
+   if (assumptionID == 0)
+      assumptionID = runtimeAssumptionNumber++;
+   TR_ASSERT(runtimeAssumptionNumber != 0, "Error: used up all possible assumptionIDs!");
+
    *guardedPath = createBuilderIfNeeded(*guardedPath);
    *guardFailedPath = createBuilderIfNeeded(*guardFailedPath);
 
    TR::TreeTop *failedPathEntry = (*guardFailedPath)->getEntry()->getEntry();
-   TR::Node *guard = comp()->createUserNopGuard(comp(), failedPathEntry, runtimeAssumptionNumber);
+   TR::Node *guard = comp()->createUserNopGuard(comp(), failedPathEntry, assumptionID);
    genTreeTop(guard);
 
    // need to add edge to guardFailedPath explicitly, other edges are already taken care of
@@ -2302,7 +2308,7 @@ OMR::IlBuilder::NOPGuard(TR::IlBuilder **guardedPath, TR::IlBuilder **guardFaile
 
    appendBlock(mergeBlock);
 
-   return runtimeAssumptionNumber++;
+   return assumptionID;
    }
 
 

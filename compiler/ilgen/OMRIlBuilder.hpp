@@ -45,6 +45,8 @@ namespace TR { class TypeDictionary; }
 template <class T> class List;
 template <class T> class ListAppender;
 
+namespace TR { typedef uint32_t JitAssumption; }
+
 namespace OMR
 {
 
@@ -344,7 +346,14 @@ public:
       {
       IfThenElse(thenPath, NULL, condition);
       }
-   virtual int32_t NOPGuard(TR::IlBuilder **guardedPath, TR::IlBuilder **guardFailedPath);
+
+   /**
+    * @brief creates a NOP guard that falls through to the guardedPath builder
+    * @param guardedPath builder object whose code will execute until the guard's assumptionID is invalidated
+    * @param guardFailedPath builder object whose code will execute after the guard's assumptionID is invalidated
+    * @param assumptionID optional parameter that can be used to assign guards to already existing assumptions
+    */
+   virtual TR::JitAssumption NOPGuard(TR::IlBuilder **guardedPath, TR::IlBuilder **guardFailedPath, TR::JitAssumption assumptionID=0);
    void Switch(const char *selectionVar,
                TR::IlBuilder **defaultBuilder,
                uint32_t numCases,

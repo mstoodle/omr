@@ -201,11 +201,9 @@ compileMethodBuilder(TR::MethodBuilder *m, uint8_t **entry)
    return rc;
    }
 
-typedef uint32_t JitAssumption;
-
 extern "C"
 void
-invalidateJitAssumption(JitAssumption assumption)
+invalidateJitAssumption(TR::JitAssumption assumption)
    {
    auto fe = JitBuilder::FrontEnd::instance();
    fe->persistentMemory()->getPersistentInfo()->getRuntimeAssumptionTable()->notifyUserAssumptionTrigger(fe, assumption);
