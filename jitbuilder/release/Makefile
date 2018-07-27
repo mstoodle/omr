@@ -41,6 +41,7 @@ ALL_TESTS = \
             iterfib \
             linkedlist \
             localarray \
+            loop \
             nestedloop \
             operandarraytests \
             operandstacktests \
@@ -81,6 +82,7 @@ all_goal: common_goal
 	./inliningrecfib
 	./linkedlist
 	./localarray
+	./loop
 	./operandarraytests
 	./operandstacktests
 	./pointer
@@ -207,6 +209,13 @@ localarray : libjitbuilder.a LocalArray.o
 	$(CXX) -g -fno-rtti -o $@ LocalArray.o $(JITBUILDER_LINK_FLAGS)
 
 LocalArray.o: src/LocalArray.cpp src/LocalArray.hpp
+	$(CXX) -o $@ $(CXXFLAGS) $<
+
+
+loop : libjitbuilder.a Loop.o
+	$(CXX) -g -fno-rtti -o $@ Loop.o $(JITBUILDER_LINK_FLAGS)
+
+Loop.o: src/Loop.cpp src/Loop.hpp
 	$(CXX) -o $@ $(CXXFLAGS) $<
 
 

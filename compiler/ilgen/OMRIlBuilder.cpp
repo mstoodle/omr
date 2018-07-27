@@ -653,6 +653,14 @@ OMR::IlBuilder::VectorStore(const char *varName, TR::IlValue *value)
    storeNode(symRef, loadValue(value));
    }
 
+void
+OMR::IlBuilder::ArrayStore(TR::IlType *dt, TR::IlValue *base, TR::IlValue *index, TR::IlValue *value)
+   {
+   StoreAt(
+      IndexAt(dt, base, index),
+      value);
+   }
+
 /**
  * @brief Store an IlValue through a pointer
  * @param address the pointer address through which the value will be written
@@ -772,6 +780,13 @@ OMR::IlBuilder::LoadIndirect(const char *type, const char *field, TR::IlValue *o
    TR::IlValue *returnValue = newValue(fieldType, TR::Node::createWithSymRef(comp()->il.opCodeForIndirectLoad(fieldType), 1, loadValue(object), 0, symRef));
    TraceIL("IlBuilder[ %p ]::%d is LoadIndirect %s.%s from (%d)\n", this, returnValue->getID(), type, field, object->getID());
    return returnValue;
+   }
+
+TR::IlValue *
+OMR::IlBuilder::ArrayLoad(TR::IlType *dt, TR::IlValue *base, TR::IlValue *index)
+   {
+   return LoadAt(dt,
+             IndexAt(dt, base, index));
    }
 
 TR::IlValue *
