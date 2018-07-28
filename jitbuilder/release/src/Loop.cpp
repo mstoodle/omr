@@ -29,6 +29,7 @@
 #include "Jit.hpp"
 #include "ilgen/TypeDictionary.hpp"
 #include "ilgen/MethodBuilder.hpp"
+#include "ilgen/VectorLoopBuilder.hpp"
 #include "Loop.hpp"
 
 static void printString(int64_t ptr)
@@ -36,18 +37,6 @@ static void printString(int64_t ptr)
    #define PRINTSTRING_LINE LINETOSTR(__LINE__)
    char *str = (char *) ptr;
    printf("%s", str);
-   }
-
-static void printInt32(int32_t val)
-   {
-   #define PRINTINT32_LINE LINETOSTR(__LINE__)
-   printf("%d", val);
-   }
-
-static void printDouble(double val)
-   {
-   #define PRINTDOUBLE_LINE LINETOSTR(__LINE__)
-   printf("%lf", val);
    }
 
 static void printPointer(int64_t val)
@@ -60,16 +49,16 @@ Loop::Loop(TR::TypeDictionary *types)
    : MethodBuilder(types)
 
    {
+   pInt32 = types->PointerTo(Int32);
+
    DefineLine(LINETOSTR(__LINE__));
    DefineFile(__FILE__);
 
-   DefineName("dotproduct");
+   DefineName("vector_multiply");
 
-   pDouble = types->PointerTo(Double);
-
-   DefineParameter("result", pDouble);
-   DefineParameter("vector1", pDouble);
-   DefineParameter("vector2", pDouble);
+   DefineParameter("result", pInt32);
+   DefineParameter("vector1", pInt32);
+   DefineParameter("vector2", pInt32);
    DefineParameter("length", Int32);
 
    DefineReturnType(NoType);
@@ -81,20 +70,6 @@ Loop::Loop(TR::TypeDictionary *types)
                   NoType,
                   1,
                   Int64);
-   DefineFunction((char *)"printInt32", 
-                  (char *)__FILE__,
-                  (char *)PRINTINT32_LINE,
-                  (void *)&printInt32,
-                  NoType,
-                  1,
-                  Int32);
-   DefineFunction((char *)"printDouble", 
-                  (char *)__FILE__,
-                  (char *)PRINTDOUBLE_LINE,
-                  (void *)&printDouble,
-                  NoType,
-                  1,
-                  Double);
    DefineFunction((char *)"printPointer", 
                   (char *)__FILE__,
                   (char *)PRINTPOINTER_LINE,
@@ -102,6 +77,7 @@ Loop::Loop(TR::TypeDictionary *types)
                   NoType,
                   1,
                   Int64);
+
    }
 
 void
@@ -131,22 +107,18 @@ Loop::buildIL()
       Load("vector2"));
    PrintString(this, "\n");
 
-   TR::IlBuilder *loop = NULL;
-   ForLoopUp("i", &loop,
-      ConstInt32(0),
-      Load("length"),
-      ConstInt32(1));
+   TR::VectorLoopBuilder *loop = VectorForLoop(Int32, ConstInt32(0), Load("length"));
 
-   loop->ArrayStore(pDouble,
+   loop->VectorArrayStore(pInt32,
    loop->   Load("result"),
-   loop->   Load("i"),
+   loop->   LoadIterationVar(),
    loop->   Mul(
-   loop->      ArrayLoad(pDouble,
+   loop->      VectorArrayLoad(pInt32,
    loop->         Load("vector1"),
-   loop->         Load("i")),
-   loop->      ArrayLoad(pDouble,
+   loop->         LoadIterationVar()),
+   loop->      VectorArrayLoad(pInt32,
    loop->         Load("vector2"),
-   loop->         Load("i"))));
+   loop->         LoadIterationVar())));
 
    Return();
 
@@ -179,17 +151,18 @@ main(int argc, char *argv[])
       }
 
    printf("Step 4: define values\n");
-   double result[10] = { 0 };
-   double values1[10] = { 1.5,2.5,3.5,4.5,5.5,6.5,7.5,8.5,9.5,10.5 };
-   double values2[10] = { 10.5,9.5,8.5,7.5,6.5,5.5,4.5,3.5,2.5,1.5 };
+   const int32_t N=19;
+   int32_t result[N] = { 0 };
+   int32_t values1[N] = {  1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15,16,17,18,19 };
+   int32_t values2[N] = { 18,17,16,15,14,13,12,11,10, 9, 8, 7, 6, 5, 4, 3, 2, 1,19 };
 
    printf("Step 5: invoke compiled code and verify results\n");
    LoopFunctionType *test = (LoopFunctionType *)entry;
-   test(result, values1, values2, 10);
+   test(result, values1, values2, N);
 
    printf("result = [\n");
-   for (int32_t i=0;i < 10;i++)
-      printf("           %lf\n", result[i]);
+   for (int32_t i=0;i < N;i++)
+      printf("           %d\n", (int)result[i]);
    printf("         ]\n\n");
 
    printf ("Step 6: shutdown JIT\n");

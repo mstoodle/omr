@@ -26,14 +26,14 @@
 
 #include "ilgen/MethodBuilder.hpp"
 
-typedef void (LoopFunctionType)(double *, double *, double *, int32_t);
+typedef void (LoopFunctionType)(int32_t *, int32_t *, int32_t *, int32_t);
 
 class Loop : public TR::MethodBuilder
    {
    private:
 
    void PrintString (TR::IlBuilder *bldr, const char *s);
-   TR::IlType *pDouble;
+   TR::IlType *pInt32;
 
    public:
    Loop(TR::TypeDictionary *);
