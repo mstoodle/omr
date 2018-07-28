@@ -45,6 +45,7 @@
 #include "ilgen/IlInjector.hpp"
 #include "ilgen/MethodBuilder.hpp"
 #include "ilgen/BytecodeBuilder.hpp"
+#include "ilgen/VectorLoopBuilder.hpp"
 #include "infra/Cfg.hpp"
 #include "infra/List.hpp"
 
@@ -482,6 +483,15 @@ OMR::IlBuilder::OrphanBuilder()
    return orphan;
    }
 
+TR::VectorLoopBuilder *
+OMR::IlBuilder::orphanVectorLoopBuilder(TR::IlType *vectorElementType)
+   {
+   TR::VectorLoopBuilder *orphan = new (comp()->trHeapMemory()) TR::VectorLoopBuilder(comp(), _methodBuilder, _types, vectorElementType);
+   orphan->initialize(_details, _methodSymbol, _fe, _symRefTab);
+   orphan->setupForBuildIL();
+   return orphan;
+   }
+
 TR::Block *
 OMR::IlBuilder::emptyBlock()
    {
@@ -661,6 +671,14 @@ OMR::IlBuilder::ArrayStore(TR::IlType *dt, TR::IlValue *base, TR::IlValue *index
       value);
    }
 
+void
+OMR::IlBuilder::VectorArrayStore(TR::IlType *dt, TR::IlValue *base, TR::IlValue *index, TR::IlValue *value)
+   {
+   VectorStoreAt(
+      IndexAt(dt, base, index),
+      value);
+   }
+
 /**
  * @brief Store an IlValue through a pointer
  * @param address the pointer address through which the value will be written
@@ -786,6 +804,13 @@ TR::IlValue *
 OMR::IlBuilder::ArrayLoad(TR::IlType *dt, TR::IlValue *base, TR::IlValue *index)
    {
    return LoadAt(dt,
+             IndexAt(dt, base, index));
+   }
+
+TR::IlValue *
+OMR::IlBuilder::VectorArrayLoad(TR::IlType *dt, TR::IlValue *base, TR::IlValue *index)
+   {
+   return VectorLoadAt(dt,
              IndexAt(dt, base, index));
    }
 
@@ -2582,6 +2607,62 @@ OMR::IlBuilder::Switch(const char *selectionVar,
    Switch(selectionVar, defaultBuilder, numCases, cases);
    }
 
+
+TR::VectorLoopBuilder *
+OMR::IlBuilder::VectorForLoop(TR::IlType *dt,
+                              TR::IlValue *initial,
+                              TR::IlValue *end)
+   {
+   TR::IlBuilder *vb = NULL;
+   IfThen(&vb, GreaterOrEqualTo(end, initial));
+
+   // allocate a vector loop builder object
+   TR::VectorLoopBuilder *loopBuilder = vb->orphanVectorLoopBuilder(dt);
+   uint32_t vectorLength = loopBuilder->VectorLength();
+   TR::IlValue *VL = vb->ConstInt32(vectorLength);
+   char *scalarIter = loopBuilder->residueIteratorVariable();
+   char *scalarCond = loopBuilder->residueConditionVariable();
+
+   TraceIL("IlBuilder[ %p ]::VectorForLoop initial %d end %d residue ind %s cond %s body [ %p ]", this, initial->getID(), end->getID(), scalarIter, scalarCond, loopBuilder->residueBody());
+
+   vb->Store(scalarIter, initial);
+
+   if (vectorLength > 1)
+      {
+      TraceIL(" vector ind %s body [ %p ]\n", loopBuilder->vectorIteratorVariable(), loopBuilder->vectorBody());
+
+      // vector loop
+      TR::IlBuilder *vectorLoop=NULL;
+      vb->ForLoop(true, loopBuilder->vectorIteratorVariable(), &vectorLoop, NULL, NULL, initial, end, VL);
+      vectorLoop->AppendBuilder(loopBuilder->vectorBody());
+      vectorLoop->Store(scalarIter,
+      vectorLoop->   Add(
+      vectorLoop->      Load(scalarIter),
+                        VL));
+      }
+   else
+      TraceIL(" (no vector loop)\n");
+
+   vb->Store(scalarCond,
+   vb->   LessThan(
+   vb->      Load(scalarIter),
+             end));
+
+   // residue loop
+   TR::IlBuilder *residueLoop = NULL;
+   vb->WhileDoLoop(scalarCond, &residueLoop, NULL, NULL);
+   residueLoop->AppendBuilder(loopBuilder->residueBody());
+   residueLoop->Store(scalarIter,
+   residueLoop->   Add(
+   residueLoop->      Load(scalarIter),
+                      ConstInt32(1)));
+   residueLoop->Store(scalarCond,
+   residueLoop->   LessThan(
+   residueLoop->      Load(scalarIter),
+                      end));
+
+   return loopBuilder;
+   }
 
 void
 OMR::IlBuilder::ForLoop(bool countsUp,

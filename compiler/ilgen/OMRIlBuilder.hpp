@@ -35,6 +35,7 @@ namespace OMR { class MethodBuilder; }
 namespace TR { class Block; }
 namespace TR { class IlGeneratorMethodDetails; }
 namespace TR { class IlBuilder; }
+namespace TR { class VectorLoopBuilder; }
 namespace TR { class ResolvedMethodSymbol; } 
 namespace TR { class SymbolReference; }
 namespace TR { class SymbolReferenceTable; }
@@ -286,8 +287,10 @@ public:
    // vector memory
    TR::IlValue *VectorLoad(const char *name);
    TR::IlValue *VectorLoadAt(TR::IlType *dt, TR::IlValue *address);
+   TR::IlValue *VectorArrayLoad(TR::IlType *dt, TR::IlValue *base, TR::IlValue *index);
    void VectorStore(const char *name, TR::IlValue *value);
    void VectorStoreAt(TR::IlValue *address, TR::IlValue *value);
+   void VectorArrayStore(TR::IlType *dt, TR::IlValue *base, TR::IlValue *index, TR::IlValue *value);
 
    // control
    void AppendBuilder(TR::IlBuilder *builder);
@@ -399,6 +402,8 @@ public:
       {
       ForLoop(countsUp, indVar, body, NULL, continueBody, initial, iterateWhile, increment);
       }
+
+   TR::VectorLoopBuilder *VectorForLoop(TR::IlType *dt, TR::IlValue *initial, TR::IlValue *end);
 
    virtual void WhileDoLoop(const char *exitCondition, TR::IlBuilder **body, TR::IlBuilder **breakBuilder = NULL, TR::IlBuilder **continueBuilder = NULL);
    void WhileDoLoopWithBreak(const char *exitCondition, TR::IlBuilder **body, TR::IlBuilder **breakBuilder)
@@ -513,6 +518,7 @@ public:
 
 
 protected:
+   TR::VectorLoopBuilder *orphanVectorLoopBuilder(TR::IlType *vectorElementType);
 
    /**
     * @brief MethodBuilder parent for this IlBuilder object
