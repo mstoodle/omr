@@ -314,6 +314,13 @@ union : libjitbuilder.a Union.o
 Union.o: src/Union.cpp src/Union.hpp
 	$(CXX) -o $@ $(CXXFLAGS) $<
 
+vecmatmult : libjitbuilder.a VectorMatMult.o
+	$(CXX) -g -fno-rtti -o $@ VectorMatMult.o $(JITBUILDER_LINK_FLAGS)
+
+VectorMatMult.o: src/VectorMatMult.cpp src/VectorMatMult.hpp
+	$(CXX) -o $@ $(CXXFLAGS) $<
+
+
 worklist : libjitbuilder.a Worklist.o
 	$(CXX) -g -fno-rtti -o $@ Worklist.o $(JITBUILDER_LINK_FLAGS)
 
