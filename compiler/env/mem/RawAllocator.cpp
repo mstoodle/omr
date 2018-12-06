@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,12 +19,10 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#if defined(OLD_MEMORY)
+#include "env/mem/RawAllocator.hpp"
 
-#include "env/SegmentAllocator.hpp"
-
-TR::SegmentAllocator::~SegmentAllocator() throw()
+TR::RawAllocator &
+OMR::RawAllocator::clone()
    {
+   return *(new (*(static_cast<const TR::RawAllocator *>(this))) TR::RawAllocator());
    }
-
-#endif // defined(OLD_MEMORY)

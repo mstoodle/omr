@@ -19,12 +19,31 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#if defined(OLD_MEMORY)
+#if !defined(OLD_MEMORY)
 
-#include "env/SegmentAllocator.hpp"
+#include "env/PersistentAllocator.hpp"
 
-TR::SegmentAllocator::~SegmentAllocator() throw()
+OMR::PersistentAllocator::PersistentAllocator(const TR::RawAllocator &rawAllocator) :
+   _rawAllocator(rawAllocator)
    {
    }
 
-#endif // defined(OLD_MEMORY)
+void *
+OMR::PersistentAllocator::allocate(size_t size, const std::nothrow_t tag, void * hint) throw()
+   {
+   return _rawAllocator.allocate(size, tag, hint);
+   }
+
+void *
+OMR::PersistentAllocator::allocate(size_t size, void * hint)
+   {
+   return _rawAllocator.allocate(size, hint);
+   }
+
+void
+OMR::PersistentAllocator::deallocate(void * p, const size_t sizeHint) throw()
+   {
+   _rawAllocator.deallocate(p, sizeHint);
+   }
+
+#endif // temporary !defined(OLD_MEMORY)

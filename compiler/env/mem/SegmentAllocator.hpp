@@ -19,12 +19,14 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#if defined(OLD_MEMORY)
+#ifndef TR_SEGMENTALLOCATOR_INCL
+#define TR_SEGMENTALLOCATOR_INCL
 
-#include "env/SegmentAllocator.hpp"
+#pragma once
 
-TR::SegmentAllocator::~SegmentAllocator() throw()
-   {
-   }
+namespace OMR { class SegmentAllocator; }
+namespace TR { using OMR::SegmentAllocator; }
 
-#endif // defined(OLD_MEMORY)
+#include "env/mem/OMRSegmentAllocator.hpp"
+
+#endif // defined(TR_SEGMENTALLOCATOR_INCL)

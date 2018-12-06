@@ -26,13 +26,18 @@
 #include "map"
 #include "ilgen/IlBuilder.hpp"
 #include "env/TypedAllocator.hpp"
+#if defined(OLD_MEMORY)
+#include "env/SegmentProvider.hpp"
+#else
+#include "env/mem/BackingMemoryAllocator.hpp"
+#include "env/mem/SegmentAllocator.hpp"
+#endif
 
 class TR_Memory;
 
 namespace OMR { class StructType; }
 namespace OMR { class UnionType; }
 namespace TR  { class IlReference; }
-namespace TR  { class SegmentProvider; }
 namespace TR  { class Region; }
 
 extern "C" {
@@ -203,8 +208,12 @@ protected:
       MemoryManager();
       ~MemoryManager();
 
-      TR::SegmentProvider *_segmentProvider;
+      // These objects are all used by the compiler component memory internals
+      // They are required, but shouldn't be used directly unless you know what you're doing
+      TR::BackingMemoryAllocator *_backingMemoryAllocator;
+      TR::SegmentAllocator *_segmentAllocator;
       TR::Region *_memoryRegion;
+
       TR_Memory *_trMemory;
       } MemoryManager;
 

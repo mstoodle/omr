@@ -19,7 +19,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#if defined(OLD_MEMORY)
+#if !defined(OLD_MEMORY)
 
 #include "env/MemorySegment.hpp"
 #include "env/Region.hpp"
@@ -28,9 +28,9 @@
 
 namespace TR {
 
-Region::Region(TR::SegmentProvider &segmentProvider, TR::RawAllocator rawAllocator) :
+Region::Region(TR::SegmentAllocator  &segmentAllocator , TR::RawAllocator rawAllocator) :
    _bytesAllocated(0),
-   _segmentProvider(segmentProvider),
+   _segmentAllocator (segmentAllocator ),
    _rawAllocator(rawAllocator),
    _initialSegment(_initialSegmentArea.data, INITIAL_SEGMENT_SIZE),
    _currentSegment(TR::ref(_initialSegment)),
@@ -40,7 +40,7 @@ Region::Region(TR::SegmentProvider &segmentProvider, TR::RawAllocator rawAllocat
 
 Region::Region(const Region &prototype) :
    _bytesAllocated(0),
-   _segmentProvider(prototype._segmentProvider),
+   _segmentAllocator (prototype._segmentAllocator ),
    _rawAllocator(prototype._rawAllocator),
    _initialSegment(_initialSegmentArea.data, INITIAL_SEGMENT_SIZE),
    _currentSegment(TR::ref(_initialSegment)),
@@ -69,7 +69,7 @@ Region::~Region() throw()
       )
       {
       _currentSegment = TR::ref(latestSegment.get().unlink());
-      _segmentProvider.release(latestSegment);
+      _segmentAllocator.deallocate(latestSegment);
       }
    TR_ASSERT(_currentSegment.get() == _initialSegment, "self-referencial link was broken");
    }
@@ -83,7 +83,7 @@ Region::allocate(size_t const size, void *hint)
       _bytesAllocated += roundedSize;
       return _currentSegment.get().allocate(roundedSize);
       }
-   TR::MemorySegment &newSegment = _segmentProvider.request(roundedSize);
+   TR::MemorySegment &newSegment = _segmentAllocator.allocate(roundedSize);
    TR_ASSERT(newSegment.remaining() >= roundedSize, "Allocated segment is too small");
    newSegment.link(_currentSegment.get());
    _currentSegment = TR::ref(newSegment);
@@ -103,4 +103,4 @@ Region::round(size_t bytes)
    }
 }
 
-#endif // defined(OLD_MEMORY)
+#endif

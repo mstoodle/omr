@@ -27,6 +27,12 @@
 #include <fstream>
 #include "ilgen/IlBuilder.hpp"
 #include "env/TypedAllocator.hpp"
+#if defined(OLD_MEMORY)
+#include "env/SegmentProvider.hpp"
+#else
+#include "env/mem/BackingMemoryAllocator.hpp"
+#include "env/mem/SegmentAllocator.hpp"
+#endif
 
 // Maximum length of _definingLine string (including null terminator)
 #define MAX_LINE_NUM_LEN 7
@@ -37,7 +43,6 @@ namespace TR { class ResolvedMethod; }
 namespace TR { class SymbolReference; }
 namespace TR { class VirtualMachineState; }
 
-namespace TR { class SegmentProvider; }
 namespace TR { class Region; }
 class TR_Memory;
 
@@ -302,7 +307,8 @@ class MethodBuilder : public TR::IlBuilder
       MemoryManager();
       ~MemoryManager();
 
-      TR::SegmentProvider *_segmentProvider;
+      TR::BackingMemoryAllocator *_backingMemoryAllocator;
+      TR::SegmentAllocator *_segmentAllocator;
       TR::Region *_memoryRegion;
       TR_Memory *_trMemory;
       } MemoryManager;

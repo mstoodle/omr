@@ -54,8 +54,14 @@
 #include "ilgen/IlGeneratorMethodDetails.hpp"
 #include "infra/Assert.hpp"                    // for TR_ASSERT
 #include "ras/Debug.hpp"                       // for createDebugObject, etc
+#if defined(OLD_MEMORY)
 #include "env/SystemSegmentProvider.hpp"
 #include "env/DebugSegmentProvider.hpp"
+#else
+#include "env/mem/DebugRawAllocator.hpp"
+#include "env/mem/SegmentAllocator.hpp"
+#include "env/mem/DebugSegmentAllocator.hpp"
+#endif
 #include "runtime/CodeCacheManager.hpp"
 
 #if defined (_MSC_VER) && _MSC_VER < 1900
@@ -276,14 +282,38 @@ compileMethodFromDetails(
    uint64_t translationStartTime = TR::Compiler->vm.getUSecClock();
    OMR::FrontEnd &fe = OMR::FrontEnd::singleton();
    auto jitConfig = fe.jitConfig();
+
+#if defined(OLD_MEMORY)
    TR::RawAllocator rawAllocator;
    TR::SystemSegmentProvider defaultSegmentProvider(1 << 16, rawAllocator);
+
+   // used when debugging memory allocators: remaps allocated segments rather than freeing to trap on use-after-free
    TR::DebugSegmentProvider debugSegmentProvider(1 << 16, rawAllocator);
-   TR::SegmentAllocator &scratchSegmentProvider =
+
+   TR::SegmentAllocator &segmentProvider =
       TR::Options::getCmdLineOptions()->getOption(TR_EnableScratchMemoryDebugging) ?
          static_cast<TR::SegmentAllocator &>(debugSegmentProvider) :
          static_cast<TR::SegmentAllocator &>(defaultSegmentProvider);
-   TR::Region dispatchRegion(scratchSegmentProvider, rawAllocator);
+   TR::Region dispatchRegion(segmentProvider, rawAllocator);
+#else
+   // allocate RawAllocator which basically uses malloc, or the debug raw allocator that tries to 
+   // protect pages after they are returned to the allocator and will not reuse memory
+   TR::RawAllocator defaultRawAllocator;
+   TR::DebugRawAllocator debugRawAllocator;
+   TR::RawAllocator & rawAllocator =
+      TR::Options::getCmdLineOptions()->getOption(TR_EnableScratchMemoryDebugging) ?
+      debugRawAllocator : defaultRawAllocator;
+
+   TR::BackingMemoryAllocator backingMemoryAllocator(rawAllocator, 1 << 16);;
+
+   TR::DebugSegmentAllocator debugSegmentAllocator(backingMemoryAllocator, 1 << 16);
+   TR::SegmentAllocator defaultSegmentAllocator(backingMemoryAllocator, 1 << 16);
+   TR::SegmentAllocator &segmentAllocator =
+      TR::Options::getCmdLineOptions()->getOption(TR_EnableScratchMemoryDebugging) ?
+      debugSegmentAllocator : defaultSegmentAllocator;
+   TR::Region dispatchRegion(segmentAllocator, rawAllocator);
+#endif
+
    TR_Memory trMemory(*fe.persistentMemory(), dispatchRegion);
    TR_ResolvedMethod & compilee = *((TR_ResolvedMethod *)details.getMethod());
 
@@ -396,7 +426,11 @@ compileMethodFromDetails(
                TR_VerboseLog::write(
                   " time=%llu mem=%lluKB",
                   translationTime,
-                  static_cast<unsigned long long>(scratchSegmentProvider.bytesAllocated()) / 1024
+#if defined(OLD_MEMORY)
+                  static_cast<unsigned long long>(segmentProvider.bytesAllocated()) / 1024
+#else
+                  static_cast<unsigned long long>(segmentAllocator.bytesAllocated()) / 1024
+#endif
                   );
                }
 

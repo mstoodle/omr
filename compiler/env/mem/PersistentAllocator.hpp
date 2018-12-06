@@ -19,8 +19,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#if defined(OLD_MEMORY)
-
 #ifndef OMR_PERSISTENT_ALLOCATOR
 #define OMR_PERSISTENT_ALLOCATOR
 
@@ -38,14 +36,13 @@ namespace TR { using OMR::PersistentAllocator; }
 #include <stdint.h>
 
 #include "env/RawAllocator.hpp"  // for RawAllocator
-#include "env/PersistentAllocatorKit.hpp" // for PersistentAllocatorKit
 
 namespace OMR {
 
 class PersistentAllocator
    {
 public:
-   PersistentAllocator(const TR::PersistentAllocatorKit &allocatorKit);
+   PersistentAllocator(const TR::RawAllocator &rawAllocator);
 
    void *allocate(size_t size, const std::nothrow_t tag, void * hint = 0) throw();
    void * allocate(size_t size, void * hint = 0);
@@ -111,9 +108,3 @@ inline void operator delete[](void *ptr, OMR::PersistentAllocator &allocator, co
    }
 
 #endif // OMR_PERSISTENT_ALLOCATOR
-
-#else
-
-#include "env/mem/PersistentAllocator.hpp"
-
-#endif // temporary defined(OLD_MEMORY)

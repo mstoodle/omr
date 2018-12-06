@@ -72,16 +72,20 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     $(JIT_OMR_DIRTY_DIR)/env/OMRClassEnv.cpp \
     $(JIT_OMR_DIRTY_DIR)/env/OMRDebugEnv.cpp \
     $(JIT_OMR_DIRTY_DIR)/env/OMRVMEnv.cpp \
-    $(JIT_OMR_DIRTY_DIR)/env/SegmentProvider.cpp \
-    $(JIT_OMR_DIRTY_DIR)/env/SegmentAllocator.cpp \
-    $(JIT_OMR_DIRTY_DIR)/env/SystemSegmentProvider.cpp \
-    $(JIT_OMR_DIRTY_DIR)/env/DebugSegmentProvider.cpp \
     $(JIT_OMR_DIRTY_DIR)/env/Region.cpp \
     $(JIT_OMR_DIRTY_DIR)/env/StackMemoryRegion.cpp \
     $(JIT_OMR_DIRTY_DIR)/env/OMRPersistentInfo.cpp \
     $(JIT_OMR_DIRTY_DIR)/env/TRMemory.cpp \
     $(JIT_OMR_DIRTY_DIR)/env/TRPersistentMemory.cpp \
     $(JIT_OMR_DIRTY_DIR)/env/VerboseLog.cpp \
+    $(JIT_OMR_DIRTY_DIR)/env/mem/DebugRawAllocator.cpp \
+    $(JIT_OMR_DIRTY_DIR)/env/mem/OMRBackingMemoryAllocator.cpp \
+    $(JIT_OMR_DIRTY_DIR)/env/mem/OMRCompilerEnv.cpp \
+    $(JIT_OMR_DIRTY_DIR)/env/mem/OMRDebugSegmentAllocator.cpp \
+    $(JIT_OMR_DIRTY_DIR)/env/mem/OMRSegmentAllocator.cpp \
+    $(JIT_OMR_DIRTY_DIR)/env/mem/PersistentAllocator.cpp \
+    $(JIT_OMR_DIRTY_DIR)/env/mem/RawAllocator.cpp \
+    $(JIT_OMR_DIRTY_DIR)/env/mem/Region.cpp \
     $(JIT_OMR_DIRTY_DIR)/il/OMRDataTypes.cpp \
     $(JIT_OMR_DIRTY_DIR)/il/OMRTreeTop.cpp \
     $(JIT_OMR_DIRTY_DIR)/il/OMRILOps.cpp \

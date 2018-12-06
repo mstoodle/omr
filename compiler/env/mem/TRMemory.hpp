@@ -19,8 +19,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#if defined(OLD_MEMORY)
-
 /**
  * \page JITMemoryAllocation JIT Memory Allocation
  * JIT memory allocation.
@@ -71,7 +69,7 @@
 #include "env/defines.h"                // for TR_HOST_64BIT
 #include "infra/Assert.hpp"             // for TR_ASSERT
 #include "infra/ReferenceWrapper.hpp"   // for reference_wrapper
-#include "env/Region.hpp"               // for Region
+#include "env/mem/Region.hpp"               // for Region
 
 #include <stdlib.h>
 #include "cs2/bitmanip.h"
@@ -1249,8 +1247,4 @@ static inline TR::typed_allocator<T, TR::Allocator> getTypedAllocator(TR::Alloca
 	return ta;
 }
 
-#endif
-
-#else
-  #include "env/mem/TRMemory.hpp"
-#endif // temporary !defined(MEW_MEMORY)
+#endif // defined(jitmemory_h)

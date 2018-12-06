@@ -19,18 +19,13 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#if defined(OLD_MEMORY)
-
-#ifndef OMR_RAW_ALLOCATOR_HPP
-#define OMR_RAW_ALLOCATOR_HPP
+#ifndef TR_RAWALLOCATOR_INCL
+#define TR_RAWALLOCATOR_INCL
 
 #pragma once
 
-#ifndef TR_RAW_ALLOCATOR
-#define TR_RAW_ALLOCATOR
 namespace OMR { class RawAllocator; }
-namespace TR { typedef OMR::RawAllocator RawAllocator; }
-#endif
+namespace TR { using OMR::RawAllocator; }
 
 #include <stddef.h>  // for size_t
 #include <cstdlib>   // for free, malloc
@@ -39,38 +34,50 @@ namespace TR { typedef OMR::RawAllocator RawAllocator; }
 
 namespace OMR {
 
+// RawAllocator should carry no state so that all RawAllocator objects are equivalent
+// and the lifetime of memory allocated by a RawAllocator object does not depend on
+// the lifetime of that particular RawAllocator object. It should be perfectly valid
+// for one RawAllocator object to be used to allocate a RawSegment and a completely
+// different RawAllocator object used to deallocate that RawSegment.
+// 
+
 class RawAllocator
    {
 public:
+   typedef void *RawSegment;
+
    RawAllocator()
-      {
-      }
+      { }
 
-   RawAllocator(const RawAllocator &other)
-      {
-      }
+   RawAllocator(const TR::RawAllocator &other)
+      { }
 
-   void *allocate(size_t size, const std::nothrow_t tag, void * hint = 0) throw()
+   virtual TR::RawAllocator & clone();
+
+   virtual RawSegment allocate(size_t size, const std::nothrow_t tag, void * hint = 0) throw()
       {
       return malloc(size);
       }
 
-   void * allocate(size_t size, void * hint = 0)
+   virtual RawSegment allocate(size_t size, void * hint = 0)
       {
       void * const alloc = allocate(size, std::nothrow, hint);
       if (!alloc) throw std::bad_alloc();
       return alloc;
       }
 
-   void deallocate(void * p) throw()
+   virtual void deallocate(RawSegment p) throw()
       {
       free(p);
       }
 
-   void deallocate(void * p, const size_t size) throw()
+   virtual void deallocate(RawSegment p, const size_t size) throw()
       {
       free(p);
       }
+
+   virtual void protect(RawSegment p, size_t size) throw()
+      { }
 
    friend bool operator ==(const RawAllocator &left, const RawAllocator &right)
       {
@@ -92,40 +99,34 @@ public:
 
 }
 
-inline void * operator new(size_t size, OMR::RawAllocator allocator)
+inline void * operator new(size_t size, TR::RawAllocator allocator)
    {
    return allocator.allocate(size);
    }
 
-inline void operator delete(void *ptr, OMR::RawAllocator allocator) throw()
+inline void operator delete(void *ptr, TR::RawAllocator allocator) throw()
    {
    allocator.deallocate(ptr);
    }
 
-inline void * operator new[](size_t size, OMR::RawAllocator allocator)
+inline void * operator new[](size_t size, TR::RawAllocator allocator)
    {
    return allocator.allocate(size);
    }
 
-inline void operator delete[](void *ptr, OMR::RawAllocator allocator) throw()
+inline void operator delete[](void *ptr, TR::RawAllocator allocator) throw()
    {
    allocator.deallocate(ptr);
    }
 
-inline void * operator new(size_t size, OMR::RawAllocator allocator, const std::nothrow_t& tag) throw()
+inline void * operator new(size_t size, TR::RawAllocator allocator, const std::nothrow_t& tag) throw()
    {
    return allocator.allocate(size, tag);
    }
 
-inline void * operator new[](size_t size, OMR::RawAllocator allocator, const std::nothrow_t& tag) throw()
+inline void * operator new[](size_t size, TR::RawAllocator allocator, const std::nothrow_t& tag) throw()
    {
    return allocator.allocate(size, tag);
    }
 
-#endif // OMR_RAW_ALLOCATOR_HPP
-
-#else
-
-#include "env/mem/RawAllocator.hpp"
-
-#endif  // temporary defined(OLD_MEMORY)
+#endif // TR_RAWALLOCATOR_INCL

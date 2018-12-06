@@ -19,12 +19,25 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#if defined(OLD_MEMORY)
+#ifndef TR_COMPILER_ENV_INCL
+#define TR_COMPILER_ENV_INCL
 
-#include "env/SegmentAllocator.hpp"
+#include "env/mem/OMRCompilerEnv.hpp"
+#include "infra/Annotations.hpp"  // for OMR_EXTENSIBLE
 
-TR::SegmentAllocator::~SegmentAllocator() throw()
+namespace TR
+{
+
+class OMR_EXTENSIBLE CompilerEnv : public OMR::CompilerEnvConnector
    {
-   }
+public:
+   CompilerEnv(const TR::RawAllocator &rawAllocator) :
+         OMR::CompilerEnvConnector(rawAllocator)
+      {}
+   };
 
-#endif // defined(OLD_MEMORY)
+extern CompilerEnv *Compiler;
+
+}
+
+#endif

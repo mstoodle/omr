@@ -27,7 +27,11 @@
 #include "compile/Compilation.hpp"
 #include "ilgen/TypeDictionary.hpp"
 #include "env/Region.hpp"
-#include "env/SystemSegmentProvider.hpp"
+#if defined(OLD_MEMORY)
+#include "env/SegmentProvider.hpp"
+#else
+#include "env/mem/SegmentAllocator.hpp"
+#endif
 #include "env/TRMemory.hpp"
 #include "infra/Assert.hpp"
 #include "infra/BitVector.hpp"

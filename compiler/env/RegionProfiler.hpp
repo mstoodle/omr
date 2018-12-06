@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,7 +25,11 @@
 #pragma once
 
 #include "env/Region.hpp"
+#if defined(OLD_MEMORY)
 #include "env/SegmentProvider.hpp"
+#else
+#include "env/mem/SegmentAllocator.hpp"
+#endif
 #include "compile/Compilation.hpp"
 
 namespace TR {
@@ -51,7 +55,11 @@ public:
    RegionProfiler(TR::Region &region, TR::Compilation &compilation, const char *format, ...) :
       _region(region),
       _initialRegionSize(_region.bytesAllocated()),
+#if defined(OLD_MEMORY)
       _initialSegmentProviderSize(_region._segmentProvider.bytesAllocated()),
+#else
+      _initialSegmentAllocatorSize(_region._segmentAllocator.bytesAllocated()),
+#endif
       _compilation(compilation)
       {
       if (_compilation.getOption(TR_ProfileMemoryRegions))
@@ -85,7 +93,11 @@ public:
                "segmentAllocation.details/%s",
                 _identifier
                 ),
+#if defined(OLD_MEMORY)
             (_region._segmentProvider.bytesAllocated() - _initialSegmentProviderSize) / 1024
+#else
+            (_region._segmentAllocator.bytesAllocated() - _initialSegmentAllocatorSize) / 1024
+#endif
             );
          }
       }
@@ -93,7 +105,11 @@ public:
 private:
    TR::Region &_region;
    size_t const _initialRegionSize;
+#if defined(OLD_MEMORY)
    size_t const _initialSegmentProviderSize;
+#else
+   size_t const _initialSegmentAllocatorSize;
+#endif
    TR::Compilation &_compilation;
    char _identifier[256];
    };

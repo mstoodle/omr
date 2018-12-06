@@ -19,7 +19,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#if defined(OLD_MEMORY)
+#if !defined(OLD_MEMORY)
 
 #include "env/CompilerEnv.hpp"
 #include "env/Environment.hpp"
@@ -28,13 +28,12 @@
 
 
 OMR::CompilerEnv::CompilerEnv(
-   TR::RawAllocator raw,
-   const TR::PersistentAllocatorKit &persistentAllocatorKit
-   ) :
-      rawAllocator(raw),
-      _initialized(false),
-      _persistentAllocator(persistentAllocatorKit),
-      regionAllocator(_persistentAllocator)
+   const TR::RawAllocator &raw
+   )
+   : rawAllocator(raw)
+   , _initialized(false)
+   , _persistentAllocator(rawAllocator)
+   , regionAllocator(_persistentAllocator)
    {
    }
 
@@ -137,5 +136,4 @@ OMR::CompilerEnv::initializeTargetEnvironment()
 
    }
 
-#endif
-
+#endif // !defined(OLD_MEMORY)

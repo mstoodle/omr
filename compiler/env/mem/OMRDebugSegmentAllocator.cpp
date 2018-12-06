@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,12 +19,24 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#if defined(OLD_MEMORY)
+#include "env/mem/RawAllocator.hpp"
+#include "env/mem/DebugRawAllocator.hpp"
+#include "env/mem/BackingMemoryAllocator.hpp"
+#include "env/mem/DebugSegmentAllocator.hpp"
 
-#include "env/SegmentAllocator.hpp"
 
-TR::SegmentAllocator::~SegmentAllocator() throw()
+TR::MemorySegment &
+OMR::DebugSegmentAllocator::allocate(size_t requiredSize, void * hint)
    {
+   // round up to a multiple of the default allocation size
+   size_t const roundedSize = ( ( ( requiredSize + (_allocationBlockSize - 1) ) / _allocationBlockSize ) * _allocationBlockSize );
+   TR::MemorySegment &newSegment = _backingMemoryAllocator.allocate(roundedSize);
+   TR::MemorySegment &allocationSegment = allocateFromSegment(roundedSize, newSegment);
+   return allocationSegment;
    }
 
-#endif // defined(OLD_MEMORY)
+void
+OMR::DebugSegmentAllocator::deallocate(TR::MemorySegment &p) throw()
+   {
+   _backingMemoryAllocator.rawAllocator().protect(p.base(), p.size());
+   }

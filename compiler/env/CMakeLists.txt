@@ -27,10 +27,15 @@ compiler_library(env
 	${CMAKE_CURRENT_LIST_DIR}/OMRClassEnv.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OMRDebugEnv.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OMRVMEnv.cpp
+	${CMAKE_CURRENT_LIST_DIR}/mem/DebugRawAllocator.cpp
+	${CMAKE_CURRENT_LIST_DIR}/mem/OMRBackingMemoryAllocator.cpp
+	${CMAKE_CURRENT_LIST_DIR}/mem/OMRDebugSegmentAllocator.cpp
+	${CMAKE_CURRENT_LIST_DIR}/mem/OMRSegmentAllocator.cpp
+	${CMAKE_CURRENT_LIST_DIR}/mem/PersistentAllocator.cpp
+	${CMAKE_CURRENT_LIST_DIR}/mem/RawAllocator.cpp
+	${CMAKE_CURRENT_LIST_DIR}/mem/Region.cpp
 	${CMAKE_CURRENT_LIST_DIR}/SegmentAllocator.cpp
 	${CMAKE_CURRENT_LIST_DIR}/SegmentProvider.cpp
-	${CMAKE_CURRENT_LIST_DIR}/SystemSegmentProvider.cpp
-	${CMAKE_CURRENT_LIST_DIR}/DebugSegmentProvider.cpp
 	${CMAKE_CURRENT_LIST_DIR}/Region.cpp
 	${CMAKE_CURRENT_LIST_DIR}/StackMemoryRegion.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OMRPersistentInfo.cpp
@@ -48,6 +53,7 @@ compiler_library(env
 	${CMAKE_CURRENT_LIST_DIR}/OMRKnownObjectTable.cpp
 	${CMAKE_CURRENT_LIST_DIR}/Globals.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OMRCompilerEnv.cpp
+	${CMAKE_CURRENT_LIST_DIR}/mem/OMRCompilerEnv.cpp
 	${CMAKE_CURRENT_LIST_DIR}/PersistentAllocator.cpp
 
 )

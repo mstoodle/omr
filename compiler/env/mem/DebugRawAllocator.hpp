@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,57 +19,40 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef TR_SEGMENT_POOL
-#define TR_SEGMENT_POOL
+#ifndef TR_DEBUGRAWALLOCATOR_INCL
+#define TR_DEBUGRAWALLOCATOR_INCL
 
 #pragma once
 
-#include <deque>
-#include <stack>
-#include "env/TypedAllocator.hpp"
-#include "infra/ReferenceWrapper.hpp"
-#include "env/SegmentProvider.hpp"
-#include "env/RawAllocator.hpp"
+namespace OMR { class DebugRawAllocator; }
+namespace TR { using OMR::DebugRawAllocator; }
 
-namespace TR {
+#include "env/mem/RawAllocator.hpp"
 
-/**
- * @brief The SegmentPool class maintains a pool of memory segments.
- */
+namespace OMR {
 
-class SegmentPool : public TR::SegmentProvider
+class DebugRawAllocator : public TR::RawAllocator
    {
 public:
-   SegmentPool(TR::SegmentProvider &backingProvider, size_t cacheSize, TR::RawAllocator rawAllocator);
-   ~SegmentPool() throw();
+   typedef void * RawSegment;
 
-   virtual TR::MemorySegment &request(size_t requiredSize);
-   virtual void release(TR::MemorySegment &) throw();
+   DebugRawAllocator()
+      : TR::RawAllocator()
+      { }
 
-private:
-   size_t const _poolSize;
-   size_t _storedSegments;
-   TR::SegmentProvider &_backingProvider;
+   DebugRawAllocator(const DebugRawAllocator &other)
+      : TR::RawAllocator(other)
+      { }
 
-   typedef TR::typed_allocator<
-      TR::reference_wrapper<TR::MemorySegment>,
-      TR::RawAllocator
-      > DequeAllocator;
+   virtual TR::RawAllocator & clone();
 
-   typedef std::deque<
-      TR::reference_wrapper<TR::MemorySegment>,
-      DequeAllocator
-      > StackContainer;
+   RawSegment allocate(size_t size, void * hint = 0);
 
-   typedef std::stack<
-      TR::reference_wrapper<TR::MemorySegment>,
-      StackContainer
-      > SegmentStack;
-
-   SegmentStack _segmentStack;
-
+   virtual void deallocate(RawSegment p) throw();
+   virtual void deallocate(RawSegment p, const size_t size) throw();
+   virtual void protect(RawSegment p, const size_t size) throw();
    };
 
 }
 
-#endif // TR_SEGMENT_POOL
+#endif // TR_DEBUGRAWALLOCATOR_INCL

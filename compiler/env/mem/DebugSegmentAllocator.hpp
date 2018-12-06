@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,12 +19,13 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#if defined(OLD_MEMORY)
+#ifndef TR_DEBUGSEGMENTALLOCATOR_INCL
+#define TR_DEBUGSEGMENTALLOCATOR_INCL
 
-#include "env/SegmentAllocator.hpp"
+#pragma once
 
-TR::SegmentAllocator::~SegmentAllocator() throw()
-   {
-   }
+#include "env/mem/OMRDebugSegmentAllocator.hpp"
 
-#endif // defined(OLD_MEMORY)
+namespace TR { using OMR::DebugSegmentAllocator; }
+
+#endif // !defined(TR_DEBUGSEGMENTALLOCATOR_INCL)

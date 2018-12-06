@@ -52,7 +52,7 @@ namespace OMR { typedef OMR::Compilation CompilationConnector; }
 #include "cs2/timer.h"                        // for LexicalBlockTimer, etc
 #include "env/PersistentInfo.hpp"             // for PersistentInfo
 #include "env/TRMemory.hpp"                   // for TR_Memory, etc
-#include "env/Region.hpp"                     // for Region
+#include "env/mem/Region.hpp"                     // for Region
 #include "env/jittypes.h"
 #include "il/DataTypes.hpp"                   // for etc
 #include "il/IL.hpp"
