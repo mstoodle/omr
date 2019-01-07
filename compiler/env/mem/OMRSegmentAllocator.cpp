@@ -108,7 +108,7 @@ OMR::SegmentAllocator::allocate(size_t requiredSize)
    if (!_freeSegments.empty() && roundedSize == _allocationBlockSize)
       {
       TR::MemorySegment &recycledSegment = _freeSegments.back();
-      TR_ASSERT(recycledSegment.size() == roundedSize, "unexpected size on free segment");
+      TR_ASSERT_FATAL(recycledSegment.size() == roundedSize, "unexpected size on free segment");
       _freeSegments.pop_back();
       recycledSegment.reset();
       _bytesAllocated += roundedSize;
