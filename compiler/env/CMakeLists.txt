@@ -37,7 +37,7 @@ compiler_library(env
 	${CMAKE_CURRENT_LIST_DIR}/TRMemory.cpp
 	${CMAKE_CURRENT_LIST_DIR}/TRPersistentMemory.cpp
 	${CMAKE_CURRENT_LIST_DIR}/VerboseLog.cpp
-
+	${CMAKE_CURRENT_LIST_DIR}/newmemory/DebugAllocator.cpp
 
 	# The following are listed under JIT_PRODUCT_SOURCE_FILES
 	# (for compiler test, but not jitbuilder).
