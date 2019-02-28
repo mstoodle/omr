@@ -19,6 +19,8 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#if defined(OLD_MEMORY)		// to be removed when refactoring complete
+
 #ifndef OMR_PERSISTENT_ALLOCATOR
 #define OMR_PERSISTENT_ALLOCATOR
 
@@ -109,3 +111,9 @@ inline void operator delete[](void *ptr, OMR::PersistentAllocator &allocator, co
    }
 
 #endif // OMR_PERSISTENT_ALLOCATOR
+
+#else
+
+#include "env/newmemory/PersistentAllocator.hpp"
+
+#endif
