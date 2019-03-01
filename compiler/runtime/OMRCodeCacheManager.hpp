@@ -30,7 +30,6 @@
 #include "runtime/MethodExceptionData.hpp"
 #include "runtime/Runtime.hpp"
 #include "runtime/CodeCacheTypes.hpp"
-#include "env/RawAllocator.hpp"
 #include "codegen/StaticRelocation.hpp"
 #include "codegen/ELFRelocationResolver.hpp"
 
@@ -43,11 +42,12 @@ namespace TR { class CodeCacheManager; }
 namespace TR { class CodeCacheMemorySegment; }
 namespace TR { class CodeGenerator; }
 namespace TR { class Monitor; }
+namespace TR { class RawAllocator; }
+namespace TR { class StaticRelocation; }
 namespace OMR { class CodeCacheHashEntrySlab; }
 namespace OMR { class FaintCacheBlock; }
 namespace OMR { typedef void CodeCacheTrampolineCode; }
 namespace OMR { class CodeCacheManager; }
-namespace TR { class StaticRelocation; }
 namespace OMR { typedef CodeCacheManager CodeCacheManagerConnector; }
 
 #if (HOST_OS == OMR_LINUX)
@@ -114,7 +114,7 @@ protected:
 
 public:
 
-   CodeCacheManager(TR::RawAllocator rawAllocator);
+   CodeCacheManager(TR::RawAllocator & rawAllocator);
 
    class CacheListCriticalSection : public CriticalSection
       {
@@ -276,7 +276,7 @@ public:
 
 protected:
 
-   TR::RawAllocator               _rawAllocator;
+   TR::RawAllocator             & _rawAllocator;
    TR::CodeCacheConfig            _config;
    TR::CodeCache                 *_lastCache;                         /*!< last code cache round robined through */
    CodeCacheList                  _codeCacheList;                     /*!< list of allocated code caches */

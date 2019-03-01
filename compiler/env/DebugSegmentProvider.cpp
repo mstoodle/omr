@@ -19,6 +19,8 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#if defined(OLD_MEMORY)		// to be removed when memory refactoring complete
+
 #if (defined(LINUX) && !defined(OMRZTPF)) || defined(__APPLE__) || defined(_AIX)
 #include <sys/mman.h>
 #if defined(__APPLE__) || !defined(MAP_ANONYMOUS)
@@ -133,3 +135,5 @@ TR::DebugSegmentProvider::setAllocationLimit(size_t allocationLimit)
    {
    return;
    }
+
+#endif

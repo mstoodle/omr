@@ -26,19 +26,25 @@
 #include <string.h>
 #include <unistd.h>
 #include <elf.h>
+#if defined(OLD_MEMORY)
 #include "env/CompilerEnv.hpp"
+#include "env/RawAllocator.hpp"
+#else
+#include "env/newmemory/CompilerEnv.hpp"
+#include "env/newmemory/RawAllocator.hpp"
+#endif
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "runtime/CodeCacheManager.hpp"
 
-TR::ELFExecutableGenerator::ELFExecutableGenerator(TR::RawAllocator rawAllocator,
+TR::ELFExecutableGenerator::ELFExecutableGenerator(TR::RawAllocator & rawAllocator,
                             uint8_t const * codeStart, size_t codeSize):
                             ELFGenerator(rawAllocator, codeStart, codeSize)
                             {
                                 initialize();
                             }
 
-TR::ELFRelocatableGenerator::ELFRelocatableGenerator(TR::RawAllocator rawAllocator,
+TR::ELFRelocatableGenerator::ELFRelocatableGenerator(TR::RawAllocator & rawAllocator,
                             uint8_t const * codeStart, size_t codeSize):
                             ELFGenerator(rawAllocator, codeStart, codeSize)
                             {

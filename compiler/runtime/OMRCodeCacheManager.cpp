@@ -31,7 +31,13 @@
 #include "control/Options_inlines.hpp"
 #include "env/IO.hpp"
 #include "env/defines.h"
+#if defined(OLD_MEMORY)
 #include "env/CompilerEnv.hpp"
+#include "env/RawAllocator.hpp"
+#else
+#include "env/newmemory/CompilerEnv.hpp"
+#include "env/newmemory/RawAllocator.hpp"
+#endif
 #include "env/jittypes.h"
 #include "il/DataTypes.hpp"
 #include "infra/Assert.hpp"
@@ -52,7 +58,7 @@ TR::CodeCacheSymbolContainer * OMR::CodeCacheManager::_symbolContainer = NULL;
 
 #endif //HOST_OS == OMR_LINUX
 
-OMR::CodeCacheManager::CodeCacheManager(TR::RawAllocator rawAllocator) :
+OMR::CodeCacheManager::CodeCacheManager(TR::RawAllocator & rawAllocator) :
    _rawAllocator(rawAllocator),
    _initialized(false),
    _codeCacheFull(false)

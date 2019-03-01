@@ -27,10 +27,10 @@
 #include <elf.h>
 #include <string>
 #include "env/TypedAllocator.hpp"
-#include "env/RawAllocator.hpp"
 #include "runtime/CodeCacheManager.hpp"
 
 class TR_Memory;
+namespace TR { class RawAllocator; }
 
 namespace TR{
 
@@ -48,7 +48,7 @@ public:
      * @param[in] codeStart the code segment base
      * @param[in] codeSize the size of the code segment
     */
-    ELFGenerator(TR::RawAllocator rawAllocator,
+    ELFGenerator(TR::RawAllocator & rawAllocator,
                  uint8_t const * codeStart, size_t codeSize):
                         _rawAllocator(rawAllocator),
                         _codeStart(codeStart),
@@ -246,7 +246,7 @@ protected:
      */
     void writeRelaEntriesToFile(::FILE *fp);
 
-    TR::RawAllocator _rawAllocator; /**< the RawAllocator passed to the constructor */
+    TR::RawAllocator & _rawAllocator; /**< the RawAllocator passed to the constructor */
     
     ELFEHeader       *_header;          /**< The ELFEHeader, required for all ELF files */
     ELFProgramHeader *_programHeader;   /**< The ELFProgramHeader, required for executable ELF */
@@ -292,7 +292,7 @@ public:
      * @param[in] codeStart the codeStart is the base of the code segment
      * @param[in] codeSize the size of the region of the code segment
     */
-    ELFExecutableGenerator(TR::RawAllocator rawAllocator,
+    ELFExecutableGenerator(TR::RawAllocator & rawAllocator,
                             uint8_t const * codeStart, size_t codeSize);
 
     /**
@@ -342,7 +342,7 @@ public:
 class ELFRelocatableGenerator : public ELFGenerator
 {
 public:
-    ELFRelocatableGenerator(TR::RawAllocator rawAllocator,
+    ELFRelocatableGenerator(TR::RawAllocator & rawAllocator,
                             uint8_t const * codeStart, size_t codeSize);
 
     ~ELFRelocatableGenerator() throw()

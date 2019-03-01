@@ -51,6 +51,8 @@
  *                               heap
  *
  */
+
+
 #ifndef jitmemory_h
 #define jitmemory_h
 
@@ -58,20 +60,33 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+
+// Round the requested size
+// Must appear before the OMR includes so other files can see it
+//
+inline size_t mem_round(size_t size)
+   {
+#if defined(TR_HOST_64BIT) || defined(FIXUP_UNALIGNED)
+   return (size+7) & (~7);
+#else
+   return (size+3) & (~3);
+#endif
+   }
+
 #include "cs2/allocator.h"
 #include "cs2/bitvectr.h"
 #include "cs2/sparsrbit.h"
 #include "cs2/timer.h"
 #include "env/FilePointerDecl.hpp"
 #include "env/PersistentAllocator.hpp"
+#include "env/Region.hpp"
 #include "env/PersistentInfo.hpp"
 #include "env/defines.h"
 #include "infra/Assert.hpp"
 #include "infra/ReferenceWrapper.hpp"
-#include "env/Region.hpp"
 
-#include <stdlib.h>
 #include "cs2/bitmanip.h"
 #include "cs2/hashtab.h"
 #include "cs2/llistof.h"
@@ -122,17 +137,6 @@ namespace TR
  * \endverbatim
  */
 #define PERSISTENT_NEW_DECLARE TR::Internal::PersistentNewType
-
-// Round the requested size
-//
-inline size_t mem_round(size_t size)
-   {
-#if defined(TR_HOST_64BIT) || defined(FIXUP_UNALIGNED)
-   return (size+7) & (~7);
-#else
-   return (size+3) & (~3);
-#endif
-   }
 
 namespace TR {
 
