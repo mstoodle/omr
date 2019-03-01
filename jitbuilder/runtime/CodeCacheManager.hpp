@@ -35,7 +35,7 @@ namespace TR
    class OMR_EXTENSIBLE CodeCacheManager : public JitBuilder::CodeCacheManager
       {
       public:
-      CodeCacheManager(TR::RawAllocator rawAllocator) : JitBuilder::CodeCacheManager(rawAllocator) { }
+      CodeCacheManager(TR::RawAllocator & rawAllocator) : JitBuilder::CodeCacheManager(rawAllocator) { }
       };
 
 } // namespace TR

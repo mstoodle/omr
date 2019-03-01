@@ -40,7 +40,7 @@
 
 TR::CodeCacheManager *JitBuilder::CodeCacheManager::_codeCacheManager = NULL;
 
-JitBuilder::CodeCacheManager::CodeCacheManager(TR::RawAllocator rawAllocator)
+JitBuilder::CodeCacheManager::CodeCacheManager(TR::RawAllocator & rawAllocator)
    : OMR::CodeCacheManagerConnector(rawAllocator)
    {
    TR_ASSERT_FATAL(!_codeCacheManager, "CodeCacheManager already instantiated. "
