@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2016 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,31 +19,52 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#if defined(OLD_MEMORY)
+#if !defined(OLD_MEMORY)	// to be removed when refactoring complete
 
-#include "env/CompilerEnv.hpp"
+#include "codegen/FrontEnd.hpp"
+#include "env/newmemory/CompilerEnv.hpp"
+#include "env/newmemory/MallocAllocator.hpp"
+#include "env/newmemory/NaiveSegmentAllocator.hpp"
+#include "env/newmemory/PersistentAllocator.hpp"
 #include "env/Environment.hpp"
 #include "env/CPU.hpp"
 #include "env/defines.h"
 
 
-OMR::CompilerEnv::CompilerEnv(
-   TR::RawAllocator raw,
-   const TR::PersistentAllocatorKit &persistentAllocatorKit
-   ) :
-      rawAllocator(raw),
-      _initialized(false),
-      _persistentAllocator(persistentAllocatorKit),
-      regionAllocator(_persistentAllocator)
+OMR::CompilerEnv::CompilerEnv()
+   : rawAllocator()
+   , _persistentSegmentAllocator(*(new (rawAllocator) OMR::NaiveSegmentAllocator<OMR::MallocAllocator>(1 << 16)))
+   , _persistentAllocator(*(new (rawAllocator) TR::PersistentAllocator(_persistentSegmentAllocator)))
+   , _initialized(false)
+   , _allocatorsOwned(true)
+   , regionAllocator(_persistentAllocator)
    {
    }
 
+// only used by subclasses extended by other projects
+OMR::CompilerEnv::CompilerEnv(TR::SegmentAllocator & segmentAllocator, TR::PersistentAllocator & persistentAllocator)
+   : rawAllocator()
+   , _persistentSegmentAllocator(segmentAllocator)
+   , _persistentAllocator(persistentAllocator)
+   , _initialized(false)
+   , _allocatorsOwned(false)
+   , regionAllocator(_persistentAllocator)
+   {
+   }
+
+OMR::CompilerEnv::~CompilerEnv()
+   {
+   if (_allocatorsOwned)
+      {
+      rawAllocator.deallocate(&_persistentAllocator);
+      rawAllocator.deallocate(&_persistentSegmentAllocator);
+      }
+   }
 
 TR::CompilerEnv *OMR::CompilerEnv::self()
    {
    return static_cast<TR::CompilerEnv *>(this);
    }
-
 
 void
 OMR::CompilerEnv::initialize()

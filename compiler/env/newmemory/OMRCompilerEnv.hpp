@@ -19,8 +19,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#if defined(OLD_MEMORY)		// to be removed when refactoring complete
-
 #ifndef OMR_COMPILER_ENV_INCL
 #define OMR_COMPILER_ENV_INCL
 
@@ -34,11 +32,11 @@ namespace OMR { typedef OMR::CompilerEnv CompilerEnvConnector; }
 #endif
 
 
-#include "infra/Annotations.hpp"
-#include "env/RawAllocator.hpp"
+#include "infra/Annotations.hpp"  // for OMR_EXTENSIBLE
+#include "env/newmemory/MallocAllocator.hpp"
+#include "env/newmemory/PersistentAllocator.hpp"
 #include "env/Environment.hpp"
 #include "env/DebugEnv.hpp"
-#include "env/PersistentAllocator.hpp"
 #include "env/ClassEnv.hpp"
 #include "env/ObjectModel.hpp"
 #include "env/ArithEnv.hpp"
@@ -56,13 +54,14 @@ class OMR_EXTENSIBLE CompilerEnv
 
 public:
 
-   CompilerEnv(TR::RawAllocator raw, const TR::PersistentAllocatorKit &persistentAllocatorKit);
+   CompilerEnv();
+   virtual ~CompilerEnv();
 
    TR::CompilerEnv *self();
 
-   /// Primordial raw allocator.  This is guaranteed to be thread safe.
+   /// Primordial raw allocator is a MallocAllocator.  This is guaranteed to be thread safe.
    ///
-   TR::RawAllocator rawAllocator;
+   OMR::MallocAllocator rawAllocator;
 
    // Compilation host environment
    //
@@ -110,6 +109,10 @@ public:
    TR::PersistentAllocator &persistentAllocator() { return _persistentAllocator; }
 
 protected:
+   // To be used by extending projects (via a subclass) to override the OMR persistent segment
+   //  allocator and OMR persistent allocator allocations made by the public constructor
+   CompilerEnv(TR::SegmentAllocator & segmentAllocator, TR::PersistentAllocator & persistentAllocator);
+
    // Initialize 'target' environment for this compiler
    //
    void initializeTargetEnvironment();
@@ -120,9 +123,11 @@ protected:
 
 private:
 
-   bool _initialized;
+   bool _initialized;     // has this object been fully initialized yet?
+   bool _allocatorsOwned; // did OMRCompilerEnv allocate the two objects below?
 
-   TR::PersistentAllocator _persistentAllocator;
+   TR::SegmentAllocator & _persistentSegmentAllocator;
+   TR::PersistentAllocator & _persistentAllocator;
 
 public:
 
@@ -134,11 +139,5 @@ public:
    };
 
 }
-
-#endif
-
-#else
-
-#include "env/newmemory/OMRCompilerEnv.hpp"
 
 #endif

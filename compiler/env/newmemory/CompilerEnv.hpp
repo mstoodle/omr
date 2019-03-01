@@ -19,14 +19,11 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#if defined(OLD_MEMORY)		// to be removed when refactoring is complete
-
 #ifndef TR_COMPILER_ENV_INCL
 #define TR_COMPILER_ENV_INCL
 
 #include "env/OMRCompilerEnv.hpp"
-#include "env/RawAllocator.hpp"
-#include "infra/Annotations.hpp"
+#include "infra/Annotations.hpp"  // for OMR_EXTENSIBLE
 
 namespace TR
 {
@@ -34,19 +31,13 @@ namespace TR
 class OMR_EXTENSIBLE CompilerEnv : public OMR::CompilerEnvConnector
    {
 public:
-   CompilerEnv(TR::RawAllocator raw, const TR::PersistentAllocatorKit &persistentAllocatorKit) :
-         OMR::CompilerEnvConnector(raw, persistentAllocatorKit)
+   CompilerEnv()
+      : OMR::CompilerEnvConnector()
       {}
    };
 
 extern CompilerEnv *Compiler;
 
 }
-
-#endif
-
-#else
-
-#include "env/newmemory/CompilerEnv.hpp"
 
 #endif
