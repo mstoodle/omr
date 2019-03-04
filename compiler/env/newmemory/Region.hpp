@@ -19,8 +19,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#if defined(OLD_MEMORY)		// to be removed when refactoring complete
-
 #ifndef OMR_REGION_HPP
 #define OMR_REGION_HPP
 
@@ -32,11 +30,11 @@
 #include "infra/ReferenceWrapper.hpp"
 #include "env/TypedAllocator.hpp"
 #include "env/MemorySegment.hpp"
-#include "env/RawAllocator.hpp"
+#include "env/newmemory/RawAllocator.hpp"
+#include "env/newmemory/SegmentAllocator.hpp"
 
 namespace TR {
 
-class SegmentProvider;
 class RegionProfiler;
 
 class Region
@@ -87,7 +85,7 @@ class Region
       };
 
 public:
-   Region(TR::SegmentProvider &segmentProvider, TR::RawAllocator rawAllocator);
+   Region(TR::SegmentAllocator  &segmentAllocator, TR::RawAllocator &rawAllocator);
    Region(const Region &prototype);
    virtual ~Region() throw();
    void * allocate(const size_t bytes, void * hint = 0);
@@ -139,8 +137,8 @@ private:
    size_t round(size_t bytes);
 
    size_t _bytesAllocated;
-   TR::SegmentProvider &_segmentProvider;
-   TR::RawAllocator _rawAllocator;
+   TR::SegmentAllocator &_segmentAllocator;
+   TR::RawAllocator &_rawAllocator;
    TR::MemorySegment _initialSegment;
    TR::reference_wrapper<TR::MemorySegment> _currentSegment;
 
@@ -172,9 +170,3 @@ TR::Region::create(const T &value)
    }
 
 #endif // OMR_REGION_HPP
-
-#else
-
-#include "env/newmemory/Region.hpp"
-
-#endif

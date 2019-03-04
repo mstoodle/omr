@@ -42,6 +42,7 @@ compiler_library(env
 	${CMAKE_CURRENT_LIST_DIR}/newmemory/NaiveSegmentAllocator.cpp
 	${CMAKE_CURRENT_LIST_DIR}/newmemory/OMRCompilerEnv.cpp
 	${CMAKE_CURRENT_LIST_DIR}/newmemory/PersistentAllocator.cpp
+	${CMAKE_CURRENT_LIST_DIR}/newmemory/Region.cpp
 	${CMAKE_CURRENT_LIST_DIR}/newmemory/SegmentCache.cpp
 
 	# The following are listed under JIT_PRODUCT_SOURCE_FILES
