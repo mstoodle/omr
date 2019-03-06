@@ -19,15 +19,13 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#if defined(OLD_MEMORY)		// to be removed when refactoring complete
-
 #ifndef OMR_REGION_PROFILER_HPP
 #define OMR_REGION_PROFILER_HPP
 
 #pragma once
 
-#include "env/Region.hpp"
-#include "env/SegmentProvider.hpp"
+#include "env/newmemory/Region.hpp"
+#include "env/newmemory/SegmentAllocator.hpp"
 #include "compile/Compilation.hpp"
 
 namespace TR {
@@ -53,7 +51,7 @@ public:
    RegionProfiler(TR::Region &region, TR::Compilation &compilation, const char *format, ...) :
       _region(region),
       _initialRegionSize(_region.bytesAllocated()),
-      _initialSegmentProviderSize(_region._segmentProvider.bytesAllocated()),
+      _initialSegmentAllocatorSize(_region._segmentAllocator.bytesAllocated()),
       _compilation(compilation)
       {
       if (_compilation.getOption(TR_ProfileMemoryRegions))
@@ -87,7 +85,7 @@ public:
                "segmentAllocation.details/%s",
                 _identifier
                 ),
-            (_region._segmentProvider.bytesAllocated() - _initialSegmentProviderSize) / 1024
+            (_region._segmentAllocator.bytesAllocated() - _initialSegmentAllocatorSize) / 1024
             );
          }
       }
@@ -95,17 +93,11 @@ public:
 private:
    TR::Region &_region;
    size_t const _initialRegionSize;
-   size_t const _initialSegmentProviderSize;
+   size_t const _initialSegmentAllocatorSize;
    TR::Compilation &_compilation;
    char _identifier[256];
    };
 
 }
-
-#endif
-
-#else
-
-#include "env/newmemory/RegionProfiler.hpp"
 
 #endif
