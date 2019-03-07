@@ -40,7 +40,15 @@
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "env/CPU.hpp"
+#if defined(OLD_MEMORY)
 #include "env/CompilerEnv.hpp"
+#else
+#include "env/newmemory/CompilerEnv.hpp"
+#include "env/newmemory/DebugAllocator.hpp"
+#include "env/newmemory/MallocAllocator.hpp"
+#include "env/newmemory/NaiveDebugSegmentAllocator.hpp"
+#include "env/newmemory/NaiveSegmentAllocator.hpp"
+#endif
 #include "env/ConcreteFE.hpp"
 #include "env/IO.hpp"
 #include "env/JitConfig.hpp"
@@ -277,6 +285,7 @@ compileMethodFromDetails(
    uint64_t translationStartTime = TR::Compiler->vm.getUSecClock();
    OMR::FrontEnd &fe = OMR::FrontEnd::singleton();
    auto jitConfig = fe.jitConfig();
+#if defined(OLD_MEMORY)
    TR::RawAllocator rawAllocator;
    TR::SystemSegmentProvider defaultSegmentProvider(1 << 16, rawAllocator);
    TR::DebugSegmentProvider debugSegmentProvider(1 << 16, rawAllocator);
@@ -285,6 +294,30 @@ compileMethodFromDetails(
          static_cast<TR::SegmentAllocator &>(debugSegmentProvider) :
          static_cast<TR::SegmentAllocator &>(defaultSegmentProvider);
    TR::Region dispatchRegion(scratchSegmentProvider, rawAllocator);
+#else
+   // both objects are directly allocated on the stack so they will be automatically destructed however this frame is exited
+   // even though only one of them will be used to allocate anything
+   OMR::MallocAllocator mallocAllocator;
+   OMR::DebugAllocator debugAllocator;
+   TR::RawAllocator & rawAllocator = mallocAllocator; // by default, not the debug one
+
+   // both objects are directly allocated on the stack so they will be automatically destructed however this frame is exited
+   // even though only one of them will be used to allocate anything
+   OMR::NaiveSegmentAllocator scratchSegmentAllocator(mallocAllocator, 1 << 16);
+   OMR::NaiveDebugSegmentAllocator debugScratchSegmentAllocator(debugAllocator, 1 << 16);
+   TR::SegmentAllocator & segAllocator = scratchSegmentAllocator; // by default, not the debug one
+
+   if (TR::Options::getCmdLineOptions()->getOption(TR_EnableScratchMemoryDebugging))
+      {
+      rawAllocator = debugAllocator;
+      segAllocator = debugScratchSegmentAllocator;
+      }
+
+   TR::Region dispatchRegion(segAllocator, rawAllocator);
+
+   // used below, to be renamed after refactoring complete
+   TR::SegmentAllocator & scratchSegmentProvider = segAllocator;
+#endif
    TR_Memory trMemory(*fe.persistentMemory(), dispatchRegion);
    TR_ResolvedMethod & compilee = *((TR_ResolvedMethod *)details.getMethod());
 
