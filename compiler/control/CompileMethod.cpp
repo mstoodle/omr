@@ -295,16 +295,16 @@ compileMethodFromDetails(
          static_cast<TR::SegmentAllocator &>(defaultSegmentProvider);
    TR::Region dispatchRegion(scratchSegmentProvider, rawAllocator);
 #else
-   // both objects are directly allocated on the stack so they will be automatically destructed however this frame is exited
+   // both objects are directly allocated on the stack so they will be automatically destructed no matter how this frame is exited
    // even though only one of them will be used to allocate anything
    OMR::MallocAllocator mallocAllocator;
    OMR::DebugAllocator debugAllocator;
    TR::RawAllocator & rawAllocator = mallocAllocator; // by default, not the debug one
 
-   // both objects are directly allocated on the stack so they will be automatically destructed however this frame is exited
+   // both objects are directly allocated on the stack so they will be automatically destructed no matter how this frame is exited
    // even though only one of them will be used to allocate anything
-   OMR::NaiveSegmentAllocator scratchSegmentAllocator(mallocAllocator, 1 << 16);
-   OMR::NaiveDebugSegmentAllocator debugScratchSegmentAllocator(debugAllocator, 1 << 16);
+   OMR::NaiveSegmentAllocator<OMR::MallocAllocator> scratchSegmentAllocator(1 << 16);
+   OMR::NaiveDebugSegmentAllocator debugScratchSegmentAllocator(1 << 16);
    TR::SegmentAllocator & segAllocator = scratchSegmentAllocator; // by default, not the debug one
 
    if (TR::Options::getCmdLineOptions()->getOption(TR_EnableScratchMemoryDebugging))
