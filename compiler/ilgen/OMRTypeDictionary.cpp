@@ -29,7 +29,11 @@
 #include "ilgen/IlReference.hpp"
 #include "ilgen/TypeDictionary.hpp"
 #include "env/Region.hpp"
+#if defined(OLD_MEMORY)
 #include "env/SystemSegmentProvider.hpp"
+#else
+#include "env/newmemory/NaiveSegmentAllocator.hpp"
+#endif
 #include "env/TRMemory.hpp"
 #include "infra/Assert.hpp"
 #include "infra/BitVector.hpp"
@@ -425,14 +429,18 @@ OMR::UnionType::clearSymRefs()
    }
 
 
-// Note: _memoryRegion and the corresponding TR::SegmentProvider and TR::Memory instances are stored as pointers within TypeDictionary
+// Note: _memoryRegion and the corresponding TR::SegmentAllocator and TR::Memory instances are stored as pointers within TypeDictionary
 // in order to avoid increasing the number of header files needed to compile against the JitBuilder library. Because we are storing
 // them as pointers, we cannot rely on the default C++ destruction semantic to destruct and deallocate the memory region, but rather
 // have to do it explicitly in the TypeDictionary::MemoryManager destructor. And since C++ destroys the other members *after* executing
 // the user defined destructor, we need to make sure that any members (and their contents) that are allocated in _memoryRegion are
 // explicitly destroyed and deallocated *before* _memoryRegion in the TypeDictionary::MemoryManager destructor.
 OMR::TypeDictionary::MemoryManager::MemoryManager() :
+#if defined(OLD_MEMORY)
    _segmentProvider( new(TR::Compiler->persistentAllocator()) TR::SystemSegmentProvider(1 << 16, TR::Compiler->rawAllocator) ),
+#else
+   _segmentProvider( new(TR::Compiler->persistentAllocator()) OMR::NaiveSegmentAllocator<OMR::MallocAllocator>(1 << 16) ),
+#endif
    _memoryRegion( new(TR::Compiler->persistentAllocator()) TR::Region(*_segmentProvider, TR::Compiler->rawAllocator) ),
    _trMemory( new(TR::Compiler->persistentAllocator()) TR_Memory(*::trPersistentMemory, *_memoryRegion) )
    {}
@@ -443,7 +451,11 @@ OMR::TypeDictionary::MemoryManager::~MemoryManager()
    ::operator delete(_trMemory, TR::Compiler->persistentAllocator());
    _memoryRegion->~Region();
    ::operator delete(_memoryRegion, TR::Compiler->persistentAllocator());
+#if defined(OLD_MEMORY)
    static_cast<TR::SystemSegmentProvider *>(_segmentProvider)->~SystemSegmentProvider();
+#else
+   static_cast<OMR::NaiveSegmentAllocator<OMR::MallocAllocator> *>(_segmentProvider)->~NaiveSegmentAllocator<OMR::MallocAllocator>();
+#endif
    ::operator delete(_segmentProvider, TR::Compiler->persistentAllocator());
    }
 
