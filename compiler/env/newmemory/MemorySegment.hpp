@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -18,8 +18,6 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-
-#if defined(OLD_MEMORY)		// to be removed when memory refactoring complete
 
 #ifndef TR_MEMORY_SEGMENT
 #define TR_MEMORY_SEGMENT
@@ -69,6 +67,15 @@ public:
       uint8_t * requested = static_cast<uint8_t *>(_segment) + _allocated;
       _allocated += bytes;
       return requested;
+      }
+
+   // @brief can be used to undo an allocation immediately
+   // if any other allocation has occurred since the one being "rewound" then memory will be double allocated
+   // be VERY sure you know what you're doing if you use rewind()
+   void rewind(size_t bytes)
+      {
+      TR_ASSERT(bytes < _allocated, "Rewind request exceeds current allocation from segment");
+      _allocated -= bytes;
       }
 
    void reset() throw()
@@ -135,10 +142,28 @@ private:
 
 }
 
+/*
+void *
+operator new(size_t size, TR::MemorySegment &segment) throw()
+   {
+   size = (size + 15) & ~static_cast<size_t>(15);
+   return segment.allocate(size);
+   }
+
+void *operator new[](size_t size, TR::MemorySegment &segment) throw()
+   {
+   return operator new(size, segment);
+   }
+
+void operator delete(void *, TR::MemorySegment &) throw()
+   {
+   // purposefully not tracking empty chunks in the middle of memory segments
+   }
+
+void operator delete[](void *ptr, TR::MemorySegment &segment) throw()
+   {
+   operator delete(ptr, segment);
+   }
+*/
+
 #endif // MEMORYSEGMENT
-
-#else
-
-#include "env/newmemory/MemorySegment.hpp"
-
-#endif
