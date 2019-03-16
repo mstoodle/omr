@@ -35,6 +35,7 @@ namespace TestCompiler { typedef CodeCacheManager CodeCacheManagerConnector; }
 namespace TR { class CodeCacheMemorySegment; }
 namespace TR { class CodeCache; }
 namespace TR { class CodeCacheManager; }
+namespace TR { class RawAllocator; }
 
 namespace TestCompiler
 {
@@ -47,7 +48,7 @@ class OMR_EXTENSIBLE CodeCacheManager : public OMR::CodeCacheManagerConnector
    TR::CodeCacheManager *self();
 
 public:
-   CodeCacheManager(TR::RawAllocator rawAllocator);
+   CodeCacheManager(TR::RawAllocator & rawAllocator);
 
    void *operator new(size_t s, TR::CodeCacheManager *m) { return m; }
 

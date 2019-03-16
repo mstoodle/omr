@@ -37,7 +37,8 @@
 
 
 TR::CodeCacheManager *TestCompiler::CodeCacheManager::_codeCacheManager = NULL;
-TestCompiler::CodeCacheManager::CodeCacheManager(TR::RawAllocator rawAllocator)
+
+TestCompiler::CodeCacheManager::CodeCacheManager(TR::RawAllocator & rawAllocator)
    : OMR::CodeCacheManagerConnector(rawAllocator)
    {
    _codeCacheManager = self();
