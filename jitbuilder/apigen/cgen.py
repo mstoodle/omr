@@ -347,10 +347,10 @@ class CGenerator(cppgen.CppGenerator):
         writer.write("#endif // __cplusplus")
 
         if class_desc.has_parent():
-            writer.write(self.generate_include("{}.hpp".format(class_desc.parent().name())))
+            writer.write(self.generate_include("{}.h".format(class_desc.parent().name())))
 
         if has_extras:
-            writer.write(self.generate_include('{}ExtrasOutsideClass.hpp'.format(class_desc.name())))
+            writer.write(self.generate_include('{}ExtrasOutsideClass.h'.format(class_desc.name())))
         writer.write("\n")
 
         writer.write("// forward declarations for all API classes\n")
