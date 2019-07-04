@@ -43,6 +43,9 @@ set(OMR_THREAD ON CACHE BOOL "Enable thread library")
 
 set(OMR_COMPILER OFF CACHE BOOL "Enable the Compiler")
 set(OMR_JITBUILDER OFF CACHE BOOL "Enable building JitBuilder")
+set(OMR_JITBUILDER_BINDING_CPP OFF CACHE BOOL "Enable building JitBuilder C++ language bindings)")
+set(OMR_JITBUILDER_BINDING_C OFF CACHE BOOL "Enable building JitBuilder C language bindings")
+set(OMR_JITBUILDER_BINDING_JAVA OFF CACHE BOOL "Enable building JitBuilder Java language bindings (requires JDK installed in JAVA_HOME)")
 set(OMR_TEST_COMPILER OFF CACHE BOOL "Enable building the test compiler")
 
 set(OMR_GC ON CACHE BOOL "Enable the GC")
@@ -53,6 +56,9 @@ if(NOT OMR_COMPILER)
 	if(OMR_JITBUILDER)
 		message(FATAL_ERROR "OMR_JITBUILDER is enabled but OMR_COMPILER is not enabled")
 	endif()
+	if(OMR_JITBUILDER_BINDING_JAVA)
+		message(FATAL_ERROR "OMR_JITBUILDER_BINDING_JAVA is enabled but OMR_COMPILER is not enabled")
+	endif()
 	if(OMR_TEST_COMPILER)
 		message(FATAL_ERROR "OMR_TEST_COMPILER is enabled but OMR_COMPILER is not enabled")
 	endif()
@@ -61,6 +67,9 @@ endif()
 ## Enable OMR_JITBUILDER_TEST if OMR_JITBUILDER is enabled.
 ## Do NOT force it since it is explicitly disabled on Windows for now.
 if(OMR_JITBUILDER)
+	## By default, build C++ bindings
+	set(OMR_JITBUILDER_BINDING_CPP ON CACHE BOOL "")
+
 	set(OMR_JITBUILDER_TEST ON CACHE BOOL "")
 
 	## Enable additional JitBuilder tests if running on a supported platform
