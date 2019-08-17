@@ -23,7 +23,7 @@ set(OMR_WARNING_AS_ERROR_FLAG -Werror)
 
 set(OMR_ENHANCED_WARNING_FLAG -Wall)
 
-list(APPEND OMR_PLATFORM_COMPILE_OPTIONS -pthread -fno-strict-aliasing)
+list(APPEND OMR_PLATFORM_COMPILE_OPTIONS -O2 -pthread -fno-strict-aliasing)
 
 list(APPEND OMR_PLATFORM_CXX_COMPILE_OPTIONS -std=c++0x)
 
