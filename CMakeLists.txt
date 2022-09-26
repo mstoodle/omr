@@ -144,6 +144,7 @@ if(OMR_DDR)
 		ddr/
 		fvtest/
 		jitbuilder/
+		jb2/
 		third_party/
 		tools/
 	)
@@ -202,6 +203,10 @@ endif()
 if(OMR_JITBUILDER)
 	add_subdirectory(jitbuilder)
 endif(OMR_JITBUILDER)
+
+if(OMR_JB2)
+	add_subdirectory(jb2)
+endif(OMR_JB2)
 
 if(OMR_SHARED_CACHE)
 	add_subdirectory(sharedcache)
