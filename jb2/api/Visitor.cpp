@@ -107,8 +107,7 @@ Visitor::visitBuilder(Builder *b, std::vector<bool> & visited, BuilderWorklist &
 
 void
 Visitor::visitOperations(Builder *b, std::vector<bool> & visited, BuilderWorklist & worklist) {
-    for (OperationIterator opIt = b->OperationsBegin(); opIt != b->OperationsEnd(); opIt++) {
-        Operation * op = *opIt;
+    for (Operation *op = b->firstOperation(); op != NULL; op = op->next()) {
         visitOperation(op);
 
         for (BuilderIterator bIt = op->BuildersBegin(); bIt != op->BuildersEnd(); bIt++) {

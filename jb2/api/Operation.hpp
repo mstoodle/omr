@@ -66,6 +66,8 @@ public:
 
     Operation *next() const                             { return _next; }
     Operation *prev() const                             { return _prev; }
+    Operation *unlink();
+    Operation *replace(Builder *b);
 
     virtual bool isDynamic() const                      { return false; }
 
