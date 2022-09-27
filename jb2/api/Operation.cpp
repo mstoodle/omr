@@ -44,10 +44,12 @@ SymbolIterator Operation::symbolEndIterator;
 TypeIterator Operation::typeEndIterator;
 ValueIterator Operation::valueEndIterator;
 
-Operation::Operation(LOCATION, ActionID a, Extension *ext, Builder * parent)
+Operation::Operation(LOCATION, ActionID a, Extension *ext, Builder * parent, Operation *next, Operation *prev)
     : _id(parent->comp()->getOperationID())
     , _ext(ext)
     , _parent(parent)
+    , _next(next)
+    , _prev(prev)
     , _action(a)
     , _name(ext->actionName(a))
     , _location(parent->location())
