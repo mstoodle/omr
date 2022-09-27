@@ -64,6 +64,9 @@ public:
     Builder * parent() const                            { return _parent; }
     Location * location() const                         { return _location; }
 
+    Operation *next() const                             { return _next; }
+    Operation *prev() const                             { return _prev; }
+
     virtual bool isDynamic() const                      { return false; }
 
     virtual LiteralIterator LiteralsBegin()             { return LiteralIterator(); }
@@ -126,10 +129,13 @@ public:
     virtual void jbgen(JB1MethodBuilder *j1mb) const { }
 
 protected:
-    Operation(LOCATION, ActionID a, Extension *ext, Builder * parent);
+    Operation(LOCATION, ActionID a, Extension *ext, Builder * parent, Operation *next=NULL, Operation *prev=NULL);
 
     Operation * setParent(Builder * newParent);
     Operation * setLocation(Location *location);
+    Operation * setNext(Operation *next) { _next = next; return this; }
+    Operation * setPrev(Operation *prev) { _prev = prev; return this; }
+
     void registerDefinition(Value *result);
 
     static void addToBuilder(Extension *ext, Builder *b, Operation *op);
@@ -137,6 +143,8 @@ protected:
     OperationID _id;
     Extension * _ext;
     Builder * _parent;
+    Operation *_next;
+    Operation *_prev;
     ActionID _action;
     const std::string _name;
     Location * _location;
