@@ -40,6 +40,9 @@ Builder::Builder(Compilation * comp, Context *context, std::string name)
     , _parent(NULL)
     , _context(context)
     , _successor(NULL)
+    , _operationCount(0)
+    , _firstOperation(NULL)
+    , _lastOperation(NULL)
     , _currentLocation(new Location(comp, "", "", 0))
     , _boundToOperation(NULL)
     , _isTarget(false)
@@ -54,6 +57,9 @@ Builder::Builder(Builder *parent, Context *context, std::string name)
     , _parent(parent)
     , _context(context)
     , _successor(NULL)
+    , _operationCount(0)
+    , _firstOperation(NULL)
+    , _lastOperation(NULL)
     , _currentLocation(parent->location())
     , _boundToOperation(NULL)
     , _isTarget(false)
@@ -69,6 +75,9 @@ Builder::Builder(Builder *parent, Operation *boundToOp, std::string name)
     , _parent(parent)
     , _context(parent->context())
     , _successor(NULL)
+    , _operationCount(0)
+    , _firstOperation(NULL)
+    , _lastOperation(NULL)
     , _currentLocation(parent->location())
     , _boundToOperation(boundToOp)
     , _isTarget(false)
@@ -78,8 +87,7 @@ Builder::Builder(Builder *parent, Operation *boundToOp, std::string name)
 }
 
 Builder::~Builder() {
-    for (auto it = OperationsBegin(); it != OperationsEnd(); it++) {
-        Operation *op = *it;
+    for (auto op = firstOperation(); op != NULL; op = op->next()) {
         delete op;
     }
 }
@@ -102,6 +110,17 @@ Builder::addChild(Builder *child) {
 Builder *
 Builder::add(Operation *op) {
     _operations.push_back(op);
+    op->setNext(NULL);
+    if (_firstOperation == NULL) {
+        _firstOperation = op;
+	op->setPrev(NULL);
+    }
+    else {
+        _lastOperation->setNext(op);
+	op->setPrev(_lastOperation);
+    }
+    _lastOperation = op;
+    _operationCount++;
     return this;
 }
 

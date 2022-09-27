@@ -52,6 +52,7 @@ typedef OperationVector::iterator OperationIterator;
 class Builder
     {
     friend class Extension;
+    friend class Operation;
     friend class OperationBuilder;
     friend class Transformer;
 
@@ -104,10 +105,9 @@ public:
     BuilderIterator ChildrenBegin() const               { return BuilderIterator(_children); }
     BuilderIterator ChildrenEnd() const                 { return BuilderIterator(); }
 
-    int32_t numOperations() const                       { return _operations.size(); }
-    OperationVector & operations()                      { return _operations; }
-    OperationIterator OperationsBegin()                 { return _operations.begin(); }
-    OperationIterator OperationsEnd()                   { return _operations.end(); }
+    int32_t numOperations() const                       { return _operationCount; }
+    Operation *firstOperation() const                   { return _firstOperation; }
+    Operation *lastOperation() const                    { return _lastOperation; }
 
     bool isBound() const                                { return _isBound; }
     Operation * boundToOperation() const                { assert(_isBound); return _boundToOperation; }
@@ -155,6 +155,9 @@ public:
     Context              * _context;
     Builder              * _successor;
     OperationVector        _operations;
+    int32_t                _operationCount;
+    Operation            * _firstOperation;
+    Operation            * _lastOperation;
     Location             * _currentLocation;
     Operation            * _boundToOperation;
     bool                   _isTarget;

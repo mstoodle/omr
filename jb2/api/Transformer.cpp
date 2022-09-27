@@ -71,9 +71,8 @@ void
 Transformer::visitOperations(Builder *b, std::vector<bool> & visited, BuilderWorklist & worklist) {
     TextWriter * log = _comp->logger(traceEnabled());
 
-    for (OperationIterator opIt = b->OperationsBegin(); opIt != b->OperationsEnd(); opIt++) {
-        Operation * op = *opIt;
-
+    // little bit more complicated than usual because we may replace the first operation and have to restart iteration
+    for (Operation *op = b->firstOperation(); op != NULL; op = op ? op->next() : b->firstOperation()) {
         if (log) {
             log->indent() << std::string("Visit ");
             log->print(op);
@@ -82,42 +81,18 @@ Transformer::visitOperations(Builder *b, std::vector<bool> & visited, BuilderWor
         Builder *transformation = transformOperation(op);
         if (transformation != NULL) {
             if (performTransformation(op, transformation)) {
-                opIt = b->operations().erase(opIt); // remove the operation we just transformed
+		// reassign parent for each operation in transformation Builder
+		for (Operation *walkOp = op->next(); walkOp->prev() != transformation->lastOperation(); walkOp = walkOp->next()) {
+                    walkOp->setParent(b);
 
-                bool replaceWithBuilder=false;
-                if (false && replaceWithBuilder) {
-                    #ifdef IMPLEMENTED_APPENDBUILDER
-                    // replace the current operation with the Builder object containing its transformation
-                    //    could also be done immutably by generating a new array of Operations
-                    //    and returning new Builder but let's do in place for now
-                    opIt = b->operations().insert(opIt, AppendBuilder::create(b, transformation));
-                    #endif
-                }
-                else {
-                    // replace the operation with the operations inside the builder
-                    // removing the builder object means each operation's parent changes
-                    for (OperationIterator it = transformation->OperationsBegin(); it != transformation->OperationsEnd(); it++) {
-                        Operation * op = *it;
-                        op->setParent(b);
+                    // scan transformed operations for builder objects we need to traverse
+                    for (BuilderIterator bIt = walkOp->BuildersBegin(); bIt != walkOp->BuildersEnd(); bIt++) {
+                        Builder *inner_b = *bIt;
+                        if (inner_b && !visited[inner_b->id()])
+                            worklist.push_front(inner_b);
                     }
-                    opIt = b->operations().insert(opIt,
-                                                  transformation->OperationsBegin(),
-                                                  transformation->OperationsEnd());
-                    for (OperationIterator it = transformation->OperationsBegin(); it != transformation->OperationsEnd(); it++) {
-                        // scan transformed operations for builder objects we need to traverse
-                        Operation *op = *it;
-                        for (BuilderIterator bIt = op->BuildersBegin(); bIt != op->BuildersEnd(); bIt++) {
-                            Builder *inner_b = *bIt;
-                            if (inner_b && !visited[inner_b->id()])
-                                worklist.push_front(inner_b);
-                        }
-                        opIt++; // skip over inserted operations
-                    }
-                    opIt--; // compensate for increment on loop back edge
                 }
-
-                // operation has changed, but any internal builders will be found by iterating
-                // over the transformed operations we just inserted
+		op = op->replace(transformation); // op may now be NULL!
             }
         }
         else {
