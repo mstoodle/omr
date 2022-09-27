@@ -69,6 +69,55 @@ Operation::setLocation(Location *location) {
     return static_cast<Operation *>(this);
 }
 
+Operation *
+Operation::unlink() {
+    Operation *p = _prev;
+    if (_prev) {
+        _prev->_next = _next;
+    } else {
+        _parent->_firstOperation = _next;
+    }
+    if (_next) {
+        _next->_prev = _prev;
+    } else {
+        _parent->_lastOperation = _prev;
+    }
+
+    _parent->_operationCount--;
+    _next = _prev = NULL;
+    _parent = NULL;
+    return p;
+}
+
+Operation *
+Operation::replace(Builder *b) {
+    Operation *first = b->firstOperation();
+    Operation *last = b->lastOperation();
+
+    last->setNext(_next);
+    if (_next) {
+        _next->setPrev(last);
+    } else {
+	_parent->_lastOperation = last;
+    }
+
+    first->setPrev(_prev);
+    if (_prev) {
+        _prev->setNext(first);
+    } else {
+        _parent->_firstOperation = first;
+    }
+
+    // update parent operation count with b's operations minus 1 for removing "this"
+    _parent->_operationCount += b->_operationCount - 1;
+
+    // this is no longer part of parent
+    _parent = NULL;
+    _next = _prev = NULL;
+
+    return first->prev();
+}
+
 void
 Operation::addToBuilder(Extension *ext, Builder *b, Operation *op) {
     ext->addOperation(b, op);
