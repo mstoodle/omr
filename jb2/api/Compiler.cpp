@@ -39,10 +39,10 @@ CompilerID Compiler::nextCompilerID = 1; // 0 is reserved
 Compiler::Compiler(std::string name, Config *config)
     : _id(nextCompilerID++)
     , _name(name)
-    , _jb1(JB1::instance())
     , _config(config)
     , _myConfig(false)
     , _myDict(false)
+    , _jb1(JB1::instance())
     , _nextExtensionID(NoExtension+1)
     , _extensions()
     , _nextActionID(NoAction+1)
@@ -60,12 +60,17 @@ Compiler::Compiler(std::string name, Config *config)
     , _target(NULL)
     , _compiler(NULL)
     , _dict(new TypeDictionary(this, name + "::root"))
+    , _errorCondition(NULL)
     , CompileSuccessful(assignReturnCode("CompileSuccessful"))
     , CompileNotStarted(assignReturnCode("CompileNotStarted"))
     , CompileFailed(assignReturnCode("CompileFailed"))
     , CompileFail_UnknownStrategyID(assignReturnCode("CompileFail_UnknownStrategy"))
     , CompileFail_IlGen(assignReturnCode("CompileFail_IlGen"))
-    , CompileFail_TypeMustBeReduced(assignReturnCode("CompileFail_TypeMustBeReduced")) {
+    , CompileFail_TypeMustBeReduced(assignReturnCode("CompileFail_TypeMustBeReduced"))
+    , CompilerError_Extension_CouldNotLoad(assignReturnCode("CompilerError_Extension_CouldNotLoad"))
+    , CompilerError_Extension_HasNoCreateFunction(assignReturnCode("CompilerError_Extension_HasNoCreateFunction"))
+    , CompilerError_Extension_CouldNotCreate(assignReturnCode("CompilerError_Extension_CouldNotCreate"))
+    , CompilerError_Extension_VersionMismatch(assignReturnCode("CompilerError_Extension_VersionMismatch")) {
 
     if (_config == NULL) {
         _config = new Config();
@@ -84,6 +89,8 @@ Compiler::~Compiler() {
         delete ext;
      }
     _extensions.clear();
+    if (_errorCondition)
+        delete _errorCondition;
 }
 
 extern "C" {
@@ -91,49 +98,52 @@ extern "C" {
 }
 
 Extension *
-Compiler::internalLoadExtension(std::string name, SemanticVersion *version) {
+Compiler::internalLoadExtension(LOCATION, const SemanticVersion *version, std::string name) {
     Extension *ext = internalLookupExtension(name);
     if (ext) {
         if (version == NULL || ext->semver()->isCompatibleWith(*version))
             return ext;
+        extensionVersionMismatch(PASSLOC, name, version, ext->semver());
         return NULL;
     }
 
     std::string soname = std::string("lib") + name + std::string(".so");
     void *handle = dlopen(soname.c_str(), RTLD_LAZY);
     if (!handle) {
-        fputs(dlerror(), stderr);
-        fputs("\n", stderr);
+        extensionCouldNotLoad(LOC, soname, dlerror());
         return NULL;
     }
 
     CreateFunction create = (CreateFunction) dlsym(handle, "create");
     char * error;
     if ((error = dlerror()) != NULL) {
-        fputs(error, stderr);
-        fputs("\n", stderr);
         dlclose(handle);
+        extensionHasNoCreateFunction(LOC, ext, soname, error);
         return NULL;
     }
 
     if (create == NULL) {
         dlclose(handle);
+        extensionHasNoCreateFunction(LOC, ext, soname, dlerror());
         return NULL;
     }
 
     ext = create(this);
     if (ext == NULL) {
         dlclose(handle);
+        extensionCouldNotCreate(LOC, soname);
         return NULL;
     }
 
     if (version == NULL || ext->semver()->isCompatibleWith(*version)) {
         addExtension(ext);
-	    return ext;
+        return ext;
     }
 
+    const SemanticVersion * extVer = ext->semver();
     delete ext;
     dlclose(handle);
+    extensionVersionMismatch(LOC, soname, version, extVer);
     return NULL;
 }
 
@@ -227,6 +237,44 @@ Compiler::compile(Compilation *comp, StrategyID strategyID) {
     return CompileSuccessful;
 }
 
+void
+Compiler::extensionCouldNotLoad(LOCATION, std::string name, char *dlerrorMsg) {
+    CompilationException *e = new CompilationException(PASSLOC, this, this->CompilerError_Extension_CouldNotLoad);
+    (*e).setMessageLine(std::string("Extension could not be loaded"))
+        .appendMessageLine(std::string("Library name: ").append(name))
+        .appendMessageLine(std::string("dlerror() reports ").append(std::string(dlerrorMsg)));
+    _errorCondition = e;
+}
+
+void
+Compiler::extensionHasNoCreateFunction(LOCATION, Extension *ext, std::string name, char *dlerrorMsg) {
+    CompilationException *e = new CompilationException(PASSLOC, this, this->CompilerError_Extension_HasNoCreateFunction);
+    (*e).setMessageLine(std::string("Extension does not have a create() function"))
+        .appendMessageLine(std::string("Library loaded: ").append(name))
+        .appendMessageLine(std::string("dlerror() reports ").append(std::string(dlerrorMsg)));
+    _errorCondition = e;
+}
+
+void
+Compiler::extensionCouldNotCreate(LOCATION, std::string name) {
+    CompilationException *e = new CompilationException(PASSLOC, this, this->CompilerError_Extension_CouldNotCreate);
+    (*e).setMessageLine(std::string("Extension create() function returned NULL"))
+        .appendMessageLine(std::string("Library loaded: ").append(name));
+    _errorCondition = e;
+}
+
+void
+Compiler::extensionVersionMismatch(LOCATION, std::string name, const SemanticVersion * version, const SemanticVersion * extensionVersion) {
+    CompilationException *e = new CompilationException(PASSLOC, this, this->CompilerError_Extension_VersionMismatch);
+    (*e).setMessageLine(std::string("Extension version mismatch"))
+        .appendMessageLine(std::string("Requested: major ").append(std::to_string(version->major())))
+        .appendMessageLine(std::string("           minor ").append(std::to_string(version->minor())))
+        .appendMessageLine(std::string("           patch ").append(std::to_string(version->patch())))
+        .appendMessageLine(std::string("Loaded:    major ").append(std::to_string(extensionVersion->major())))
+        .appendMessageLine(std::string("           minor ").append(std::to_string(extensionVersion->minor())))
+        .appendMessageLine(std::string("           patch ").append(std::to_string(extensionVersion->patch())));
+    _errorCondition = e;
+}
+
 } // namespace JitBuilder
 } // namespace OMR
-

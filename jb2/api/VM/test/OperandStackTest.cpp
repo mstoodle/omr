@@ -131,13 +131,12 @@ main(int argc, char *argv[]) {
     compiler.config()->setTraceCodeGenerator(true);
 
     if (verbose) cout << "Step 2: load extensions (Base and VM)\n";
-    Base::BaseExtension *base = compiler.loadExtension<Base::BaseExtension>();
-    assert(base);
-    VM::VMExtension *vme = compiler.loadExtension<VM::VMExtension>();
+    VM::VMExtension *vme = compiler.loadExtension<VM::VMExtension>(LOC);
     assert(vme);
 
     if (verbose) cout << "Step 3: Create Function object\n";
-    OperandStackTestFunction pointerFunction(base, vme);
+    Base::BaseExtension *base = compiler.lookupExtension<Base::BaseExtension>();
+    OperandStackTestFunction pointerFunction(LOC, base, vme);
 
     if (verbose) cout << "Step 4: Set up logging configuration\n";
     Base::FunctionCompilation *comp = pointerFunction.comp();
@@ -160,7 +159,7 @@ main(int argc, char *argv[]) {
     ptrTest();
 
     if (verbose) cout << "Step 7: Set up operand stack tests using a Thread structure\n";
-    OperandStackTestUsingStructFunction threadFunction(base, vme);
+    OperandStackTestUsingStructFunction threadFunction(LOC, base, vme);
     comp = threadFunction.comp();
     TextWriter logger2(comp, std::cout, std::string("    "));
     TextWriter *log2 = (verbose) ? &logger : NULL;
@@ -400,8 +399,8 @@ OperandStackTestFunction::verifyStack(const char *step, int32_t max, int32_t num
 }
 
 
-OperandStackTestFunction::OperandStackTestFunction(Base::BaseExtension *base, VM::VMExtension *vme)
-    : Base::Function(base->compiler())
+OperandStackTestFunction::OperandStackTestFunction(LOCATION, Base::BaseExtension *base, VM::VMExtension *vme)
+    : Base::Function(PASSLOC, base->compiler())
     , _base(base)
     , _vme(vme) {
 
@@ -602,8 +601,8 @@ OperandStackTestFunction::buildIL() {
 
 
 
-OperandStackTestUsingStructFunction::OperandStackTestUsingStructFunction(Base::BaseExtension *base, VM::VMExtension *vme)
-    : OperandStackTestFunction(base, vme) {
+OperandStackTestUsingStructFunction::OperandStackTestUsingStructFunction(LOCATION, Base::BaseExtension *base, VM::VMExtension *vme)
+    : OperandStackTestFunction(PASSLOC, base, vme) {
 
     Base::StructTypeBuilder builder(base, this);
     builder.setName("Thread")

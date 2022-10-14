@@ -47,13 +47,10 @@ class VMExtension : public Extension {
     friend class VMExtensionChecker;
 
 public:
-    VMExtension(Compiler *compiler, bool extended=false, std::string extensionName="vm");
+    VMExtension(LOCATION, Compiler *compiler, bool extended=false, std::string extensionName="vm");
     virtual ~VMExtension();
 
     static const std::string NAME;
-    static const MajorID VMEXT_MAJOR=0;
-    static const MinorID VMEXT_MINOR=1;
-    static const PatchID VMEXT_PATCH=0;
 
     virtual const SemanticVersion * semver() const {
         return &version;
@@ -72,7 +69,6 @@ public:
     //
     // CompilerReturnCodes
     //
-    const CompilerReturnCode CompileFail_BaseExtensionNotLoaded;
 
     //
     // Operations
@@ -95,8 +91,17 @@ public:
     BytecodeBuilder *OrphanBytecodeBuilder(Base::FunctionCompilation *comp, int32_t bcIndex, int32_t bcLength=1, std::string name="", Context *context=NULL);
 
 protected:
-    static const SemanticVersion version;
     Base::BaseExtension *_baseExt;
+
+    static const MajorID VMEXT_MAJOR=0;
+    static const MinorID VMEXT_MINOR=1;
+    static const PatchID VMEXT_PATCH=0;
+    static const SemanticVersion version;
+
+    static const MajorID REQUIRED_BASEEXT_MAJOR=0;
+    static const MinorID REQUIRED_BASEEXT_MINOR=1;
+    static const PatchID REQUIRED_BASEEXT_PATCH=0;
+    static const SemanticVersion requiredBaseVersion;
 };
 
 } // namespace VM

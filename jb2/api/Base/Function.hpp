@@ -153,8 +153,8 @@ public:
     virtual void replaceTypes(TypeReplacer *repl);
 
 protected:
-    Function(Compiler *compiler); // meant to be subclassed
-    Function(Function *outerFunction);
+    Function(LOCATION, Compiler *compiler); // meant to be subclassed
+    Function(LOCATION, Function *outerFunction);
 
     void DefineParameter(ParameterSymbol *parm);
     void DefineLocal(LocalSymbol *local);
@@ -175,6 +175,8 @@ protected:
     NativeCallableContext * _nativeContext;
 
     std::string             _givenName;
+
+    CreateLocation          _createLocation;
     std::string             _fileName;
     std::string             _lineNumber;
     FunctionSymbolVector    _functions; // move to compiler?

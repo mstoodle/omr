@@ -76,13 +76,10 @@ class BaseExtension : public Extension {
     friend class PointerTypeBuilder;
 
 public:
-    BaseExtension(Compiler *compiler, bool extended=false, std::string extensionName="");
+    BaseExtension(LOCATION, Compiler *compiler, bool extended=false, std::string extensionName="");
     virtual ~BaseExtension();
 
     static const std::string NAME;
-    static const MajorID BASEEXT_MAJOR=0;
-    static const MinorID BASEEXT_MINOR=1;
-    static const PatchID BASEEXT_PATCH=0;
 
     // 4 == LocalSymbol, ParameterSymbol, FunctionSymbol, FieldSymbol
     uint32_t numSymbolTypes() const { return 4; }
@@ -256,6 +253,8 @@ public:
     Value * LoadArray(LOCATION, Builder *b, Value *array, Value *indexValue);
     void StoreArray(LOCATION, Builder *b, Value *array, Value *indexValue, Value *value);
 
+    void registerChecker(BaseExtensionChecker *checker);
+
     // JB1 compilation support
     CompilerReturnCode jb1cgCompile(Compilation *comp);
 
@@ -263,8 +262,11 @@ protected:
     void failValidateOffsetAt(LOCATION, Builder *b, Value *array);
 
     StrategyID _jb1cgStrategyID;
-    std::vector<BaseExtensionChecker *> _checkers;
+    std::list<BaseExtensionChecker *> _checkers;
 
+    static const MajorID BASEEXT_MAJOR=0;
+    static const MinorID BASEEXT_MINOR=1;
+    static const PatchID BASEEXT_PATCH=0;
     static const SemanticVersion version;
 };
 

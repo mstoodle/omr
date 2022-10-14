@@ -41,13 +41,14 @@ namespace Base {
 
 FunctionSymbolIterator Function::endFunctionIterator;
 
-Function::Function(Compiler *compiler) // , int32_t numEntries)
+Function::Function(LOCATION, Compiler *compiler) // , int32_t numEntries)
     : _compiler(compiler)
     , _ext(compiler->lookupExtension<BaseExtension>())
     , _outerFunction(NULL)
     , _dict(new TypeDictionary(compiler, "Function", compiler->dict()))
     , _comp(new FunctionCompilation(compiler, this, _dict))
     , _nativeContext(new NativeCallableContext(_comp))
+    , _createLocation(PASSLOC)
     , _numEntryPoints(1)
     , _entryPoints(new Builder *[1])
     , _nativeEntryPoints(new void *[1])
@@ -57,13 +58,14 @@ Function::Function(Compiler *compiler) // , int32_t numEntries)
     _ext->SourceLocation(LOC, _entryPoints[0], ""); // make sure everything has a location; by default BCIndex is 0
 }
 
-Function::Function(Function *outerFunc) // , int32_t numEntries)
+Function::Function(LOCATION, Function *outerFunc) // , int32_t numEntries)
     : _compiler(outerFunc->_compiler)
     , _ext(_compiler->lookupExtension<BaseExtension>())
     , _outerFunction(outerFunc)
     , _dict(outerFunc->dict())
     , _comp(outerFunc->comp())
     , _nativeContext(new NativeCallableContext(_comp, outerFunc->_nativeContext))
+    , _createLocation(PASSLOC)
     , _numEntryPoints(1)
     , _entryPoints(new Builder *[1])
     , _nativeEntryPoints(new void *[1])
@@ -103,12 +105,12 @@ Function::DefineName(std::string name) {
 
 void
 Function::DefineFile(std::string file) {
-    _fileName = file;
+    _createLocation.overrideFileName(file.c_str());
 }
 
 void
 Function::DefineLine(std::string line) {
-    _lineNumber = line;
+    _createLocation.overrideLineNumber(static_cast<uint32_t>(std::stoul(line)));
 }
 
 ParameterSymbol *
@@ -293,7 +295,7 @@ Function::write(TextWriter &w) const {
     w.indentIn();
 
     w.indent() << "[ name " << name() << " ]" << w.endl();
-    w.indent() << "[ origin " << fileName() + "::" + lineNumber() << " ]" << w.endl();
+    w.indent() << "[ origin " << _createLocation.to_string() << " ]" << w.endl();
     w.indent() << "[ returnType " << returnType() << "]" << w.endl();
     for (ParameterSymbolIterator paramIt = ParametersBegin();paramIt != ParametersEnd(); paramIt++) {
         const ParameterSymbol *parameter = *paramIt;
@@ -315,8 +317,8 @@ Function::write(TextWriter &w) const {
 void
 Function::constructJB1Function(JB1MethodBuilder *j1mb) {
     j1mb->FunctionName(name());
-    j1mb->FunctionFile(fileName());
-    j1mb->FunctionLine(lineNumber());
+    j1mb->FunctionFile(_createLocation.fileName());
+    j1mb->FunctionLine(_createLocation.lineNumber());
     j1mb->FunctionReturnType(returnType());
 
     for (ParameterSymbolIterator paramIt = ParametersBegin();paramIt != ParametersEnd(); paramIt++) {

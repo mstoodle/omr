@@ -68,16 +68,15 @@ public:
     TypeDictionary *dict() const { return _dict; }
 
     ExtensionID getExtensionID() { return _nextExtensionID++; }
-    void addExtension(Extension *ext);
     template<typename T>
-    T *loadExtension(std::string name=T::NAME, SemanticVersion *version=NULL) {
-        return static_cast<T *>(internalLoadExtension(name, version));
+    T *loadExtension(LOCATION, const SemanticVersion *version=NULL, std::string name=T::NAME) {
+        return static_cast<T *>(internalLoadExtension(PASSLOC, version, name));
     }
-    bool validateExtension(std::string name) const;
     template<typename T>
     T *lookupExtension(std::string name=T::NAME) {
         return static_cast<T *>(internalLookupExtension(name));
     }
+    bool validateExtension(std::string name) const;
 
     PassID lookupPass(std::string name);
     CompilerReturnCode compile(Compilation *comp, StrategyID strategyID);
@@ -89,8 +88,6 @@ public:
         return found->second;
     }
 
-    uint8_t platformWordSize() const { return 64; } // should test _targetPlatform!
-
     const std::string returnCodeName(CompilerReturnCode c) const {
         assert(c < _nextReturnCode);
         auto found = _returnCodeNames.find(c);
@@ -98,23 +95,35 @@ public:
         return found->second;
     }
 
+    uint8_t platformWordSize() const { return 64; } // should test _targetPlatform!
+
+    bool hasErrorCondition() const { return _errorCondition != NULL; }
+    CompilationException *errorCondition() const { return _errorCondition; } 
+
 protected:
+    void addExtension(Extension *ext);
     PassID addPass(Pass *pass);
     StrategyID addStrategy(Strategy *st);
     TypeDictionaryID getTypeDictionaryID() {
         return this->_nextTypeDictionaryID++;
     }
 
-    Extension *internalLoadExtension(std::string name, SemanticVersion *version=NULL);
+    Extension *internalLoadExtension(LOCATION, const SemanticVersion * version, std::string name);
     Extension *internalLookupExtension(std::string name);
     Strategy * lookupStrategy(StrategyID id);
 
+    void extensionCouldNotLoad(LOCATION, std::string name, char *dlerrorMsg);
+    void extensionHasNoCreateFunction(LOCATION, Extension *ext, std::string name, char *dlerrorMsg);
+    void extensionCouldNotCreate(LOCATION, std::string name);
+    void extensionVersionMismatch(LOCATION, std::string name, const SemanticVersion *version, const SemanticVersion *extensionVersion);
+
     CompilerID _id;
     std::string _name;
-    JB1 *_jb1;
     Config *_config;
     bool _myConfig;
     bool _myDict;
+
+    JB1 *_jb1;
 
     ExtensionID _nextExtensionID;
     std::map<std::string, Extension *> _extensions;
@@ -145,6 +154,8 @@ protected:
     // must come AFTER _nextTypeDictionaryID for proper initialization
     TypeDictionary *_dict;
 
+    CompilationException *_errorCondition;
+
     static CompilerID nextCompilerID;
 
 // put these at end so they're initialized after _nextReturnCode is set
@@ -155,7 +166,10 @@ public:
     CompilerReturnCode CompileFail_UnknownStrategyID;
     CompilerReturnCode CompileFail_IlGen;
     CompilerReturnCode CompileFail_TypeMustBeReduced;
-
+    CompilerReturnCode CompilerError_Extension_CouldNotLoad;
+    CompilerReturnCode CompilerError_Extension_HasNoCreateFunction;
+    CompilerReturnCode CompilerError_Extension_CouldNotCreate;
+    CompilerReturnCode CompilerError_Extension_VersionMismatch;
 };
 
 class CompilationException : public std::exception {

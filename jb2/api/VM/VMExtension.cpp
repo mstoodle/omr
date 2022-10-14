@@ -30,26 +30,19 @@ namespace JitBuilder {
 namespace VM {
 
 const SemanticVersion VMExtension::version(VMEXT_MAJOR,VMEXT_MINOR,VMEXT_PATCH);
+const SemanticVersion VMExtension::requiredBaseVersion(REQUIRED_BASEEXT_MAJOR,REQUIRED_BASEEXT_MINOR,REQUIRED_BASEEXT_PATCH);
 const std::string VMExtension::NAME("jb2vm");
 
 extern "C" {
-    Extension *create(Compiler *compiler) {
-        return new VMExtension(compiler);
+    Extension *create(LOCATION, Compiler *compiler) {
+        return new VMExtension(PASSLOC, compiler);
     }
 }
 
-VMExtension::VMExtension(Compiler *compiler, bool extended, std::string extensionName)
-    : Extension(compiler, (extended ? extensionName : NAME))
-    , CompileFail_BaseExtensionNotLoaded(registerReturnCode("BaseExtensionNotLoaded")) {
+VMExtension::VMExtension(LOCATION, Compiler *compiler, bool extended, std::string extensionName)
+    : Extension(compiler, (extended ? extensionName : NAME)) {
 
-    if (compiler->validateExtension("Base")) {
-        CompilationException e(LOC, compiler, CompileFail_BaseExtensionNotLoaded);
-        e.setMessageLine(std::string("VM Extension depends on Base extension to be loaded"))
-         .appendMessageLine(std::string("    Call compiler->loadExtension<Base::BaseExtension>(\"base\") before trying to load VM extension"));
-        throw e;
-    }
-
-    _baseExt = compiler->lookupExtension<Base::BaseExtension>();
+    _baseExt = compiler->loadExtension<Base::BaseExtension>(PASSLOC, &requiredBaseVersion);
 }
 
 VMExtension::~VMExtension() {
