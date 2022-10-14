@@ -53,13 +53,11 @@ main(int argc, char *argv[]) {
     Compiler c("VirtualMachineRegisterTest");
 
     cout << "Step 2: load extensions (Base and VM)\n";
-    Base::BaseExtension *base = c.loadExtension<Base::BaseExtension>();
-    assert(base);
-    VM::VMExtension *vme = c.loadExtension<VM::VMExtension>();
+    VM::VMExtension *vme = c.loadExtension<VM::VMExtension>(LOC);
     assert(vme);
 
     cout << "Step 3: Create Function object\n";
-    VMRegisterFunction vmrFunc(&c);
+    VMRegisterFunction vmrFunc(LOC, &c);
 
     cout << "Step 4: Set up logging configuration\n";
     Base::FunctionCompilation *comp = vmrFunc.comp();
@@ -84,7 +82,7 @@ main(int argc, char *argv[]) {
     cout << "vmregister(values) returned " << retVal << "\n";
 
     cout << "Step 7: compile vmregisterInStruct function\n";
-    VMRegisterInStructFunction vmrisFunc(&c);
+    VMRegisterInStructFunction vmrisFunc(LOC, &c);
     result = vmrisFunc.Compile(log); 
 
     if (result != c.CompileSuccessful) {
@@ -93,8 +91,8 @@ main(int argc, char *argv[]) {
     }
     
     cout << "Step 8: invoke compiled vmregisterInStruct function and print results\n";
-    typedef int32_t (VMRegisterInStructFunction)(VMRegisterStruct *param);
-    VMRegisterInStructFunction *vmregisterInStruct = vmrisFunc.nativeEntry<VMRegisterInStructFunction *>();
+    typedef int32_t (VMRegisterInStructCFunction)(VMRegisterStruct *param);
+    VMRegisterInStructCFunction *vmregisterInStruct = vmrisFunc.nativeEntry<VMRegisterInStructCFunction *>();
 
     VMRegisterStruct param;
     param.count = 7;
@@ -111,8 +109,8 @@ main(int argc, char *argv[]) {
 }
 
 
-VMRegisterFunction::VMRegisterFunction(Compiler *compiler)
-    : Base::Function(compiler)
+VMRegisterFunction::VMRegisterFunction(LOCATION, Compiler *compiler)
+    : Base::Function(PASSLOC, compiler)
     , _base(compiler->lookupExtension<Base::BaseExtension>())
     , _vme(compiler->lookupExtension<VM::VMExtension>()) {
 
@@ -155,8 +153,8 @@ VMRegisterFunction::buildIL() {
 }
 
 
-VMRegisterInStructFunction::VMRegisterInStructFunction(Compiler *compiler)
-    : Base::Function(compiler)
+VMRegisterInStructFunction::VMRegisterInStructFunction(LOCATION, Compiler *compiler)
+    : Base::Function(PASSLOC, compiler)
     , _base(compiler->lookupExtension<Base::BaseExtension>())
     , _vme(compiler->lookupExtension<VM::VMExtension>()) {
 

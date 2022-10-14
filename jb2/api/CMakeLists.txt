@@ -43,6 +43,7 @@ omr_assert(
 set(JB2_JBCORE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/)
 set(JB2_JBBASE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Base/)
 set(JB2_JBVM_DIR ${CMAKE_CURRENT_SOURCE_DIR}/VM/)
+set(JB2_JBCOMPLEX_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Complex/)
 
 add_library(jb2core SHARED
 	Builder.cpp
@@ -75,17 +76,7 @@ add_library(jb2core SHARED
 target_link_libraries(jb2core jb2)
 add_subdirectory(test)
 
+# Extensions
 add_subdirectory(Base)
 add_subdirectory(VM)
-
-# install(TARGETS jitbuilder
-#         ARCHIVE       DESTINATION ${CMAKE_BINARY_DIR}/jitbuilder_release
-#         PUBLIC_HEADER DESTINATION ${CMAKE_BINARY_DIR}/jitbuilder_release/include
-#         )
-#
-# # Create release directory
-# file(MAKE_DIRECTORY jitbuilder_release)
-# file(COPY ${jitbuilder_library} DESTINATION jitbuilder_release)
-# file(COPY ${CMAKE_SOURCE_DIR}/compiler/env   DESTINATION jitbuilder_release/include)
-# file(COPY ${CMAKE_SOURCE_DIR}/compiler/il    DESTINATION jitbuilder_release/include)
-# file(COPY ${CMAKE_SOURCE_DIR}/compiler/ilgen DESTINATION jitbuilder_release/include)
+add_subdirectory(Complex)

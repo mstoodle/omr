@@ -48,21 +48,21 @@ const SemanticVersion BaseExtension::version(BASEEXT_MAJOR,BASEEXT_MINOR,BASEEXT
 const std::string BaseExtension::NAME("jb2base");
 
 extern "C" {
-    Extension *create(Compiler *compiler) {
-        return new BaseExtension(compiler);
+    Extension *create(LOCATION, Compiler *compiler) {
+        return new BaseExtension(PASSLOC, compiler);
     }
 }
 
-BaseExtension::BaseExtension(Compiler *compiler, bool extended, std::string extensionName)
+BaseExtension::BaseExtension(LOCATION, Compiler *compiler, bool extended, std::string extensionName)
     : Extension(compiler, (extended ? extensionName : NAME))
-    , NoType(new NoTypeType(LOC, this))
-    , Int8(new Int8Type(LOC, this))
-    , Int16(new Int16Type(LOC, this))
-    , Int32(new Int32Type(LOC, this))
-    , Int64(new Int64Type(LOC, this))
-    , Float32(new Float32Type(LOC, this))
-    , Float64(new Float64Type(LOC, this))
-    , Address(new AddressType(LOC, this))
+    , NoType(new NoTypeType(PASSLOC, this))
+    , Int8(new Int8Type(PASSLOC, this))
+    , Int16(new Int16Type(PASSLOC, this))
+    , Int32(new Int32Type(PASSLOC, this))
+    , Int64(new Int64Type(PASSLOC, this))
+    , Float32(new Float32Type(PASSLOC, this))
+    , Float64(new Float64Type(PASSLOC, this))
+    , Address(new AddressType(PASSLOC, this))
     , Word(compiler->platformWordSize() == 64 ? this->Int64->refine<Type>() : this->Int32->refine<Type>())
     , aConst(registerAction(std::string("Const")))
     , aAdd(registerAction(std::string("Add")))
@@ -135,6 +135,11 @@ BaseExtension::~BaseExtension() {
     delete Int8;
     delete NoType;
     // what about other types!?
+}
+
+void
+BaseExtension::registerChecker(BaseExtensionChecker *checker) {
+    _checkers.push_front(checker);
 }
 
 //
