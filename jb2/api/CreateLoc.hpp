@@ -43,9 +43,17 @@ public:
         , _functionName(LOC_FUNC)
     { }
 
+    std::string fileName() const { return std::string(_fileName); }
+    std::string lineNumber() const { return std::to_string(_lineNumber); }
+    std::string functionName() const { return std::string(_functionName); }
+
     std::string to_string() const {
         return std::string(_functionName).append(" in ").append(_fileName).append(":L").append(std::to_string(_lineNumber));
     }
+
+    void overrideFileName(const char *fileName) { _fileName = fileName; }
+    void overrideLineNumber(uint32_t lineNumber) { _lineNumber = lineNumber; }
+    void overrideFunctionName(const char *functionName) { _functionName = functionName; }
 
 protected:
     const char *_fileName;

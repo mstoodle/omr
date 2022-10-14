@@ -23,12 +23,8 @@
 #include <limits>
 #include <stdio.h>
 #include "gtest/gtest.h"
-#include "Compiler.hpp"
-#include "Base/BaseExtension.hpp"
-#include "Base/ControlOperations.hpp"
-#include "Base/Function.hpp"
-#include "Base/FunctionCompilation.hpp"
-#include "TextWriter.hpp"
+#include "JBCore.hpp"
+#include "Base/Base.hpp"
 
 
 using namespace OMR::JitBuilder;
@@ -52,27 +48,27 @@ int main(int argc, char** argv) {
 
 TEST(BaseExtension, loadExtension) {
     Compiler c("testBase");
-    Base::BaseExtension *ext = c.loadExtension<Base::BaseExtension>("jb2base");
+    Base::BaseExtension *ext = c.loadExtension<Base::BaseExtension>(LOC, NULL, "jb2base");
     EXPECT_TRUE(ext != NULL) << "Base extension loaded";
 }
 
 TEST(BaseExtension, cannotLoadUnknownExtension) {
     Compiler c("testNotBase");
-    Base::BaseExtension *ext = c.loadExtension<Base::BaseExtension>("notbase");
+    Base::BaseExtension *ext = c.loadExtension<Base::BaseExtension>(LOC, NULL, "notbase");
     EXPECT_TRUE(ext == NULL) << "notbase extension correctly could not be loaded";
 }
 
 TEST(BaseExtension, checkVersionPass) {
     Compiler c("testBase");
     SemanticVersion v(0,0,0);
-    Base::BaseExtension *ext = c.loadExtension<Base::BaseExtension>("jb2base", &v);
+    Base::BaseExtension *ext = c.loadExtension<Base::BaseExtension>(LOC, &v, "jb2base");
     EXPECT_TRUE(ext != NULL) << "Base extension with v(0,0,0) loaded";
 }
 
 TEST(BaseExtension, checkVersionFail) {
     Compiler c("testBase");
     SemanticVersion v(1,0,0);
-    Base::BaseExtension *ext = c.loadExtension<Base::BaseExtension>("jb2base", &v);
+    Base::BaseExtension *ext = c.loadExtension<Base::BaseExtension>(LOC, &v, "jb2base");
     EXPECT_TRUE(ext == NULL) << "Base extension with v(1,0,0) correctly could not be loaded";
 }
 
@@ -81,7 +77,7 @@ TEST(BaseExtension, checkVersionFail) {
     protected: \
         Base::BaseExtension *ext; \
     public: \
-        name(Compiler *c, Base::BaseExtension *x) : Base::Function(c), ext(x) { \
+        name(LOCATION, Compiler *c, Base::BaseExtension *x) : Base::Function(PASSLOC, c), ext(x) { \
             DefineName(#name); \
             DefineLine(line); \
             DefineFile(file); \
@@ -97,8 +93,8 @@ TEST(BaseExtension, checkVersionFail) {
 
 #define COMPILE_FUNC(FuncClass, FuncProto, f, DO_LOGGING) \
     Compiler c("testBase"); \
-    Base::BaseExtension *ext = c.loadExtension<Base::BaseExtension>(); \
-    FuncClass func(&c, ext); \
+    Base::BaseExtension *ext = c.loadExtension<Base::BaseExtension>(LOC); \
+    FuncClass func(LOC, &c, ext); \
     Base::FunctionCompilation *comp = func.comp(); \
     TextWriter logger(comp, std::cout, std::string("    ")); \
     TextWriter *log = (DO_LOGGING) ? &logger : NULL; \
@@ -109,8 +105,8 @@ TEST(BaseExtension, checkVersionFail) {
 
 #define COMPILE_FUNC_TO_FAIL(FuncClass, expectedFailureCode, DO_LOGGING) \
     Compiler c("testBase"); \
-    Base::BaseExtension *ext = c.loadExtension<Base::BaseExtension>(); \
-    FuncClass func(&c, ext); \
+    Base::BaseExtension *ext = c.loadExtension<Base::BaseExtension>(LOC); \
+    FuncClass func(LOC, &c, ext); \
     Base::FunctionCompilation *comp = func.comp(); \
     TextWriter logger(comp, std::cout, std::string("    ")); \
     TextWriter *log = (DO_LOGGING) ? &logger : NULL; \

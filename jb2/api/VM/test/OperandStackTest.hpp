@@ -48,7 +48,7 @@ using namespace OMR::JitBuilder;
 
 class OperandStackTestFunction : public Base::Function {
 public:
-    OperandStackTestFunction(Base::BaseExtension *base, VM::VMExtension *vme);
+    OperandStackTestFunction(LOCATION, Base::BaseExtension *base, VM::VMExtension *vme);
     virtual bool buildIL();
 
     static void verifyStack(const char *step, int32_t max, int32_t num, ...);
@@ -94,7 +94,7 @@ protected:
 
 class OperandStackTestUsingStructFunction : public OperandStackTestFunction {
 public:
-    OperandStackTestUsingStructFunction(Base::BaseExtension *base, VM::VMExtension *vme);
+    OperandStackTestUsingStructFunction(LOCATION, Base::BaseExtension *base, VM::VMExtension *vme);
     virtual bool buildIL();
 
 protected:

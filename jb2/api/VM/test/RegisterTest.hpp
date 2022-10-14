@@ -24,30 +24,14 @@
 #ifndef VMREGISTER_INCL
 #define VMREGISTER_INCL
 
+#include "JBCore.hpp"
 #include "Base/Function.hpp"
-
-namespace OMR {
-    namespace JitBuilder {
-
-        class Compiler;
-
-        namespace Base {
-            class BaseExtension;
-            class LocalSymbol;
-            class ParameterSymbol;
-        }
-
-        namespace VM {
-            class VMExtension;
-        }
-    }
-}
 
 using namespace OMR::JitBuilder;
 
 class VMRegisterFunction : public Base::Function {
 public:
-    VMRegisterFunction(Compiler *compiler);
+    VMRegisterFunction(LOCATION, Compiler *compiler);
     virtual bool buildIL();
 
 protected:
@@ -65,7 +49,7 @@ typedef struct VMRegisterStruct {
 
 class VMRegisterInStructFunction : public Base::Function {
 public:
-    VMRegisterInStructFunction(Compiler *compiler);
+    VMRegisterInStructFunction(LOCATION, Compiler *compiler);
     virtual bool buildIL();
 
     protected:
