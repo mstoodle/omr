@@ -23,34 +23,15 @@
 #define BASESYMBOLS_INCL
 
 #include <string>
-#include "Symbol.hpp"
+#include "JBCore.hpp"
+#include "Func/Func.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 namespace Base {
 
 class FieldType;
-class FunctionType;
 class StructType;
-
-class LocalSymbol : public Symbol {
-    friend class BaseExtension;
-
-public:
-    LocalSymbol(std::string name, const Type * type)
-        : Symbol(getSymbolClassKind(), name, type) {
-    }
-
-    static const SymbolKind getSymbolClassKind();
-
-protected:
-    LocalSymbol(SymbolKind kind, std::string name, const Type * type)
-        : Symbol(kind, name, type) {
-    }
-
-    static SymbolKind SYMBOLKIND;
-    static bool kindRegistered;
-};
 
 class FieldSymbol : public Symbol {
     friend class BaseExtension;
@@ -66,47 +47,6 @@ public:
 protected:
     const StructType *_structType;
     const FieldType *_fieldType;
-
-    static SymbolKind SYMBOLKIND;
-    static bool kindRegistered;
-};
-
-class FunctionSymbol : public Symbol {
-    friend class BaseExtension;
-    friend class Function;
-
-public:
-    FunctionSymbol(const FunctionType *type, std::string name, std::string fileName, std::string lineNumber, void *entryPoint);
-    const FunctionType *functionType() const;
-    std::string fileName() const { return _fileName; }
-    std::string lineNumber() const { return _lineNumber; }
-    void *entryPoint() const { return _entryPoint; }
-
-    static const SymbolKind getSymbolClassKind();
-
-protected:
-    std::string _fileName;
-    std::string _lineNumber;
-    void *_entryPoint;
-
-    static SymbolKind SYMBOLKIND;
-    static bool kindRegistered;
-};
-
-class ParameterSymbol : public LocalSymbol {
-public:
-    ParameterSymbol(std::string name, const Type * type, int index)
-        : LocalSymbol(getSymbolClassKind(), name, type)
-        , _index(index) {
-
-    }
-
-    int index() const { return _index; }
-
-    static const SymbolKind getSymbolClassKind();
-
-protected:
-    int _index;
 
     static SymbolKind SYMBOLKIND;
     static bool kindRegistered;

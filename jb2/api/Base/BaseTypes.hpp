@@ -24,23 +24,15 @@
 
 #include <list>
 #include <map>
-#include "BaseExtension.hpp" // needed for static_cast in BaseType
-#include "Type.hpp"
+#include "JBCore.hpp"
+#include "Func/Func.hpp"
 
 namespace OMR {
 namespace JitBuilder {
-
-class Extension;
-class JB1MethodBuilder;
-class Literal;
-class TextWriter;
-class TypeReplacer;
-
 namespace Base {
 
+class BaseCompilation;
 class BaseExtension;
-class Function;
-class FunctionCompilation;
 
 class BaseType : public Type {
     friend class BaseExtension;
@@ -55,28 +47,8 @@ class BaseType : public Type {
 
     }
 
-    BaseExtension *baseExt() { return static_cast<BaseExtension *>(_ext); }
-    BaseExtension *baseExt() const { return static_cast<BaseExtension * const>(_ext); }
-};
-
-class NoTypeType : public BaseType {
-    friend class BaseExtension;
-
-    public:
-    static NoTypeType * create(LOCATION, Extension *ext) { return new NoTypeType(PASSLOC, ext); }
-    virtual void printValue(TextWriter &w, const void *p) const;
-    virtual bool registerJB1Type(JB1MethodBuilder *j1mb) const;
-
-    static const TypeKind getTypeClassKind();
-
-    protected:
-    NoTypeType(LOCATION, Extension *ext)
-        : BaseType(PASSLOC, TYPEKIND, ext, "NoType", 0) {
-
-    }
-
-    static TypeKind TYPEKIND;
-    static bool kindRegistered;
+    BaseExtension *baseExt();
+    BaseExtension *baseExt() const;
 };
 
 class NumericType : public BaseType {
@@ -302,12 +274,12 @@ typedef void (PointerTypeHelper)(PointerType *pType, PointerTypeBuilder *builder
 
 class PointerTypeBuilder {
 public:
-    PointerTypeBuilder(BaseExtension *ext, FunctionCompilation *comp);
+    PointerTypeBuilder(BaseExtension *ext, Base::BaseCompilation *comp);
     PointerTypeBuilder *setBaseType(const Type *type) { _baseType = type; return this; }
     PointerTypeBuilder *setHelper(PointerTypeHelper *helper) { _helper = helper; return this; }
 
     BaseExtension *extension() const { return _ext; }
-    FunctionCompilation *comp() const { return _comp; }
+    Base::BaseCompilation *comp() const { return _comp; }
     TypeDictionary *dict() const { return _dict; }
     const Type *baseType() const { return _baseType; }
     PointerTypeHelper *helper() const { return _helper; }
@@ -317,7 +289,7 @@ public:
 
 protected:
     BaseExtension * _ext;
-    FunctionCompilation * _comp;
+    Base::BaseCompilation * _comp;
     TypeDictionary *_dict;
     const Type * _baseType;
     PointerTypeHelper *_helper;
@@ -407,7 +379,7 @@ class StructTypeBuilder {
     };
 
 public:
-    StructTypeBuilder(BaseExtension *ext, Function *func);
+    StructTypeBuilder(BaseExtension *ext, Base::BaseCompilation *comp);
     #if NEED_UNION
     StructTypeBuilder *setUnion(bool v=false); { _buildUnion = v; return this; }
     #endif
@@ -421,7 +393,7 @@ public:
     }
 
     BaseExtension *extension() const { return _ext; }
-    FunctionCompilation *comp() const { return _comp; }
+    Base::BaseCompilation *comp() const { return _comp; }
     TypeDictionary *dict() const { return _dict; }
     std::string name() const { return _name; }
     size_t size() const { return _size; }
@@ -443,8 +415,8 @@ protected:
     void setStructType(StructType *structType) { _structType = structType; }
 
     BaseExtension * _ext;
-    Function * _func;
-    FunctionCompilation * _comp;
+    Func::Function * _func;
+    Base::BaseCompilation * _comp;
     TypeDictionary * _dict;
     std::string _name;
     size_t _size;
@@ -526,92 +498,6 @@ protected:
     static bool kindRegistered;
 };
 #endif
-
-class FunctionType : public BaseType {
-    friend class BaseExtension;
-    friend class TypeDictionary;
-
-public:
-    #if 0
-    // TODO: Move to separate class
-    class TypeBuilder {
-        struct FieldInfo {
-            std::string _name;
-            const Type * _type;
-            size_t _offset;
-            FieldInfo(std::string name, const Type *type, size_t offset)
-                : _name(name, _type(type), _offset(offset) {
-            }
-        };
-    public:
-        TypeBuilder()
-            : _ext(NULL)
-            , _name("")
-            , _size(0)
-            , _helper(NULL) {
-        }
-        TypeBuilder *setExtension(Extension *ext) { _ext = ext; }
-        TypeBuilder *setName(std::string n) { _name = n; }
-        TypeBuilder *setSize(size_t size) { _size = size; }
-        TypeBuilder *addField(std::string name, const Type *fieldType, size_t offset) {
-            FieldInfo info(name, fieldType, offset);
-            _fields.push_back(info);
-        }
-        TypeBuilder *setHelper(StructHelperFuntion *helper) { _helper = helper; }
-
-        Extention *extension() const { return _extension; }
-        std::string name() const { return _name; }
-        size_t size() const { return _size; }
-        StructHelperFunction *helper() const { return _helper; }
-
-        void createFields(LOCATION, StructType *structType) {
-            for (auto it = _fields.begin(); it != _fields.end(); it++) {
-                FieldInfo info = *it;
-                structType->addField(PASSLOC, info._name, info._type, info._offset);
-            }
-        }
-
-        const StructType *create() {
-            return StructType::create(this);
-        }
-
-    protected:
-        Extension * _ext;
-        std::string _name;
-        size_t _size;
-        std::list<FieldInfo> _fields;
-        StructHelperFunction _helper;
-    };
-    #endif
-    
-    ~FunctionType() { delete[] _parmTypes; }
-
-    Literal *literal(LOCATION, Compilation *comp, void * functionValue);
-    virtual std::string to_string(bool useHeader=false) const;
-
-    const Type *returnType() const { return _returnType; }
-    int32_t numParms() const { return _numParms; }
-    const Type *parmType(int p) const { return _parmTypes[p]; }
-    const Type **parmTypes() const { return _parmTypes; }
-
-    virtual void printValue(TextWriter &w, const void *p) const;
-
-    virtual const Type * replace(TypeReplacer *repl);
-
-    static std::string typeName(const Type *returnType, int32_t numParms, const Type **parmTypes);
-
-    static const TypeKind getTypeClassKind();
-
-protected:
-    FunctionType(LOCATION, Extension *ext, TypeDictionary *dict, const Type *returnType, int32_t numParms, const Type ** parmTypes);
-
-    const Type *_returnType;
-    int32_t _numParms;
-    const Type **_parmTypes;
-
-    static TypeKind TYPEKIND;
-    static bool kindRegistered;
-};
 
 } // namespace Base
 } // namespace JitBuilder

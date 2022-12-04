@@ -19,42 +19,34 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include <stdint.h>
-#include "BaseExtension.hpp"
-#include "BaseSymbols.hpp"
+#include "BaseSymbol.hpp"
 #include "BaseTypes.hpp"
-#include "Builder.hpp"
-#include "ConstOperations.hpp"
-#include "Function.hpp"
-#include "Literal.hpp"
-#include "JB1MethodBuilder.hpp"
-#include "Location.hpp"
-#include "Operation.hpp"
-#include "OperationCloner.hpp"
-#include "TextWriter.hpp"
-#include "Value.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 namespace Base {
 
 
-Op_Const::Op_Const(LOCATION, Extension *ext, Builder * parent, ActionID aConst, Value * result, Literal *lv)
-    : OperationR1L1(PASSLOC, aConst, ext, parent, result, lv) {
+// should be initialized first time it's needed by ensureKindRegistered()
+bool FieldSymbol::kindRegistered=false;
+SymbolKind FieldSymbol::SYMBOLKIND=KindService::NoKind;
+
+const SymbolKind
+FieldSymbol::getSymbolClassKind() {
+    if (!kindRegistered) {
+        SYMBOLKIND = Symbol::kindService.assignKind(KindService::AnyKind, "FieldSymbol");
+	kindRegistered = true;
+    }
+    return SYMBOLKIND;
 }
 
-Operation *
-Op_Const::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    return new Op_Const(PASSLOC, this->_ext, b, this->action(), cloner->result(), cloner->literal());
-}
+FieldSymbol::FieldSymbol(std::string name, const StructType *structType, const FieldType *fieldType)
+    : Symbol(getSymbolClassKind(), name, fieldType->type())
+    , _structType(structType)
+    , _fieldType(fieldType) {
 
-void
-Op_Const::jbgen(JB1MethodBuilder *j1mb) const {
-    literal()->type()->createJB1ConstOp(location(), j1mb, parent(), result(), literal());
 }
-
 
 } // namespace Base
 } // namespace JitBuilder
 } // namespace OMR
-

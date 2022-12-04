@@ -22,32 +22,11 @@
 #ifndef MEMORYOPERATIONS_INCL
 #define MEMORYOPERATIONS_INCL
 
-#include "Literal.hpp"
-#include "Operation.hpp"
+#include "JBCore.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 namespace Base {
-
-class Op_Load : public OperationR1S1 {
-    friend class BaseExtension;
-public:
-    virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-    virtual void jbgen(JB1MethodBuilder *j1mb) const;
-
-protected:
-    Op_Load(LOCATION, Extension *ext, Builder * parent, ActionID aLoad, Value *result, Symbol *s);
-    };
-
-class Op_Store : public OperationR0S1V1 {
-    friend class BaseExtension;
-public:
-    virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-    virtual void jbgen(JB1MethodBuilder *j1mb) const;
-
-protected:
-    Op_Store(LOCATION, Extension *ext, Builder * parent, ActionID aStore, Symbol *s, Value *value);
-};
 
 class Op_LoadAt : public OperationR1V1 {
     friend class BaseExtension;

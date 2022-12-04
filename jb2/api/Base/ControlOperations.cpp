@@ -20,21 +20,10 @@
  *******************************************************************************/
 
 #include <stdint.h>
-#include "BaseExtension.hpp"
-#include "BaseSymbols.hpp"
-#include "BaseTypes.hpp"
-#include "Builder.hpp"
-#include "ControlOperations.hpp"
-#include "Function.hpp"
-#include "JB1MethodBuilder.hpp"
-#include "Literal.hpp"
-#include "Location.hpp"
-#include "Operation.hpp"
-#include "OperationCloner.hpp"
-#include "TextWriter.hpp"
-#include "Value.hpp"
-
-using namespace OMR::JitBuilder;
+#include "Base/BaseExtension.hpp"
+#include "Base/BaseSymbol.hpp"
+#include "Base/BaseTypes.hpp"
+#include "Base/ControlOperations.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -46,13 +35,12 @@ namespace Base {
 // Call
 //
 
-Op_Call::Op_Call(LOCATION, Extension *ext, Builder * parent, ActionID aCall, Value *result, FunctionSymbol *target, std::va_list & args)
+Op_Call::Op_Call(LOCATION, Extension *ext, Builder * parent, ActionID aCall, Value *result, Func::FunctionSymbol *target, std::va_list & args)
     : OperationR1S1VN(PASSLOC, aCall, ext, parent, result, target, target->functionType()->numParms(), args) {
 
 }
 
-
-Op_Call::Op_Call(LOCATION, Extension *ext, Builder * parent, ActionID aCall, FunctionSymbol *target, std::va_list & args)
+Op_Call::Op_Call(LOCATION, Extension *ext, Builder * parent, ActionID aCall, Func::FunctionSymbol *target, std::va_list & args)
     : OperationR1S1VN(PASSLOC, aCall, ext, parent, NULL, target, target->functionType()->numParms(), args) {
 
 }
@@ -75,13 +63,42 @@ Op_Call::write(TextWriter & w) const {
 
 void
 Op_Call::jbgen(JB1MethodBuilder *j1mb) const {
-    FunctionSymbol *funcSym = symbol()->refine<FunctionSymbol>();
-    const FunctionType *funcType = funcSym->functionType();
+    Func::FunctionSymbol *funcSym = symbol()->refine<Func::FunctionSymbol>();
+    const Func::FunctionType *funcType = funcSym->functionType();
     //j1mb->DefineFunction(funcSym->name(), funcSym->fileName(), funcSym->lineNumber(), funcSym->entryPoint(), funcType->returnType(), funcType->numParms(), funcType->parmTypes());
-    if (result())
-        j1mb->Call(location(), parent(), result(), funcSym->name(), _values);
-    else
-        j1mb->Call(location(), parent(), funcSym->name(), _values);
+    j1mb->Call(location(), parent(), result(), funcSym->name(), _values);
+}
+
+
+//
+// CallVoid
+//
+
+Op_CallVoid::Op_CallVoid(LOCATION, Extension *ext, Builder * parent, ActionID aCall, Func::FunctionSymbol *target, std::va_list & args)
+    : OperationR0S1VN(PASSLOC, aCall, ext, parent, target, target->functionType()->numParms(), args) {
+
+}
+
+Operation *
+Op_CallVoid::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
+    return new Op_CallVoid(PASSLOC, this->_ext, b, this->action(), cloner);
+}
+
+void
+Op_CallVoid::write(TextWriter & w) const {
+    w << name() << " " << this->_symbol;
+    for (auto a=0;a < _values.size(); a++) {
+        w << " " << this->_values[a];
+    }
+    w << w.endl();
+}
+
+void
+Op_CallVoid::jbgen(JB1MethodBuilder *j1mb) const {
+    Func::FunctionSymbol *funcSym = symbol()->refine<Func::FunctionSymbol>();
+    const Func::FunctionType *funcType = funcSym->functionType();
+    //j1mb->DefineFunction(funcSym->name(), funcSym->fileName(), funcSym->lineNumber(), funcSym->entryPoint(), funcType->returnType(), funcType->numParms(), funcType->parmTypes());
+    j1mb->Call(location(), parent(), funcSym->name(), _values);
 }
 
 
@@ -114,7 +131,7 @@ Op_ForLoopUp::Op_ForLoopUp(LOCATION, Extension *ext, Builder * parent, ActionID 
 Operation *
 Op_ForLoopUp::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
     ForLoopBuilder loopBuilder;
-    loopBuilder.setLoopVariable(static_cast<LocalSymbol *>(cloner->symbol()))
+    loopBuilder.setLoopVariable(static_cast<Func::LocalSymbol *>(cloner->symbol()))
                ->setInitialValue(cloner->operand(0))
                ->setFinalValue(cloner->operand(1))
                ->setBumpValue(cloner->operand(2))
@@ -491,7 +508,7 @@ Goto::clone(Builder *b, OperationCloner *cloner) const
    return create(b, cloner->builder());
    }
 
-ForLoop::ForLoop(Builder * parent, bool countsUp, LocalSymbol * loopSym,
+ForLoop::ForLoop(Builder * parent, bool countsUp, Func::LocalSymbol * loopSym,
                                   Builder * loopBody, Builder * loopBreak, Builder * loopContinue,
                                   Value * initial, Value * end, Value * bump)
    : Operation(aForLoop, parent)
@@ -505,7 +522,7 @@ ForLoop::ForLoop(Builder * parent, bool countsUp, LocalSymbol * loopSym,
    , _bump(bump)
    { }
 
-ForLoop::ForLoop(Builder * parent, bool countsUp, LocalSymbol * loopSym,
+ForLoop::ForLoop(Builder * parent, bool countsUp, Func::LocalSymbol * loopSym,
                                   Builder * loopBody, Builder * loopBreak,
                                   Value * initial, Value * end, Value * bump)
    : Operation(aForLoop, parent)
@@ -519,7 +536,7 @@ ForLoop::ForLoop(Builder * parent, bool countsUp, LocalSymbol * loopSym,
    , _bump(bump)
    { }
 
-ForLoop::ForLoop(Builder * parent, bool countsUp, LocalSymbol *loopSym,
+ForLoop::ForLoop(Builder * parent, bool countsUp, Func::LocalSymbol *loopSym,
                                   Builder * loopBody,
                                   Value * initial, Value * end, Value * bump)
    : Operation(aForLoop, parent)
@@ -536,7 +553,7 @@ ForLoop::ForLoop(Builder * parent, bool countsUp, LocalSymbol *loopSym,
 void
 ForLoop::cloneTo(Builder *b, ValueMapper **resultMappers, ValueMapper **operandMappers, TypeMapper **typeMappers, LiteralMapper **literalMappers, SymbolMapper **symbolMappers, BuilderMapper **builderMappers) const
    {
-   b->ForLoop(literalMappers[0]->next()->getInt8(), static_cast<LocalSymbol *>(symbolMappers[0]->next()),
+   b->ForLoop(literalMappers[0]->next()->getInt8(), static_cast<Func::LocalSymbol *>(symbolMappers[0]->next()),
               builderMappers[0]->next(),
               _loopBreak ? builderMappers[1]->next() : NULL,
               _loopContinue ? builderMappers[2]->next() : NULL,
@@ -546,7 +563,7 @@ ForLoop::cloneTo(Builder *b, ValueMapper **resultMappers, ValueMapper **operandM
 Operation *
 ForLoop::clone(Builder *b, OperationCloner *cloner) const
    {
-   return create(b, cloner->literal(0)->getInt8(), static_cast<LocalSymbol *>(cloner->symbol()),
+   return create(b, cloner->literal(0)->getInt8(), static_cast<Func::LocalSymbol *>(cloner->symbol()),
                cloner->builder(0),
                _loopBreak ? cloner->builder(1) : NULL,
                _loopContinue ? cloner->builder(2) : NULL,
@@ -554,7 +571,7 @@ ForLoop::clone(Builder *b, OperationCloner *cloner) const
    }
 
 ForLoop *
-ForLoop::create(Builder * parent, bool countsUp, LocalSymbol * loopSym,
+ForLoop::create(Builder * parent, bool countsUp, Func::LocalSymbol * loopSym,
                            Builder * loopBody, Builder * loopBreak, Builder * loopContinue,
                            Value * initial, Value * end, Value * bump)
    {
@@ -579,7 +596,7 @@ ForLoop::create(Builder * parent, bool countsUp, LocalSymbol * loopSym,
    }
 
 ForLoop *
-ForLoop::create(Builder * parent, bool countsUp, LocalSymbol * loopSym,
+ForLoop::create(Builder * parent, bool countsUp, Func::LocalSymbol * loopSym,
                            Builder * loopBody, Builder * loopBreak,
                            Value * initial, Value * end, Value * bump)
    {
@@ -598,7 +615,7 @@ ForLoop::create(Builder * parent, bool countsUp, LocalSymbol * loopSym,
    }
 
 ForLoop *
-ForLoop::create(Builder * parent, bool countsUp, LocalSymbol * loopSym,
+ForLoop::create(Builder * parent, bool countsUp, Func::LocalSymbol * loopSym,
                            Builder * loopBody, Value * initial, Value * end, Value * bump)
    {
    ForLoop * forLoopOp = new ForLoop(parent, countsUp, loopSym, loopBody, initial, end, bump);

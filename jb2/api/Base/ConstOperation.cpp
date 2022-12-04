@@ -19,54 +19,28 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "BaseExtension.hpp"
-#include "BaseSymbols.hpp"
-#include "BaseTypes.hpp"
-#include "FunctionCompilation.hpp"
-#include "NativeCallableContext.hpp"
-#include "Operation.hpp"
-#include "TextWriter.hpp"
-
+#include <stdint.h>
+#include "Base/ConstOperation.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 namespace Base {
 
-LocalSymbolIterator NativeCallableContext::endLocalSymbolIterator;
-ParameterSymbolIterator NativeCallableContext::endParameterSymbolIterator;
 
-ParameterSymbol *
-NativeCallableContext::DefineParameter(std::string name, const Type * type) {
-    ParameterSymbol *parm = new ParameterSymbol(name, type, this->_parameters.size());
-    this->_parameters.push_back(parm);
-    addSymbol(parm);
-    return parm;
+Op_Const::Op_Const(LOCATION, Extension *ext, Builder * parent, ActionID aConst, Value * result, Literal *lv)
+    : OperationR1L1(PASSLOC, aConst, ext, parent, result, lv) {
+}
+
+Operation *
+Op_Const::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
+    return new Op_Const(PASSLOC, this->_ext, b, this->action(), cloner->result(), cloner->literal());
 }
 
 void
-NativeCallableContext::DefineParameter(ParameterSymbol *parm) {
-    assert(parm->index() == this->_parameters.size());
-    this->_parameters.push_back(parm);
-    addSymbol(parm);
+Op_Const::jbgen(JB1MethodBuilder *j1mb) const {
+    literal()->type()->createJB1ConstOp(location(), j1mb, parent(), result(), literal());
 }
 
-LocalSymbol *
-NativeCallableContext::DefineLocal(std::string name, const Type * type) {
-    Symbol *sym = this->lookupSymbol(name);
-    if (sym && sym->isKind<LocalSymbol>())
-       return sym->refine<LocalSymbol>();
-
-    LocalSymbol *local = new LocalSymbol(name, type);
-    this->_locals.push_back(local);
-    addSymbol(local);
-    return local;
-}
-
-void
-NativeCallableContext::DefineLocal(LocalSymbol *local) {
-    this->_locals.push_back(local);
-    addSymbol(local);
-}
 
 } // namespace Base
 } // namespace JitBuilder

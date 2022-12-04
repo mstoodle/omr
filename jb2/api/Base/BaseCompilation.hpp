@@ -19,71 +19,42 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef FUNCTIONCOMPILATION_INCL
-#define FUNCTIONCOMPILATION_INCL
+#ifndef BASECOMPILATION_INCL
+#define BASECOMPILATION_INCL
 
 #include <map>
-#include <stdint.h>
-#include <string>
-#include <vector>
-#include "Compilation.hpp"
-#include "typedefs.hpp"
+#include "JBCore.hpp"
+#include "Func/Func.hpp"
 
 namespace OMR {
 namespace JitBuilder {
-
-class Compiler;
-class Config;
-class JB1MethodBuilder;
-class TextWriter;
-class TypeDictionary;
-class TypeReplacer;
-
 namespace Base {
 
-class Function;
 class PointerType;
 class StructType;
 
-class FunctionCompilation : public Compilation {
+class BaseCompilation : public Func::FunctionCompilation {
+    friend class BaseExtension;
+
 public:
-    FunctionCompilation(Compiler *compiler, Function *func, TypeDictionary *dict=NULL, Config *localConfig=NULL)
-        : Compilation(compiler, dict, localConfig)
-        , _func(func) {
-    }
-    virtual ~FunctionCompilation() { }
-
-    Function *func() const { return _func; }
-
-    virtual void write(TextWriter & w) const;
-
-    virtual bool buildIL();
-
-    virtual void constructJB1Function(JB1MethodBuilder *j1mb);
-    virtual void jbgenProlog(JB1MethodBuilder *j1mb);
+    BaseCompilation(Compiler *compiler, Func::Function *func, StrategyID strategy=NoStrategy, TypeDictionary *dict=NULL, Config *localConfig=NULL);
+    virtual ~BaseCompilation() { }
 
     const PointerType * pointerTypeFromBaseType(const Type * baseType);
     void registerPointerType(const PointerType * pType);
     const StructType * structTypeFromName(std::string name);
     void registerStructType(const StructType * sType);
-    const FunctionType * lookupFunctionType(const Type *returnType, int32_t numParms, const Type **parmTypes);
-    void registerFunctionType(const FunctionType * fType);
 
-    void setNativeEntryPoint(void *entry, int i);
-
-    virtual void replaceTypes(TypeReplacer *repl);
 protected:
-    virtual void addInitialBuildersToWorklist(BuilderWorklist & worklist);
+    void setContext(Func::FunctionContext *context) { this->Compilation::setContext(context); }
 
-    Function *_func;
     std::map<const Type *,const PointerType *> _pointerTypeFromBaseType;
     std::map<std::string,const StructType *> _structTypeFromName;
-    std::map<std::string,const FunctionType *> _functionTypesFromName;
 };
 
-} // namespace FunctionCompilation
+} // namespace Base
 } // namespace JitBuilder
 } // namespace OMR
 
-#endif // !defined(FUNCTIONCOMPILATION_INCL)
+#endif // !defined(BASECOMPILATION_INCL)
 
