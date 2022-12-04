@@ -1,5 +1,4 @@
-/*******************************************************************************
- * Copyright (c) 2021, 2022 IBM Corp. and others
+/******************************************************************************* * Copyright (c) 2021, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,24 +20,16 @@
 
 #include <cstdarg>
 
-#include "ArithmeticOperations.hpp"
-#include "BaseExtension.hpp"
-#include "BaseSymbols.hpp"
-#include "BaseTypes.hpp"
-#include "Builder.hpp"
-#include "ConstOperations.hpp"
-#include "ControlOperations.hpp"
-#include "Compilation.hpp"
-#include "Compiler.hpp"
-#include "Context.hpp"
-#include "FunctionCompilation.hpp"
-#include "JB1CodeGenerator.hpp"
-#include "Literal.hpp"
-#include "Location.hpp"
-#include "MemoryOperations.hpp"
-#include "Strategy.hpp"
-#include "TextWriter.hpp"
-#include "Value.hpp"
+#include "JBCore.hpp"
+#include "Func/Func.hpp"
+#include "Base/ArithmeticOperations.hpp"
+#include "Base/BaseCompilation.hpp"
+#include "Base/BaseExtension.hpp"
+#include "Base/BaseSymbol.hpp"
+#include "Base/BaseTypes.hpp"
+#include "Base/ConstOperation.hpp"
+#include "Base/ControlOperations.hpp"
+#include "Base/MemoryOperations.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -47,15 +38,23 @@ namespace Base {
 const SemanticVersion BaseExtension::version(BASEEXT_MAJOR,BASEEXT_MINOR,BASEEXT_PATCH);
 const std::string BaseExtension::NAME("jb2base");
 
+static const MajorID NEEDED_FUNCEXT_MAJOR=0;
+static const MajorID NEEDED_FUNCEXT_MINOR=1;
+static const MajorID NEEDED_FUNCEXT_PATCH=0;
+const static SemanticVersion neededFuncVersion(NEEDED_FUNCEXT_MAJOR,NEEDED_FUNCEXT_MINOR,NEEDED_FUNCEXT_PATCH);
+
 extern "C" {
     Extension *create(LOCATION, Compiler *compiler) {
+        Func::FunctionExtension *fx = compiler->loadExtension<Func::FunctionExtension>(PASSLOC, &neededFuncVersion);
+        if (fx == NULL)
+            return NULL;
         return new BaseExtension(PASSLOC, compiler);
     }
 }
 
 BaseExtension::BaseExtension(LOCATION, Compiler *compiler, bool extended, std::string extensionName)
-    : Extension(compiler, (extended ? extensionName : NAME))
-    , NoType(new NoTypeType(PASSLOC, this))
+    : Extension(PASSLOC, compiler, (extended ? extensionName : NAME))
+    , _fx(compiler->lookupExtension<Func::FunctionExtension>())
     , Int8(new Int8Type(PASSLOC, this))
     , Int16(new Int16Type(PASSLOC, this))
     , Int32(new Int32Type(PASSLOC, this))
@@ -69,8 +68,6 @@ BaseExtension::BaseExtension(LOCATION, Compiler *compiler, bool extended, std::s
     , aConvertTo(registerAction(std::string("ConvertTo")))
     , aMul(registerAction(std::string("Mul")))
     , aSub(registerAction(std::string("Sub")))
-    , aLoad(registerAction(std::string("Load")))
-    , aStore(registerAction(std::string("Store")))
     , aLoadAt(registerAction(std::string("LoadAt")))
     , aStoreAt(registerAction(std::string("StoreAt")))
     , aLoadField(registerAction(std::string("LoadField")))
@@ -81,6 +78,7 @@ BaseExtension::BaseExtension(LOCATION, Compiler *compiler, bool extended, std::s
     , aCreateLocalStruct(registerAction(std::string("CreateLocalStruct")))
     , aIndexAt(registerAction(std::string("IndexAt")))
     , aCall(registerAction(std::string("Call")))
+    , aCallVoid(registerAction(std::string("CallVoid")))
     , aForLoopUp(registerAction(std::string("ForLoopUp")))
     , aGoto(registerAction(std::string("Goto")))
     , aIfCmpEqual(registerAction(std::string("IfCmpEqual")))
@@ -116,11 +114,8 @@ BaseExtension::BaseExtension(LOCATION, Compiler *compiler, bool extended, std::s
     , CompileFail_BadInputArray_OffsetAt(registerReturnCode("CompileFail_BadInputArray_OffsetAt"))
     , CompileFail_MismatchedArgumentTypes_Call(registerReturnCode("CompileFail_MismatchedArgumentTypes_Call")) {
 
+    assert(_fx);
     if (!extended) {
-        Strategy *jb1cgStrategy = new Strategy(compiler, "jb1cg");
-        Pass *jb1cg = new JB1CodeGenerator(compiler);
-        jb1cgStrategy->addPass(jb1cg);
-        _jb1cgStrategyID = jb1cgStrategy->id();
         _checkers.push_back(new BaseExtensionChecker(this));
     }
 }
@@ -133,7 +128,6 @@ BaseExtension::~BaseExtension() {
     delete Int32;
     delete Int16;
     delete Int8;
-    delete NoType;
     // what about other types!?
 }
 
@@ -141,6 +135,29 @@ void
 BaseExtension::registerChecker(BaseExtensionChecker *checker) {
     _checkers.push_front(checker);
 }
+
+CompilerReturnCode
+BaseExtension::compile(LOCATION, Func::Function *func, StrategyID strategy, TextWriter *logger) {
+
+    if (strategy == NoStrategy)
+        strategy = _compiler->jb1cgStrategyID;
+
+    BaseCompilation comp(_compiler, func, strategy, _compiler->dict(), NULL);
+    Func::FunctionContext context(PASSLOC, &comp);
+    comp.setContext(&context);
+    comp.setLogger(logger);
+
+    CompilerReturnCode rc = _compiler->compile(PASSLOC, &comp, strategy);
+    if (rc != _compiler->CompileSuccessful) {
+        return rc;
+    }
+
+    CompiledBody *body = new CompiledBody(func, &context, strategy);
+    func->saveCompiledBody(body, strategy);
+
+    return _compiler->CompileSuccessful;
+}
+
 
 //
 // Const Operations
@@ -390,8 +407,8 @@ BaseExtension::Sub(LOCATION, Builder *b, Value *left, Value *right) {
 //
 
 bool
-BaseExtensionChecker::validateCall(LOCATION, Builder *b, FunctionSymbol *target, std::va_list & args) {
-    const FunctionType *tgtType = target->functionType();
+BaseExtensionChecker::validateCall(LOCATION, Builder *b, Func::FunctionSymbol *target, std::va_list & args) {
+    const Func::FunctionType *tgtType = target->functionType();
     for (auto a=0;a < tgtType->numParms();a++) {
         Value *arg = va_arg(args, Value *);
         if (arg->type() != tgtType->parmTypes()[a]) // should be more like "can be stored to"
@@ -402,8 +419,8 @@ BaseExtensionChecker::validateCall(LOCATION, Builder *b, FunctionSymbol *target,
 }
 
 void
-BaseExtensionChecker::failValidateCall(LOCATION, Builder *b, FunctionSymbol *target, std::va_list & args) {
-    const FunctionType *tgtType = target->functionType();
+BaseExtensionChecker::failValidateCall(LOCATION, Builder *b, Func::FunctionSymbol *target, std::va_list & args) {
+    const Func::FunctionType *tgtType = target->functionType();
     CompilationException e(PASSLOC, _base->compiler(), _base->CompileFail_MismatchedArgumentTypes_Call);
     e.setMessageLine(std::string("Call: mismatched argument types"));
     for (auto a=0;a < tgtType->numParms();a++) {
@@ -422,8 +439,8 @@ BaseExtensionChecker::failValidateCall(LOCATION, Builder *b, FunctionSymbol *tar
 }
 
 Value *
-BaseExtension::Call(LOCATION, Builder *b, FunctionSymbol *target, ...) {
-    const FunctionType *tgtType = target->functionType();
+BaseExtension::Call(LOCATION, Builder *b, Func::FunctionSymbol *target, ...) {
+    const Func::FunctionType *tgtType = target->functionType();
     for (auto it = _checkers.begin(); it != _checkers.end(); it++) {
         BaseExtensionChecker *checker = *it;
         std::va_list args;
@@ -437,18 +454,18 @@ BaseExtension::Call(LOCATION, Builder *b, FunctionSymbol *target, ...) {
     va_start(args, target);
 
     Value *result = NULL;
-    if (target->functionType()->returnType() != NULL) {
+    if (target->functionType()->returnType() != NoType) {
         result = createValue(b, target->functionType()->returnType());
         addOperation(b, new Op_Call(PASSLOC, this, b, aCall, result, target, args));
     } else {
-        addOperation(b, new Op_Call(PASSLOC, this, b, aCall, target, args));
+        addOperation(b, new Op_CallVoid(PASSLOC, this, b, aCall, target, args));
     }
     return result;
 }
 
 
 bool
-BaseExtensionChecker::validateForLoopUp(LOCATION, Builder *b, LocalSymbol *loopVariable, Value *initial, Value *final, Value *bump) {
+BaseExtensionChecker::validateForLoopUp(LOCATION, Builder *b, Func::LocalSymbol *loopVariable, Value *initial, Value *final, Value *bump) {
     const Type *counterType = loopVariable->type();
     if (counterType != _base->Int8
      && counterType != _base->Int16
@@ -469,7 +486,7 @@ BaseExtensionChecker::validateForLoopUp(LOCATION, Builder *b, LocalSymbol *loopV
 }
 
 void
-BaseExtensionChecker::failValidateForLoopUp(LOCATION, Builder *b, LocalSymbol *loopVariable, Value *initial, Value *final, Value *bump) {
+BaseExtensionChecker::failValidateForLoopUp(LOCATION, Builder *b, Func::LocalSymbol *loopVariable, Value *initial, Value *final, Value *bump) {
     CompilationException e(PASSLOC, _base->compiler(), _base->CompileFail_BadInputTypes_ForLoopUp);
     e.setMessageLine(std::string("ForLoopUp: invalid input types"))
      .appendMessageLine(std::string("  loop var s").append(std::to_string(loopVariable->id())).append(" ").append(loopVariable->name()).append(" ").append(loopVariable->type()->to_string()))
@@ -481,7 +498,7 @@ BaseExtensionChecker::failValidateForLoopUp(LOCATION, Builder *b, LocalSymbol *l
 }
 
 ForLoopBuilder *
-BaseExtension::ForLoopUp(LOCATION, Builder *b, LocalSymbol *loopVariable,
+BaseExtension::ForLoopUp(LOCATION, Builder *b, Func::LocalSymbol *loopVariable,
                          Value *initial, Value *final, Value *bump) {
     for (auto it = _checkers.begin(); it != _checkers.end(); it++) {
         BaseExtensionChecker *checker = *it;
@@ -717,18 +734,6 @@ BaseExtension::Return(LOCATION, Builder *b, Value *v) {
 //
 
 Value *
-BaseExtension::Load(LOCATION, Builder *b, Symbol * sym) {
-    Value * result = createValue(b, sym->type());
-    addOperation(b, new Op_Load(PASSLOC, this, b, this->aLoad, result, sym));
-    return result;
-}
-
-void
-BaseExtension::Store(LOCATION, Builder *b, Symbol * sym, Value *value) {
-    addOperation(b, new Op_Store(PASSLOC, this, b, this->aStore, sym, value));
-}
-
-Value *
 BaseExtension::LoadAt(LOCATION, Builder *b, Value *ptrValue) {
     assert(ptrValue->type()->isKind<PointerType>());
     const Type *baseType = ptrValue->type()->refine<PointerType>()->baseType();
@@ -811,27 +816,6 @@ BaseExtension::IndexAt(LOCATION, Builder *b, Value *base, Value *index) {
 //
 // Pseudo operations
 //
-Location *
-BaseExtension::SourceLocation(LOCATION, Builder *b, std::string func) {
-    Location *loc = new Location(b->comp(), func, "");
-    b->setLocation(loc);
-    return loc;
-}
-
-Location *
-BaseExtension::SourceLocation(LOCATION, Builder *b, std::string func, std::string lineNumber) {
-    Location *loc = new Location(b->comp(), func, lineNumber);
-    b->setLocation(loc);
-    return loc;
-}
-
-Location *
-BaseExtension::SourceLocation(LOCATION, Builder *b, std::string func, std::string lineNumber, int32_t bcIndex) {
-    Location *loc = new Location(b->comp(), func, lineNumber, bcIndex);
-    b->setLocation(loc);
-    return loc;
-}
-
 Value *
 BaseExtension::ConstInt8(LOCATION, Builder *b, int8_t v) {
     Literal *lv = this->Int8->literal(PASSLOC, b->comp(), v);
@@ -896,16 +880,16 @@ BaseExtension::One(LOCATION, Builder *b, const Type *type) {
 
 void
 BaseExtension::Increment(LOCATION, Builder *b, Symbol *sym, Value *bump) {
-    Value *oldValue = Load(PASSLOC, b, sym);
+    Value *oldValue = _fx->Load(PASSLOC, b, sym);
     Value *newValue = Add(PASSLOC, b, oldValue, bump);
-    Store(PASSLOC, b, sym, newValue);
+    _fx->Store(PASSLOC, b, sym, newValue);
 }
 
 void
-BaseExtension::Increment(LOCATION, Builder *b, LocalSymbol *sym) {
-   Value *oldValue = Load(PASSLOC, b, sym);
+BaseExtension::Increment(LOCATION, Builder *b, Func::LocalSymbol *sym) {
+   Value *oldValue = _fx->Load(PASSLOC, b, sym);
    Value *newValue = Add(PASSLOC, b, oldValue, One(PASSLOC, b, sym->type()));
-   Store(PASSLOC, b, sym, newValue);
+   _fx->Store(PASSLOC, b, sym, newValue);
 }
 
 void
@@ -969,26 +953,10 @@ BaseExtension::StoreArray(LOCATION, Builder *b, Value *array, Value *indexValue,
 
 
 const PointerType *
-BaseExtension::PointerTo(LOCATION, FunctionCompilation *comp, const Type *baseType) {
+BaseExtension::PointerTo(LOCATION, Base::BaseCompilation *comp, const Type *baseType) {
     PointerTypeBuilder pb(this, comp);
     pb.setBaseType(baseType);
     return pb.create(PASSLOC);
-}
-
-const FunctionType *
-BaseExtension::DefineFunctionType(LOCATION, FunctionCompilation *comp, const Type *returnType, int32_t numParms, const Type **parmTypes) {
-    const FunctionType *fType = comp->lookupFunctionType(returnType, numParms, parmTypes);
-    if (fType)
-        return fType;
-
-    const FunctionType *f = new FunctionType(PASSLOC, this, comp->dict(), returnType, numParms, parmTypes);
-    comp->registerFunctionType(f);
-    return f;
-}
-
-CompilerReturnCode
-BaseExtension::jb1cgCompile(Compilation *comp) {
-    return _compiler->compile(comp, _jb1cgStrategyID);
 }
 
 #if 0
@@ -1209,11 +1177,11 @@ BuilderBase::AppendBuilder(Builder * b)
 Value *
 BuilderBase::Call(Value *func, int32_t numArgs, ...)
    {
-   assert(func->type()->isKind<FunctionType>());
+   assert(func->type()->isKind<Func::FunctionType>());
 
    va_list args ;
    va_start(args, numArgs);
-   FunctionType *function = func->type()->refine<FunctionType>();
+   Func::FunctionType *function = func->type()->refine<Func::FunctionType>();
    Type *returnType = dict()->producedType(function, numArgs, args);
    if (returnType == NULL)
       creationError(aCall, "functionType", func, numArgs, args);
@@ -1233,8 +1201,8 @@ BuilderBase::Call(Value *func, int32_t numArgs, ...)
 Value *
 BuilderBase::Call(Value *func, int32_t numArgs, Value **args)
    {
-   assert(func->type()->isKind<FunctionType>());
-   FunctionType *function = func->type()->refine<FunctionType>();
+   assert(func->type()->isKind<Func::FunctionType>());
+   Func::FunctionType *function = func->type()->refine<Func::FunctionType>();
    Type *returnType = dict()->producedType(function, numArgs, args);
    if (returnType == NULL)
       creationError(aCall, "functionType", func, numArgs, args);
@@ -1324,17 +1292,17 @@ BuilderBase::IfThenElse(Builder * thenB, Builder * elseB, Value * cond)
 void
 BuilderBase::ForLoopUp(std::string loopVar, Builder * body, Value * initial, Value * end, Value * bump)
    {
-   LocalSymbol *loopSym = NULL;
+   Func::LocalSymbol *loopSym = NULL;
    Symbol *sym = fb()->getSymbol(loopVar);
-   if (sym && sym->isKind<LocalSymbol>())
-      loopSym = sym->refine<LocalSymbol>();
+   if (sym && sym->isKind<Func::LocalSymbol>())
+      loopSym = sym->refine<Func::LocalSymbol>();
    else
       loopSym = fb()->DefineLocal(loopVar, initial->type());
    ForLoopUp(loopSym, body, initial, end, bump);
    }
 
 void
-BuilderBase::ForLoopUp(LocalSymbol *loopSym, Builder * body, Value * initial, Value * end, Value * bump)
+BuilderBase::ForLoopUp(Func::LocalSymbol *loopSym, Builder * body, Value * initial, Value * end, Value * bump)
    {
    Type *returnType = dict()->producedType(aForLoop, initial, end, bump);
    if (!returnType || returnType != NoType)
@@ -1349,17 +1317,17 @@ BuilderBase::ForLoopUp(LocalSymbol *loopSym, Builder * body, Value * initial, Va
 void
 BuilderBase::ForLoop(bool countsUp, std::string loopVar, Builder * loopBody, Builder * loopContinue, Builder * loopBreak, Value * initial, Value * end, Value * bump)
    {
-   LocalSymbol *loopSym = NULL;
+   Func::LocalSymbol *loopSym = NULL;
    Symbol *sym = fb()->getSymbol(loopVar);
-   if (sym && sym->isKind<LocalSymbol>())
-      loopSym = sym->refine<LocalSymbol>();
+   if (sym && sym->isKind<Func::LocalSymbol>())
+      loopSym = sym->refine<Func::LocalSymbol>();
    else
       loopSym = fb()->DefineLocal(loopVar, initial->type());
    ForLoop(countsUp, loopSym, loopBody, loopContinue, loopBreak, initial, end, bump);
    }
 
 void
-BuilderBase::ForLoop(bool countsUp, LocalSymbol *loopSym, Builder * loopBody, Builder * loopContinue, Builder * loopBreak, Value * initial, Value * end, Value * bump)
+BuilderBase::ForLoop(bool countsUp, Func::LocalSymbol *loopSym, Builder * loopBody, Builder * loopContinue, Builder * loopBreak, Value * initial, Value * end, Value * bump)
    {
    Type *returnType = dict()->producedType(aForLoop, initial, end, bump);
    if (!returnType || returnType != NoType)

@@ -20,44 +20,22 @@
  *******************************************************************************/
 
 #include <cstring>
-#include "BaseExtension.hpp"
-#include "BaseTypes.hpp"
-#include "Compiler.hpp"
-#include "Function.hpp"
-#include "FunctionCompilation.hpp"
-#include "JB1MethodBuilder.hpp"
-#include "Literal.hpp"
-#include "Type.hpp"
-#include "TextWriter.hpp"
-#include "TypeDictionary.hpp"
-#include "TypeReplacer.hpp"
+#include "Base/BaseCompilation.hpp"
+#include "Base/BaseExtension.hpp"
+#include "Base/BaseTypes.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 namespace Base {
 
-
-TypeKind NoTypeType::TYPEKIND = KindService::NoKind;
-bool NoTypeType::kindRegistered = false;
-
-const TypeKind
-NoTypeType::getTypeClassKind() {
-    if (!kindRegistered) {
-        TYPEKIND = KindService::NoKind;
-        kindRegistered = true;
-    }
-    return TYPEKIND;
+BaseExtension *
+BaseType::baseExt() {
+    return static_cast<BaseExtension *>(_ext);
 }
 
-void
-NoTypeType::printValue(TextWriter &w, const void *p) const {
-    w << name();
-}
-
-bool
-NoTypeType::registerJB1Type(JB1MethodBuilder *j1mb) const {
-    j1mb->registerNoType(this);
-    return true;
+BaseExtension *
+BaseType::baseExt() const {
+    return static_cast<BaseExtension * const>(_ext);
 }
 
 TypeKind NumericType::TYPEKIND = KindService::NoKind;
@@ -476,10 +454,10 @@ AddressType::createJB1ConstOp(Location *loc, JB1MethodBuilder *j1mb, Builder *b,
 }
 
 
-PointerTypeBuilder::PointerTypeBuilder(BaseExtension *ext, FunctionCompilation *comp)
+PointerTypeBuilder::PointerTypeBuilder(BaseExtension *ext, Base::BaseCompilation *comp)
     : _ext(ext)
     , _comp(comp)
-    , _dict(comp->dict())
+    , _dict(comp->typedict())
     , _baseType(NULL)
     , _helper(NULL) {
 
@@ -561,7 +539,7 @@ const Type *
 PointerType::replace(TypeReplacer *repl) {
     const Type *currentBaseType = baseType();
     const Type *newBaseType = repl->replacedType(currentBaseType);
-    FunctionCompilation *comp = static_cast<FunctionCompilation *>(repl->comp());
+    Base::BaseCompilation *comp = static_cast<Base::BaseCompilation *>(repl->comp());
     const Type *newPtrType = baseExt()->PointerTo(LOC, comp, newBaseType);
     return newPtrType;
 }
@@ -616,11 +594,11 @@ FieldType::explodedName(TypeReplacer *repl, std::string & baseName) const {
     return fName;
 }
 
-StructTypeBuilder::StructTypeBuilder(BaseExtension *ext, Function *func)
+StructTypeBuilder::StructTypeBuilder(BaseExtension *ext, Base::BaseCompilation *comp)
     : _ext(ext)
-    , _func(func)
-    , _comp(func->comp())
-    , _dict(func->comp()->dict())
+    , _func(comp->func())
+    , _comp(comp)
+    , _dict(comp->typedict())
     , _size(0)
     , _helper(NULL) {
 
@@ -859,7 +837,7 @@ StructType::replace(TypeReplacer *repl) {
         return this;
 
     std::string newName = std::string("_X_::").append(name());
-    StructTypeBuilder stb(base, static_cast<FunctionCompilation *>(repl->comp())->func());
+    StructTypeBuilder stb(base, static_cast<Base::BaseCompilation *>(repl->comp()));
     stb.setName(newName)
        ->setSize(this->size());
 
@@ -881,85 +859,6 @@ UnionType::printValue(TextWriter &w, const void *p) const {
     // TODO
 }
 #endif
-
-
-TypeKind FunctionType::TYPEKIND = KindService::NoKind;
-bool FunctionType::kindRegistered = false;
-
-const TypeKind
-FunctionType::getTypeClassKind() {
-    if (!kindRegistered) {
-        TYPEKIND = Type::kindService.assignKind(IntegerType::getTypeClassKind(), "Function");
-        kindRegistered = true;
-    }
-    return TYPEKIND;
-}
-
-
-FunctionType::FunctionType(LOCATION, Extension *ext, TypeDictionary *dict, const Type *returnType, int32_t numParms, const Type ** parmTypes)
-    : BaseType(PASSLOC, getTypeClassKind(), ext, dict, typeName(returnType, numParms, parmTypes), 0)
-    , _returnType(returnType)
-    , _numParms(numParms)
-    , _parmTypes(parmTypes) {
-}
-
-std::string
-FunctionType::typeName(const Type * returnType, int32_t numParms, const Type **parmTypes) {
-    std::string s = std::string("t").append(std::to_string(returnType->id())).append(std::string(" <- ("));
-    if (numParms > 0)
-        s.append(std::string("0:t")).append(std::to_string(parmTypes[0]->id()));
-    for (auto p = 1; p < numParms; p++) {
-        const Type *type = parmTypes[p];
-        s.append(std::string(" ")).append(std::to_string(p)).append(std::string(":t")).append(std::to_string(type->id()));
-    }
-    s.append(std::string(")"));
-    return s;
-}
-
-std::string
-FunctionType::to_string(bool useHeader) const {
-    std::string s = Type::base_string(useHeader);
-    s.append(std::string("functionType"));
-    return s;
-}
-
-void
-FunctionType::printValue(TextWriter &w, const void *p) const {
-    // TODO
-}
-
-const Type *
-FunctionType::replace(TypeReplacer *repl) {
-    const Type *returnType = _returnType;
-    assert(!repl->isExploded(returnType)); // can't explode return types yet
-    const Type *newReturnType = repl->singleMappedType(returnType);
-
-    // count how many parameters are needed after exploding types
-    int32_t numParms = _numParms;
-    int32_t numNewParms = 0; // each original parameter explodes to at least one remapped parameter
-    for (int32_t p=0;p < numParms;p++) {
-        const Type *parmType = _parmTypes[p];
-        TypeMapper *parmMapper = repl->mapperForType(parmType);
-        assert(parmMapper != NULL);
-        numNewParms += parmMapper->size();
-    }
-
-    // allocate array and then assign the mapped parameter types
-    const Type **newParmTypes = new const Type *[numNewParms];
-    int parmNum = 0;
-    for (int32_t p=0;p < numParms;p++) {
-        const Type *parmType = _parmTypes[p];
-        TypeMapper *parmMapper = repl->mapperForType(parmType);
-        assert(parmMapper != NULL);
-        for (int i=0;i < parmMapper->size();i++)
-            newParmTypes[parmNum++] = parmMapper->next();
-    }
-
-    assert(parmNum == numNewParms);
-
-    const FunctionType *newType = new FunctionType(LOC, _ext, repl->comp()->dict(), newReturnType, numNewParms, newParmTypes);
-    return newType;
-}
 
 } // namespace Base
 } // namespace JitBuilder

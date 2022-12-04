@@ -22,16 +22,14 @@
 #ifndef CONTROLOPERATIONS_INCL
 #define CONTROLOPERATIONS_INCL
 
-#include "Operation.hpp"
-#include "BaseSymbols.hpp"
+#include "JBCore.hpp"
+#include "Func/Func.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 namespace Base {
 
 class BaseExtension;
-class Op_ForLoopUp;
-class LocalSymbol;
 
 class Op_Call : public OperationR1S1VN {
     friend class BaseExtension;
@@ -42,10 +40,26 @@ public:
     virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
-    Op_Call(LOCATION, Extension *ext, Builder * parent, ActionID aCall, Value *result, FunctionSymbol *target, std::va_list & args);
-    Op_Call(LOCATION, Extension *ext, Builder * parent, ActionID aCall, FunctionSymbol *target, std::va_list & args);
+    Op_Call(LOCATION, Extension *ext, Builder * parent, ActionID aCall, Value *result, Func::FunctionSymbol *target, std::va_list & args);
+    Op_Call(LOCATION, Extension *ext, Builder * parent, ActionID aCall, Func::FunctionSymbol *target, std::va_list & args);
     Op_Call(LOCATION, Extension *ext, Builder * parent, ActionID aCall, OperationCloner *cloner)
         : OperationR1S1VN(PASSLOC, aCall, ext, parent, cloner) {
+    }
+};
+
+class Op_CallVoid : public OperationR0S1VN {
+    friend class BaseExtension;
+
+public:
+    virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
+    virtual void write(TextWriter &w) const;
+    virtual void jbgen(JB1MethodBuilder *j1mb) const;
+
+protected:
+    Op_CallVoid(LOCATION, Extension *ext, Builder * parent, ActionID aCallVoid, Value *result, Func::FunctionSymbol *target, std::va_list & args);
+    Op_CallVoid(LOCATION, Extension *ext, Builder * parent, ActionID aCallVoid, Func::FunctionSymbol *target, std::va_list & args);
+    Op_CallVoid(LOCATION, Extension *ext, Builder * parent, ActionID aCallVoid, OperationCloner *cloner)
+        : OperationR0S1VN(PASSLOC, aCallVoid, ext, parent, cloner) {
     }
 };
 
@@ -294,7 +308,7 @@ public:
 protected:
     Op_ForLoopUp(LOCATION, Extension *ext, Builder * parent, ActionID aForLoopUp, ForLoopBuilder *loopBuilder);
 
-    LocalSymbol *_loopVariable;
+    Func::LocalSymbol *_loopVariable;
     Value * _initial;
     Value * _final;
     Value * _bump;
@@ -497,19 +511,19 @@ class ForLoop : public Operation
     {
     public:
     virtual size_t size() const { return sizeof(ForLoop); }
-    static ForLoop * create(Builder * parent, bool countsUp, LocalSymbol * loopSym,
+    static ForLoop * create(Builder * parent, bool countsUp, Func::LocalSymbol * loopSym,
                                     Builder * loopBody, Builder * loopBreak, Builder * loopContinue,
                                     Value * initial, Value * end, Value * bump);
-    static ForLoop * create(Builder * parent, bool countsUp, LocalSymbol * loopSym,
+    static ForLoop * create(Builder * parent, bool countsUp, Func::LocalSymbol * loopSym,
                                     Builder * loopBody, Builder * loopBreak,
                                     Value * initial, Value * end, Value * bump);
-    static ForLoop * create(Builder * parent, bool countsUp, LocalSymbol * loopSym,
+    static ForLoop * create(Builder * parent, bool countsUp, Func::LocalSymbol * loopSym,
                                     Builder * loopBody, Value * initial, Value * end, Value * bump);
 
     static void initializeTypeProductions(TypeDictionary * types, TypeGraph * graph);
 
     virtual bool countsUp() const                              { return (bool)(_countsUp->getInt8()); }
-    virtual LocalSymbol *getLoopSymbol() const             { return _loopSym; }
+    virtual Func::LocalSymbol *getLoopSymbol() const             { return _loopSym; }
 
     virtual Value * getInitial() const                        { return _initial; }
     virtual Value * getEnd() const                             { return _end; }
@@ -576,18 +590,18 @@ class ForLoop : public Operation
     virtual Operation * clone(Builder *b, OperationCloner *cloner) const;
 
     protected:
-    ForLoop(Builder * parent, bool countsUp, LocalSymbol *loopSym,
+    ForLoop(Builder * parent, bool countsUp, Func::LocalSymbol *loopSym,
               Builder * loopBody, Builder * loopBreak, Builder * loopContinue,
               Value * initial, Value * end, Value * bump);
-    ForLoop(Builder * parent, bool countsUp, LocalSymbol *loopSym,
+    ForLoop(Builder * parent, bool countsUp, Func::LocalSymbol *loopSym,
               Builder * loopBody, Builder * loopBreak,
               Value * initial, Value * end, Value * bump);
-    ForLoop(Builder * parent, bool countsUp, LocalSymbol *loopSym,
+    ForLoop(Builder * parent, bool countsUp, Func::LocalSymbol *loopSym,
               Builder * loopBody,
               Value * initial, Value * end, Value * bump);
 
     Literal *_countsUp;
-    LocalSymbol *_loopSym;
+    Func::LocalSymbol *_loopSym;
 
     Builder * _loopBody;
     Builder * _loopBreak;

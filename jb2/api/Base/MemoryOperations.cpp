@@ -20,62 +20,14 @@
  *******************************************************************************/
 
 #include <stdint.h>
-#include "BaseExtension.hpp"
-#include "BaseSymbols.hpp"
-#include "BaseTypes.hpp"
-#include "Builder.hpp"
-#include "ControlOperations.hpp"
-#include "Function.hpp"
-#include "JB1MethodBuilder.hpp"
-#include "Literal.hpp"
-#include "Location.hpp"
-#include "MemoryOperations.hpp"
-#include "Operation.hpp"
-#include "OperationCloner.hpp"
-#include "TextWriter.hpp"
-#include "Value.hpp"
-
-using namespace OMR::JitBuilder;
+#include "Base/BaseExtension.hpp"
+#include "Base/BaseSymbol.hpp"
+#include "Base/BaseTypes.hpp"
+#include "Base/MemoryOperations.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 namespace Base {
-
-//
-// Load
-//
-Op_Load::Op_Load(LOCATION, Extension *ext, Builder * parent, ActionID aLoad, Value *result, Symbol *symbol)
-    : OperationR1S1(PASSLOC, aLoad, ext, parent, result, symbol) {
-}
-
-Operation *
-Op_Load::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    return new Op_Load(PASSLOC, this->_ext, b, this->action(), cloner->result(), cloner->symbol());
-}
-
-void
-Op_Load::jbgen(JB1MethodBuilder *j1mb) const {
-    j1mb->Load(location(), this->parent(), this->_result, this->_symbol);
-}
-
-
-//
-// Store
-//
-Op_Store::Op_Store(LOCATION, Extension *ext, Builder * parent, ActionID aStore, Symbol *symbol, Value *value)
-    : OperationR0S1V1(PASSLOC, aStore, ext, parent, symbol, value) {
-    assert(value);
-}
-
-Operation *
-Op_Store::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    return new Op_Store(PASSLOC, this->_ext, b, this->action(), cloner->symbol(), cloner->operand());
-}
-
-void
-Op_Store::jbgen(JB1MethodBuilder *j1mb) const {
-    j1mb->Store(location(), this->parent(), this->_symbol, this->_value);
-}
 
 
 //
