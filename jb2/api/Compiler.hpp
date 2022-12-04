@@ -38,6 +38,8 @@ namespace JitBuilder {
 
 class Compilation;
 class CompilationException;
+class CompiledBody;
+class CompileUnit;
 class Config;
 class Extension;
 class JB1;
@@ -49,7 +51,11 @@ class Type;
 class TypeDictionary;
 
 class Compiler {
+    friend class Compilation;
     friend class CompilationException;
+    friend class CompiledBody;
+    friend class CompileUnit;
+    friend class Context;
     friend class Extension;
     friend class Pass;
     friend class Strategy;
@@ -59,12 +65,13 @@ class Compiler {
     typedef std::map<PassID, PassChain> PassRegistry;
 
 public:
-    Compiler(std::string name, Config *config=NULL);
+    Compiler(std::string name, Config *config=NULL, Compiler *parent=NULL);
     virtual ~Compiler();
 
     CompilerID id() const { return _id; }
     std::string name() const { return _name; }
     Config *config() const { return _config; }
+    Compiler *parent() const { return _parent; }
     TypeDictionary *dict() const { return _dict; }
 
     ExtensionID getExtensionID() { return _nextExtensionID++; }
@@ -79,7 +86,7 @@ public:
     bool validateExtension(std::string name) const;
 
     PassID lookupPass(std::string name);
-    CompilerReturnCode compile(Compilation *comp, StrategyID strategyID);
+    CompilerReturnCode compile(LOCATION, Compilation *comp, StrategyID strategyID);
 
     const std::string actionName(ActionID a) const {
         assert(a < _nextActionID);
@@ -117,11 +124,14 @@ protected:
     void extensionCouldNotCreate(LOCATION, std::string name);
     void extensionVersionMismatch(LOCATION, std::string name, const SemanticVersion *version, const SemanticVersion *extensionVersion);
 
+    void notifyRecompile(CompileUnit *unit, CompiledBody *oldBody, CompiledBody *newBody, StrategyID strategy=NoStrategy);
+
+    uint64_t _eyeCatcher;
     CompilerID _id;
     std::string _name;
-    Config *_config;
     bool _myConfig;
-    bool _myDict;
+    Config *_config;
+    Compiler *_parent;
 
     JB1 *_jb1;
 
@@ -135,6 +145,18 @@ protected:
     PassID _nextPassID;
     std::map<std::string, PassID> _registeredPassNames;
     PassRegistry _passRegistry;
+
+    CompilationID getCompilationID() { return this->_nextCompilationID++; }
+    CompilationID _nextCompilationID;
+
+    CompileUnitID getCompiledBodyID() { return this->_nextCompiledBodyID++; }
+    CompileUnitID _nextCompiledBodyID;
+
+    CompileUnitID getCompileUnitID() { return this->_nextCompileUnitID++; }
+    CompileUnitID _nextCompileUnitID;
+
+    ContextID getContextID() { return _nextContextID++; }
+    ContextID _nextContextID;
 
     CompilerReturnCode assignReturnCode(std::string name);
     CompilerReturnCode _nextReturnCode;
@@ -156,9 +178,10 @@ protected:
 
     CompilationException *_errorCondition;
 
+    static EyeCatcher EYE_CATCHER_COMPILER;
     static CompilerID nextCompilerID;
 
-// put these at end so they're initialized after _nextReturnCode is set
+// put these at end so they're initialized after everthing else
 public:
     CompilerReturnCode CompileSuccessful;
     CompilerReturnCode CompileNotStarted;
@@ -170,6 +193,8 @@ public:
     CompilerReturnCode CompilerError_Extension_HasNoCreateFunction;
     CompilerReturnCode CompilerError_Extension_CouldNotCreate;
     CompilerReturnCode CompilerError_Extension_VersionMismatch;
+
+    StrategyID jb1cgStrategyID;
 };
 
 class CompilationException : public std::exception {
@@ -209,4 +234,3 @@ protected:
 } // namespace OMR
 
 #endif // !defined(COMPILER_INCL)
-

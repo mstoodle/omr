@@ -25,6 +25,7 @@
 #include "Config.hpp"
 #include "Extension.hpp"
 #include "JB1.hpp"
+#include "JB1CodeGenerator.hpp"
 #include "Pass.hpp"
 #include "SemanticVersion.hpp"
 #include "Strategy.hpp"
@@ -35,13 +36,15 @@ namespace OMR {
 namespace JitBuilder {
 
 CompilerID Compiler::nextCompilerID = 1; // 0 is reserved
+EyeCatcher Compiler::EYE_CATCHER_COMPILER=0xAABBCCDDDDCCBBAA;
 
-Compiler::Compiler(std::string name, Config *config)
-    : _id(nextCompilerID++)
+Compiler::Compiler(std::string name, Config *config, Compiler *parent)
+    : _eyeCatcher(EYE_CATCHER_COMPILER)
+    , _id(nextCompilerID++)
     , _name(name)
-    , _config(config)
-    , _myConfig(false)
-    , _myDict(false)
+    , _myConfig(config == NULL)
+    , _config(config != NULL ? config : new Config())
+    , _parent(parent)
     , _jb1(JB1::instance())
     , _nextExtensionID(NoExtension+1)
     , _extensions()
@@ -50,11 +53,15 @@ Compiler::Compiler(std::string name, Config *config)
     , _nextPassID(NoPass+1)
     , _registeredPassNames()
     , _passRegistry()
+    , _nextCompilationID(NoCompilation)
+    , _nextCompileUnitID(NoCompileUnit)
+    , _nextCompiledBodyID(NoCompiledBody)
+    , _nextContextID(NoContext)
     , _nextReturnCode(0)
     , _returnCodeNames()
     , _nextStrategyID(NoStrategy+1)
     , _strategies()
-    , _nextTypeID(NoType+1)
+    , _nextTypeID(NoTypeID+1)
     , _types()
     , _nextTypeDictionaryID(0)
     , _target(NULL)
@@ -72,16 +79,22 @@ Compiler::Compiler(std::string name, Config *config)
     , CompilerError_Extension_CouldNotCreate(assignReturnCode("CompilerError_Extension_CouldNotCreate"))
     , CompilerError_Extension_VersionMismatch(assignReturnCode("CompilerError_Extension_VersionMismatch")) {
 
-    if (_config == NULL) {
-        _config = new Config();
-        _myConfig = true;
-    }
     _jb1->initialize();
+
+    Strategy *jb1cgStrategy = new Strategy(this, "jb1cg");
+    Pass *jb1cg = new JB1CodeGenerator(this);
+    jb1cgStrategy->addPass(jb1cg);
+    jb1cgStrategyID = jb1cgStrategy->id();
+
+    // has to be last since Extension's constructor will use this object
+    if (parent == NULL)
+        addExtension(new Extension(LOC, this));
 }
 
 Compiler::~Compiler() {
     _jb1->shutdown();
-    delete _dict;
+    if (_dict != NULL)
+        delete _dict;
     if (_myConfig && _config != NULL)
         delete _config;
     for (auto it = _extensions.begin();it != _extensions.end();it++) {
@@ -94,7 +107,7 @@ Compiler::~Compiler() {
 }
 
 extern "C" {
-    typedef Extension * (*CreateFunction)(Compiler *);
+    typedef Extension * (*CreateFunction)(LOCATION, Compiler *);
 }
 
 Extension *
@@ -128,7 +141,7 @@ Compiler::internalLoadExtension(LOCATION, const SemanticVersion *version, std::s
         return NULL;
     }
 
-    ext = create(this);
+    ext = create(LOC, this);
     if (ext == NULL) {
         dlclose(handle);
         extensionCouldNotCreate(LOC, soname);
@@ -155,14 +168,21 @@ Compiler::addExtension(Extension *ext) {
 bool
 Compiler::validateExtension(std::string name) const {
     auto it = _extensions.find(name);
-    return (it != _extensions.end());
+    if (it != _extensions.end())
+        return true;
+    if (_parent)
+        return _parent->validateExtension(name);
+    return false;
 }
 
 Extension *
 Compiler::internalLookupExtension(std::string name) {
     auto it = _extensions.find(name);
-    if (it == _extensions.end())
+    if (it == _extensions.end()) {
+        if (_parent != NULL)
+            return _parent->internalLookupExtension(name);
         return NULL;
+    }
     assert(it->first == name);
     return it->second;
 }
@@ -207,19 +227,23 @@ Compiler::addStrategy(Strategy *st) {
 Strategy *
 Compiler::lookupStrategy(StrategyID id) {
     auto it = _strategies.find(id);
-    if (it == _strategies.end())
+    if (it == _strategies.end()) {
+        if (_parent != NULL)
+            return _parent->lookupStrategy(id);
         return NULL;
+    }
     return it->second;
 }
 
 CompilerReturnCode
-Compiler::compile(Compilation *comp, StrategyID strategyID) {
+Compiler::compile(LOCATION, Compilation *comp, StrategyID strategyID) {
     try {
-        bool success = comp->buildIL();
+
+        bool success = comp->prepareIL(PASSLOC);
         if (!success)
             return CompileFail_IlGen;
 
-        if (strategyID == NoStrategy)
+        if (strategyID == NoStrategy) // nothing more to do
             return CompileSuccessful;
 
         Strategy *st = lookupStrategy(strategyID);
@@ -227,6 +251,7 @@ Compiler::compile(Compilation *comp, StrategyID strategyID) {
             return CompileFail_UnknownStrategyID;
 
         return st->perform(comp);
+
     } catch (CompilationException e) {
         // only if config.verboseErrors()?
         std::cerr << "Location: " << e.locationLine();
@@ -274,6 +299,11 @@ Compiler::extensionVersionMismatch(LOCATION, std::string name, const SemanticVer
         .appendMessageLine(std::string("           minor ").append(std::to_string(extensionVersion->minor())))
         .appendMessageLine(std::string("           patch ").append(std::to_string(extensionVersion->patch())));
     _errorCondition = e;
+}
+
+void
+Compiler::notifyRecompile(CompileUnit *unit, CompiledBody *oldBody, CompiledBody *newBody, StrategyID strategy) {
+    // TODO: notify registered Listeners
 }
 
 } // namespace JitBuilder

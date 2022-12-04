@@ -33,6 +33,7 @@ namespace OMR {
 namespace JitBuilder {
 
 class Compilation;
+class LiteralDictionary;
 class TextWriter;
 class Type;
 
@@ -41,6 +42,7 @@ class Literal {
 
 public:
     Literal(LOCATION, Compilation *comp, const Type *t, const LiteralBytes *v);
+    Literal(LOCATION, LiteralDictionary *litDict, const Type *t, const LiteralBytes *v);
     ~Literal();
 
     LiteralID id() const { return _id; }
@@ -57,7 +59,7 @@ public:
 protected:
     LiteralID _id;
     CreateLocation _creator;
-    Compilation *_comp;
+    LiteralDictionary *_litDict;
     const Type *_type;
     const LiteralBytes *_pValue;
 };

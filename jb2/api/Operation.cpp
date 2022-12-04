@@ -135,6 +135,11 @@ Operation::writeFull(TextWriter & w) const {
 }
 
 void
+Operation::write(TextWriter & w) const {
+    w << this->name() << w.endl();
+}
+
+void
 OperationR0S1::write(TextWriter & w) const {
     w << this->name() << " " << this->_symbol << w.endl();
 }
@@ -159,6 +164,21 @@ OperationR0T1V2::write(TextWriter & w) const {
     w << this->name() << " ";
     this->_type->writeType(w);
     w << " " << this->_base << " " << this->_value << w.endl();
+}
+
+OperationR0S1VN::OperationR0S1VN(LOCATION, ActionID a, Extension *ext, Builder * parent, OperationCloner * cloner)
+    : OperationR0S1(PASSLOC, a, ext, parent, cloner->symbol()) {
+
+    for (auto a=0;a < cloner->numOperands(); a++)
+        _values.push_back(cloner->operand(a));
+    }
+
+void
+OperationR0S1VN::write(TextWriter & w) const {
+    w << this->name() << " " << this->symbol();
+    for (auto a=0;a < this->numOperands(); a++)
+        w << " " << operand(a);
+    w << w.endl();
 }
 
 void
@@ -218,8 +238,7 @@ OperationR1S1VN::OperationR1S1VN(LOCATION, ActionID a, Extension *ext, Builder *
 
 void
 OperationR1S1VN::write(TextWriter & w) const {
-    if (this->_result)
-        w << this->_result << " = ";
+    w << this->_result << " = ";
     w << this->name() << " " << this->symbol();
     for (auto a=0;a < this->numOperands(); a++)
         w << " " << operand(a);

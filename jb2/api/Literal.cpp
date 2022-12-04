@@ -22,6 +22,7 @@
 #include <string.h>
 #include "Compilation.hpp"
 #include "Literal.hpp"
+#include "LiteralDictionary.hpp"
 #include "TextWriter.hpp"
 #include "Type.hpp"
 
@@ -29,9 +30,22 @@ namespace OMR {
 namespace JitBuilder {
 
 Literal::Literal(LOCATION, Compilation *comp, const Type *type, const LiteralBytes *v)
-    : _id(comp->getLiteralID())
+    : _id(comp->litdict()->getLiteralID())
     , _creator(PASSLOC)
-    , _comp(comp)
+    , _litDict(comp->litdict())
+    , _type(type) {
+
+    // privatize the literal value
+    size_t numBytes = (type->size() / 8) + ((type->size() & 7 > 0) ? 1 : 0);
+    LiteralBytes *newBytes = new LiteralBytes[numBytes];
+    memcpy(newBytes, v, numBytes);
+    _pValue = newBytes;
+}
+
+Literal::Literal(LOCATION, LiteralDictionary *litDict, const Type *type, const LiteralBytes *v)
+    : _id(litDict->getLiteralID())
+    , _creator(PASSLOC)
+    , _litDict(litDict)
     , _type(type) {
 
     // privatize the literal value

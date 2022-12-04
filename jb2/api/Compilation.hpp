@@ -35,6 +35,7 @@ namespace JitBuilder {
 
 class Builder;
 class Compiler;
+class CompileUnit;
 class Config;
 class Context;
 class CreateLocation;
@@ -51,6 +52,8 @@ class Visitor;
 
 class Compilation {
     friend class Builder;
+    friend class CompileUnit;
+    friend class Context;
     friend class Literal;
     friend class LiteralDictionary;
     friend class Location;
@@ -61,19 +64,18 @@ class Compilation {
     friend class Visitor;
 
     public:
-    Compilation(Compiler *compiler, TypeDictionary *dict, Config *localConfig=NULL);
+    Compilation(Compiler *compiler, CompileUnit *unit, StrategyID strategy=NoStrategy, TypeDictionary *typeDict=NULL, Config *config=NULL);
     virtual ~Compilation();
 
     CompilationID id() const { return _id; }
     Compiler *compiler() const { return _compiler; }
+    CompileUnit *unit() const { return _unit; }
     Config *config() const { return _config; }
     Context *context() const { return _context; }
 
-    TypeDictionary *dict() const { return _typeDict; }
+    TypeDictionary *typedict() const { return _typeDict; }
     LiteralDictionary *litdict() const { return _literalDict; }
     SymbolDictionary *symdict() const { return _symbolDict; }
-
-    virtual bool ilBuilt() const { return _ilBuilt; }
 
     void registerBuilder(Builder *b);
 
@@ -90,23 +92,27 @@ class Compilation {
     BuilderIterator buildersBegin() { return BuilderIterator(_builders); }
     BuilderIterator buildersEnd() { return endBuilderIterator; }
 
-    virtual CompilerReturnCode compile(std::string strategy);
+    //virtual CompilerReturnCode compile(std::string strategy);
     void setLogger(TextWriter * logger) { _logger = logger; }
     TextWriter * logger(bool enabled=true) const { return enabled ? _logger : NULL; }
     virtual void write(TextWriter &w) const;
 
-    virtual bool buildIL() { _ilBuilt=true; return true; }
+    virtual bool prepareIL(LOCATION);
+
     virtual void constructJB1Function(JB1MethodBuilder *j1mb) { }
     virtual void jbgenProlog(JB1MethodBuilder *j1mb) { }
-    virtual void setNativeEntryPoint(void *entry, int i=0) { }
+    virtual void setNativeEntryPoint(void *entry, int i=0);
 
     virtual void replaceTypes(TypeReplacer *repl) { }
 
-    protected:
+protected:
+    void setContext(Context *context) { _context = context; }
+
     virtual void addInitialBuildersToWorklist(BuilderWorklist & worklist);
     Literal *registerLiteral(LOCATION, const Type *type, const LiteralBytes *value);
 
     BuilderID getBuilderID() { return _nextBuilderID++; }
+    ContextID getContextID() { return _nextContextID++; }
     LiteralID getLiteralID() { return _nextLiteralID++; }
     LiteralDictionaryID getLiteralDictionaryID() { return _nextLiteralDictionaryID++; }
     LocationID getLocationID() { return _nextLocationID++; }
@@ -115,18 +121,9 @@ class Compilation {
     ValueID getValueID() { return _nextValueID++; }
 
     CompilationID _id;
-    Compiler *_compiler;
-    Config *_config;
-    bool _myConfig;
-    Context *_context;
-
-    LiteralDictionary *_literalDict;
-    SymbolDictionary *_symbolDict;
-    TypeDictionary *_typeDict;
-
-    TextWriter * _logger;
 
     BuilderID _nextBuilderID;
+    ContextID _nextContextID;
     //CaseID _nextCaseID;
     LiteralID _nextLiteralID;
     LiteralDictionaryID _nextLiteralDictionaryID;
@@ -136,11 +133,22 @@ class Compilation {
     TransformationID _nextTransformationID;
     ValueID _nextValueID;
 
+    Compiler *_compiler;
+    CompileUnit *_unit;
+    StrategyID _strategy;
+    Config *_config;
+    Context *_context;
+
+    LiteralDictionary *_literalDict;
+    SymbolDictionary *_symbolDict;
+    bool _myTypeDict;
+    TypeDictionary *_typeDict;
+
+    TextWriter * _logger;
+
+
     BuilderVector _builders;
 
-    bool _ilBuilt;
-
-    static CompilationID nextCompilationID;
     static BuilderIterator endBuilderIterator;
     static LiteralIterator endLiteralIterator;
 };

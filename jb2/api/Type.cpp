@@ -22,6 +22,7 @@
 #include "Compilation.hpp"
 #include "Compiler.hpp"
 #include "Extension.hpp"
+#include "JB1MethodBuilder.hpp"
 #include "TextWriter.hpp"
 #include "Type.hpp"
 #include "TypeDictionary.hpp"
@@ -105,6 +106,34 @@ Type::getTypeClassKind() {
         kindRegistered = true;
     }
     return TYPEKIND;
+}
+
+
+//
+// NoType
+//
+
+TypeKind NoTypeType::TYPEKIND = KindService::NoKind;
+bool NoTypeType::kindRegistered = false;
+
+const TypeKind
+NoTypeType::getTypeClassKind() {
+    if (!kindRegistered) {
+        TYPEKIND = KindService::NoKind;
+        kindRegistered = true;
+    }
+    return TYPEKIND;
+}
+
+void
+NoTypeType::printValue(TextWriter &w, const void *p) const {
+    w << name();
+}
+
+bool
+NoTypeType::registerJB1Type(JB1MethodBuilder *j1mb) const {
+    j1mb->registerNoType(this);
+    return true;
 }
 
 } // namespace JitBuilder

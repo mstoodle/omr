@@ -22,6 +22,7 @@
 #include "Builder.hpp"
 #include "Compilation.hpp"
 #include "Compiler.hpp"
+#include "CompileUnit.hpp"
 #include "Config.hpp"
 #include "Context.hpp"
 #include "Literal.hpp"
@@ -33,42 +34,36 @@
 namespace OMR {
 namespace JitBuilder {
 
-CompilationID Compilation::nextCompilationID = 1; // 0 is reserved
-
 BuilderIterator Compilation::endBuilderIterator;
 
-Compilation::Compilation(Compiler *compiler, TypeDictionary *typeDict, Config *config)
-    : _id(nextCompilationID++)
+Compilation::Compilation(Compiler *compiler, CompileUnit *unit, StrategyID strategy, TypeDictionary *typeDict, Config *config)
+    : _id(compiler->getCompilationID())
+    , _nextBuilderID(NoBuilder+1) // must precede anything that might create Builders
+    , _nextContextID(NoContext+1) // must precede anything that might create Contexts
+    , _nextLiteralDictionaryID(0) // must precede anything that might create LiteralDictionaries
+    , _nextLiteralID(NoLiteral+1) // must precede anything that might create Literal
+    , _nextLocationID(NoLocation+1) // must precede anything that might create Locations
+    , _nextOperationID(NoOperation+1) // must precede anything that might create Operations
+    , _nextSymbolDictionaryID(0) // must precede anything that might create SymbolDictionaries
+    , _nextTransformationID(NoTransformation) // must precede anything that might create Transformations
+    , _nextValueID(NoValue) // must precede anything that might create Values
     , _compiler(compiler)
-    , _config(config)
-    , _myConfig(true)
-    , _context(new Context(this, NULL, "root"))
+    , _unit(unit)
+    , _strategy(strategy)
+    , _config((config == NULL) ? compiler->config() : config)
+    , _context(NULL)
     , _literalDict(new LiteralDictionary(this))
     , _symbolDict(new SymbolDictionary(this))
-    , _typeDict(typeDict)
-    , _nextBuilderID(NoBuilder+1)
-    //, _nextCaseID(No)
-    , _nextLiteralID(NoLiteral+1)
-    , _nextLiteralDictionaryID(0)
-    , _nextLocationID(NoLocation+1)
-    , _nextOperationID(NoOperation+1)
-    , _nextSymbolDictionaryID(0)
-    , _nextTransformationID(NoTransformation+1)
-    , _nextValueID(NoValue+1)
-    , _ilBuilt(false) {
+    , _myTypeDict(typeDict == NULL)
+    , _typeDict(_myTypeDict ? new TypeDictionary(compiler, "Compilation", compiler->dict()) : typeDict) {
 
-    if (_config == NULL) {
-        _config = compiler->config();
-        _myConfig = false;
-    }
 }
 
 Compilation::~Compilation() {
-    if (_myConfig && _config != NULL)
-        delete _config;
+    if (_myTypeDict && _typeDict != NULL)
+        delete _typeDict;
     delete _symbolDict;
     delete _literalDict;
-    delete _context;
 }
 
 void
@@ -89,7 +84,7 @@ Compilation::write(TextWriter &w) const {
    w << w.endl();
 
    w.indentIn();
-   TypeDictionary *td = dict();
+   TypeDictionary *td = typedict();
    td->write(w);
 
    SymbolDictionary *sd = symdict();
@@ -99,10 +94,17 @@ Compilation::write(TextWriter &w) const {
    ld->write(w);
 }
 
-CompilerReturnCode
-Compilation::compile(std::string strategy) {
-    // debatable but let's call this an error
-    return _compiler->CompileFailed;
+bool
+Compilation::prepareIL(LOCATION) {
+    if (unit()->initContext(PASSLOC, this, _context) == false)
+        return false;
+
+    return unit()->buildIL(PASSLOC, this, _context);
+}
+
+void
+Compilation::setNativeEntryPoint(void *entryPoint, int e) {
+    _context->setNativeEntryPoint(entryPoint, e);
 }
 
 } // namespace JitBuilder
