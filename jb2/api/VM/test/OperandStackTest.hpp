@@ -25,7 +25,10 @@
 #define OPERANDSTACKTESTS_INCL
 
 #include <stddef.h>
-#include "Base/Function.hpp"
+#include "JBCore.hpp"
+#include "Func/Func.hpp"
+#include "Base/Base.hpp"
+#include "VM/VM.hpp"
 
 #define STACKVALUETYPE	Int32
 #define STACKVALUECTYPE int32_t
@@ -33,23 +36,14 @@
 //#define STACKVALUETYPE  Base::Int64
 //#define STACKVALUECTYPE int64_t
 
-namespace OMR {
-    namespace JitBuilder {
-        class Compiler;
-
-        namespace Base {
-            class BytecodeBuilder;
-            class StructType;
-        }
-    }
-}
-
 using namespace OMR::JitBuilder;
 
-class OperandStackTestFunction : public Base::Function {
+class OperandStackTestFunction : public Func::Function {
 public:
-    OperandStackTestFunction(LOCATION, Base::BaseExtension *base, VM::VMExtension *vme);
-    virtual bool buildIL();
+    OperandStackTestFunction(LOCATION, VM::VMExtension *vmx);
+
+    virtual bool initContext(LOCATION, Func::FunctionCompilation *comp, Func::FunctionContext *fc);
+    virtual bool buildIL(LOCATION, Func::FunctionCompilation *comp, Func::FunctionContext *fc);
 
     static void verifyStack(const char *step, int32_t max, int32_t num, ...);
     static bool verifyUntouched(int32_t maxTouched);
@@ -57,31 +51,32 @@ public:
     STACKVALUECTYPE **getSPPtr() { return &_realStackTop; }
 
 protected:
-    VM::BytecodeBuilder * testStack(VM::BytecodeBuilder *b, bool useEqual);
+    VM::BytecodeBuilder * testStack(VM::BytecodeBuilder *b, Base::BaseCompilation *comp, bool useEqual);
 
-    Base::BaseExtension *_base;
-    VM::VMExtension *_vme;
+    Base::BaseExtension *_bx;
+    Func::FunctionExtension *_fx;
+    VM::VMExtension *_vmx;
 
     const Type * _valueType;
 
-    Base::FunctionSymbol *_createStack;
-    Base::FunctionSymbol *_moveStack;
-    Base::FunctionSymbol *_freeStack;
-    Base::FunctionSymbol *_verifyResult0;
-    Base::FunctionSymbol *_verifyResult1;
-    Base::FunctionSymbol *_verifyResult2;
-    Base::FunctionSymbol *_verifyResult3;
-    Base::FunctionSymbol *_verifyResult4;
-    Base::FunctionSymbol *_verifyResult5;
-    Base::FunctionSymbol *_verifyResult6;
-    Base::FunctionSymbol *_verifyResult7;
-    Base::FunctionSymbol *_verifyResult8;
-    Base::FunctionSymbol *_verifyResult9;
-    Base::FunctionSymbol *_verifyResult10;
-    Base::FunctionSymbol *_verifyResult11;
-    Base::FunctionSymbol *_verifyResult12;
-    Base::FunctionSymbol *_verifyValuesEqual;
-    Base::FunctionSymbol *_modifyTop3Elements;
+    Func::FunctionSymbol *_createStack;
+    Func::FunctionSymbol *_moveStack;
+    Func::FunctionSymbol *_freeStack;
+    Func::FunctionSymbol *_verifyResult0;
+    Func::FunctionSymbol *_verifyResult1;
+    Func::FunctionSymbol *_verifyResult2;
+    Func::FunctionSymbol *_verifyResult3;
+    Func::FunctionSymbol *_verifyResult4;
+    Func::FunctionSymbol *_verifyResult5;
+    Func::FunctionSymbol *_verifyResult6;
+    Func::FunctionSymbol *_verifyResult7;
+    Func::FunctionSymbol *_verifyResult8;
+    Func::FunctionSymbol *_verifyResult9;
+    Func::FunctionSymbol *_verifyResult10;
+    Func::FunctionSymbol *_verifyResult11;
+    Func::FunctionSymbol *_verifyResult12;
+    Func::FunctionSymbol *_verifyValuesEqual;
+    Func::FunctionSymbol *_modifyTop3Elements;
 
     static STACKVALUECTYPE * _realStack;
     static STACKVALUECTYPE * _realStackTop;
@@ -94,13 +89,14 @@ protected:
 
 class OperandStackTestUsingStructFunction : public OperandStackTestFunction {
 public:
-    OperandStackTestUsingStructFunction(LOCATION, Base::BaseExtension *base, VM::VMExtension *vme);
-    virtual bool buildIL();
+    OperandStackTestUsingStructFunction(LOCATION, VM::VMExtension *vmx);
+    virtual bool initContext(LOCATION, Func::FunctionCompilation *comp, Func::FunctionContext *fc);
+    virtual bool buildIL(LOCATION, Func::FunctionCompilation *comp, Func::FunctionContext *fc);
 
 protected:
     const Base::StructType *_threadType;
     const Base::FieldType *_spField;
-    Base::ParameterSymbol *_threadParam;
+    Func::ParameterSymbol *_threadParam;
 };
 
 #endif // !defined(OPERANDSTACKTESTS_INCL)

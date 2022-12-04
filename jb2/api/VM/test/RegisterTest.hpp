@@ -25,21 +25,25 @@
 #define VMREGISTER_INCL
 
 #include "JBCore.hpp"
-#include "Base/Function.hpp"
+#include "Func/Func.hpp"
+#include "Base/Base.hpp"
+#include "VM/VM.hpp"
 
 using namespace OMR::JitBuilder;
 
-class VMRegisterFunction : public Base::Function {
+class VMRegisterFunction : public Func::Function {
 public:
     VMRegisterFunction(LOCATION, Compiler *compiler);
-    virtual bool buildIL();
+    virtual bool initContext(LOCATION, Func::FunctionCompilation *comp, Func::FunctionContext *fc);
+    virtual bool buildIL(LOCATION, Func::FunctionCompilation *comp, Func::FunctionContext *fc);
 
 protected:
-    Base::BaseExtension *_base;
-    VM::VMExtension *_vme;
+    Base::BaseExtension *_bx;
+    Func::FunctionExtension *_fx;
+    VM::VMExtension *_vmx;
 
-    Base::ParameterSymbol *_values;
-    Base::ParameterSymbol *_count;
+    Func::ParameterSymbol *_values;
+    Func::ParameterSymbol *_count;
 };
 
 typedef struct VMRegisterStruct {
@@ -47,17 +51,20 @@ typedef struct VMRegisterStruct {
    int32_t count;
 } VMRegisterStruct;
 
-class VMRegisterInStructFunction : public Base::Function {
+class VMRegisterInStructFunction : public Func::Function {
 public:
     VMRegisterInStructFunction(LOCATION, Compiler *compiler);
-    virtual bool buildIL();
+    virtual bool initContext(LOCATION, Func::FunctionCompilation *comp, Func::FunctionContext *fc);
+    virtual bool buildIL(LOCATION, Func::FunctionCompilation *comp, Func::FunctionContext *fc);
 
     protected:
-    Base::BaseExtension *_base;
-    VM::VMExtension *_vme;
+    Base::BaseExtension *_bx;
+    Func::FunctionExtension *_fx;
+    VM::VMExtension *_vmx;
+
     const Base::FieldType *_valuesField;
     const Base::FieldType *_countField;
-    Base::ParameterSymbol *_param;
+    Func::ParameterSymbol *_param;
 };
 
 #endif // !defined(VMREGISTER_INCL)

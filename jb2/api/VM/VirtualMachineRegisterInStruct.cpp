@@ -19,14 +19,8 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-
-#include "Base/BaseExtension.hpp"
-#include "Base/BaseSymbols.hpp"
-#include "Base/BaseTypes.hpp"
-#include "Base/Function.hpp"
 #include "VirtualMachineRegisterInStruct.hpp"
 #include "VMExtension.hpp"
-
 
 namespace OMR {
 namespace JitBuilder {
@@ -47,18 +41,18 @@ VirtualMachineRegisterInStruct::getStateClassKind() {
 VirtualMachineRegisterInStruct::VirtualMachineRegisterInStruct(LOCATION,
                                                                VMExtension *vme,
                                                                std::string name,
-                                                               Base::Function *func,
+                                                               Base::BaseCompilation *comp,
                                                                const Base::FieldType * fieldType,
-                                                               Base::LocalSymbol * localHoldingStructAddress,
+                                                               Func::LocalSymbol * localHoldingStructAddress,
                                                                bool doReload)
-    : VirtualMachineRegister(PASSLOC, vme, name, func, getStateClassKind())
+    : VirtualMachineRegister(PASSLOC, vme, name, comp, getStateClassKind())
     , _localHoldingStructAddress(localHoldingStructAddress)
     , _fieldType(fieldType) {
 
     const Type *regBaseType = fieldType->type();
     _integerTypeForAdjustments = regBaseType;
     if (regBaseType->isKind<Base::PointerType>()) {
-        _integerTypeForAdjustments = _vme->baseExt()->Word;
+        _integerTypeForAdjustments = _vme->bx()->Word;
         const Type *baseType = regBaseType->refine<Base::PointerType>()->baseType();
         _adjustByStep = baseType->size();
         _isAdjustable = true;
@@ -67,32 +61,35 @@ VirtualMachineRegisterInStruct::VirtualMachineRegisterInStruct(LOCATION,
         _isAdjustable = false;
     }
 
-    _local = func->DefineLocal(name, regBaseType);
+    Func::FunctionContext *fc = comp->funcContext();
+    _local = fc->DefineLocal(name, regBaseType);
     if (doReload) {
-        for (auto e=0;e < func->numEntryPoints();e++)
-            Reload(PASSLOC, func->builderEntry(e));
+        for (auto e=0;e < fc->numEntryPoints();e++)
+            Reload(PASSLOC, fc->builderEntryPoint(e));
     }
 }
 
 void
 VirtualMachineRegisterInStruct::Commit(LOCATION, Builder *b) {
-    Base::BaseExtension *base = _vme->baseExt();
-    Value *structBase = base->Load(PASSLOC, b, _localHoldingStructAddress);
-    Value *registerValue = base->Load(PASSLOC, b, _local);
-    base->StoreFieldAt(PASSLOC, b, _fieldType, structBase, registerValue);
+    Base::BaseExtension *bx = _vme->bx();
+    Func::FunctionExtension *fx = _vme->fx();
+    Value *structBase = fx->Load(PASSLOC, b, _localHoldingStructAddress);
+    Value *registerValue = fx->Load(PASSLOC, b, _local);
+    bx->StoreFieldAt(PASSLOC, b, _fieldType, structBase, registerValue);
 }
 
 VirtualMachineState *
 VirtualMachineRegisterInStruct::MakeCopy(LOCATION, Builder *b) {
-    return new  VirtualMachineRegisterInStruct(PASSLOC, _vme, _name, _func, _fieldType, _localHoldingStructAddress, false);
+    return new  VirtualMachineRegisterInStruct(PASSLOC, _vme, _name, _comp, _fieldType, _localHoldingStructAddress, false);
 }
 
 void
 VirtualMachineRegisterInStruct::Reload(LOCATION, Builder *b) {
-    Base::BaseExtension *base = _vme->baseExt();
-    Value *structBase = base->Load(PASSLOC, b, _localHoldingStructAddress);
-    Value *registerValue = base->LoadFieldAt(PASSLOC, b, _fieldType, structBase);
-    base->Store(PASSLOC, b, _local, registerValue);
+    Base::BaseExtension *bx = _vme->bx();
+    Func::FunctionExtension *fx = _vme->fx();
+    Value *structBase = fx->Load(PASSLOC, b, _localHoldingStructAddress);
+    Value *registerValue = bx->LoadFieldAt(PASSLOC, b, _fieldType, structBase);
+    fx->Store(PASSLOC, b, _local, registerValue);
 }
 
 } // namespace VM

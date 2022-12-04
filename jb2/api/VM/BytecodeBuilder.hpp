@@ -22,25 +22,16 @@
 #ifndef BYTECODEBUILDER_INCL
 #define BYTECODEBUILDER_INCL
 
-#include "stdint.h"
-#include "stddef.h"
 #include <list>
-#include "Builder.hpp"
+#include <stdint.h>
+#include <stddef.h>
+#include "JBCore.hpp"
+#include "Base/Base.hpp"
 
 namespace OMR {
 namespace JitBuilder {
-
-class Context;
-class TextWriter;
-class Type;
-class TypeDictionary;
-class Value;
-
-namespace Base { class FunctionCompilation; }
-
 namespace VM {
 
-class VirtualMachineRegister;
 class VirtualMachineState;
 class VMExtension;
 
@@ -48,7 +39,7 @@ class BytecodeBuilder: public Builder {
     friend VMExtension;
 
 public:
-    BytecodeBuilder(Base::FunctionCompilation *comp, VMExtension *vme, int32_t bcIndex, int32_t bcLength=1, std::string name="", Context *context=NULL);
+    BytecodeBuilder(Base::BaseCompilation *comp, VMExtension *vme, int32_t bcIndex, int32_t bcLength=1, Context *context=NULL, std::string name="");
     int32_t bcIndex() const { return _bcIndex; }
     int32_t bcLength() const { return _bcLength; }
 

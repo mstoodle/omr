@@ -22,28 +22,22 @@
 #ifndef VIRTUALMACHINEOPERANDSTACK_INCL
 #define VIRTUALMACHINEOPERANDSTACK_INCL
 
-#include "stdint.h"
-#include "stddef.h"
+#include <stdint.h>
+#include <stddef.h>
+#include "JBCore.hpp"
+#include "Func/Func.hpp"
+#include "Base/Base.hpp"
 #include "VirtualMachineState.hpp"
 
 namespace OMR {
 namespace JitBuilder {
-
-class Builder;
-class Type;
-class Value;
-
-namespace Base { class BytecodeBuilder; }
-namespace Base { class Function; }
-namespace Base { class LocalSymbol; }
-
 namespace VM {
 
 class VirtualMachineRegister;
 
 class VirtualMachineOperandStack: public VirtualMachineState {
 public:
-    VirtualMachineOperandStack(LOCATION, VMExtension *vme, Base::Function * func, int32_t sizeHint, VirtualMachineRegister * stackTopRegister, const Type *elementType, bool growsUp=true, int32_t stackInitialOffset=-1);
+    VirtualMachineOperandStack(LOCATION, VMExtension *vme, Base::BaseCompilation * comp, int32_t sizeHint, VirtualMachineRegister * stackTopRegister, const Type *elementType, bool growsUp=true, int32_t stackInitialOffset=-1);
     VirtualMachineOperandStack(LOCATION, VirtualMachineOperandStack * other);
 
     virtual void Commit(LOCATION, Builder * b);
@@ -66,7 +60,7 @@ protected:
     void checkSizeAndGrowIfNeeded();
     void grow(int32_t growAmount=0);
 
-    Base::Function * _func;
+    Base::BaseCompilation * _comp;
     VirtualMachineRegister * _stackTopRegister;
     const Type * _elementType;
     bool _growsUp;
@@ -74,7 +68,7 @@ protected:
     int32_t _stackOffset;
     int32_t _stackMax;
     int32_t _stackTop;
-    Base::LocalSymbol *_stackBaseLocal;
+    Func::LocalSymbol *_stackBaseLocal;
     int32_t _pushAmount;
     Value ** _stack;
 
