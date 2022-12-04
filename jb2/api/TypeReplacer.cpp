@@ -500,7 +500,7 @@ TypeReplacer::visitPreCompilation(Compilation * comp) {
  
     if (log) log->indent() << "TypeReplacer::look for new Types:" << log->endl();
     LOG_INDENT_REGION(log) {
-        TypeDictionary *dict = comp->dict();
+        TypeDictionary *dict = comp->typedict();
         for (auto it = dict->TypesBegin(); it != dict->TypesEnd(); it++) {
             const Type *type = *it;
             transformTypeIfNeeded(type);
@@ -558,7 +558,7 @@ TypeReplacer::transformLiteral(Literal *lv) {
 Builder *
 TypeReplacer::transformOperation(Operation * op) {
     TextWriter *log = comp()->logger(traceEnabled());
-    TypeDictionary *dict = comp()->dict();
+    TypeDictionary *dict = comp()->typedict();
     Builder *b = NULL;
 
     LOG_INDENT_REGION(log) {
@@ -713,7 +713,7 @@ TypeReplacer::finalCleanup() {
     if (log) log->indent() << "Final stage: removing types (" << _typesToRemove.size() << " types registered for removal):" << log->endl();
 
     LOG_INDENT_REGION(log) {
-        TypeDictionary *dict = _comp->dict();
+        TypeDictionary *dict = _comp->typedict();
         for (auto typeIt = _typesToRemove.begin(); typeIt != _typesToRemove.end(); typeIt++) {
             const Type *typeToRemove = *typeIt;
             #if 0
@@ -738,5 +738,5 @@ TypeReplacer::finalCleanup() {
     LOG_OUTDENT
 
     if (log) log->indent() << "Final dictionary:" << log->endl();
-    if (log) _comp->dict()->write(*log);
+    if (log) _comp->typedict()->write(*log);
 }
