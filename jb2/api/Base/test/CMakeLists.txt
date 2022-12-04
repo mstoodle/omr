@@ -36,6 +36,7 @@ set(GTEST_DIR $(omr_SOURCE_DIR)/third_party/gtest-1.8.0)
 	)
 	target_link_libraries(testbase
 		jb2base
+		jb2func
 		jb2core
 		jb2
 		omrGtest
@@ -43,6 +44,7 @@ set(GTEST_DIR $(omr_SOURCE_DIR)/third_party/gtest-1.8.0)
 	)
 	target_include_directories(testbase PRIVATE
 		${JB2_JBBASE_DIR}
+		${JB2_JBFUNC_DIR}
 		${JB2_JBCORE_DIR}
 	       	${GTEST_DIR}/include
 	)

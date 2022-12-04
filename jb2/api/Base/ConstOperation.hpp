@@ -22,16 +22,14 @@
 #ifndef CONSTOPERATIONS_INCL
 #define CONSTOPERATIONS_INCL
 
-#include "Literal.hpp"
-#include "Operation.hpp"
+#include "JBCore.hpp"
+#include "Func/Func.hpp"
 
 namespace OMR {
 namespace JitBuilder {
-
-class JB1MethodBuilder;
-class TextWriter;
-
 namespace Base {
+
+class BaseExtension;
 
 class Op_Const : public OperationR1L1 {
     friend class BaseExtension;
@@ -49,4 +47,3 @@ protected:
 } // namespace OMR
 
 #endif // !defined(CONSTOPERATIONS_INCL)
-

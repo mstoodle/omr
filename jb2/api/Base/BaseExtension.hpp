@@ -25,32 +25,13 @@
 #include <cstdarg>
 #include <map>
 #include <stdint.h>
-#include "CreateLoc.hpp"
-#include "Extension.hpp"
-#include "IDs.hpp"
-#include "SemanticVersion.hpp"
-#include "typedefs.hpp"
-
+#include "JBCore.hpp"
+#include "Func/Func.hpp"
 
 namespace OMR {
 namespace JitBuilder {
-
-class Compilation;
-class Context;
-class FieldType;
-class FunctionType;
-class Literal;
-class Location;
-class OperationCloner;
-class OperationReplacer;
-class PointerType;
-class StructType;
-class UnionType;
-class Value;
-
 namespace Base {
 
-class NoTypeType;
 class IntegerType;
 class Int8Type;
 class Int16Type;
@@ -64,16 +45,16 @@ class PointerTypeBuilder;
 class FieldType;
 class StructType;
 class UnionType;
-class FunctionType;
 
+class BaseCompilation;
 class BaseExtensionChecker;
 class ForLoopBuilder;
-class FunctionCompilation;
-class FunctionSymbol;
-class LocalSymbol;
 
 class BaseExtension : public Extension {
     friend class PointerTypeBuilder;
+
+protected:
+    Func::FunctionExtension *_fx;
 
 public:
     BaseExtension(LOCATION, Compiler *compiler, bool extended=false, std::string extensionName="");
@@ -81,8 +62,8 @@ public:
 
     static const std::string NAME;
 
-    // 4 == LocalSymbol, ParameterSymbol, FunctionSymbol, FieldSymbol
-    uint32_t numSymbolTypes() const { return 4; }
+    // 1 == FieldSymbol
+    uint32_t numSymbolTypes() const { return 1; }
 
     virtual const SemanticVersion * semver() const {
         return &version;
@@ -92,7 +73,6 @@ public:
     // Types
     //
 
-    const NoTypeType *NoType;
     const Int8Type *Int8;
     const Int16Type *Int16;
     const Int32Type *Int32;
@@ -102,13 +82,7 @@ public:
     const AddressType *Address;
     const Type *Word;
 
-    const PointerType *PointerTo(LOCATION, FunctionCompilation *comp, const Type *baseType);
-
-    #if 0
-    const FunctionType * DefineFunctionType(LOCATION, FunctionTypeBuilder *builder);
-    #endif
-    // deprecated
-    const FunctionType * DefineFunctionType(LOCATION, FunctionCompilation *comp, const Type *returnType, int32_t numParms, const Type **parmTypes);
+    const PointerType *PointerTo(LOCATION, Base::BaseCompilation *comp, const Type *baseType);
 
     //
     // Actions
@@ -125,6 +99,7 @@ public:
 
     // Control actions
     const ActionID aCall;
+    const ActionID aCallVoid;
     const ActionID aForLoopUp;
     const ActionID aGoto;
     const ActionID aIfCmpEqual;
@@ -142,8 +117,6 @@ public:
     const ActionID aReturn;
 
     // Memory actions
-    const ActionID aLoad;
-    const ActionID aStore;
     const ActionID aLoadAt;
     const ActionID aStoreAt;
     const ActionID aLoadField;
@@ -194,9 +167,9 @@ public:
     Value * Sub(LOCATION, Builder *b, Value *left, Value *right);
 
     // Control operations
-    Value *Call(LOCATION, Builder *b, FunctionSymbol *funcSym, ...);
-    Value *CallWithArgArray(LOCATION, Builder *b, FunctionSymbol *funcSym, int32_t numArgs, Value **args);
-    ForLoopBuilder *ForLoopUp(LOCATION, Builder *b, LocalSymbol *loopVariable, Value *initial, Value *final, Value *bump);
+    Value *Call(LOCATION, Builder *b, Func::FunctionSymbol *funcSym, ...);
+    Value *CallWithArgArray(LOCATION, Builder *b, Func::FunctionSymbol *funcSym, int32_t numArgs, Value **args);
+    ForLoopBuilder *ForLoopUp(LOCATION, Builder *b, Func::LocalSymbol *loopVariable, Value *initial, Value *final, Value *bump);
     void Goto(LOCATION, Builder *b, Builder *target);
     void IfCmpEqual(LOCATION, Builder *b, Builder *target, Value *left, Value *right);
     void IfCmpEqualZero(LOCATION, Builder *b, Builder *target, Value *condition);
@@ -214,8 +187,6 @@ public:
     void Return(LOCATION, Builder *b, Value *v);
 
     // Memory operations
-    Value * Load(LOCATION, Builder *b, Symbol *sym);
-    void Store(LOCATION, Builder *b, Symbol *sym, Value *value);
     Value * LoadAt(LOCATION, Builder *b, Value *ptrValue);
     void StoreAt(LOCATION, Builder *b, Value *ptrValue, Value *value);
     Value * LoadField(LOCATION, Builder *b, const FieldType *fieldType, Value *structValue);
@@ -227,10 +198,6 @@ public:
     Value * IndexAt(LOCATION, Builder *b, Value *base, Value *index);
 
     // Pseudo operations
-    Location * SourceLocation(LOCATION, Builder *b, std::string func);
-    Location * SourceLocation(LOCATION, Builder *b, std::string func, std::string lineNumber);
-    Location * SourceLocation(LOCATION, Builder *b, std::string func, std::string lineNumber, int32_t bcIndex);
-
     Value * ConstInt8(LOCATION, Builder *b, int8_t v);
     Value * ConstInt16(LOCATION, Builder *b, int16_t v);
     Value * ConstInt32(LOCATION, Builder *b, int32_t v);
@@ -244,7 +211,7 @@ public:
     Value * One(LOCATION, Builder *b, const Type *type);
 
     void Increment(LOCATION, Builder *b, Symbol *sym, Value *bump);
-    void Increment(LOCATION, Builder *b, LocalSymbol *sym);
+    void Increment(LOCATION, Builder *b, Func::LocalSymbol *sym);
 
     Value * OffsetAt(LOCATION, Builder *b, Value *array, size_t elementIndex);
     Value * LoadArray(LOCATION, Builder *b, Value *array, size_t elementIndex);
@@ -255,13 +222,11 @@ public:
 
     void registerChecker(BaseExtensionChecker *checker);
 
-    // JB1 compilation support
-    CompilerReturnCode jb1cgCompile(Compilation *comp);
+    CompilerReturnCode compile(LOCATION, Func::Function *func, StrategyID strategy, TextWriter *logger);
 
 protected:
     void failValidateOffsetAt(LOCATION, Builder *b, Value *array);
 
-    StrategyID _jb1cgStrategyID;
     std::list<BaseExtensionChecker *> _checkers;
 
     static const MajorID BASEEXT_MAJOR=0;
@@ -278,25 +243,25 @@ public:
     }
 
     virtual bool validateAdd(LOCATION, Builder *b, Value *left, Value *right);
-    virtual bool validateCall(LOCATION, Builder *b, FunctionSymbol *target, std::va_list & args);
-    //virtual bool validateCallWithArgArray(LOCATION, Builder *b, FunctionSymbol *target, int32_t numArgs, Value **args);
+    virtual bool validateCall(LOCATION, Builder *b, Func::FunctionSymbol *target, std::va_list & args);
+    //virtual bool validateCallWithArgArray(LOCATION, Builder *b, Func::FunctionSymbol *target, int32_t numArgs, Value **args);
     virtual bool validateConvertTo(LOCATION, Builder *b, const Type *type, Value *value);
     virtual bool validateMul(LOCATION, Builder *b, Value *left, Value *right);
     virtual bool validateSub(LOCATION, Builder *b, Value *left, Value *right);
     virtual bool validateIfCmp(LOCATION, Builder *b, Builder *target, Value *left, Value *right, CompilerReturnCode failCode, std::string opCodeName);
     virtual bool validateIfCmpZero(LOCATION, Builder *b, Builder *target, Value *value, CompilerReturnCode failCode, std::string opCodeName);
-    virtual bool validateForLoopUp(LOCATION, Builder *b, LocalSymbol *loopVariable, Value *initial, Value *final, Value *bump);
+    virtual bool validateForLoopUp(LOCATION, Builder *b, Func::LocalSymbol *loopVariable, Value *initial, Value *final, Value *bump);
 
 protected:
     virtual void failValidateAdd(LOCATION, Builder *b, Value *left, Value *right);
-    virtual void failValidateCall(LOCATION, Builder *b, FunctionSymbol *target, std::va_list & args);
-    //virtual void failValidateCallWithArgArray(LOCATION, Builder *b, FunctionSymbol *target, int32_t numArgs, Value **args);
+    virtual void failValidateCall(LOCATION, Builder *b, Func::FunctionSymbol *target, std::va_list & args);
+    //virtual void failValidateCallWithArgArray(LOCATION, Builder *b, Func::FunctionSymbol *target, int32_t numArgs, Value **args);
     virtual void failValidateConvertTo(LOCATION, Builder *b, const Type *type, Value *value);
     virtual void failValidateMul(LOCATION, Builder *b, Value *left, Value *right);
     virtual void failValidateSub(LOCATION, Builder *b, Value *left, Value *right);
     virtual void failValidateIfCmp(LOCATION, Builder *b, Builder *target, Value *left, Value *right, CompilerReturnCode failCode, std::string opCodeName);
     virtual void failValidateIfCmpZero(LOCATION, Builder *b, Builder *target, Value *value, CompilerReturnCode failCode, std::string opCodeName);
-    virtual void failValidateForLoopUp(LOCATION, Builder *b, LocalSymbol *loopVariable, Value *initial, Value *final, Value *bump);
+    virtual void failValidateForLoopUp(LOCATION, Builder *b, Func::LocalSymbol *loopVariable, Value *initial, Value *final, Value *bump);
 
     BaseExtension *_base;
 };
@@ -317,7 +282,7 @@ public:
 
     }
 
-    LocalSymbol * loopVariable() const { return _loopVariable; }
+    Func::LocalSymbol * loopVariable() const { return _loopVariable; }
     Value *initialValue() const { return _initial; }
     Value *finalValue() const { return _final; }
     Value *bumpValue() const { return _bump; }
@@ -326,7 +291,7 @@ public:
     Builder *loopContinue()const { return _loopContinue; }
 
 private:
-    ForLoopBuilder *setLoopVariable(LocalSymbol *s) { _loopVariable = s; return this; }
+    ForLoopBuilder *setLoopVariable(Func::LocalSymbol *s) { _loopVariable = s; return this; }
     ForLoopBuilder *setInitialValue(Value *v) { _initial = v; return this; }
     ForLoopBuilder *setFinalValue(Value *v) { _final = v; return this; }
     ForLoopBuilder *setBumpValue(Value *v) { _bump = v; return this; }
@@ -334,7 +299,7 @@ private:
     ForLoopBuilder *setLoopBreak(Builder *b) { _loopBreak = b; return this; }
     ForLoopBuilder *setLoopContinue(Builder *b) { _loopContinue = b; return this; }
 
-    LocalSymbol * _loopVariable;
+    Func::LocalSymbol * _loopVariable;
     Value * _initial;
     Value * _final;
     Value * _bump;

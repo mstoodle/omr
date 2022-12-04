@@ -23,16 +23,12 @@
 #define OMR_JITBUILDER_Base_INCL
 
 #include "Base/ArithmeticOperations.hpp"
+#include "Base/BaseCompilation.hpp"
 #include "Base/BaseExtension.hpp"
-#include "Base/BaseIterator.hpp"
-#include "Base/BaseSymbols.hpp"
+#include "Base/BaseSymbol.hpp"
 #include "Base/BaseTypes.hpp"
-#include "Base/ConstOperations.hpp"
+#include "Base/ConstOperation.hpp"
 #include "Base/ControlOperations.hpp"
-#include "Base/Function.hpp"
-#include "Base/FunctionCompilation.hpp"
 #include "Base/MemoryOperations.hpp"
-#include "Base/NativeCallableContext.hpp"
 
 #endif // defined(OMR_JITBUILDER_Base_INCL)
-

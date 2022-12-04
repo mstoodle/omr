@@ -20,19 +20,10 @@
  *******************************************************************************/
 
 #include <stdint.h>
-#include "ArithmeticOperations.hpp"
-#include "BaseExtension.hpp"
-#include "BaseSymbols.hpp"
-#include "BaseTypes.hpp"
-#include "Builder.hpp"
-#include "Function.hpp"
-#include "JB1MethodBuilder.hpp"
-#include "Literal.hpp"
-#include "Location.hpp"
-#include "Operation.hpp"
-#include "OperationCloner.hpp"
-#include "TextWriter.hpp"
-#include "Value.hpp"
+#include "Base/ArithmeticOperations.hpp"
+#include "Base/BaseExtension.hpp"
+#include "Base/BaseSymbol.hpp"
+#include "Base/BaseTypes.hpp"
 
 
 namespace OMR {
