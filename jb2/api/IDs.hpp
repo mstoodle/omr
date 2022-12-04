@@ -22,6 +22,8 @@
 #ifndef IDENTIFIERTYPES_INCL
 #define IDENTIFIERTYPES_INCL
 
+#include <stdint.h>
+
 namespace OMR {
 namespace JitBuilder {
 
@@ -40,11 +42,17 @@ const CaseID NoCase=0;
 typedef uint64_t CompilationID;
 const CompilationID NoCompilation=0;
 
+typedef uint64_t CompiledBodyID;
+const CompiledBodyID NoCompiledBody=0;
+
 typedef uint64_t CompilerID;
 const CompilerID NoCompiler=0;
 
 typedef uint64_t CompilerReturnCode;
 // zero is not "special"
+
+typedef uint64_t CompileUnitID;
+const CompileUnitID NoCompileUnit=0;
 
 typedef uint64_t ContextID;
 const ContextID NoContext=0;
@@ -81,7 +89,7 @@ typedef uint64_t TransformationID;
 const TransformationID NoTransformation=0;
 
 typedef uint64_t TypeID;
-const TypeID NoType=0;
+const TypeID NoTypeID=0; // suffix ID because otherwise conflicts with named NoType type instance on Compiler
 
 typedef uint64_t TypeDictionaryID;
 

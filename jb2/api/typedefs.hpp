@@ -33,6 +33,8 @@ class Builder;
 typedef std::vector<Builder *> BuilderVector;
 typedef std::deque<Builder *> BuilderWorklist;
 
+typedef uint64_t EyeCatcher;
+
 typedef uint8_t LiteralBytes;
 class Literal;
 typedef std::vector<Literal *> LiteralVector;

@@ -45,7 +45,7 @@ class Value;
 
 class TextWriter : public Visitor {
 public:
-    TextWriter(Compilation * comp, std::ostream & os, std::string perIndent);
+    TextWriter(Compiler * compiler, std::ostream & os, std::string perIndent);
 
     void print(Compilation *comp) { start(comp); }
     void print(Builder * b) { start(b); }
@@ -174,4 +174,3 @@ private:
 } // namespace OMR
 
 #endif // defined(TEXTWRITER_INCL)
-

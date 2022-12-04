@@ -44,6 +44,7 @@ class LiteralDictionary {
     friend class DebugDictionary;
     friend class DynamicType;
     friend class Extension;
+    friend class Literal;
     friend class OperationBuilder;
 
 public:
@@ -66,6 +67,7 @@ public:
     void write(TextWriter &w);
 
 protected:
+    LiteralID getLiteralID() { return _nextLiteralID++; }
     void addNewLiteral(Literal *literal);
     Literal *registerLiteral(LOCATION, const Type *type, const LiteralBytes *value);
 

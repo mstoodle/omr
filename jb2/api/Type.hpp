@@ -147,6 +147,26 @@ protected:
     static bool kindRegistered;
 };
 
+class NoTypeType : public Type {
+    friend class Extension;
+
+    public:
+    static NoTypeType * create(LOCATION, Extension *ext) { return new NoTypeType(PASSLOC, ext); }
+    virtual void printValue(TextWriter &w, const void *p) const;
+    virtual bool registerJB1Type(JB1MethodBuilder *j1mb) const;
+
+    static const TypeKind getTypeClassKind();
+
+    protected:
+    NoTypeType(LOCATION, Extension *ext)
+        : Type(PASSLOC, TYPEKIND, ext, "NoType", 0) {
+
+    }
+
+    static TypeKind TYPEKIND;
+    static bool kindRegistered;
+};
+
 } // namespace JitBuilder
 } // namespace OMR
 

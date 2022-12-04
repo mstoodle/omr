@@ -20,7 +20,9 @@
  *******************************************************************************/
 
 #include "Compilation.hpp"
+#include "Compiler.hpp"
 #include "Context.hpp"
+#include "Extension.hpp"
 #include "Symbol.hpp"
 #include "SymbolDictionary.hpp"
 
@@ -29,32 +31,81 @@ namespace OMR {
 namespace JitBuilder {
 
 
-SymbolIterator Context::symbolEndIterator;
-
-Context::Context(Compilation *comp, Context *parent, std::string name)
-    : _comp(comp)
+Context::Context(LOCATION, Compilation *comp, LiteralDictionary *useLitDict, SymbolDictionary *useSymDict, TypeDictionary *useTypeDict, uint32_t numEntryPoints, uint32_t numExitPoints, std::string name)
+    : _id(comp->getContextID())
+    , _comp(comp)
     , _name(name)
-    , _parent(parent) {
+    , _parent(NULL)
+    , _litDict((useLitDict != NULL) ? useLitDict : comp->litdict())
+    , _symDict((useSymDict != NULL) ? useSymDict : comp->symdict())
+    , _typeDict((useTypeDict != NULL) ? useTypeDict : comp->typedict())
+    , _numEntryPoints(numEntryPoints)
+    , _numExitPoints(numExitPoints) {
 
+    initEntriesAndExits(PASSLOC, comp);
+}
+
+Context::Context(LOCATION, Context *parent, LiteralDictionary *useLitDict, SymbolDictionary *useSymDict, TypeDictionary *useTypeDict, uint32_t numEntryPoints, uint32_t numExitPoints, std::string name)
+    : _id(parent->comp()->getContextID())
+    , _comp(parent->comp())
+    , _name(name)
+    , _parent(parent)
+    , _litDict(useLitDict)
+    , _symDict(useSymDict)
+    , _typeDict(useTypeDict)
+    , _numEntryPoints(numEntryPoints)
+    , _numExitPoints(numExitPoints) {
+
+    initEntriesAndExits(PASSLOC, parent->comp());
 }
 
 void
-Context::addSymbol(Symbol *symbol) {
-    this->_comp->symdict()->registerSymbol(symbol);
-    this->_symbolByName.insert({symbol->name(), symbol});
-    this->_symbols.push_back(symbol);
+Context::initEntriesAndExits(LOCATION, Compilation *comp) {
+    Extension *core = _comp->compiler()->lookupExtension<Extension>();
+
+    _builderEntryPoints = new Builder *[_numEntryPoints];
+    _nativeEntryPoints = new void *[_numEntryPoints];
+    _debugEntryPoints = new void *[_numEntryPoints];
+    for (unsigned e=0;e < _numEntryPoints;e++) {
+        _builderEntryPoints[e] = core->EntryBuilder(PASSLOC, comp, this);
+        _nativeEntryPoints[e] = 0;
+        _debugEntryPoints[e] = 0;
+    }
+
+    _builderExitPoints = new Builder *[_numExitPoints];
+    for (unsigned x=0;x < _numExitPoints;x++)
+        _builderExitPoints[x] = core->ExitBuilder(PASSLOC, comp, this);
+}
+
+void
+Context::addSymbol(Symbol *sym) {
+    if (_symDict) {
+        _symDict->registerSymbol(sym);
+        return;
+    }
+
+    if (_parent) {
+        _parent->addSymbol(sym);
+        return;
+    }
+
+    assert(0); // there should be some symbol dictionary!
 }
 
 Symbol *
 Context::lookupSymbol(std::string name, bool includeParents) {
-    auto it = this->_symbolByName.find(name);
-    if (it != this->_symbolByName.end())
-        return it->second;
-    if (includeParents && this->_parent)
-        return this->_parent->lookupSymbol(name, includeParents);
-    return NULL;
+    Symbol *sym = NULL;
+    if (_symDict) {
+        sym = _symDict->LookupSymbol(name);
+    }
+
+    if (sym == NULL) {
+	if (includeParents && _parent != NULL)
+            return this->_parent->lookupSymbol(name);
+    }
+
+    return sym;
 }
 
 } // namespace JitBuilder
 } // namespace OMR
-

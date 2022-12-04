@@ -22,6 +22,7 @@
 #include "Builder.hpp"
 #include "Compiler.hpp"
 #include "Extension.hpp"
+#include "Location.hpp"
 #include "Operation.hpp"
 #include "SemanticVersion.hpp"
 #include "Type.hpp"
@@ -33,12 +34,26 @@ namespace JitBuilder {
 
 
 const SemanticVersion Extension::version(0,0,0);
+const std::string Extension::NAME("core");
 
-Extension::Extension(Compiler *compiler, std::string name)
+// used by Compiler to allocate an actual Extension object
+Extension::Extension(LOCATION, Compiler *compiler)
+    : _id(compiler->getExtensionID())
+    , _name(NAME)
+    , _compiler(compiler)
+    , _createLoc(PASSLOC)
+    , NoType(new NoTypeType(LOC, this))
+    , aMergeDef(registerAction(std::string("MergeDef"))) {
+}
+
+// used by subclasses
+Extension::Extension(LOCATION, Compiler *compiler, std::string name)
     : _id(compiler->getExtensionID())
     , _name(name)
     , _compiler(compiler)
+    , _createLoc(PASSLOC)
     , _types()
+    , NoType(compiler->lookupExtension<Extension>()->NoType)
     , aMergeDef(registerAction(std::string("MergeDef"))) {
 }
 
@@ -74,7 +89,7 @@ Extension::addOperation(Builder *b, Operation *op) {
 
 
 //
-// Const Operations
+// Core Operations
 //
 
 void
@@ -84,7 +99,7 @@ Extension::MergeDef(LOCATION, Builder *b, Value *existingDef, Value *newDef) {
 
 
 //
-// Const Pseudo Operations
+// Core Pseudo Operations
 //
 
 Builder *
@@ -95,6 +110,37 @@ Extension::BoundBuilder(LOCATION, Builder *parent, Operation *parentOp, std::str
 Builder *
 Extension::OrphanBuilder(LOCATION, Builder *parent, Context *context, std::string name) {
     return new Builder(parent, context, name);
+}
+
+Builder *
+Extension::EntryBuilder(LOCATION, Compilation *comp, Context *context, std::string name) {
+    return new Builder(comp, context, name);
+}
+
+Builder *
+Extension::ExitBuilder(LOCATION, Compilation *comp, Context *context, std::string name) {
+    return new Builder(comp, context, name);
+}
+
+Location *
+Extension::SourceLocation(LOCATION, Builder *b, std::string func) {
+    Location *loc = new Location(b->comp(), func, "");
+    b->setLocation(loc);
+    return loc;
+}
+
+Location *
+Extension::SourceLocation(LOCATION, Builder *b, std::string func, std::string lineNumber) {
+    Location *loc = new Location(b->comp(), func, lineNumber);
+    b->setLocation(loc);
+    return loc;
+}
+
+Location *
+Extension::SourceLocation(LOCATION, Builder *b, std::string func, std::string lineNumber, int32_t bcIndex) {
+    Location *loc = new Location(b->comp(), func, lineNumber, bcIndex);
+    b->setLocation(loc);
+    return loc;
 }
 
 } // namespace JitBuilder
