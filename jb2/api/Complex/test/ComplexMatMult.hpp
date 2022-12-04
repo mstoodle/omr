@@ -26,6 +26,7 @@
 
 #include <complex>
 #include "JBCore.hpp"
+#include "Base/Base.hpp"
 #include "Complex/Complex.hpp"
 
 using namespace OMR::JitBuilder;
@@ -52,7 +53,8 @@ class ComplexMatMult : public Base::Function
 
    public:
    ComplexMatMult(LOCATION, Compiler *compiler, Complex::ComplexExtension *xc);
-   virtual bool buildIL();
+   virtual bool initContext(LOCATION, Base::FunctionCompilation *comp, Base::FunctionContext *fc);
+   virtual bool buildIL(LOCATION, Base::FunctionCompilation *comp, Base::FunctionContext *fc);
    };
 
 #endif // !defined(COMPLEXMATMULT_INCL)
