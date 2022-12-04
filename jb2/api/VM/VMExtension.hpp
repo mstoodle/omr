@@ -24,23 +24,14 @@
 
 #include <stdint.h>
 #include <map>
-#include "CreateLoc.hpp"
-#include "Extension.hpp"
-#include "IDs.hpp"
-#include "SemanticVersion.hpp"
-#include "typedefs.hpp"
+
+#include "JBCore.hpp"
+#include "Func/Func.hpp"
+#include "Base/Base.hpp"
 
 
 namespace OMR {
 namespace JitBuilder {
-
-class Compilation;
-class Context;
-class Location;
-class Value;
-
-namespace Base { class BaseExtension; }
-
 namespace VM {
 
 class VMExtension : public Extension {
@@ -56,7 +47,8 @@ public:
         return &version;
     }
 
-    Base::BaseExtension *baseExt() const { return _baseExt; }
+    Func::FunctionExtension *fx() const { return _fx; }
+    Base::BaseExtension *bx() const { return _bx; }
 
     //
     // Types
@@ -88,20 +80,16 @@ public:
     void IfCmpUnsignedLessThan(LOCATION, BytecodeBuilder *b, BytecodeBuilder *target, Value *left, Value *right);
     void IfCmpUnsignedGreaterOrEqual(LOCATION, BytecodeBuilder *b, BytecodeBuilder *target, Value *left, Value *right);
     void IfCmpUnsignedGreaterThan(LOCATION, BytecodeBuilder *b, BytecodeBuilder *target, Value *left, Value *right);
-    BytecodeBuilder *OrphanBytecodeBuilder(Base::FunctionCompilation *comp, int32_t bcIndex, int32_t bcLength=1, std::string name="", Context *context=NULL);
+    BytecodeBuilder *OrphanBytecodeBuilder(Base::BaseCompilation *comp, int32_t bcIndex, int32_t bcLength=1, Context *context=NULL, std::string name="");
 
 protected:
-    Base::BaseExtension *_baseExt;
+    Base::BaseExtension *_bx;
+    Func::FunctionExtension *_fx;
 
     static const MajorID VMEXT_MAJOR=0;
     static const MinorID VMEXT_MINOR=1;
     static const PatchID VMEXT_PATCH=0;
     static const SemanticVersion version;
-
-    static const MajorID REQUIRED_BASEEXT_MAJOR=0;
-    static const MinorID REQUIRED_BASEEXT_MINOR=1;
-    static const PatchID REQUIRED_BASEEXT_PATCH=0;
-    static const SemanticVersion requiredBaseVersion;
 };
 
 } // namespace VM
@@ -109,4 +97,3 @@ protected:
 } // namespace OMR
 
 #endif // defined(VMEXTENSION_INCL)
-

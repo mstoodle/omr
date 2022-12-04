@@ -21,15 +21,12 @@
  *******************************************************************************/
 
 
+#include <assert.h>
 #include <dlfcn.h>
 #include <iostream>
 #include <stdlib.h>
 #include <stdint.h>
 #include <errno.h>
-
-#include "JBCore.hpp"
-#include "Base/Base.hpp"
-#include "VM/VM.hpp"
 #include "RegisterTest.hpp"
 
 using std::cout;
@@ -38,7 +35,7 @@ using std::cerr;
 #define TOSTR(x)     #x
 #define LINETOSTR(x) TOSTR(x)
 
-#define DO_LOGGING true
+#define DO_LOGGING false
 
 int
 main(int argc, char *argv[]) {
@@ -53,19 +50,19 @@ main(int argc, char *argv[]) {
     Compiler c("VirtualMachineRegisterTest");
 
     cout << "Step 2: load extensions (Base and VM)\n";
-    VM::VMExtension *vme = c.loadExtension<VM::VMExtension>(LOC);
-    assert(vme);
+    Base::BaseExtension *bx = c.loadExtension<Base::BaseExtension>(LOC);
+    VM::VMExtension *vmx = c.loadExtension<VM::VMExtension>(LOC);
+    assert(vmx);
 
     cout << "Step 3: Create Function object\n";
     VMRegisterFunction vmrFunc(LOC, &c);
 
     cout << "Step 4: Set up logging configuration\n";
-    Base::FunctionCompilation *comp = vmrFunc.comp();
-    TextWriter logger(comp, std::cout, std::string("    "));
+    TextWriter logger(&c, std::cout, std::string("    "));
     TextWriter *log = (DO_LOGGING) ? &logger : NULL;
     
     cout << "Step 5: compile vmregister function\n";
-    CompilerReturnCode result = vmrFunc.Compile(log);
+    CompilerReturnCode result = bx->compile(LOC, &vmrFunc, c.jb1cgStrategyID, log);
 
     if (result != c.CompileSuccessful) {
         cout << "Compile failed: " << result << "\n";
@@ -74,7 +71,7 @@ main(int argc, char *argv[]) {
     
     cout << "Step 6: invoke compiled vmregister function and print results\n";
     typedef int32_t (VMRegisterMethodFunction)(int8_t **values, int32_t count);
-    VMRegisterMethodFunction *vmregister = vmrFunc.nativeEntry<VMRegisterMethodFunction *>();
+    VMRegisterMethodFunction *vmregister = vmrFunc.compiledBody(c.jb1cgStrategyID)->nativeEntryPoint<VMRegisterMethodFunction>();
 
     int8_t values[] = {7,2,9,5,3,1,6};
     int8_t *vals = values;
@@ -83,7 +80,7 @@ main(int argc, char *argv[]) {
 
     cout << "Step 7: compile vmregisterInStruct function\n";
     VMRegisterInStructFunction vmrisFunc(LOC, &c);
-    result = vmrisFunc.Compile(log); 
+    result = bx->compile(LOC, &vmrisFunc, c.jb1cgStrategyID, log); 
 
     if (result != c.CompileSuccessful) {
         cout << "Compile failed: " << result << "\n";
@@ -92,7 +89,7 @@ main(int argc, char *argv[]) {
     
     cout << "Step 8: invoke compiled vmregisterInStruct function and print results\n";
     typedef int32_t (VMRegisterInStructCFunction)(VMRegisterStruct *param);
-    VMRegisterInStructCFunction *vmregisterInStruct = vmrisFunc.nativeEntry<VMRegisterInStructCFunction *>();
+    VMRegisterInStructCFunction *vmregisterInStruct = vmrisFunc.compiledBody(c.jb1cgStrategyID)->nativeEntryPoint<VMRegisterInStructCFunction>();
 
     VMRegisterStruct param;
     param.count = 7;
@@ -110,94 +107,111 @@ main(int argc, char *argv[]) {
 
 
 VMRegisterFunction::VMRegisterFunction(LOCATION, Compiler *compiler)
-    : Base::Function(PASSLOC, compiler)
-    , _base(compiler->lookupExtension<Base::BaseExtension>())
-    , _vme(compiler->lookupExtension<VM::VMExtension>()) {
+    : Func::Function(PASSLOC, compiler)
+    , _bx(compiler->lookupExtension<Base::BaseExtension>())
+    , _fx(compiler->lookupExtension<Func::FunctionExtension>())
+    , _vmx(compiler->lookupExtension<VM::VMExtension>()) {
 
     DefineLine(LINETOSTR(__LINE__));
     DefineFile(__FILE__);
-
     DefineName("vmregister");
-    _values = DefineParameter("valuesPtr", _base->PointerTo(LOC, comp(), _base->PointerTo(LOC, comp(), _base->Int8)));
-    _count = DefineParameter("count", _base->Int32);
-    DefineReturnType(_base->Int32);
 }
 
 bool
-VMRegisterFunction::buildIL() {
-    Builder *entry = builderEntry();
-    VM::VirtualMachineRegister *vmreg = new VM::VirtualMachineRegister(LOC, _vme, "MYBYTES", this, _base->Load(LOC, entry, _values));
+VMRegisterFunction::initContext(LOCATION, Func::FunctionCompilation *fcomp, Func::FunctionContext *fc) {
+    Base::BaseCompilation *comp = static_cast<Base::BaseCompilation *>(fcomp);
+    _values = fc->DefineParameter("valuesPtr", _bx->PointerTo(LOC, comp, _bx->PointerTo(LOC, comp, _bx->Int8)));
+    _count = fc->DefineParameter("count", _bx->Int32);
+    fc->DefineReturnType(_bx->Int32);
+    return true;
+}
 
-    Base::LocalSymbol *result = DefineLocal("result", _base->Int32);
-    _base->Store(LOC, entry, result, _base->ConstInt32(LOC, entry, 0));
+bool
+VMRegisterFunction::buildIL(LOCATION, Func::FunctionCompilation *fcomp, Func::FunctionContext *fc) {
+    Base::BaseCompilation *comp = static_cast<Base::BaseCompilation *>(fcomp);
 
-    Base::LocalSymbol *iterVar = DefineLocal("i", _base->Int32);
-    Base::ForLoopBuilder *loop = _base->ForLoopUp(LOC, entry, iterVar, 
-                                                  _base->ConstInt32(LOC, entry, 0),
-                                                  _base->Load(LOC, entry, _count),
-                                                  _base->ConstInt32(LOC, entry, 1)); {
+    Builder *entry = fc->builderEntryPoint();
+    VM::VirtualMachineRegister *vmreg = new VM::VirtualMachineRegister(LOC, _vmx, "MYBYTES", comp, _fx->Load(LOC, entry, _values));
+
+    Func::LocalSymbol *result = fc->DefineLocal("result", _bx->Int32);
+    _fx->Store(LOC, entry, result, _bx->ConstInt32(LOC, entry, 0));
+
+    Func::LocalSymbol *iterVar = fc->DefineLocal("i", _bx->Int32);
+    Base::ForLoopBuilder *loop = _bx->ForLoopUp(LOC, entry, iterVar, 
+                                                _bx->ConstInt32(LOC, entry, 0),
+                                                _fx->Load(LOC, entry, _count),
+                                                _bx->ConstInt32(LOC, entry, 1)); {
 
         Builder *body = loop->loopBody();
 
-        Value *val = _base->LoadAt(LOC, body, vmreg->Load(LOC, body));
+        Value *val = _bx->LoadAt(LOC, body, vmreg->Load(LOC, body));
 
-        Value *bumpAmount = _base->ConvertTo(LOC, body, _base->Int32, val);
-        Value *newval = _base->Add(LOC, body, _base->Load(LOC, body, result), bumpAmount);
-        _base->Store(LOC, body, result, newval);
+        Value *bumpAmount = _bx->ConvertTo(LOC, body, _bx->Int32, val);
+        Value *newval = _bx->Add(LOC, body, _fx->Load(LOC, body, result), bumpAmount);
+        _fx->Store(LOC, body, result, newval);
         vmreg->Adjust(LOC, body, 1);
     }
 
-    _base->Return(LOC, entry, _base->Load(LOC, entry, result));
+    _fx->Return(LOC, entry, _fx->Load(LOC, entry, result));
 
     return true;
 }
 
 
 VMRegisterInStructFunction::VMRegisterInStructFunction(LOCATION, Compiler *compiler)
-    : Base::Function(PASSLOC, compiler)
-    , _base(compiler->lookupExtension<Base::BaseExtension>())
-    , _vme(compiler->lookupExtension<VM::VMExtension>()) {
+    : Func::Function(PASSLOC, compiler)
+    , _bx(compiler->lookupExtension<Base::BaseExtension>())
+    , _fx(compiler->lookupExtension<Func::FunctionExtension>())
+    , _vmx(compiler->lookupExtension<VM::VMExtension>()) {
 
     DefineLine(LINETOSTR(__LINE__));
     DefineFile(__FILE__);
-
     DefineName("vmregisterInStruct");
-    Base::StructTypeBuilder builder(_base, this);
-    builder.setName("VMRegisterStruct")
-          ->addField("values", _base->PointerTo(LOC, comp(), _base->Int8), 8*offsetof(VMRegisterStruct, values))
-          ->addField("count", _base->Int32, 8*offsetof(VMRegisterStruct, count));
-    const Base::StructType *vmRegisterStruct = builder.create(LOC);
-    _valuesField = vmRegisterStruct->LookupField("values");
-    _countField = vmRegisterStruct->LookupField("count");
-    _param = DefineParameter("param", _base->PointerTo(LOC, comp(), vmRegisterStruct));
-    DefineReturnType(_base->Int32);
 }
 
 bool
-VMRegisterInStructFunction::buildIL() {
-    Builder *entry = builderEntry();
-    VM::VirtualMachineRegisterInStruct *vmreg = new VM::VirtualMachineRegisterInStruct(LOC, _vme, "VALUES", this, _valuesField, _param);
+VMRegisterInStructFunction::initContext(LOCATION, Func::FunctionCompilation *fcomp, Func::FunctionContext *fc) {
+    Base::BaseCompilation *comp = static_cast<Base::BaseCompilation *>(fcomp);
 
-    Base::LocalSymbol *result = DefineLocal("result", _base->Int32);
-    _base->Store(LOC, entry, result, _base->ConstInt32(LOC, entry, 0));
+    Base::StructTypeBuilder builder(_bx, comp);
+    builder.setName("VMRegisterStruct")
+           ->addField("values", _bx->PointerTo(LOC, comp, _bx->Int8), 8*offsetof(VMRegisterStruct, values))
+           ->addField("count", _bx->Int32, 8*offsetof(VMRegisterStruct, count));
+    const Base::StructType *vmRegisterStruct = builder.create(LOC);
+    _valuesField = vmRegisterStruct->LookupField("values");
+    _countField = vmRegisterStruct->LookupField("count");
+    _param = fc->DefineParameter("param", _bx->PointerTo(LOC, comp, vmRegisterStruct));
+    fc->DefineReturnType(_bx->Int32);
+    return true;
+}
 
-    Base::LocalSymbol *iterVar = DefineLocal("i", _base->Int32);
-    Base::ForLoopBuilder *loop = _base->ForLoopUp(LOC, entry, iterVar, 
-                                                  _base->ConstInt32(LOC, entry, 0),
-                                                  _base->LoadFieldAt(LOC, entry, _countField, _base->Load(LOC, entry, _param)),
-                                                  _base->ConstInt32(LOC, entry, 1)); {
+bool
+VMRegisterInStructFunction::buildIL(LOCATION, Func::FunctionCompilation *fcomp, Func::FunctionContext *fc) {
+    Base::BaseCompilation *comp = static_cast<Base::BaseCompilation *>(fcomp);
+
+    Builder *entry = fc->builderEntryPoint();
+    VM::VirtualMachineRegisterInStruct *vmreg = new VM::VirtualMachineRegisterInStruct(LOC, _vmx, "VALUES", comp, _valuesField, _param);
+
+    Func::LocalSymbol *result = fc->DefineLocal("result", _bx->Int32);
+    _fx->Store(LOC, entry, result, _bx->ConstInt32(LOC, entry, 0));
+
+    Func::LocalSymbol *iterVar = fc->DefineLocal("i", _bx->Int32);
+    Base::ForLoopBuilder *loop = _bx->ForLoopUp(LOC, entry, iterVar, 
+                                                _bx->ConstInt32(LOC, entry, 0),
+                                                _bx->LoadFieldAt(LOC, entry, _countField, _fx->Load(LOC, entry, _param)),
+                                                _bx->ConstInt32(LOC, entry, 1)); {
 
         Builder *body = loop->loopBody();
 
-        Value *val = _base->LoadAt(LOC, body, vmreg->Load(LOC, body));
+        Value *val = _bx->LoadAt(LOC, body, vmreg->Load(LOC, body));
 
-        Value *bumpAmount = _base->ConvertTo(LOC, body, _base->Int32, val);
-        Value *newval = _base->Add(LOC, body, _base->Load(LOC, body, result), bumpAmount);
-        _base->Store(LOC, body, result, newval);
+        Value *bumpAmount = _bx->ConvertTo(LOC, body, _bx->Int32, val);
+        Value *newval = _bx->Add(LOC, body, _fx->Load(LOC, body, result), bumpAmount);
+        _fx->Store(LOC, body, result, newval);
         vmreg->Adjust(LOC, body, 1);
     }
 
-    _base->Return(LOC, entry, _base->Load(LOC, entry, result));
+    _fx->Return(LOC, entry, _fx->Load(LOC, entry, result));
 
     return true;
 }

@@ -22,18 +22,14 @@
 #ifndef VIRTUALMACHINEREGISTER_INCL
 #define VIRTUALMACHINEREGISTER_INCL
 
-#include "stddef.h"
-#include "stdint.h"
+#include <stddef.h>
+#include <stdint.h>
+#include "JBCore.hpp"
+#include "Base/Base.hpp"
 #include "VirtualMachineState.hpp"
 
 namespace OMR {
 namespace JitBuilder {
-
-namespace Base { class LocalSymbol; }
-namespace Base { class PointerType; }
-class Type;
-class Value;
-
 namespace VM {
 
 // forward declarations for all API classes
@@ -79,7 +75,7 @@ public:
     * @param addressOfRegister is the address of the actual register
     * @param doReload whether local register should be Reloaded (default true, MakeCopy will pass false)
     */
-    VirtualMachineRegister(LOCATION, VMExtension *vme, std::string name, Base::Function *func, Value * addressOfRegister, bool doReload=true);
+    VirtualMachineRegister(LOCATION, VMExtension *vme, std::string name, Base::BaseCompilation *comp, Value * addressOfRegister, bool doReload=true);
 
     // virtualmachinestate api
 
@@ -118,11 +114,11 @@ protected:
      * @param vme the VM extension to use
      * @param func the function being compiled
      */
-    VirtualMachineRegister(LOCATION, VMExtension *vme, std::string name, Base::Function * func, StateKind kind);
+    VirtualMachineRegister(LOCATION, VMExtension *vme, std::string name, Base::BaseCompilation * comp, StateKind kind);
 
     std::string _name;
-    Base::Function *_func;
-    Base::LocalSymbol * _local;
+    Base::BaseCompilation *_comp;
+    Func::LocalSymbol * _local;
     uint32_t _adjustByStep;
     Value * _addressOfRegister;
     const Base::PointerType *_pRegisterType;

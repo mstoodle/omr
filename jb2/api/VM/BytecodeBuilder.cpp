@@ -19,12 +19,10 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "Base/BaseExtension.hpp"
-#include "Base/FunctionCompilation.hpp"
+#include "JBCore.hpp"
+#include "Func/Func.hpp"
+#include "Base/Base.hpp"
 #include "BytecodeBuilder.hpp"
-#include "JB1MethodBuilder.hpp"
-#include "TextWriter.hpp"
-#include "TypeDictionary.hpp"
 #include "VirtualMachineState.hpp"
 #include "VMExtension.hpp"
 
@@ -32,12 +30,12 @@ namespace OMR {
 namespace JitBuilder {
 namespace VM {
 
-BytecodeBuilder::BytecodeBuilder(Base::FunctionCompilation *comp,
+BytecodeBuilder::BytecodeBuilder(Base::BaseCompilation *comp,
                                  VMExtension *vme,
                                  int32_t bcIndex,
                                  int32_t bcLength,
-                                 std::string name,
-                                 Context *context)
+                                 Context *context,
+                                 std::string name)
     : Builder(comp, context, name)
     , _vme(vme)
     , _bcIndex(bcIndex)
@@ -112,12 +110,12 @@ BytecodeBuilder::transferVMState(LOCATION, BytecodeBuilder *b) {
         // for example, the local variables holding the elements on the operand stack may not match
         // create an intermediate builder object to do that work
         // TODO: Compilation needs "Kind"s too
-        BytecodeBuilder *intermediateBuilder = _vme->OrphanBytecodeBuilder(static_cast<Base::FunctionCompilation *>(_comp), b->bcIndex(), b->bcLength(), b->name(), b->context());
+        BytecodeBuilder *intermediateBuilder = _vme->OrphanBytecodeBuilder(static_cast<Base::BaseCompilation *>(_comp), b->bcIndex(), b->bcLength(), b->context(), b->name());
 
         _vmState->MergeInto(PASSLOC, b->initialVMState(), intermediateBuilder);
 
         // direct control to b from intermediateBuilder, but we have already propagated vm state : use BaseExtension::Goto
-        _vme->baseExt()->Goto(PASSLOC, intermediateBuilder, b);
+        _vme->bx()->Goto(PASSLOC, intermediateBuilder, b);
         intermediateBuilder->_successorBuilders.push_back(b);
         return intermediateBuilder; // branches should direct towards intermediateBuilder not original *b
     } else {

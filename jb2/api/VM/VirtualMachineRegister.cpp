@@ -19,12 +19,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "Base/BaseExtension.hpp"
-#include "Base/BaseSymbols.hpp"
-#include "Base/BaseTypes.hpp"
-#include "Base/Function.hpp"
-#include "Builder.hpp"
-#include "Value.hpp"
 #include "VirtualMachineRegister.hpp"
 #include "VMExtension.hpp"
 
@@ -47,12 +41,12 @@ VirtualMachineRegister::getStateClassKind() {
 VirtualMachineRegister::VirtualMachineRegister(LOCATION,
                                                VMExtension *vme,
                                                std::string name,
-                                               Base::Function *func,
+                                               Base::BaseCompilation *comp,
                                                Value * addressOfRegister,
                                                bool doReload)
     : VirtualMachineState(PASSLOC, vme, getStateClassKind())
     , _name(name)
-    , _func(func)
+    , _comp(comp)
     , _addressOfRegister(addressOfRegister)
     , _pRegisterType(addressOfRegister->type()->refine<Base::PointerType>()) {
 
@@ -60,7 +54,7 @@ VirtualMachineRegister::VirtualMachineRegister(LOCATION,
     const Type *regBaseType = _pRegisterType->baseType();
     _integerTypeForAdjustments = regBaseType;
     if (regBaseType->isKind<Base::PointerType>()) {
-        _integerTypeForAdjustments = _vme->baseExt()->Word;
+        _integerTypeForAdjustments = _vme->bx()->Word;
         const Type *baseType = regBaseType->refine<Base::PointerType>()->baseType();
         _adjustByStep = baseType->size();
         _isAdjustable = true;
@@ -68,21 +62,22 @@ VirtualMachineRegister::VirtualMachineRegister(LOCATION,
         _adjustByStep = 0;
         _isAdjustable = false;
     }
-    _local = func->DefineLocal(name, regBaseType);
+    Func::FunctionContext *fc = comp->funcContext();
+    _local = fc->DefineLocal(name, regBaseType);
     if (doReload) {
-        for (auto e=0;e < func->numEntryPoints();e++)
-            Reload(PASSLOC, func->builderEntry(e));
+        for (auto e=0;e < fc->numEntryPoints();e++)
+            Reload(PASSLOC, fc->builderEntryPoint(e));
     }
 }
 
 VirtualMachineRegister::VirtualMachineRegister(LOCATION,
                                                VMExtension *vme,
                                                std::string name,
-                                               Base::Function * func,
+                                               Base::BaseCompilation * comp,
                                                StateKind kind)
         : VirtualMachineState(PASSLOC, vme, kind)
         , _name(name)
-        , _func(func)
+        , _comp(comp)
         , _addressOfRegister(0)
         , _pRegisterType(NULL) {
 
@@ -94,21 +89,23 @@ VirtualMachineRegister::VirtualMachineRegister(LOCATION,
 
 void
 VirtualMachineRegister::Commit(LOCATION, Builder *b) {
-    Base::BaseExtension *base = _vme->baseExt();
-    Value *oldValue = base->Load(PASSLOC, b, _local);
-    base->StoreAt(PASSLOC, b, _addressOfRegister, oldValue);
+    Base::BaseExtension *bx = _vme->bx();
+    Func::FunctionExtension *fx = _vme->fx();
+    Value *oldValue = fx->Load(PASSLOC, b, _local);
+    bx->StoreAt(PASSLOC, b, _addressOfRegister, oldValue);
 }
 
 VirtualMachineState *
 VirtualMachineRegister::MakeCopy(LOCATION, Builder *b) {
-    return new VirtualMachineRegister(PASSLOC, _vme, _name, _func, _addressOfRegister, false);
+    return new VirtualMachineRegister(PASSLOC, _vme, _name, _comp, _addressOfRegister, false);
 }
 
 void
 VirtualMachineRegister::Reload(LOCATION, Builder *b) {
-    Base::BaseExtension *base = _vme->baseExt();
-    Value *value = base->LoadAt(PASSLOC, b, _addressOfRegister);
-    base->Store(PASSLOC, b, _local, value);
+    Base::BaseExtension *bx = _vme->bx();
+    Func::FunctionExtension *fx = _vme->fx();
+    Value *value = bx->LoadAt(PASSLOC, b, _addressOfRegister);
+    fx->Store(PASSLOC, b, _local, value);
 }
 
 //
@@ -124,10 +121,11 @@ VirtualMachineRegister::Reload(LOCATION, Builder *b) {
  */
 void
 VirtualMachineRegister::Adjust(LOCATION, Builder *b, Value *amount) {
-    Base::BaseExtension *base = _vme->baseExt();
-    Value *oldValue = base->Load(PASSLOC, b, _local);
-    Value *newValue = base->IndexAt(PASSLOC, b, oldValue, amount);
-    base->Store(PASSLOC, b, _local, newValue);
+    Base::BaseExtension *bx = _vme->bx();
+    Func::FunctionExtension *fx = _vme->fx();
+    Value *oldValue = fx->Load(PASSLOC, b, _local);
+    Value *newValue = bx->IndexAt(PASSLOC, b, oldValue, amount);
+    fx->Store(PASSLOC, b, _local, newValue);
 }
 
 /**
@@ -139,9 +137,10 @@ VirtualMachineRegister::Adjust(LOCATION, Builder *b, Value *amount) {
  */
 void
 VirtualMachineRegister::Adjust(LOCATION, Builder *b, size_t amount) {
-    Base::BaseExtension *base = _vme->baseExt();
-    Literal *amountLiteral = base->Word->literal(PASSLOC, b->comp(), reinterpret_cast<LiteralBytes *>(&amount));
-    Value *amountValue = base->ConvertTo(LOC, b, _integerTypeForAdjustments, base->Const(PASSLOC, b, amountLiteral));
+    Base::BaseExtension *bx = _vme->bx();
+    Func::FunctionExtension *fx = _vme->fx();
+    Literal *amountLiteral = bx->Word->literal(PASSLOC, b->comp(), reinterpret_cast<LiteralBytes *>(&amount));
+    Value *amountValue = bx->ConvertTo(LOC, b, _integerTypeForAdjustments, bx->Const(PASSLOC, b, amountLiteral));
     Adjust(PASSLOC, b, amountValue);
 }
 
@@ -152,8 +151,8 @@ VirtualMachineRegister::Adjust(LOCATION, Builder *b, size_t amount) {
  */
 Value *
 VirtualMachineRegister::Load(LOCATION, Builder *b) {
-    Base::BaseExtension *base = _vme->baseExt();
-    return base->Load(PASSLOC, b, _local);
+    Func::FunctionExtension *fx = _vme->fx();
+    return fx->Load(PASSLOC, b, _local);
 }
 
 /**
@@ -162,8 +161,8 @@ VirtualMachineRegister::Load(LOCATION, Builder *b) {
  */
 void
 VirtualMachineRegister::Store(LOCATION, Builder *b, Value *value) {
-    Base::BaseExtension *base = _vme->baseExt();
-    base->Store(PASSLOC, b, _local, value);
+    Func::FunctionExtension *fx = _vme->fx();
+    fx->Store(PASSLOC, b, _local, value);
 }
 
 } // namespace VM

@@ -20,11 +20,6 @@
  *******************************************************************************/
 
 #include <cstring>
-#include "Base/BaseExtension.hpp"
-#include "Base/BaseSymbols.hpp"
-#include "Base/BaseTypes.hpp"
-#include "Base/Function.hpp"
-#include "Value.hpp"
 #include "VirtualMachineOperandStack.hpp"
 #include "VirtualMachineRegister.hpp"
 #include "VMExtension.hpp"
@@ -47,14 +42,14 @@ VirtualMachineOperandStack::getStateClassKind() {
 
 VirtualMachineOperandStack::VirtualMachineOperandStack(LOCATION,
                                                        VMExtension *vme,
-                                                       Base::Function *func,
+                                                       Base::BaseCompilation *comp,
                                                        int32_t sizeHint,
                                                        VirtualMachineRegister *stackTopRegister,
                                                        const Type *elementType,
                                                        bool growsUp,
                                                        int32_t stackInitialOffset)
     : VirtualMachineState(PASSLOC, vme, getStateClassKind())
-    , _func(func)
+    , _comp(comp)
     , _stackTopRegister(stackTopRegister)
     , _elementType(elementType)
     , _stackOffset(stackInitialOffset)
@@ -67,7 +62,7 @@ VirtualMachineOperandStack::VirtualMachineOperandStack(LOCATION,
 
 VirtualMachineOperandStack::VirtualMachineOperandStack(LOCATION, VirtualMachineOperandStack *other)
     : VirtualMachineState(PASSLOC, other->_vme, getStateClassKind())
-    , _func(other->_func)
+    , _comp(other->_comp)
     , _stackTopRegister(other->_stackTopRegister)
     , _elementType(other->_elementType)
     , _stackOffset(other->_stackOffset)
@@ -88,9 +83,10 @@ VirtualMachineOperandStack::VirtualMachineOperandStack(LOCATION, VirtualMachineO
 //    as a VirtualMachineRegister or a VirtualMachineRegisterInStruct
 void
 VirtualMachineOperandStack::Commit(LOCATION, Builder *b) {
-    Base::BaseExtension *base = _vme->baseExt();
+    Base::BaseExtension *bx = _vme->bx();
+    Func::FunctionExtension *fx = _vme->fx();
 
-    Value *stack = base->Load(PASSLOC, b, _stackBaseLocal);
+    Value *stack = fx->Load(PASSLOC, b, _stackBaseLocal);
 
     // Adjust the vm _stackTopRegister by number of elements that have been pushed onto the stack.
     // _stackTop is -1 at 0 pushes, 0 for 1 push, so # of elements to adjust by is _stackTop+1
@@ -99,19 +95,20 @@ VirtualMachineOperandStack::Commit(LOCATION, Builder *b) {
 
     for (int32_t i = _stackTop;i >= 0;i--) {
         Value *element = Pick(_stackTop - i);
-        base->StoreArray(PASSLOC, b, stack, i - _stackOffset, element);
+        bx->StoreArray(PASSLOC, b, stack, i - _stackOffset, element);
     }
 }
 
 void
 VirtualMachineOperandStack::Reload(LOCATION, Builder* b) {
-    Base::BaseExtension *base = _vme->baseExt();
-    Value *stack = base->Load(PASSLOC, b, _stackBaseLocal);
+    Base::BaseExtension *bx = _vme->bx();
+    Func::FunctionExtension *fx = _vme->fx();
+    Value *stack = fx->Load(PASSLOC, b, _stackBaseLocal);
     // reload the elements back into the simulated operand stack
     // If the # of stack element has changed, the user should adjust the # of elements
     // using Drop beforehand to add/delete stack elements.
     for (int32_t i = _stackTop; i >= 0; i--) {
-        _stack[i] = base->LoadArray(PASSLOC, b, stack, i - _stackOffset);
+        _stack[i] = bx->LoadArray(PASSLOC, b, stack, i - _stackOffset);
     }
 }
 
@@ -125,7 +122,7 @@ VirtualMachineOperandStack::MakeCopy(LOCATION, Builder *b) {
 void
 VirtualMachineOperandStack::MergeInto(LOCATION, VirtualMachineState *o, Builder* b) {
     assert(o->isKind<VirtualMachineOperandStack>());
-    Base::BaseExtension *base = _vme->baseExt();
+    Extension *x = _vme->fx();
     VirtualMachineOperandStack *other = o->refine<VirtualMachineOperandStack>();
     assert(_stackTop == other->_stackTop);
     for (int32_t i=_stackTop;i >= 0;i--) {
@@ -137,7 +134,7 @@ VirtualMachineOperandStack::MergeInto(LOCATION, VirtualMachineState *o, Builder*
             // but not primitive types (even different types of objects should have same primitive
             // type: Address. Expecting to be disappointed here some day...
             assert(_stack[i]->type() == other->_stack[i]->type()); // "invalid stack merge: primitive type mismatch at same depth stack elements");
-            base->MergeDef(PASSLOC, b, other->_stack[i], _stack[i]);
+            x->MergeDef(PASSLOC, b, other->_stack[i], _stack[i]);
         }
     }
 }
@@ -188,8 +185,8 @@ VirtualMachineOperandStack::Top() {
 // This call will normally be followed by a call to Reload if any of the stack values changed in the move
 void
 VirtualMachineOperandStack::UpdateStack(LOCATION, Builder *b, Value *stack) {
-    Base::BaseExtension *base = _vme->baseExt();
-    base->Store(PASSLOC, b, _stackBaseLocal, stack);
+    Func::FunctionExtension *fx = _vme->fx();
+    fx->Store(PASSLOC, b, _stackBaseLocal, stack);
 }
 
 void
@@ -222,22 +219,24 @@ VirtualMachineOperandStack::grow(int32_t growAmount) {
 
 void
 VirtualMachineOperandStack::init(LOCATION) {
+    Base::BaseExtension *bx = _vme->bx();
+    Func::FunctionExtension *fx = _vme->fx();
+
     _stack = new Value *[_stackMax];
 
     int32_t numBytes = _stackMax * sizeof(Value *);
     memset(_stack, 0, numBytes);
 
-    Base::BaseExtension *base = _vme->baseExt();
-
     // Create a unique local symbol to hold this OperandStack's base
     std::string name("VMOS_StackBase_");
     name.append(std::to_string(_id));
-    _stackBaseLocal = _func->DefineLocal(name, base->PointerTo(LOC, _func->comp(), _elementType));
+    Func::FunctionContext *fc = _comp->funcContext();
+    _stackBaseLocal = fc->DefineLocal(name, bx->PointerTo(LOC, _comp, _elementType));
 
     // store current operand stack pointer base address so we can use it whenever we need
     // to recreate the stack as the interpreter would have
-    Builder *b = _func->builderEntry();
-    base->Store(PASSLOC, b, _stackBaseLocal, _stackTopRegister->Load(PASSLOC, b));
+    Builder *b = fc->builderEntryPoint();
+    fx->Store(PASSLOC, b, _stackBaseLocal, _stackTopRegister->Load(PASSLOC, b));
 }
 
 } // namespace VM
