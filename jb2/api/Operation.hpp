@@ -69,6 +69,7 @@ public:
     Operation *unlink();
     Operation *replace(Builder *b);
 
+    virtual size_t size() const                         { return sizeof(Operation); }
     virtual bool isDynamic() const                      { return false; }
 
     virtual LiteralIterator LiteralsBegin()             { return LiteralIterator(); }
@@ -127,7 +128,7 @@ public:
 
     void writeFull(TextWriter & w) const;
     const std::string & name() const { return _name; }
-    virtual void write(TextWriter & w) const { }
+    virtual void write(TextWriter & w) const;
     virtual void jbgen(JB1MethodBuilder *j1mb) const { }
 
 protected:
@@ -306,6 +307,34 @@ protected:
 
     Value * _left;
     Value * _right;
+};
+
+class OperationR0S1VN : public OperationR0S1 {
+public:
+    virtual size_t size() const { return sizeof(OperationR0S1VN); }
+
+    virtual int32_t numOperands() const { return _values.size(); }
+    virtual Value * operand(int i=0) const {
+        if (i < _values.size()) return _values[i];
+        return NULL;
+    }
+
+    virtual ValueIterator OperandsBegin() { return ValueIterator(_values); }
+
+    virtual void write(TextWriter & w) const;
+
+protected:
+    OperationR0S1VN(LOCATION, ActionID a, Extension *ext, Builder * parent, Symbol *symbol, int32_t numArgs, std::va_list & args)
+        : OperationR0S1(PASSLOC, a, ext, parent, symbol) {
+
+        for (auto a=0;a < numArgs;a++) {
+            _values.push_back(va_arg(args, Value *));
+        }
+    }
+
+    OperationR0S1VN(LOCATION, ActionID a, Extension *ext, Builder * parent, OperationCloner * cloner);
+
+    std::vector<Value *> _values;
 };
 
 class OperationR1 : public Operation {

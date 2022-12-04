@@ -27,13 +27,17 @@
 #include "CreateLoc.hpp"
 #include "IDs.hpp"
 #include "Type.hpp" // for TypeKind
+#include "typedefs.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 
 class Builder;
 class Compiler;
+class CompileUnit;
 class Context;
+class Location;
+class NoTypeType;
 class Operation;
 class Pass;
 class SemanticVersion;
@@ -42,16 +46,33 @@ class Value;
 
 class Extension {
     friend class Compiler;
+    friend class Context;
     friend class Operation;
 
 public:
     virtual const SemanticVersion * semver() const { return &version; }
+    static const std::string NAME;
 
-    Extension(Compiler *compiler, std::string name);
+    Extension(LOCATION, Compiler *compiler);
+
     Compiler *compiler() const { return _compiler; }
     std::string name() const { return _name; }
 
     const std::string actionName(ActionID a) const;
+
+protected:
+    ExtensionID _id;
+    std::string _name;
+    Compiler *_compiler;
+    CreateLocation _createLoc;
+    std::vector<const Type *> _types;
+
+public:
+    // 
+    // Core types
+    //
+
+    const NoTypeType *NoType;
 
     // 
     // Core operations
@@ -63,10 +84,15 @@ public:
     // Core pseudo operations
     //
 
-    Builder *OrphanBuilder(LOCATION, Builder *parent, Context *context=NULL, std::string name="");
     Builder *BoundBuilder(LOCATION, Builder *parent, Operation *parentOp, std::string name="");
+    Builder *OrphanBuilder(LOCATION, Builder *parent, Context *context=NULL, std::string name="");
+    Location * SourceLocation(LOCATION, Builder *b, std::string func);
+    Location * SourceLocation(LOCATION, Builder *b, std::string func, std::string lineNumber);
+    Location * SourceLocation(LOCATION, Builder *b, std::string func, std::string lineNumber, int32_t bcIndex);
 
 protected:
+    Extension(LOCATION, Compiler *compiler, std::string name);
+
     ActionID registerAction(std::string name);
     CompilerReturnCode registerReturnCode(std::string name);
     PassID addPass(Pass *pass); 
@@ -76,10 +102,8 @@ protected:
 
     virtual uint64_t numTypes() const { return static_cast<uint64_t>(_types.size()); }
 
-    ExtensionID _id;
-    std::string _name;
-    Compiler *_compiler;
-    std::vector<const Type *> _types;
+    Builder *EntryBuilder(LOCATION, Compilation *comp, Context *context, std::string name="");
+    Builder *ExitBuilder(LOCATION, Compilation *comp, Context *context, std::string name="");
 
     static const SemanticVersion version;
     

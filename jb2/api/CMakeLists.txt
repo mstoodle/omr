@@ -48,9 +48,12 @@ set(JB2_JBCOMPLEX_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Complex/)
 add_library(jb2core SHARED
 	Builder.cpp
 	Compilation.cpp
+	CompiledBody.cpp
 	Compiler.cpp
+	CompileUnit.cpp
 	Context.cpp
 	Extension.cpp
+	InputReader.cpp
 	JB1.cpp
 	KindService.cpp
 	Literal.cpp
@@ -77,6 +80,8 @@ target_link_libraries(jb2core jb2)
 add_subdirectory(test)
 
 # Extensions
+add_subdirectory(Func)
 add_subdirectory(Base)
+#add_subdirectory(Debug)
 add_subdirectory(VM)
-add_subdirectory(Complex)
+#add_subdirectory(Complex)

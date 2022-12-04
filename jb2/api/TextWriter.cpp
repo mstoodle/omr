@@ -34,8 +34,8 @@
 namespace OMR {
 namespace JitBuilder {
 
-TextWriter::TextWriter(Compilation * comp, std::ostream & os, std::string perIndent)
-    : Visitor(comp->compiler())
+TextWriter::TextWriter(Compiler * compiler, std::ostream & os, std::string perIndent)
+    : Visitor(compiler)
     , _os(os)
     , _perIndent(perIndent)
     , _indent(0) {

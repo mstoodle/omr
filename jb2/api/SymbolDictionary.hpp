@@ -56,6 +56,7 @@ public:
     SymbolIterator SymbolsEnd() const { return SymbolIterator(); }
 
     Symbol *LookupSymbol(SymbolID id);
+    Symbol *LookupSymbol(std::string name);
     void RemoveSymbol(Symbol *symbol);
 
     SymbolDictionaryID id() const { return _id; }
@@ -76,6 +77,7 @@ protected:
     SymbolVector _symbols;
     SymbolVector _ownedSymbols;
     std::map<const Type *,SymbolVector *> _symbolsByType;
+    std::map<std::string, Symbol *> _symbolsByName;
     SymbolID _nextSymbolID;
     SymbolDictionary * _linkedDictionary;
 };

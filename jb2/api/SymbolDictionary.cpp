@@ -82,6 +82,15 @@ SymbolDictionary::LookupSymbol(uint64_t id) {
     return NULL;
 }
 
+Symbol *
+SymbolDictionary::LookupSymbol(std::string name) {
+    auto it = _symbolsByName.find(name);
+    if (it != _symbolsByName.end())
+        return it->second;
+
+    return NULL;
+}
+
 void
 SymbolDictionary::RemoveSymbol(Symbol *sym) {
     // TODO: should really collect these and do in one pass
@@ -106,6 +115,7 @@ SymbolDictionary::internalRegisterSymbol(Symbol *symbol) {
         _symbolsByType.insert({type, typeList});
     }
     typeList->push_back(symbol);
+    _symbolsByName.insert({symbol->name(), symbol});
     _symbols.push_back(symbol);
 }
 

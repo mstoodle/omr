@@ -22,44 +22,81 @@
 #ifndef CONTEXT_INCL
 #define CONTEXT_INCL
 
-#include <map>
+#include <assert.h>
 #include <string>
-#include <vector>
 #include "IDs.hpp"
-#include "Iterator.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 
 class Compilation;
+class LiteralDictionary;
 class Symbol;
+class SymbolDictionary;
+class TypeDictionary;
 
 class Context {
 
 public:
-    Context(Compilation *comp, Context *parent, std::string name="");
+    Context(LOCATION, Compilation *comp, LiteralDictionary *useLitDict=NULL, SymbolDictionary *useSymDict=NULL, TypeDictionary *useTypeDict=NULL, uint32_t numEntryPoints=1, uint32_t numExitPoints=1, std::string name="");
+    Context(LOCATION, Context *parent, LiteralDictionary *useLitDict=NULL, SymbolDictionary *useSymDict=NULL, TypeDictionary *useTypeDict=NULL, uint32_t numEntryPoints=1, uint32_t numExitPoints=1, std::string name="");
 
     ContextID id() const { return _id; }
-    std::string name() { return _name; }
+    std::string name() const { return _name; }
 
-    Symbol *lookupSymbol(std::string name, bool includeParents=false);
-    bool removeSymbol(Symbol *symbol);
+    LiteralDictionary *litDict() const { return _litDict; }
+    SymbolDictionary *symDict() const { return _symDict; }
+    TypeDictionary *typeDict() const { return _typeDict; }
 
-    SymbolIterator SymbolsBegin() { return SymbolIterator(this->_symbols); }
-    SymbolIterator &SymbolsEnd()  { return symbolEndIterator; }
+    uint32_t numEntryPoints() const { return _numEntryPoints; }
+    uint32_t numExitPoints() const { return _numExitPoints; }
+
+    void * nativeEntryPoint(unsigned e=0) const { assert(e < _numEntryPoints); return _nativeEntryPoints[e]; }
+    void setNativeEntryPoint(void *entry, unsigned e=0) {
+        assert(e < _numEntryPoints);
+        _nativeEntryPoints[e] = entry;
+    }
+
+    void * debugEntryPoint(unsigned e=0) const { assert(e < _numEntryPoints); return _debugEntryPoints[e]; }
+    void setDebugEntryPoint(void *entry, unsigned e=0) {
+        assert(e < _numEntryPoints);
+        _debugEntryPoints[e] = entry;
+    }
+
+    Builder *builderEntryPoint(unsigned e=0) const {
+        assert(e < _numEntryPoints);
+        return _builderEntryPoints[e];
+    }
+
+    Builder *builderExitPoint(unsigned x=0) const {
+        assert(x < _numExitPoints);
+        return _builderExitPoints[x];
+    }
+
+    Symbol *lookupSymbol(std::string name, bool includeParents=true);
 
 protected:
-    void addSymbol(Symbol *symbol);
+    void initEntriesAndExits(LOCATION, Compilation *comp);
+    void addSymbol(Symbol *sym);
+    Compilation *comp() const { return _comp; }
 
     uint64_t _id;
-    Compilation * _comp;
+    Compilation *_comp;
     std::string _name;
+
     Context * _parent;
 
-    std::map<std::string,Symbol *> _symbolByName;
-    std::vector<Symbol *> _symbols;
+    LiteralDictionary *_litDict;
+    SymbolDictionary *_symDict;
+    TypeDictionary *_typeDict;
 
-    static SymbolIterator symbolEndIterator;
+    uint32_t _numEntryPoints;
+    void **_nativeEntryPoints;
+    void **_debugEntryPoints;
+    Builder **_builderEntryPoints;
+
+    uint32_t _numExitPoints;
+    Builder **_builderExitPoints;
 };
 
 } // namespace JitBuilder

@@ -54,33 +54,21 @@ JB1CodeGenerator::perform(Compilation *comp) {
         CompileMethodBuilder(Compilation *comp, JB1CodeGenerator *cg, TR::TypeDictionary *types)
             : TR::MethodBuilder(types)
             , _comp(comp)
-            , _cg(cg)
-            , _ilBuilt(false) {
-
-            // IL may already be constructed but if not, call buildIL()
-            bool success = _comp->ilBuilt();
-            if (!success)
-                success = _comp->buildIL();
+            , _cg(cg) {
 
             _cg->j1mb()->setMethodBuilder(this);
-            _cg->j1mb()->registerTypes(_comp->dict());
-
+            _cg->j1mb()->registerTypes(_comp->typedict());
             _comp->constructJB1Function(_cg->j1mb());
-
-            _ilBuilt = success;
         }
 
         virtual bool buildIL() {
-            if (_ilBuilt)
-                _cg->Visitor::start(_comp);
-
-            return _ilBuilt;
+            _cg->Visitor::start(_comp);
+            return true;
         }
 
     protected:
         Compilation * _comp;
         JB1CodeGenerator * _cg;
-        bool _ilBuilt;
     };
 
     setTraceEnabled(comp->config()->traceCodeGenerator());

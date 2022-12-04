@@ -88,10 +88,6 @@ public:
     Value * CreateLocalStruct(Type *elementType);
     #endif
 
-    Location * SourceLocation();
-    Location * SourceLocation(std::string lineNumber);
-    Location * SourceLocation(std::string lineNumber, int32_t bcIndex);
-
     int64_t id() const                                  { return _id; }
     std::string name() const                            { return _name; }
     virtual size_t size() const                         { return sizeof(Builder); }
