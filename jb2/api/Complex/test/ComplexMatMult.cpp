@@ -39,16 +39,24 @@ using namespace OMR::JitBuilder;
 ComplexMatMult::ComplexMatMult(LOCATION, Compiler * compiler, Complex::ComplexExtension *xc)
     : Base::Function(PASSLOC, compiler)
     , _xc(xc)
-    , _base(xc->base())
-    , pComplex(_base->PointerTo(PASSLOC, _comp, _xc->ComplexFloat64))
-    , _sumVar(DefineLocal("sum", _xc->ComplexFloat64))
-    , _paramC(DefineParameter("C", pComplex))
-    , _paramA(DefineParameter("A", pComplex))
-    , _paramB(DefineParameter("B", pComplex))
-    , _paramN(DefineParameter("N", pComplex)) {
+    , _base(xc->base()) {
 
     DefineName("complexmatmult");
-    DefineReturnType(_base->NoType);
+}
+
+bool
+ComplexMatMult::initContext(LOCATION, Base::FunctionCompilation *comp, Base::FunctionContext *fc) {
+    pComplex = _base->PointerTo(PASSLOC, comp, _xc->ComplexFloat64);
+
+    _sumVar = fc->DefineLocal("sum", _xc->ComplexFloat64);
+    _paramC = fc->DefineParameter("C", pComplex);
+    _paramA = fc->DefineParameter("A", pComplex);
+    _paramB = fc->DefineParameter("B", pComplex);
+    _paramN = fc->DefineParameter("N", pComplex);
+
+    fc->DefineReturnType(_base->NoType);
+
+    return true;
 }
 
 
@@ -72,12 +80,12 @@ ComplexMatMult::Load2D(LOCATION, Builder *bldr, Value *base, Value *first, Value
 }
 
 bool
-ComplexMatMult::buildIL() {
-    Builder *entry = builderEntry();
+ComplexMatMult::buildIL(LOCATION, Base::FunctionCompilation *comp, Base::FunctionContext *fc) {
+    Builder *entry = fc->builderEntryPoint();
 
-    Base::LocalSymbol *iVar = DefineLocal("i", _base->Int64);
-    Base::LocalSymbol *jVar = DefineLocal("j", _base->Int64);
-    Base::LocalSymbol *kVar = DefineLocal("k", _base->Int64);
+    Base::LocalSymbol *iVar = fc->DefineLocal("i", _base->Int64);
+    Base::LocalSymbol *jVar = fc->DefineLocal("j", _base->Int64);
+    Base::LocalSymbol *kVar = fc->DefineLocal("k", _base->Int64);
 
     Value *A = _base->Load(LOC, entry, _paramA);
     Value *B = _base->Load(LOC, entry, _paramB);
@@ -159,6 +167,7 @@ main(int argc, char *argv[]) {
     Compiler c("Compiler for Complex Matrix Multiply Code Sample");
 
     cout << "Step 3: load extensions (Base and VM)\n";
+    Base::BaseExtension *base = c.loadExtension<Base::BaseExtension>(LOC);
     Complex::ComplexExtension *xc = c.loadExtension<Complex::ComplexExtension>(LOC);
     if (c.hasErrorCondition()) {
         cerr << c.errorCondition()->message();
@@ -170,8 +179,7 @@ main(int argc, char *argv[]) {
     ComplexMatMult cmmFunc(LOC, &c, xc);
 
     cout << "Step 5: Set up logging configuration\n";
-    Base::FunctionCompilation *comp = cmmFunc.comp();
-    TextWriter logger(comp, std::cout, std::string("    "));
+    TextWriter logger(&c, std::cout, std::string("    "));
     TextWriter *log = (DO_LOGGING) ? &logger : NULL;
     
     printMatrix(A, N, "A");
@@ -181,14 +189,14 @@ main(int argc, char *argv[]) {
     ComplexMatMultFunctionType *cmm = cmmFunc.debugEntry<ComplexMatMultFunctionType *>();
 #else
     cout << "Step 6: compile function\n";
-    CompilerReturnCode result = cmmFunc.Compile(log);
+    CompilerReturnCode result = cmmFunc.compile(LOC, base->jb1cgStrategyID, log);
 
     if (result != c.CompileSuccessful) {
         cout << "Compile failed: " << result << "\n";
         exit(-1);
     }
     
-    ComplexMatMultFunctionType *cmm = cmmFunc.nativeEntry<ComplexMatMultFunctionType *>();
+    ComplexMatMultFunctionType *cmm = cmmFunc.compiledBody(base->jb1cgStrategyID)->nativeEntryPoint<ComplexMatMultFunctionType>();
 #endif
 
     cout << "Matrix Multiply operands:\n";
