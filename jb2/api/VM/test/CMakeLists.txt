@@ -35,6 +35,7 @@ set(GTEST_DIR $(omr_SOURCE_DIR)/third_party/gtest-1.8.0)
 	target_link_libraries(testregister
 		jb2vm
 		jb2base
+		jb2func
 		jb2core
 		jb2
 		omrGtest
@@ -60,6 +61,7 @@ set(GTEST_DIR $(omr_SOURCE_DIR)/third_party/gtest-1.8.0)
 	target_link_libraries(testoperandstack
 		jb2vm
 		jb2base
+		jb2func
 		jb2core
 		jb2
 		omrGtest

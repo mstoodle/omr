@@ -22,15 +22,13 @@
 #ifndef VIRTUALMACHINEREGISTERINSTRUCT_INCL
 #define VIRTUALMACHINEREGISTERINSTRUCT_INCL
 
+#include "JBCore.hpp"
+#include "Func/Func.hpp"
+#include "Base/Base.hpp"
 #include "VirtualMachineRegister.hpp"
 
 namespace OMR {
 namespace JitBuilder {
-
-class Builder;
-namespace Base { class FieldType; }
-namespace Base { class LocalSymbol; }
-
 namespace VM {
 
 class VMExtension;
@@ -65,7 +63,7 @@ public:
      * @param localHoldingStructAddress is the local variable symbol that holds the struct base address; it must have been stored in this symbol before control will reach the builder "b"
      * @param doReload do a Reload on every entry builder for _func (defaults true, MakeCopy passes false)
      */
-    VirtualMachineRegisterInStruct(LOCATION, VMExtension *vme, std::string name, Base::Function *func, const Base::FieldType *fieldType, Base::LocalSymbol * localHoldingStructAddress, bool doReload=true);
+    VirtualMachineRegisterInStruct(LOCATION, VMExtension *vme, std::string name, Base::BaseCompilation *comp, const Base::FieldType *fieldType, Func::LocalSymbol * localHoldingStructAddress, bool doReload=true);
 
     virtual void Commit(LOCATION, Builder * b);
     virtual VirtualMachineState * MakeCopy(LOCATION, Builder *b);
@@ -76,7 +74,7 @@ public:
 
 protected:
     const Base::FieldType * _fieldType;
-    Base::LocalSymbol * _localHoldingStructAddress;
+    Func::LocalSymbol * _localHoldingStructAddress;
 
     static StateKind STATEKIND;
     static bool kindRegistered;
