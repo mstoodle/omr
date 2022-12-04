@@ -20,18 +20,18 @@ OpenJDK Assembly Exception [2].
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
-#  Compilation
+#  CompileUnit
 
-`Compilation``instances represent a temporal context associated with compiling
-some `CompileUnit`. For example, a compiler that compiles functions would create
-a CompileUnit for the process of compiling each function. Similarly, a compiler
-that compiles individual basic blocks would create a CompileUnit corresponding to
-the process of compiling each block. The Compilation will be associated with a
-specific Compiler and will capture the memory required to compile the CompileUnit.
-Some results may be stored on the `Compilation` object so that they can be
-communicated to the various steps used to compile the `CompileUnit`.
-
-A `Compilation` object is created when a `CompileUnit`'s compile process is
-initiated by a `Compiler`, and is freed when that compile process completes
-(along with any memory allocted during that process that isn't expressly
-designed to persist the compilation process).
+`CompileUnit``instances represent a body of code that can be compiled by a
+`Compiler`. A `CompileUnit` has a `Context` that captures what values are
+available to the `CompileUnit`, how many entry and exit points it has, etc.
+For example, a compiler designed to compile functions could define a
+`Function``object that subclasses `CompileUnit` that corresponds to each
+function in the target program that is to be compiled. The `Context` for
+such a `Function` object might have information about the parameters
+and their Types, the function return Type, etc. Similarly, a compiler that
+compiles basic blocks might define a `BasicBlock` subclass of `CompileUnit`
+that would correspond to each basic block in the target program that is
+to be compiled, and its `Context` object might hold different kinds of
+information (e.g. available local variables in an outer stack frame, or
+perhaps registers and details of the Values stored in them).
