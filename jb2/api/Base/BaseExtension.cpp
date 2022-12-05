@@ -142,7 +142,7 @@ BaseExtension::compile(LOCATION, Func::Function *func, StrategyID strategy, Text
     if (strategy == NoStrategy)
         strategy = _compiler->jb1cgStrategyID;
 
-    BaseCompilation comp(_compiler, func, strategy, _compiler->dict(), NULL);
+    BaseCompilation comp(_compiler, func, strategy, NULL, NULL);
     Func::FunctionContext context(PASSLOC, &comp);
     comp.setContext(&context);
     comp.setLogger(logger);

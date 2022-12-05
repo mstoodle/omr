@@ -30,6 +30,7 @@ namespace JitBuilder {
 class FunctionBuilder;
 class Transformer;
 
+// Needs method filter concept and construction should decode filter
 class Config {
 public:
     Config()
@@ -38,6 +39,13 @@ public:
         , _traceTypeReplacer(false)
         , _lastTransformationIndex(-1) // no limit
         , _logRegex("") {
+    }
+    Config(Config *parent)
+        : _traceBuildIL(parent->_traceBuildIL)
+        , _traceCodeGenerator(parent->_traceCodeGenerator)
+        , _traceTypeReplacer(parent->_traceTypeReplacer)
+        , _lastTransformationIndex(parent->_lastTransformationIndex)
+        , _logRegex(parent->_logRegex) {
     }
 
     // when true, turn logging on when buildIL() is called
