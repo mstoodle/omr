@@ -50,7 +50,8 @@ Compilation::Compilation(Compiler *compiler, CompileUnit *unit, StrategyID strat
     , _compiler(compiler)
     , _unit(unit)
     , _strategy(strategy)
-    , _config((config == NULL) ? compiler->config() : config)
+    , _myConfig(config == NULL)
+    , _config((config == NULL) ? new Config(compiler->config()) : config)
     , _context(NULL)
     , _literalDict(new LiteralDictionary(this))
     , _symbolDict(new SymbolDictionary(this))
@@ -62,6 +63,8 @@ Compilation::Compilation(Compiler *compiler, CompileUnit *unit, StrategyID strat
 Compilation::~Compilation() {
     if (_myTypeDict && _typeDict != NULL)
         delete _typeDict;
+    if (_myConfig && _config != NULL)
+        delete _config;
     delete _symbolDict;
     delete _literalDict;
 }

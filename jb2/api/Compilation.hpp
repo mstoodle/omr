@@ -136,6 +136,7 @@ protected:
     Compiler *_compiler;
     CompileUnit *_unit;
     StrategyID _strategy;
+    bool _myConfig;
     Config *_config;
     Context *_context;
 
