@@ -21,7 +21,22 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 -->
 
 # `Config`
+
 `Config` instance associated with a `Compiler` or a `Compilation` that can be
-queried by a `Compilation` to tailor its behaviour. Examples would be
-to activate various kinds of logging or details about the target
-environment for a `Compilation`.
+queried by a `Compilation` to tailor its behaviour based on the user or client
+environment. Examples would be to activate various kinds of logging or details
+about the target environment for a `Compilation`. The `Config` object is meant
+to be a repository of simple information; it should not perform any complicated
+reasoning itself. Eventually, there will be a default command-line option
+processing function that will translate command-line options into settings
+recorded by the `Config` object and read by other classes in the `Compiler`
+to adjust its behaviour.
+
+`Config` is pretty basic at the moment. It has the following facilities:
+* `setTraceBuildIL` - enable logging during the buildIL step of IL generation
+* `setTraceCodeGenerator` - enable logging during JB1 code generation
+* `setTraceTypeReplacer` - enable logging during type replacement
+* `setLastTransformationIndex - diagnostic support to disable transformations after the given index
+
+A `Config` object can be configured in a fluent interface where you
+chain calls on the object to set the properties needed.
