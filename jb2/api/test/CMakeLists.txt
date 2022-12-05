@@ -47,7 +47,7 @@ set(GTEST_DIR $(omr_SOURCE_DIR)/third_party/gtest-1.8.0)
 
 	#omr_add_test( NAME JitBuilderTest COMMAND $<TARGET_FILE:jitbuildertest> --gtest_output=xml:${CMAKE_CURRENT_BINARY_DIR}/jitbuildertest-results.xml)
 	add_test(
-		NAME TestJB2SemVer
+		NAME JB2TestSemVer
 		COMMAND $<TARGET_FILE:testsemver>
 	)
 
@@ -68,7 +68,7 @@ set(GTEST_DIR $(omr_SOURCE_DIR)/third_party/gtest-1.8.0)
 
 	#omr_add_test( NAME JitBuilderTest COMMAND $<TARGET_FILE:jitbuildertest> --gtest_output=xml:${CMAKE_CURRENT_BINARY_DIR}/jitbuildertest-results.xml)
 	add_test(
-		NAME TestJB2Compiler
+		NAME JB2TestCompiler
 		COMMAND $<TARGET_FILE:testcompiler>
 	)
 #endif()
