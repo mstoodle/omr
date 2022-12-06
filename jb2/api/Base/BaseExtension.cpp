@@ -36,7 +36,7 @@ namespace JitBuilder {
 namespace Base {
 
 const SemanticVersion BaseExtension::version(BASEEXT_MAJOR,BASEEXT_MINOR,BASEEXT_PATCH);
-const std::string BaseExtension::NAME("jb2base");
+const String BaseExtension::NAME("jb2base");
 
 static const MajorID NEEDED_FUNCEXT_MAJOR=0;
 static const MajorID NEEDED_FUNCEXT_MINOR=1;
@@ -52,7 +52,7 @@ extern "C" {
     }
 }
 
-BaseExtension::BaseExtension(LOCATION, Compiler *compiler, bool extended, std::string extensionName)
+BaseExtension::BaseExtension(LOCATION, Compiler *compiler, bool extended, String extensionName)
     : Extension(PASSLOC, compiler, (extended ? extensionName : NAME))
     , _fx(compiler->lookupExtension<Func::FunctionExtension>())
     , Int8(new Int8Type(PASSLOC, this))
@@ -63,37 +63,37 @@ BaseExtension::BaseExtension(LOCATION, Compiler *compiler, bool extended, std::s
     , Float64(new Float64Type(PASSLOC, this))
     , Address(new AddressType(PASSLOC, this))
     , Word(compiler->platformWordSize() == 64 ? this->Int64->refine<Type>() : this->Int32->refine<Type>())
-    , aConst(registerAction(std::string("Const")))
-    , aAdd(registerAction(std::string("Add")))
-    , aConvertTo(registerAction(std::string("ConvertTo")))
-    , aMul(registerAction(std::string("Mul")))
-    , aSub(registerAction(std::string("Sub")))
-    , aLoadAt(registerAction(std::string("LoadAt")))
-    , aStoreAt(registerAction(std::string("StoreAt")))
-    , aLoadField(registerAction(std::string("LoadField")))
-    , aStoreField(registerAction(std::string("StoreField")))
-    , aLoadFieldAt(registerAction(std::string("LoadFieldAt")))
-    , aStoreFieldAt(registerAction(std::string("StoreFieldAt")))
-    , aCreateLocalArray(registerAction(std::string("CreateLocalArray")))
-    , aCreateLocalStruct(registerAction(std::string("CreateLocalStruct")))
-    , aIndexAt(registerAction(std::string("IndexAt")))
-    , aCall(registerAction(std::string("Call")))
-    , aCallVoid(registerAction(std::string("CallVoid")))
-    , aForLoopUp(registerAction(std::string("ForLoopUp")))
-    , aGoto(registerAction(std::string("Goto")))
-    , aIfCmpEqual(registerAction(std::string("IfCmpEqual")))
-    , aIfCmpEqualZero(registerAction(std::string("IfCmpEqualZero")))
-    , aIfCmpGreaterThan(registerAction(std::string("IfCmpGreaterThan")))
-    , aIfCmpGreaterOrEqual(registerAction(std::string("IfCmpGreaterOrEqual")))
-    , aIfCmpLessThan(registerAction(std::string("IfCmpLessThan")))
-    , aIfCmpLessOrEqual(registerAction(std::string("IfCmpLessOrEqual")))
-    , aIfCmpNotEqual(registerAction(std::string("IfCmpNotEqual")))
-    , aIfCmpNotEqualZero(registerAction(std::string("IfCmpNotEqualZero")))
-    , aIfCmpUnsignedGreaterThan(registerAction(std::string("IfCmpUnsignedGreaterThan")))
-    , aIfCmpUnsignedGreaterOrEqual(registerAction(std::string("IfCmpUnsignedGreaterOrEqual")))
-    , aIfCmpUnsignedLessThan(registerAction(std::string("IfCmpUnsignedLessThan")))
-    , aIfCmpUnsignedLessOrEqual(registerAction(std::string("IfCmpUnsignedLessOrEqual")))
-    , aReturn(registerAction(std::string("Return")))
+    , aConst(registerAction(String("Const")))
+    , aAdd(registerAction(String("Add")))
+    , aConvertTo(registerAction(String("ConvertTo")))
+    , aMul(registerAction(String("Mul")))
+    , aSub(registerAction(String("Sub")))
+    , aLoadAt(registerAction(String("LoadAt")))
+    , aStoreAt(registerAction(String("StoreAt")))
+    , aLoadField(registerAction(String("LoadField")))
+    , aStoreField(registerAction(String("StoreField")))
+    , aLoadFieldAt(registerAction(String("LoadFieldAt")))
+    , aStoreFieldAt(registerAction(String("StoreFieldAt")))
+    , aCreateLocalArray(registerAction(String("CreateLocalArray")))
+    , aCreateLocalStruct(registerAction(String("CreateLocalStruct")))
+    , aIndexAt(registerAction(String("IndexAt")))
+    , aCall(registerAction(String("Call")))
+    , aCallVoid(registerAction(String("CallVoid")))
+    , aForLoopUp(registerAction(String("ForLoopUp")))
+    , aGoto(registerAction(String("Goto")))
+    , aIfCmpEqual(registerAction(String("IfCmpEqual")))
+    , aIfCmpEqualZero(registerAction(String("IfCmpEqualZero")))
+    , aIfCmpGreaterThan(registerAction(String("IfCmpGreaterThan")))
+    , aIfCmpGreaterOrEqual(registerAction(String("IfCmpGreaterOrEqual")))
+    , aIfCmpLessThan(registerAction(String("IfCmpLessThan")))
+    , aIfCmpLessOrEqual(registerAction(String("IfCmpLessOrEqual")))
+    , aIfCmpNotEqual(registerAction(String("IfCmpNotEqual")))
+    , aIfCmpNotEqualZero(registerAction(String("IfCmpNotEqualZero")))
+    , aIfCmpUnsignedGreaterThan(registerAction(String("IfCmpUnsignedGreaterThan")))
+    , aIfCmpUnsignedGreaterOrEqual(registerAction(String("IfCmpUnsignedGreaterOrEqual")))
+    , aIfCmpUnsignedLessThan(registerAction(String("IfCmpUnsignedLessThan")))
+    , aIfCmpUnsignedLessOrEqual(registerAction(String("IfCmpUnsignedLessOrEqual")))
+    , aReturn(registerAction(String("Return")))
     , CompileFail_BadInputTypes_Add(registerReturnCode("CompileFail_BadInputTypes_Add"))
     , CompileFail_BadInputTypes_ConvertTo(registerReturnCode("CompileFail_BadInputTypes_ConvertTo"))
     , CompileFail_BadInputTypes_Mul(registerReturnCode("CompileFail_BadInputTypes_Mul"))
@@ -215,11 +215,11 @@ BaseExtensionChecker::failValidateAdd(LOCATION, Builder *b, Value *left, Value *
     CompilationException e(PASSLOC, _base->compiler(), _base->CompileFail_BadInputTypes_Add);
     const Type *lType = left->type();
     const Type *rType = right->type();
-    e.setMessageLine(std::string("Add: invalid input types"))
-     .appendMessageLine(std::string("    left ").append(lType->to_string()))
-     .appendMessageLine(std::string("   right ").append(rType->to_string()))
-     .appendMessageLine(std::string("Left and right types are expected to be the same for integer types (Int8,Int16,Int32,Int64,Float32,Float64)"))
-     .appendMessageLine(std::string("If left/right type is Address then the right/left (respectively) type must be Word"));
+    e.setMessageLine(String("Add: invalid input types"))
+     .appendMessageLine(String("    left ").append(lType->to_string()))
+     .appendMessageLine(String("   right ").append(rType->to_string()))
+     .appendMessageLine(String("Left and right types are expected to be the same for integer types (Int8,Int16,Int32,Int64,Float32,Float64)"))
+     .appendMessageLine(String("If left/right type is Address then the right/left (respectively) type must be Word"));
     throw e;
 }
 
@@ -274,10 +274,10 @@ void
 BaseExtensionChecker::failValidateConvertTo(LOCATION, Builder *b, const Type *type, Value *value) {
     CompilationException e(PASSLOC, _base->compiler(), _base->CompileFail_BadInputTypes_ConvertTo);
     const Type *vType = value->type();
-    e.setMessageLine(std::string("ConvertTo: invalid input types"))
-     .appendMessageLine(std::string("    type ").append(type->to_string()))
-     .appendMessageLine(std::string("   value ").append(vType->to_string()))
-     .appendMessageLine(std::string("Source value and destination types must be a primitive type (Int8,Int16,Int32,Int64,Float32,Float64,Address)"));
+    e.setMessageLine(String("ConvertTo: invalid input types"))
+     .appendMessageLine(String("    type ").append(type->to_string()))
+     .appendMessageLine(String("   value ").append(vType->to_string()))
+     .appendMessageLine(String("Source value and destination types must be a primitive type (Int8,Int16,Int32,Int64,Float32,Float64,Address)"));
     throw e;
 }
 
@@ -324,11 +324,11 @@ BaseExtensionChecker::failValidateMul(LOCATION, Builder *b, Value *left, Value *
     CompilationException e(PASSLOC, _base->compiler(), _base->CompileFail_BadInputTypes_Mul);
     const Type *lType = left->type();
     const Type *rType = right->type();
-    e.setMessageLine(std::string("Mul: invalid input types"))
-     .appendMessageLine(std::string("    left ").append(lType->to_string()))
-     .appendMessageLine(std::string("   right ").append(rType->to_string()))
-     .appendMessageLine(std::string("Left and right types are expected to be the same for integer types (Int8,Int16,Int32,Int64,Float32,Float64)"))
-     .appendMessageLine(std::string("Address types cannot be used"));
+    e.setMessageLine(String("Mul: invalid input types"))
+     .appendMessageLine(String("    left ").append(lType->to_string()))
+     .appendMessageLine(String("   right ").append(rType->to_string()))
+     .appendMessageLine(String("Left and right types are expected to be the same for integer types (Int8,Int16,Int32,Int64,Float32,Float64)"))
+     .appendMessageLine(String("Address types cannot be used"));
     throw e;
 }
 
@@ -381,11 +381,11 @@ BaseExtensionChecker::failValidateSub(LOCATION, Builder *b, Value *left, Value *
     CompilationException e(PASSLOC, _base->compiler(), _base->CompileFail_BadInputTypes_Sub);
     const Type *lType = left->type();
     const Type *rType = right->type();
-    e.setMessageLine(std::string("Sub: invalid input types"))
-     .appendMessageLine(std::string("    left ").append(lType->to_string()))
-     .appendMessageLine(std::string("   right ").append(rType->to_string()))
-     .appendMessageLine(std::string("Left and right types are expected to be the same for integer types (Int8,Int16,Int32,Int64,Float32,Float64)"))
-     .appendMessageLine(std::string("If left type is Address then the right type must be either Address or Word"));
+    e.setMessageLine(String("Sub: invalid input types"))
+     .appendMessageLine(String("    left ").append(lType->to_string()))
+     .appendMessageLine(String("   right ").append(rType->to_string()))
+     .appendMessageLine(String("Left and right types are expected to be the same for integer types (Int8,Int16,Int32,Int64,Float32,Float64)"))
+     .appendMessageLine(String("If left type is Address then the right type must be either Address or Word"));
     throw e;
 }
 
@@ -422,19 +422,19 @@ void
 BaseExtensionChecker::failValidateCall(LOCATION, Builder *b, Func::FunctionSymbol *target, std::va_list & args) {
     const Func::FunctionType *tgtType = target->functionType();
     CompilationException e(PASSLOC, _base->compiler(), _base->CompileFail_MismatchedArgumentTypes_Call);
-    e.setMessageLine(std::string("Call: mismatched argument types"));
+    e.setMessageLine(String("Call: mismatched argument types"));
     for (auto a=0;a < tgtType->numParms();a++) {
         Value *arg = va_arg(args, Value *);
         if (arg->type() != tgtType->parmTypes()[a])
-            e.appendMessageLine(std::string("  X  "));
+            e.appendMessageLine(String("  X  "));
         else
-            e.appendMessageLine(std::string("     "));
-        e.appendMessage(std::string(" p").append(std::to_string(a)).append(std::string(" ")).append(tgtType->parmTypes()[a]->to_string())
-         .append(std::string(" : a")).append(std::to_string(a))
-         .append(std::string(" v")).append(std::to_string(arg->id()))
-         .append(std::string(" ")).append(arg->type()->to_string()));
+            e.appendMessageLine(String("     "));
+        e.appendMessage(String(" p").append(String::to_string(a)).append(String(" ")).append(tgtType->parmTypes()[a]->to_string())
+         .append(String(" : a")).append(String::to_string(a))
+         .append(String(" v")).append(String::to_string(arg->id()))
+         .append(String(" ")).append(arg->type()->to_string()));
     }
-    e.appendMessageLine(std::string("Argument types must match corresponding parameter types (currently exact, should be assignable to)"));
+    e.appendMessageLine(String("Argument types must match corresponding parameter types (currently exact, should be assignable to)"));
     throw e;
 }
 
@@ -488,12 +488,12 @@ BaseExtensionChecker::validateForLoopUp(LOCATION, Builder *b, Func::LocalSymbol 
 void
 BaseExtensionChecker::failValidateForLoopUp(LOCATION, Builder *b, Func::LocalSymbol *loopVariable, Value *initial, Value *final, Value *bump) {
     CompilationException e(PASSLOC, _base->compiler(), _base->CompileFail_BadInputTypes_ForLoopUp);
-    e.setMessageLine(std::string("ForLoopUp: invalid input types"))
-     .appendMessageLine(std::string("  loop var s").append(std::to_string(loopVariable->id())).append(" ").append(loopVariable->name()).append(" ").append(loopVariable->type()->to_string()))
-     .appendMessageLine(std::string("   initial v").append(std::to_string(initial->id())).append(" ").append(initial->type()->to_string()))
-     .appendMessageLine(std::string("     final v").append(std::to_string(final->id())).append(" ").append(final->type()->to_string()))
-     .appendMessageLine(std::string("      bump v").append(std::to_string(final->id())).append(" ").append(bump->type()->to_string()))
-     .appendMessageLine(std::string("Loop variable must be one of Int8, Int16, Int32, or Int64, and the types of initial, final, and bump must be same as the loop variable's type"));
+    e.setMessageLine(String("ForLoopUp: invalid input types"))
+     .appendMessageLine(String("  loop var s").append(String::to_string(loopVariable->id())).append(" ").append(loopVariable->name()).append(" ").append(loopVariable->type()->to_string()))
+     .appendMessageLine(String("   initial v").append(String::to_string(initial->id())).append(" ").append(initial->type()->to_string()))
+     .appendMessageLine(String("     final v").append(String::to_string(final->id())).append(" ").append(final->type()->to_string()))
+     .appendMessageLine(String("      bump v").append(String::to_string(final->id())).append(" ").append(bump->type()->to_string()))
+     .appendMessageLine(String("Loop variable must be one of Int8, Int16, Int32, or Int64, and the types of initial, final, and bump must be same as the loop variable's type"));
     throw e;
 }
 
@@ -523,7 +523,7 @@ BaseExtension::Goto(LOCATION, Builder *b, Builder *target) {
 
 
 bool
-BaseExtensionChecker::validateIfCmp(LOCATION, Builder *b, Builder *target, Value *left, Value *right, CompilerReturnCode failCode, std::string opCodeName) {
+BaseExtensionChecker::validateIfCmp(LOCATION, Builder *b, Builder *target, Value *left, Value *right, CompilerReturnCode failCode, String opCodeName) {
     const Type *lType = left->type();
     const Type *rType = right->type();
 
@@ -545,20 +545,20 @@ BaseExtensionChecker::validateIfCmp(LOCATION, Builder *b, Builder *target, Value
 }
 
 void
-BaseExtensionChecker::failValidateIfCmp(LOCATION, Builder *b, Builder *target, Value *left, Value *right, CompilerReturnCode failCode, std::string opCodeName) {
+BaseExtensionChecker::failValidateIfCmp(LOCATION, Builder *b, Builder *target, Value *left, Value *right, CompilerReturnCode failCode, String opCodeName) {
     CompilationException e(PASSLOC, _base->compiler(), failCode);
     const Type *lType = left->type();
     const Type *rType = right->type();
-    e.setMessageLine(opCodeName.append(std::string(": invalid input types")))
-     .appendMessageLine(std::string("    left ").append(lType->to_string()))
-     .appendMessageLine(std::string("   right ").append(rType->to_string()))
-     .appendMessageLine(std::string("  target ").append(target->to_string()))
-     .appendMessageLine(std::string("Left and right types are expected to be the same type (Int8,Int16,Int32,Int64,Float32,Float64,Address)"));
+    e.setMessageLine(opCodeName.append(String(": invalid input types")))
+     .appendMessageLine(String("    left ").append(lType->to_string()))
+     .appendMessageLine(String("   right ").append(rType->to_string()))
+     .appendMessageLine(String("  target ").append(target->to_string()))
+     .appendMessageLine(String("Left and right types are expected to be the same type (Int8,Int16,Int32,Int64,Float32,Float64,Address)"));
     throw e;
 }
 
 bool
-BaseExtensionChecker::validateIfCmpZero(LOCATION, Builder *b, Builder *target, Value *value, CompilerReturnCode failCode, std::string opCodeName) {
+BaseExtensionChecker::validateIfCmpZero(LOCATION, Builder *b, Builder *target, Value *value, CompilerReturnCode failCode, String opCodeName) {
     const Type *type = value->type();
 
     if (type == _base->Int8
@@ -577,13 +577,13 @@ BaseExtensionChecker::validateIfCmpZero(LOCATION, Builder *b, Builder *target, V
 }
 
 void
-BaseExtensionChecker::failValidateIfCmpZero(LOCATION, Builder *b, Builder *target, Value *value, CompilerReturnCode failCode, std::string opCodeName) {
+BaseExtensionChecker::failValidateIfCmpZero(LOCATION, Builder *b, Builder *target, Value *value, CompilerReturnCode failCode, String opCodeName) {
     CompilationException e(PASSLOC, _base->compiler(), failCode);
     const Type *type = value->type();
-    e.setMessageLine(opCodeName.append(std::string(": invalid input types")))
-     .appendMessageLine(std::string("   value ").append(type->to_string()))
-     .appendMessageLine(std::string("  target ").append(target->to_string()))
-     .appendMessageLine(std::string("Value type is expected to be a primitive type (Int8,Int16,Int32,Int64,Float32,Float64,Address)"));
+    e.setMessageLine(opCodeName.append(String(": invalid input types")))
+     .appendMessageLine(String("   value ").append(type->to_string()))
+     .appendMessageLine(String("  target ").append(target->to_string()))
+     .appendMessageLine(String("Value type is expected to be a primitive type (Int8,Int16,Int32,Int64,Float32,Float64,Address)"));
     throw e;
 }
 
@@ -896,9 +896,9 @@ void
 BaseExtension::failValidateOffsetAt(LOCATION, Builder *b, Value *array) {
     CompilationException e(PASSLOC, _compiler, CompileFail_BadInputArray_OffsetAt);
     const Type *arrayType = array->type();
-    e.setMessageLine(std::string("OffsetAt: invalid array type"))
-     .appendMessageLine(std::string("   array ").append(arrayType->to_string()))
-     .appendMessageLine(std::string("Array type must be a PointerType"));
+    e.setMessageLine(String("OffsetAt: invalid array type"))
+     .appendMessageLine(String("   array ").append(arrayType->to_string()))
+     .appendMessageLine(String("Array type must be a PointerType"));
     throw e;
 }
 
@@ -1031,7 +1031,7 @@ BuilderBase::Load(Symbol *local)
    }
 
 Value *
-BuilderBase::Load (std::string name)
+BuilderBase::Load (String name)
    {
    Symbol *local = _fb->getSymbol(name);
    if (!local)
@@ -1052,7 +1052,7 @@ BuilderBase::LoadAt (Type * type, Value * address)
    }
 
 Value *
-BuilderBase::LoadField (std::string structName, std::string fieldName, Value * structBase)
+BuilderBase::LoadField (String structName, String fieldName, Value * structBase)
    {
    StructType *structType = dict()->LookupStruct(structName);
    FieldType *fieldType = structType->LookupField(fieldName);
@@ -1074,7 +1074,7 @@ BuilderBase::LoadField (FieldType *fieldType, Value *structBase)
    }
 
 Value *
-BuilderBase::LoadIndirect (std::string structName, std::string fieldName, Value * pStructBase)
+BuilderBase::LoadIndirect (String structName, String fieldName, Value * pStructBase)
    {
    StructType *structType = dict()->LookupStruct(structName);
    FieldType *fieldType = structType->LookupField(fieldName);
@@ -1102,7 +1102,7 @@ BuilderBase::Store(Symbol * local, Value * value)
    }
    
 void
-BuilderBase::Store (std::string name, Value * value)
+BuilderBase::Store (String name, Value * value)
    {
    Symbol *local = fb()->getSymbol(name);
    if (local == NULL)
@@ -1124,7 +1124,7 @@ BuilderBase::StoreAt (Value * address, Value * value)
    }
 
 void
-BuilderBase::StoreField (std::string structName, std::string fieldName, Value * structBase, Value *value)
+BuilderBase::StoreField (String structName, String fieldName, Value * structBase, Value *value)
    {
    StructType *structType = dict()->LookupStruct(structName);
    FieldType *fieldType = structType->LookupField(fieldName);
@@ -1144,7 +1144,7 @@ BuilderBase::StoreField (FieldType *fieldType, Value *structBase, Value *value)
    }
 
 void
-BuilderBase::StoreIndirect (std::string structName, std::string fieldName, Value * pStructBase, Value *value)
+BuilderBase::StoreIndirect (String structName, String fieldName, Value * pStructBase, Value *value)
    {
    StructType *structType = dict()->LookupStruct(structName);
    FieldType *fieldType = structType->LookupField(fieldName);
@@ -1290,7 +1290,7 @@ BuilderBase::IfThenElse(Builder * thenB, Builder * elseB, Value * cond)
    }
 
 void
-BuilderBase::ForLoopUp(std::string loopVar, Builder * body, Value * initial, Value * end, Value * bump)
+BuilderBase::ForLoopUp(String loopVar, Builder * body, Value * initial, Value * end, Value * bump)
    {
    Func::LocalSymbol *loopSym = NULL;
    Symbol *sym = fb()->getSymbol(loopVar);
@@ -1315,7 +1315,7 @@ BuilderBase::ForLoopUp(Func::LocalSymbol *loopSym, Builder * body, Value * initi
    }
 
 void
-BuilderBase::ForLoop(bool countsUp, std::string loopVar, Builder * loopBody, Builder * loopContinue, Builder * loopBreak, Value * initial, Value * end, Value * bump)
+BuilderBase::ForLoop(bool countsUp, String loopVar, Builder * loopBody, Builder * loopContinue, Builder * loopBreak, Value * initial, Value * end, Value * bump)
    {
    Func::LocalSymbol *loopSym = NULL;
    Symbol *sym = fb()->getSymbol(loopVar);

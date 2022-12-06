@@ -23,8 +23,7 @@
 #define DEBUGDICTIONARY_INCL
 
 #include <map>
-
-#include "TypeDictionary.hpp"
+#include "Sim/SimExtension.hpp"
 
 namespace OMR {
 namespace JitBuilder {

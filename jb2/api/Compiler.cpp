@@ -38,7 +38,7 @@ namespace JitBuilder {
 CompilerID Compiler::nextCompilerID = 1; // 0 is reserved
 EyeCatcher Compiler::EYE_CATCHER_COMPILER=0xAABBCCDDDDCCBBAA;
 
-Compiler::Compiler(std::string name, Config *config, Compiler *parent)
+Compiler::Compiler(String name, Config *config, Compiler *parent)
     : _eyeCatcher(EYE_CATCHER_COMPILER)
     , _id(nextCompilerID++)
     , _name(name)
@@ -111,7 +111,7 @@ extern "C" {
 }
 
 Extension *
-Compiler::internalLoadExtension(LOCATION, const SemanticVersion *version, std::string name) {
+Compiler::internalLoadExtension(LOCATION, const SemanticVersion *version, String name) {
     Extension *ext = internalLookupExtension(name);
     if (ext) {
         if (version == NULL || ext->semver()->isCompatibleWith(*version))
@@ -120,7 +120,7 @@ Compiler::internalLoadExtension(LOCATION, const SemanticVersion *version, std::s
         return NULL;
     }
 
-    std::string soname = std::string("lib") + name + std::string(".so");
+    String soname = String("lib") + name + String(".so");
     void *handle = dlopen(soname.c_str(), RTLD_LAZY);
     if (!handle) {
         extensionCouldNotLoad(LOC, soname, dlerror());
@@ -166,7 +166,7 @@ Compiler::addExtension(Extension *ext) {
 }
 
 bool
-Compiler::validateExtension(std::string name) const {
+Compiler::validateExtension(String name) const {
     auto it = _extensions.find(name);
     if (it != _extensions.end())
         return true;
@@ -176,7 +176,7 @@ Compiler::validateExtension(std::string name) const {
 }
 
 Extension *
-Compiler::internalLookupExtension(std::string name) {
+Compiler::internalLookupExtension(String name) {
     auto it = _extensions.find(name);
     if (it == _extensions.end()) {
         if (_parent != NULL)
@@ -188,14 +188,14 @@ Compiler::internalLookupExtension(std::string name) {
 }
 
 ActionID
-Compiler::assignActionID(std::string name) {
+Compiler::assignActionID(String name) {
     ActionID id = this->_nextActionID++;
     this->_actionNames.insert({id, name});
     return id;
 }
 
 CompilerReturnCode
-Compiler::assignReturnCode(std::string name) {
+Compiler::assignReturnCode(String name) {
     CompilerReturnCode rc = this->_nextReturnCode++;
     this->_returnCodeNames.insert({rc, name});
     return rc;
@@ -210,7 +210,7 @@ Compiler::addPass(Pass *pass) {
 }
 
 PassID
-Compiler::lookupPass(std::string name) {
+Compiler::lookupPass(String name) {
     auto it = this->_registeredPassNames.find(name);
     if (it != this->_registeredPassNames.end())
         return it->second;
@@ -254,8 +254,8 @@ Compiler::compile(LOCATION, Compilation *comp, StrategyID strategyID) {
 
     } catch (CompilationException e) {
         // only if config.verboseErrors()?
-        std::cerr << "Location: " << e.locationLine();
-        std::cerr << e._message;
+        std::cerr << "Location: " << e.locationLine().c_str();
+        std::cerr << e._message.c_str();
         return e._result;
     }
 
@@ -263,41 +263,41 @@ Compiler::compile(LOCATION, Compilation *comp, StrategyID strategyID) {
 }
 
 void
-Compiler::extensionCouldNotLoad(LOCATION, std::string name, char *dlerrorMsg) {
+Compiler::extensionCouldNotLoad(LOCATION, String name, char *dlerrorMsg) {
     CompilationException *e = new CompilationException(PASSLOC, this, this->CompilerError_Extension_CouldNotLoad);
-    (*e).setMessageLine(std::string("Extension could not be loaded"))
-        .appendMessageLine(std::string("Library name: ").append(name))
-        .appendMessageLine(std::string("dlerror() reports ").append(std::string(dlerrorMsg)));
+    (*e).setMessageLine(String("Extension could not be loaded"))
+        .appendMessageLine(String("Library name: ").append(name))
+        .appendMessageLine(String("dlerror() reports ").append(String(dlerrorMsg)));
     _errorCondition = e;
 }
 
 void
-Compiler::extensionHasNoCreateFunction(LOCATION, Extension *ext, std::string name, char *dlerrorMsg) {
+Compiler::extensionHasNoCreateFunction(LOCATION, Extension *ext, String name, char *dlerrorMsg) {
     CompilationException *e = new CompilationException(PASSLOC, this, this->CompilerError_Extension_HasNoCreateFunction);
-    (*e).setMessageLine(std::string("Extension does not have a create() function"))
-        .appendMessageLine(std::string("Library loaded: ").append(name))
-        .appendMessageLine(std::string("dlerror() reports ").append(std::string(dlerrorMsg)));
+    (*e).setMessageLine(String("Extension does not have a create() function"))
+        .appendMessageLine(String("Library loaded: ").append(name))
+        .appendMessageLine(String("dlerror() reports ").append(String(dlerrorMsg)));
     _errorCondition = e;
 }
 
 void
-Compiler::extensionCouldNotCreate(LOCATION, std::string name) {
+Compiler::extensionCouldNotCreate(LOCATION, String name) {
     CompilationException *e = new CompilationException(PASSLOC, this, this->CompilerError_Extension_CouldNotCreate);
-    (*e).setMessageLine(std::string("Extension create() function returned NULL"))
-        .appendMessageLine(std::string("Library loaded: ").append(name));
+    (*e).setMessageLine(String("Extension create() function returned NULL"))
+        .appendMessageLine(String("Library loaded: ").append(name));
     _errorCondition = e;
 }
 
 void
-Compiler::extensionVersionMismatch(LOCATION, std::string name, const SemanticVersion * version, const SemanticVersion * extensionVersion) {
+Compiler::extensionVersionMismatch(LOCATION, String name, const SemanticVersion * version, const SemanticVersion * extensionVersion) {
     CompilationException *e = new CompilationException(PASSLOC, this, this->CompilerError_Extension_VersionMismatch);
-    (*e).setMessageLine(std::string("Extension version mismatch"))
-        .appendMessageLine(std::string("Requested: major ").append(std::to_string(version->major())))
-        .appendMessageLine(std::string("           minor ").append(std::to_string(version->minor())))
-        .appendMessageLine(std::string("           patch ").append(std::to_string(version->patch())))
-        .appendMessageLine(std::string("Loaded:    major ").append(std::to_string(extensionVersion->major())))
-        .appendMessageLine(std::string("           minor ").append(std::to_string(extensionVersion->minor())))
-        .appendMessageLine(std::string("           patch ").append(std::to_string(extensionVersion->patch())));
+    (*e).setMessageLine(String("Extension version mismatch"))
+        .appendMessageLine(String("Requested: major ").append(String::to_string(version->major())))
+        .appendMessageLine(String("           minor ").append(String::to_string(version->minor())))
+        .appendMessageLine(String("           patch ").append(String::to_string(version->patch())))
+        .appendMessageLine(String("Loaded:    major ").append(String::to_string(extensionVersion->major())))
+        .appendMessageLine(String("           minor ").append(String::to_string(extensionVersion->minor())))
+        .appendMessageLine(String("           patch ").append(String::to_string(extensionVersion->patch())));
     _errorCondition = e;
 }
 

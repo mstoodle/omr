@@ -27,7 +27,7 @@ namespace OMR {
 namespace JitBuilder {
 
 TextWriter &
-Loggable::trace(Compilation *comp, std::string msg) {
+Loggable::trace(Compilation *comp, String msg) {
     TextWriter *log = comp->logger(traceEnabled());
     if (log)
         log->indent() << msg << log->endl();

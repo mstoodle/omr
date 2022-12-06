@@ -111,9 +111,9 @@ Op_ForLoopUp::Op_ForLoopUp(LOCATION, Extension *ext, Builder * parent, ActionID 
     , _initial(loopBuilder->initialValue())
     , _final(loopBuilder->finalValue())
     , _bump(loopBuilder->bumpValue())
-    , _loopBody(A_UNLESS_B(ext->BoundBuilder(PASSLOC, parent, this, std::string("loopBody")), loopBuilder->loopBody()))
-    , _loopBreak(A_UNLESS_B(ext->BoundBuilder(PASSLOC, parent, this, std::string("loopBreak")), loopBuilder->loopBreak()))
-    , _loopContinue(A_UNLESS_B(ext->BoundBuilder(PASSLOC, parent, this, std::string("loopContinue")), loopBuilder->loopContinue())) {
+    , _loopBody(A_UNLESS_B(ext->BoundBuilder(PASSLOC, parent, this, String("loopBody")), loopBuilder->loopBody()))
+    , _loopBreak(A_UNLESS_B(ext->BoundBuilder(PASSLOC, parent, this, String("loopBreak")), loopBuilder->loopBreak()))
+    , _loopContinue(A_UNLESS_B(ext->BoundBuilder(PASSLOC, parent, this, String("loopContinue")), loopBuilder->loopContinue())) {
 
     if (loopBuilder->loopBody() == NULL)
         loopBuilder->setLoopBody(_loopBody);

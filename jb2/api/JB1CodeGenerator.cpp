@@ -201,13 +201,13 @@ JBCodeGenerator::generateFunctionAPI(FunctionBuilder *fb) {
         if (type->isStruct()) {
             StructType *sType = static_cast<StructType *>(type);
             char * structName = findOrCreateString(sType->name());
-            mapStructFields(typesJB1, sType, structName, std::string(""), 0);
+            mapStructFields(typesJB1, sType, structName, String(""), 0);
             _mb->typeDictionary()->CloseStruct(structName, sType->size()/8);
         }
         else if (type->isUnion()) {
             UnionType *uType = static_cast<UnionType *>(type);
             char * structName = findOrCreateString(uType->name());
-            mapStructFields(typesJB1, uType, structName, std::string(""), 0);
+            mapStructFields(typesJB1, uType, structName, String(""), 0);
             _mb->typeDictionary()->CloseStruct(structName, uType->size()/8);
         }
     }

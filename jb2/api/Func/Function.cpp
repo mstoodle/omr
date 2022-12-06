@@ -77,17 +77,17 @@ Function::fcontext(Compilation *comp) {
 }
 
 void
-Function::DefineName(std::string name) {
+Function::DefineName(String name) {
     _givenName = name;
 }
 
 void
-Function::DefineFile(std::string file) {
+Function::DefineFile(String file) {
     _createLocation.overrideFileName(file.c_str());
 }
 
 void
-Function::DefineLine(std::string line) {
+Function::DefineLine(String line) {
     _createLocation.overrideLineNumber(static_cast<uint32_t>(std::stoul(line)));
 }
 
@@ -98,7 +98,7 @@ Function::numLocals() const {
 }
 
 ParameterSymbol *
-Function::DefineParameter(std::string name, const Type * type) {
+Function::DefineParameter(String name, const Type * type) {
     return comp()->nativeContext()->DefineParameter(name, type);
 }
 
@@ -113,7 +113,7 @@ Function::DefineReturnType(const Type * type) {
 }
 
 LocalSymbol *
-Function::DefineLocal(std::string name, const Type * type) {
+Function::DefineLocal(String name, const Type * type) {
     return comp()->nativeContext()->DefineLocal(name, type);
 }
 
@@ -124,9 +124,9 @@ Function::DefineLocal(LocalSymbol *local) {
 
 FunctionSymbol *
 Function::DefineFunction(LOCATION,
-                         std::string name,
-                         std::string fileName,
-                         std::string lineNumber,
+                         String name,
+                         String fileName,
+                         String lineNumber,
                          void *entryPoint,
                          const Type *returnType,
                          int32_t numParms,
@@ -145,9 +145,9 @@ Function::DefineFunction(LOCATION,
 
 FunctionSymbol *
 Function::DefineFunction(LOCATION,
-                         std::string name,
-                         std::string fileName,
-                         std::string lineNumber,
+                         String name,
+                         String fileName,
+                         String lineNumber,
                          void *entryPoint,
                          const Type *returnType,
                          int32_t numParms,
@@ -169,9 +169,9 @@ Function::DefineFunction(FunctionSymbol *function) {
 // maybe move to Compilation?
 FunctionSymbol *
 Function::internalDefineFunction(LOCATION,
-                                 std::string name,
-                                 std::string fileName,
-                                 std::string lineNumber,
+                                 String name,
+                                 String fileName,
+                                 String lineNumber,
                                  void *entryPoint,
                                  const Type *returnType,
                                  int32_t numParms,
@@ -219,7 +219,7 @@ Function::ResetLocals() {
 }
 
 LocalSymbol *
-Function::LookupLocal(std::string name) {
+Function::LookupLocal(String name) {
     for (LocalSymbolIterator lIt = comp()->nativeContext()->LocalsBegin(); lIt != comp()->nativeContext()->LocalsEnd(); lIt++) {
         LocalSymbol * local = *lIt;
         if (local->name() == name)
@@ -243,7 +243,7 @@ Function::ResetFunctions() {
 }
 
 Symbol *
-Function::getSymbol(std::string name) {
+Function::getSymbol(String name) {
     LocalSymbol *localSym = LookupLocal(name);
     if (localSym)
         return localSym;

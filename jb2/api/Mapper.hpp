@@ -22,6 +22,9 @@
 #ifndef MAPPER_INCL
 #define MAPPER_INCL
 
+#include "util/String.hpp"
+
+
 namespace OMR {
 namespace JitBuilder {
 
@@ -30,7 +33,7 @@ class Mapper {
 private:
 
     struct Element {
-        Element(T *t, std::string name="", size_t offset=0)
+        Element(T *t, String name="", size_t offset=0)
             : _item(t)
             , _name(name)
             , _offset(offset)
@@ -38,14 +41,14 @@ private:
 	}
 
         T *_item;
-        std::string _name;
+        String _name;
         size_t _offset;
         Element *_next;
     };
 
 public:
     Mapper() : _head(NULL), _tail(NULL), _current(NULL), _size(0) { }
-    Mapper(T *t, std::string name="", size_t offset=0)
+    Mapper(T *t, String name="", size_t offset=0)
         : _head(NULL)
         , _tail(NULL)
         , _current(NULL)
@@ -69,7 +72,7 @@ public:
     //          with different items returned by another Mapper (like "scalar" expansion)
 
     void start()   { _current = _head; }
-    void add(T *t, std::string name="", size_t offset=0) {
+    void add(T *t, String name="", size_t offset=0) {
         Element *elem = new Element(t, name, offset);
         if (_head == NULL) {
             _head = elem;
@@ -103,10 +106,10 @@ public:
     T *current() {
         return _current->_item;
     }
-    std::string name() {
+    String name() {
         // must be called *before* next() to get correct name
         if (!_current)
-            return std::string("");
+            return String("");
         return _current->_name;
     }
     size_t offset() {

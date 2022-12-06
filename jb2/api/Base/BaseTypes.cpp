@@ -407,15 +407,15 @@ AddressType::AddressType(LOCATION, Extension *ext)
 
 }
 
-AddressType::AddressType(LOCATION, Extension *ext, std::string name)
+AddressType::AddressType(LOCATION, Extension *ext, String name)
     : BaseType(PASSLOC, getTypeClassKind(), ext, name, ext->compiler()->platformWordSize() ) {
 }
 
-AddressType::AddressType(LOCATION, Extension *ext, TypeDictionary *dict, std::string name)
+AddressType::AddressType(LOCATION, Extension *ext, TypeDictionary *dict, String name)
     : BaseType(PASSLOC, getTypeClassKind(), ext, dict, name, dict->compiler()->platformWordSize() ) {
 }
 
-AddressType::AddressType(LOCATION, Extension *ext, TypeDictionary *dict, TypeKind kind, std::string name)
+AddressType::AddressType(LOCATION, Extension *ext, TypeDictionary *dict, TypeKind kind, String name)
     : BaseType(PASSLOC, kind, ext, dict, name, dict->compiler()->platformWordSize() ) {
 }
 
@@ -510,10 +510,10 @@ PointerType::literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) co
     return (*reinterpret_cast<void * const *>(l1)) == (*reinterpret_cast<void * const *>(l2));
 }
 
-std::string
+String
 PointerType::to_string(bool useHeader) const {
-    std::string s = Type::base_string(useHeader);
-    return s.append(std::string("pointerType base t")).append(std::to_string(_baseType->id()));
+    String s(Type::base_string(useHeader));
+    return s.append(String("pointerType base t")).append(String::to_string(_baseType->id()));
 }
 
 void
@@ -558,7 +558,7 @@ FieldType::getTypeClassKind() {
 }
 
 
-FieldType::FieldType(LOCATION, BaseExtension *ext, TypeDictionary *dict, const StructType *structType, std::string name, const Type *type, size_t offset)
+FieldType::FieldType(LOCATION, BaseExtension *ext, TypeDictionary *dict, const StructType *structType, String name, const Type *type, size_t offset)
     : BaseType(PASSLOC, getTypeClassKind(), ext, dict, name, type->size())
     , _structType(structType)
     , _fieldName(name)
@@ -567,13 +567,13 @@ FieldType::FieldType(LOCATION, BaseExtension *ext, TypeDictionary *dict, const S
 
 }
 
-std::string
+String
 FieldType::to_string(bool useHeader) const {
-    std::string s = Type::base_string(useHeader);
-    s.append(std::string("fieldType ")).append(_fieldName);
-    s.append(std::string(" size ")).append(std::to_string(_type->size()));
-    s.append(std::string(" t")).append(std::to_string(_type->id()));
-    s.append(std::string("@")).append(std::to_string(_offset));
+    String s(Type::base_string(useHeader));
+    s.append(String("fieldType ")).append(_fieldName);
+    s.append(String(" size ")).append(String::to_string(_type->size()));
+    s.append(String(" t")).append(String::to_string(_type->id()));
+    s.append(String("@")).append(String::to_string(_offset));
     return s;
 }
 
@@ -584,9 +584,9 @@ FieldType::registerJB1Type(JB1MethodBuilder *j1mb) const {
     return true;
 }
 
-std::string
-FieldType::explodedName(TypeReplacer *repl, std::string & baseName) const {
-    std::string fName = _fieldName;
+String
+FieldType::explodedName(TypeReplacer *repl, String & baseName) const {
+    String fName = _fieldName;
     if (fName == _type->name())
         fName = repl->replacedType(_type)->name();
     if (baseName.length() > 0)
@@ -658,7 +658,7 @@ StructType::StructType(LOCATION, StructTypeBuilder *builder)
 }
 
 const FieldType *
-StructType::addField(LOCATION, Extension *ext, TypeDictionary *dict, std::string name, const Type *type, size_t offset) {
+StructType::addField(LOCATION, Extension *ext, TypeDictionary *dict, String name, const Type *type, size_t offset) {
     const FieldType *preExistingField = LookupField(name);
     if (preExistingField) {
         if (preExistingField->type() == type && preExistingField->offset() == offset)
@@ -676,14 +676,14 @@ StructType::addField(LOCATION, Extension *ext, TypeDictionary *dict, std::string
     return field;
 }
 
-std::string
+String
 StructType::to_string(bool useHeader) const {
-    std::string s = Type::base_string(useHeader);
-    s.append(std::string("structType size ")).append(std::to_string(size()));
+    String s(Type::base_string(useHeader));
+    s.append(String("structType size ")).append(String::to_string(size()));
     for (auto it = FieldsBegin(); it != FieldsEnd(); it++) {
         auto field = it->second;
-        s.append(std::string(" t")).append(std::to_string(field->id()));
-        s.append(std::string("@")).append(std::to_string(field->offset()));
+        s.append(String(" t")).append(String::to_string(field->id()));
+        s.append(String("@")).append(String::to_string(field->offset()));
     }
     return s;
 }
@@ -709,10 +709,10 @@ StructType::printLiteral(TextWriter & w, const Literal *lv) const {
 }
 
 void
-StructType::registerAllFields(JB1MethodBuilder *j1mb, std::string structName, std::string fNamePrefix, size_t baseOffset) const {
+StructType::registerAllFields(JB1MethodBuilder *j1mb, String structName, String fNamePrefix, size_t baseOffset) const {
     for (auto fIt = FieldsBegin(); fIt != FieldsEnd(); fIt++) {
         const FieldType *fType = fIt->second;
-        std::string fieldName = fNamePrefix + fType->name();
+        String fieldName = fNamePrefix + fType->name();
         size_t fieldOffset = baseOffset + fType->offset();
 
         if (fType->isKind<StructType>()) {
@@ -735,7 +735,7 @@ StructType::registerJB1Type(JB1MethodBuilder *j1mb) const {
         return false; // first pass just creates struct types
     }
 
-    registerAllFields(j1mb, name(), std::string(""), 0); // second pass defines the fields
+    registerAllFields(j1mb, name(), String(""), 0); // second pass defines the fields
     j1mb->closeStruct(name());
     return true;
 }
@@ -756,7 +756,7 @@ StructType::explodeAsLayout(TypeReplacer *repl, size_t baseOffset, TypeMapper *m
         }
         else {
             const Type *mappedType = repl->replacedType(t);
-            std::string fieldName = mappedType->name();
+            String fieldName = mappedType->name();
             m->add(mappedType, fieldName, fieldOffset);
         }
     }
@@ -766,7 +766,7 @@ void
 StructType::transformFields(TypeReplacer *repl,
                             StructTypeBuilder *stb,
                             StructType *origStruct,
-                            std::string baseName,
+                            String baseName,
                             size_t baseOffset) const {
 
     bool removeFields = true;
@@ -775,7 +775,7 @@ StructType::transformFields(TypeReplacer *repl,
 
     for (auto fIt = FieldsBegin(); fIt != FieldsEnd(); fIt++) {
         const FieldType *fType = fIt->second;
-        std::string fieldName = fType->explodedName(repl, baseName);
+        String fieldName = fType->explodedName(repl, baseName);
         const Type *t = fType->type();
         repl->transformTypeIfNeeded(t);
 
@@ -795,12 +795,12 @@ StructType::transformFields(TypeReplacer *repl,
 void
 StructType::mapTransformedFields(TypeReplacer *repl,
                                  const StructType *type,
-                                 std::string baseName,
+                                 String baseName,
                                  TypeMapper *mapper) const {
 
     for (auto fIt = FieldsBegin(); fIt != FieldsEnd(); fIt++) {
         const FieldType *fType = fIt->second;
-        std::string fieldName = fType->explodedName(repl, baseName);
+        String fieldName = fType->explodedName(repl, baseName);
         const Type *t = fType->type();
         if (repl->isExploded(t)) {
             TypeMapper *m = new TypeMapper();
@@ -836,14 +836,14 @@ StructType::replace(TypeReplacer *repl) {
     if (!needToReplace) 
         return this;
 
-    std::string newName = std::string("_X_::").append(name());
+    String newName = String("_X_::").append(name());
     StructTypeBuilder stb(base, static_cast<Base::BaseCompilation *>(repl->comp()));
     stb.setName(newName)
        ->setSize(this->size());
 
     // TODO: don't believe this works for recursive Types...need to move this work into the Helper function
 
-    std::string baseName("");
+    String baseName("");
     transformFields(repl, &stb, this, baseName, 0);
 
     const StructType *newType = stb.create(LOC);

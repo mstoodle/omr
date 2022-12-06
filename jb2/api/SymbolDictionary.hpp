@@ -48,19 +48,19 @@ class SymbolDictionary {
 
 public:
     SymbolDictionary(Compilation *comp);
-    SymbolDictionary(Compilation *comp, std::string name);
-    SymbolDictionary(Compilation *comp, std::string name, SymbolDictionary *linkedTypes);
+    SymbolDictionary(Compilation *comp, String name);
+    SymbolDictionary(Compilation *comp, String name, SymbolDictionary *linkedTypes);
     virtual ~SymbolDictionary();
 
     SymbolIterator SymbolsBegin() const { return SymbolIterator(_symbols); }
     SymbolIterator SymbolsEnd() const { return SymbolIterator(); }
 
     Symbol *LookupSymbol(SymbolID id);
-    Symbol *LookupSymbol(std::string name);
+    Symbol *LookupSymbol(String name);
     void RemoveSymbol(Symbol *symbol);
 
     SymbolDictionaryID id() const { return _id; }
-    std::string name() const { return _name; }
+    String name() const { return _name; }
     bool hasLinkedDictionary() const { return _linkedDictionary != NULL; }
     SymbolDictionary *linkedDictionary() { return _linkedDictionary; }
 
@@ -73,11 +73,11 @@ protected:
 
     SymbolDictionaryID _id;
     Compilation * _comp;
-    std::string _name;
+    String _name;
     SymbolVector _symbols;
     SymbolVector _ownedSymbols;
     std::map<const Type *,SymbolVector *> _symbolsByType;
-    std::map<std::string, Symbol *> _symbolsByName;
+    std::map<String, Symbol *> _symbolsByName;
     SymbolID _nextSymbolID;
     SymbolDictionary * _linkedDictionary;
 };

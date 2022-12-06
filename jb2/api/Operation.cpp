@@ -377,7 +377,7 @@ LoadIndirect::clone(Builder *b, OperationCloner *cloner) const
    return create(b, cloner->result(), fieldType, cloner->operand());
    }
 
-Store::Store(Builder * parent, std::string name, Value * value)
+Store::Store(Builder * parent, String name, Value * value)
    : OperationR0S1V1(aStore, parent, parent->fb()->getSymbol(name), value)
       { }
 

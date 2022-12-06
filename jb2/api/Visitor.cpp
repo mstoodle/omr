@@ -29,7 +29,7 @@
 namespace OMR {
 namespace JitBuilder {
 
-Visitor::Visitor(Compiler *compiler, std::string name, bool visitAppendedBuilders)
+Visitor::Visitor(Compiler *compiler, String name, bool visitAppendedBuilders)
     : Pass(compiler, name)
     , _comp(NULL)
     , _aborted(false)
@@ -119,7 +119,7 @@ Visitor::visitOperations(Builder *b, std::vector<bool> & visited, BuilderWorklis
 }
 
 void
-Visitor::trace(std::string msg) {
+Visitor::trace(String msg) {
     TextWriter *log = _comp->logger();
     if (log) {
         log->indent() << msg << log->endl();

@@ -35,7 +35,7 @@ KindService::getNextKind(Kind k) {
 }
 
 KindService::Kind
-KindService::assignKind(Kind baseKind, std::string name) {
+KindService::assignKind(Kind baseKind, String name) {
     auto found = _kindFromNameMap.find(name);
     if (found != _kindFromNameMap.end())
         return found->second;

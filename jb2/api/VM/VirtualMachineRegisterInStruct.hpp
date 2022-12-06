@@ -63,7 +63,7 @@ public:
      * @param localHoldingStructAddress is the local variable symbol that holds the struct base address; it must have been stored in this symbol before control will reach the builder "b"
      * @param doReload do a Reload on every entry builder for _func (defaults true, MakeCopy passes false)
      */
-    VirtualMachineRegisterInStruct(LOCATION, VMExtension *vme, std::string name, Base::BaseCompilation *comp, const Base::FieldType *fieldType, Func::LocalSymbol * localHoldingStructAddress, bool doReload=true);
+    VirtualMachineRegisterInStruct(LOCATION, VMExtension *vme, String name, Base::BaseCompilation *comp, const Base::FieldType *fieldType, Func::LocalSymbol * localHoldingStructAddress, bool doReload=true);
 
     virtual void Commit(LOCATION, Builder * b);
     virtual VirtualMachineState * MakeCopy(LOCATION, Builder *b);

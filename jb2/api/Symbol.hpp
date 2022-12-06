@@ -27,6 +27,7 @@
 #include <vector>
 #include "IDs.hpp"
 #include "KindService.hpp"
+#include "util/String.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -41,9 +42,9 @@ class Symbol {
     friend class SymbolDictionary;
 
 public:
-    static Symbol *create(std::string name, const Type * type) { return new Symbol(name, type); }
+    static Symbol *create(String name, const Type * type) { return new Symbol(name, type); }
 
-    std::string name() const { return _name; }
+    String name() const { return _name; }
     const Type * type() const { return _type; }
     SymbolID id() const { return _id; }
     virtual SymbolKind kind() const { return _kind; }
@@ -69,14 +70,14 @@ public:
     static const SymbolKind getSymbolClassKind();
 
 protected:
-    Symbol(std::string name, const Type * type)
+    Symbol(String name, const Type * type)
         : _id(NoSymbol)
         , _kind(getSymbolClassKind())
         , _name(name)
         , _type(type) {
 
     }
-    Symbol(SymbolKind kind, std::string name, const Type * type)
+    Symbol(SymbolKind kind, String name, const Type * type)
         : _id(NoSymbol)
         , _kind(kind)
         , _name(name)
@@ -90,11 +91,11 @@ protected:
        	assert(id != NoSymbol);
        	_id = id;
     }
-    SymbolKind assignSymbolKind(SymbolKind baseKind, std::string name);
+    SymbolKind assignSymbolKind(SymbolKind baseKind, String name);
 
     SymbolID _id;
     SymbolKind _kind;
-    std::string _name;
+    String _name;
     const Type * _type;
 
     static KindService kindService;

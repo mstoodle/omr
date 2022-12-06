@@ -19,7 +19,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include <string>
 #include "Compilation.hpp"
 #include "Operation.hpp"
 #include "Literal.hpp"
@@ -40,7 +39,7 @@ LiteralDictionary::LiteralDictionary(Compilation *comp)
     , _linkedDictionary(NULL) {
 }
 
-LiteralDictionary::LiteralDictionary(Compilation *comp, std::string name)
+LiteralDictionary::LiteralDictionary(Compilation *comp, String name)
     : _id(comp->getLiteralDictionaryID())
     , _comp(comp)
     , _name(name)
@@ -49,7 +48,7 @@ LiteralDictionary::LiteralDictionary(Compilation *comp, std::string name)
 }
 
 // Only accessible to subclasses
-LiteralDictionary::LiteralDictionary(Compilation *comp, std::string name, LiteralDictionary * linkedLiterals)
+LiteralDictionary::LiteralDictionary(Compilation *comp, String name, LiteralDictionary * linkedLiterals)
     : _id(comp->getLiteralDictionaryID())
     , _comp(comp)
     , _name(name)

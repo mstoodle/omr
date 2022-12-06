@@ -35,7 +35,7 @@ BytecodeBuilder::BytecodeBuilder(Base::BaseCompilation *comp,
                                  int32_t bcIndex,
                                  int32_t bcLength,
                                  Context *context,
-                                 std::string name)
+                                 String name)
     : Builder(comp, context, name)
     , _vme(vme)
     , _bcIndex(bcIndex)

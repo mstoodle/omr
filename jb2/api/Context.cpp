@@ -31,7 +31,7 @@ namespace OMR {
 namespace JitBuilder {
 
 
-Context::Context(LOCATION, Compilation *comp, LiteralDictionary *useLitDict, SymbolDictionary *useSymDict, TypeDictionary *useTypeDict, uint32_t numEntryPoints, uint32_t numExitPoints, std::string name)
+Context::Context(LOCATION, Compilation *comp, LiteralDictionary *useLitDict, SymbolDictionary *useSymDict, TypeDictionary *useTypeDict, uint32_t numEntryPoints, uint32_t numExitPoints, String name)
     : _id(comp->getContextID())
     , _comp(comp)
     , _name(name)
@@ -45,7 +45,7 @@ Context::Context(LOCATION, Compilation *comp, LiteralDictionary *useLitDict, Sym
     initEntriesAndExits(PASSLOC, comp);
 }
 
-Context::Context(LOCATION, Context *parent, LiteralDictionary *useLitDict, SymbolDictionary *useSymDict, TypeDictionary *useTypeDict, uint32_t numEntryPoints, uint32_t numExitPoints, std::string name)
+Context::Context(LOCATION, Context *parent, LiteralDictionary *useLitDict, SymbolDictionary *useSymDict, TypeDictionary *useTypeDict, uint32_t numEntryPoints, uint32_t numExitPoints, String name)
     : _id(parent->comp()->getContextID())
     , _comp(parent->comp())
     , _name(name)
@@ -94,7 +94,7 @@ Context::addSymbol(Symbol *sym) {
 }
 
 Symbol *
-Context::lookupSymbol(std::string name, bool includeParents) {
+Context::lookupSymbol(String name, bool includeParents) {
     Symbol *sym = NULL;
     if (_symDict) {
         sym = _symDict->LookupSymbol(name);

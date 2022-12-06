@@ -38,7 +38,7 @@
 namespace OMR {
 namespace JitBuilder {
 
-CompileUnit::CompileUnit(LOCATION, Compiler *compiler, std::string name)
+CompileUnit::CompileUnit(LOCATION, Compiler *compiler, String name)
     : _id(compiler->getCompileUnitID())
     , _createLocation(PASSLOC)
     , _name(name)
@@ -58,7 +58,7 @@ CompileUnit::CompileUnit(LOCATION, Compiler *compiler, std::string name)
     //ext->SourceLocation(PASSLOC, _builderEntryPoints[0], ""); // make sure everything has a location; by default BCIndex is 0
 }
 
-CompileUnit::CompileUnit(LOCATION, CompileUnit *outerUnit, std::string name)
+CompileUnit::CompileUnit(LOCATION, CompileUnit *outerUnit, String name)
     : _id(_compiler->getCompileUnitID())
     , _createLocation(PASSLOC)
     , _name(name)

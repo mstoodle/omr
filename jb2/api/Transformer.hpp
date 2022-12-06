@@ -30,7 +30,7 @@ namespace JitBuilder {
 
 class Transformer : public Visitor {
     public:
-    Transformer(Compiler *compiler, std::string name="Transformer")
+    Transformer(Compiler *compiler, String name="Transformer")
         : Visitor(compiler, name)
         , _traceEnabled(false) {
 
@@ -52,11 +52,11 @@ protected:
     virtual Builder * transformOperation(Operation * op) { return NULL; }
 
     // logging support: output msg to the log if enabled
-    void trace(std::string msg);
+    void trace(String msg);
 
     // logging support: returns true if the transformation is allowed
     //                  and if log enabled, logs details if performed and "not applied" message if not
-    bool performTransformation(Operation * op, Builder * transformed, std::string msg="");
+    bool performTransformation(Operation * op, Builder * transformed, String msg="");
 
     bool _traceEnabled;
 };

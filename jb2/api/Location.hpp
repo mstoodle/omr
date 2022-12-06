@@ -23,8 +23,8 @@
 #define LOCATION_INCL
 
 #include <stdint.h>
-#include <string>
 #include "IDs.hpp"
+#include "util/String.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -33,20 +33,20 @@ class Compilation;
 
 class Location {
 public:
-    Location(Compilation *comp, std::string fileName, std::string lineNumber);
-    Location(Compilation *comp, std::string fileName, std::string lineNumber, int32_t bcIndex);
+    Location(Compilation *comp, String fileName, String lineNumber);
+    Location(Compilation *comp, String fileName, String lineNumber, int32_t bcIndex);
 
     virtual size_t size()          { return sizeof(Location); }
     LocationID id() const          { return _id; }
     ByteCodeIndex bcIndex() const  { return _bcIndex; }
-    std::string fileName() const   { return _fileName; }
-    std::string lineNumber() const { return _lineNumber; }
+    String fileName() const        { return _fileName; }
+    String lineNumber() const      { return _lineNumber; }
 
 protected:
     LocationID    _id;
     Compilation * _comp;
-    std::string   _fileName;
-    std::string   _lineNumber;
+    String   _fileName;
+    String   _lineNumber;
     ByteCodeIndex _bcIndex;
 };
 

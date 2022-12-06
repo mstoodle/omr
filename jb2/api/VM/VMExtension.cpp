@@ -28,7 +28,7 @@ namespace JitBuilder {
 namespace VM {
 
 const SemanticVersion VMExtension::version(VMEXT_MAJOR,VMEXT_MINOR,VMEXT_PATCH);
-const std::string VMExtension::NAME("jb2vm");
+const String VMExtension::NAME("jb2vm");
 
 static const MajorID REQUIRED_BASEEXT_MAJOR=0;
 static const MinorID REQUIRED_BASEEXT_MINOR=1;
@@ -43,7 +43,7 @@ extern "C" {
     }
 }
 
-VMExtension::VMExtension(LOCATION, Compiler *compiler, bool extended, std::string extensionName)
+VMExtension::VMExtension(LOCATION, Compiler *compiler, bool extended, String extensionName)
     : Extension(PASSLOC, compiler, (extended ? extensionName : NAME)) {
 
     _bx = compiler->lookupExtension<Base::BaseExtension>();
@@ -132,7 +132,7 @@ VMExtension::IfCmpUnsignedGreaterThan(LOCATION, BytecodeBuilder *b, BytecodeBuil
 }
 
 BytecodeBuilder *
-VMExtension::OrphanBytecodeBuilder(Base::BaseCompilation *comp, int32_t bcIndex, int32_t bcLength, Context *context, std::string name) {
+VMExtension::OrphanBytecodeBuilder(Base::BaseCompilation *comp, int32_t bcIndex, int32_t bcLength, Context *context, String name) {
     return new BytecodeBuilder(comp, this, bcIndex, bcLength, context, name);
 }
 

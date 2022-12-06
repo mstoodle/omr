@@ -159,13 +159,13 @@ JB1MethodBuilder::registerStruct(const Type * type) {
 }
 
 void
-JB1MethodBuilder::registerField(std::string structName, std::string fieldName, const Type *type, size_t offset) {
+JB1MethodBuilder::registerField(String structName, String fieldName, const Type *type, size_t offset) {
     TR::TypeDictionary *dict = _mb->typeDictionary();
     dict->DefineField(findOrCreateString(structName), findOrCreateString(fieldName), map(type), offset/8); // JB1 uses byte offsets
 }
 
 void
-JB1MethodBuilder::closeStruct(std::string structName) {
+JB1MethodBuilder::closeStruct(String structName) {
     TR::TypeDictionary *dict = _mb->typeDictionary();
     dict->CloseStruct(findOrCreateString(structName));
 }
@@ -204,7 +204,7 @@ JB1MethodBuilder::createBuilder(const Builder * b) {
 }
 
 void
-JB1MethodBuilder::createBytecodeBuilder(const Builder * bcb, int32_t bcIndex, std::string name) {
+JB1MethodBuilder::createBytecodeBuilder(const Builder * bcb, int32_t bcIndex, String name) {
     if (_bytecodeBuilders.find(bcb->id()) != _bytecodeBuilders.end())
         return;
 
@@ -240,17 +240,17 @@ JB1MethodBuilder::addSuccessorBuilder(const Builder *bcb, const Builder * sbcb) 
 }
 
 void
-JB1MethodBuilder::FunctionName(std::string name) {
+JB1MethodBuilder::FunctionName(String name) {
     _mb->DefineName(findOrCreateString(name));
 }
 
 void
-JB1MethodBuilder::FunctionFile(std::string file) {
+JB1MethodBuilder::FunctionFile(String file) {
     _mb->DefineFile(findOrCreateString(file));
 }
 
 void
-JB1MethodBuilder::FunctionLine(std::string line) {
+JB1MethodBuilder::FunctionLine(String line) {
     _mb->DefineLine(findOrCreateString(line));
 }
 
@@ -260,19 +260,19 @@ JB1MethodBuilder::FunctionReturnType(const Type *type) {
 }
 
 void
-JB1MethodBuilder::Parameter(std::string name, const Type * type) {
+JB1MethodBuilder::Parameter(String name, const Type * type) {
     _mb->DefineParameter(findOrCreateString(name), map(type));
 }
 
 void
-JB1MethodBuilder::Local(std::string name, const Type * type) {
+JB1MethodBuilder::Local(String name, const Type * type) {
     _mb->DefineLocal(findOrCreateString(name), map(type));
 }
 
 void
-JB1MethodBuilder::DefineFunction(std::string name,
-                             std::string fileName,
-                             std::string lineNumber,
+JB1MethodBuilder::DefineFunction(String name,
+                             String fileName,
+                             String lineNumber,
                              void *entryPoint,
                              const Type * returnType,
                              int32_t numParms,
@@ -373,7 +373,7 @@ JB1MethodBuilder::EntryPoint(Builder *entryBuilder) {
 }
 
 void
-JB1MethodBuilder::Call(Location *loc, Builder *b, Value *result, std::string targetName, std::vector<Value *> arguments) {
+JB1MethodBuilder::Call(Location *loc, Builder *b, Value *result, String targetName, std::vector<Value *> arguments) {
     TR::IlBuilder *omr_b = map(b);
     omr_b->setBCIndex(loc->bcIndex())->SetCurrentIlGenerator();
     const char *function = findOrCreateString(targetName);
@@ -384,7 +384,7 @@ JB1MethodBuilder::Call(Location *loc, Builder *b, Value *result, std::string tar
 }
 
 void
-JB1MethodBuilder::Call(Location *loc, Builder *b, std::string targetName, std::vector<Value *> arguments) {
+JB1MethodBuilder::Call(Location *loc, Builder *b, String targetName, std::vector<Value *> arguments) {
     TR::IlBuilder *omr_b = map(b);
     omr_b->setBCIndex(loc->bcIndex())->SetCurrentIlGenerator();
     const char *function = findOrCreateString(targetName);
@@ -555,14 +555,14 @@ JB1MethodBuilder::StoreAt(Location *loc, Builder *b, Value *ptrValue, Value *val
 }
 
 void
-JB1MethodBuilder::LoadIndirect(Location *loc, Builder *b, Value *result, std::string structName, std::string fieldName, Value *pStruct) {
+JB1MethodBuilder::LoadIndirect(Location *loc, Builder *b, Value *result, String structName, String fieldName, Value *pStruct) {
     TR::IlBuilder *omr_b = map(b);
     omr_b->setBCIndex(loc->bcIndex())->SetCurrentIlGenerator();
     registerValue(result, omr_b->LoadIndirect(findOrCreateString(structName), findOrCreateString(fieldName), map(pStruct)));
 }
 
 void
-JB1MethodBuilder::StoreIndirect(Location *loc, Builder *b, std::string structName, std::string fieldName, Value *pStruct, Value *value) {
+JB1MethodBuilder::StoreIndirect(Location *loc, Builder *b, String structName, String fieldName, Value *pStruct, Value *value) {
     TR::IlBuilder *omr_b = map(b);
     omr_b->setBCIndex(loc->bcIndex())->SetCurrentIlGenerator();
     omr_b->StoreIndirect(findOrCreateString(structName), findOrCreateString(fieldName), map(pStruct), map(value));
@@ -604,7 +604,7 @@ JB1MethodBuilder::IndexAt(Location *loc, Builder *b, Value *result, Value *base,
 //
 
 char *
-JB1MethodBuilder::findOrCreateString(std::string str) {
+JB1MethodBuilder::findOrCreateString(String str) {
     if (_strings.find(str) != _strings.end())
         return _strings[str];
 
@@ -676,10 +676,10 @@ JB1MethodBuilder::map(const Type * t) {
 // As mapStructFields recursively visits inner types, structName/fieldName will stay the same,
 //     but sType/fType will reflect each inner type in succession
 TR::IlType *
-JBCodeGenerator::registerStruct(TR::TypeDictionary * types, StructType * sType, char *structName, std::string fNamePrefix, size_t baseOffset) {
+JBCodeGenerator::registerStruct(TR::TypeDictionary * types, StructType * sType, char *structName, String fNamePrefix, size_t baseOffset) {
     for (auto fIt = sType->FieldsBegin(); fIt != sType->FieldsEnd(); fIt++) {
         FieldType *fType = fIt->second;
-        std::string fieldName = fNamePrefix + fType->name();
+        String fieldName = fNamePrefix + fType->name();
         const char *fieldString = findOrCreateString(fieldName);
         size_t fieldOffset = baseOffset + fType->offset();
 
@@ -821,13 +821,13 @@ JBCodeGenerator::generateFunctionAPI(FunctionBuilder *fb) {
         if (type->isStruct()) {
             StructType *sType = static_cast<StructType *>(type);
             char * structName = findOrCreateString(sType->name());
-            mapStructFields(typesJB1, sType, structName, std::string(""), 0);
+            mapStructFields(typesJB1, sType, structName, String(""), 0);
             _mb->typeDictionary()->CloseStruct(structName, sType->size()/8);
         }
         else if (type->isUnion()) {
             UnionType *uType = static_cast<UnionType *>(type);
             char * structName = findOrCreateString(uType->name());
-            mapStructFields(typesJB1, uType, structName, std::string(""), 0);
+            mapStructFields(typesJB1, uType, structName, String(""), 0);
             _mb->typeDictionary()->CloseStruct(structName, uType->size()/8);
         }
     }

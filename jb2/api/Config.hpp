@@ -67,7 +67,7 @@ public:
 
     // when true, logging should be enabled
     bool logCompilation(Compilation * fb) const               { return false; } // TODO: match name against _logRegex
-    Config * setLogRegex(std::string regex)                   { _logRegex = regex; return this; }
+    Config * setLogRegex(String regex)                        { _logRegex = regex; return this; }
 
 protected:
     bool _traceBuildIL;
@@ -76,11 +76,10 @@ protected:
 
     TransformationID _lastTransformationIndex;
 
-    std::string _logRegex;
+    String _logRegex;
 };
 
 } // namespace JitBuilder
 } // namespace OMR
 
 #endif // defined(CONFIG_INCL)
-

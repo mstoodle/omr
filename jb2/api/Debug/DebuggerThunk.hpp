@@ -39,7 +39,7 @@ public:
         : DebuggerFunction(LOC, dbgr, debugFunc)
         , _debugger(dbgr) {
 
-        DefineName(std::string("jbdb_") + debugFunc->name());
+        DefineName(String("jbdb_") + debugFunc->name());
         DefineFile(debugFunc->fileName());
         DefineLine(debugFunc->lineNumber());
     }

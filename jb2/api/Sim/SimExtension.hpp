@@ -24,12 +24,7 @@
 
 #include <stdint.h>
 #include <map>
-
-#include "CreateLoc.hpp"
-#include "Extension.hpp"
-#include "IDs.hpp"
-#include "SemanticVersion.hpp"
-#include "typedefs.hpp"
+#include "JBCore.hpp"
 
 
 namespace OMR {
@@ -49,10 +44,10 @@ class Debugger;
 class DebugExtension : public Extension {
 
 public:
-    DebugExtension(LOCATION, Compiler *compiler, bool extended=false, std::string extensionName="vm");
+    DebugExtension(LOCATION, Compiler *compiler, bool extended=false, String extensionName="vm");
     virtual ~DebugExtension();
 
-    static const std::string NAME;
+    static const String NAME;
 
     virtual const SemanticVersion * semver() const {
         return &version;

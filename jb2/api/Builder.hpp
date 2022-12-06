@@ -28,6 +28,7 @@
 #include <vector>
 #include "IDs.hpp"
 #include "Iterator.hpp"
+#include "util/String.hpp"
 
 namespace OMR {
 namespace JitBuilder { 
@@ -61,8 +62,8 @@ public:
 
     Compilation *comp() const { return _comp; }
 
-    static Builder * create(Builder *parent, Context *context=NULL, std::string name="");
-    static Builder * create(Compilation *comp, Context *context=NULL, std::string name="");
+    static Builder * create(Builder *parent, Context *context=NULL, String name="");
+    static Builder * create(Compilation *comp, Context *context=NULL, String name="");
 
     #if 0
     Operation * appendClone(Operation *op);
@@ -78,9 +79,9 @@ public:
     void AppendBuilder(Builder * b);
     void IfThenElse(Builder * thenB, Value * cond);
     void IfThenElse(Builder * thenB, Builder * elseB, Value * cond);
-    void ForLoopUp(std::string loopVar, Builder * body, Value * initial, Value * end, Value * bump);
+    void ForLoopUp(String loopVar, Builder * body, Value * initial, Value * end, Value * bump);
     void ForLoopUp(LocalSymbol *loopSym, Builder * body, Value * initial, Value * end, Value * bump);
-    void ForLoop(bool countsUp, std::string loopVar, Builder * body, Builder * loopContinue, Builder * loopBreak, Value * initial, Value * end, Value * bump);
+    void ForLoop(bool countsUp, String loopVar, Builder * body, Builder * loopContinue, Builder * loopBreak, Value * initial, Value * end, Value * bump);
     void ForLoop(bool countsUp, LocalSymbol *loopSym, Builder * body, Builder * loopContinue, Builder * loopBreak, Value * initial, Value * end, Value * bump);
     void Switch(Value * selector, Builder * defaultBuilder, int numCases, Case ** cases);
 
@@ -89,7 +90,7 @@ public:
     #endif
 
     int64_t id() const                                  { return _id; }
-    std::string name() const                            { return _name; }
+    String name() const                                 { return _name; }
     virtual size_t size() const                         { return sizeof(Builder); }
 
     TypeDictionary * dict() const;
@@ -122,11 +123,11 @@ public:
         _currentLocation = loc;
     }
 
-    virtual std::string to_string() const {
-        return std::string("B").append(std::to_string(_id));
+    virtual String to_string() const {
+        return String("B").append(String::to_string(_id));
     }
 
-    virtual std::string logName() const { return "Builder"; }
+    virtual String logName() const { return String("Builder"); }
     virtual void writeProperties(TextWriter & w) const;
     virtual void writePrefix(TextWriter & w) const;
     virtual void writeSuffix(TextWriter & w) const;
@@ -135,9 +136,9 @@ public:
     virtual void jbgenSuccessors(JB1MethodBuilder *j1mb) const;
 
     protected:
-    Builder(Compilation *comp, Context *context=NULL, std::string name="");
-    Builder(Builder *parent, Context *context=NULL, std::string name="");
-    Builder(Builder *parent, Operation *boundToOp, std::string name="");
+    Builder(Compilation *comp, Context *context=NULL, String name="");
+    Builder(Builder *parent, Context *context=NULL, String name="");
+    Builder(Builder *parent, Operation *boundToOp, String name="");
 
     void setParent(Builder *parent);
     void addChild(Builder *child);
@@ -145,7 +146,7 @@ public:
 
     BuilderID              _id;
     Compilation          * _comp;
-    std::string            _name;
+    String                 _name;
     Builder              * _parent;
     std::vector<Builder *> _children;
     Context              * _context;

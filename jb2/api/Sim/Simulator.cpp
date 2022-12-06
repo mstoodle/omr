@@ -273,7 +273,7 @@ Debugger::acceptCommands(Operation *op, Operation *nextOp) {
                     continue;
                 }
             } else {
-                std::string current(line);
+                String current(line);
                 _commandHistory.push_back(current);
             }
 
@@ -373,7 +373,7 @@ Debugger::acceptCommands(Operation *op, Operation *nextOp) {
 }
 
 void
-Debugger::showOp(Operation *op, std::string msg) {
+Debugger::showOp(Operation *op, String msg) {
     TextWriter &w = *_writer;
     w << msg;
     w.writeOperation(op);
@@ -530,7 +530,7 @@ Debugger::ensureOperationDebugger(Operation * op) {
 
 #ifdef TRACE_OPSIMULATORS
     std::cout.setf(std::ios_base::skipws);
-    OMR::JitBuilder::TextWriter printer(opDebugFunc, std::cout, std::string("    "));
+    OMR::JitBuilder::TextWriter printer(opDebugFunc, std::cout, String("    "));
     opDebugFunc->setLogger(&printer);
     opDebugFunc->config()
                ->setTraceBuildIL()

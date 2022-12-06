@@ -22,18 +22,12 @@
 #ifndef OPERATIONDEBUGGER_INCL
 #define OPERATIONDEBUGGER_INCL
 
+#include "JBCore.hpp"
+#include "Base/Base.hpp"
 #include "Debug/DebuggerFunction.hpp"
 
 namespace OMR {
 namespace JitBuilder {
-
-class Builder;
-class Operation;
-class Value;
-
-namespace Base { class LocalSymbol; }
-namespace Base { class ParameterSymbol; }
-
 namespace Debug {
 
 class Debugger;
@@ -48,7 +42,7 @@ public:
 
 protected:
     void setDebuggerBuilderTarget(Builder *b, Builder *targetBuilder);
-    std::string valueName(Value *v);
+    String valueName(Value *v);
     void handleLocalsAndValuesIncoming(Builder *b);
     void handleLocalsOutgoing(Builder *b);
 
@@ -58,11 +52,11 @@ protected:
     virtual bool buildIL(LOCATION, Base::FunctionCompilation *comp, Base::FunctionContext *fc);
 
     Operation  *_op;
-    std::string _dbgrName;
-    std::string _localsName;
-    std::string _valuesName;
-    std::string _frameName;
-    std::string _fromBuilderID;
+    String _dbgrName;
+    String _localsName;
+    String _valuesName;
+    String _frameName;
+    String _fromBuilderID;
     Base::LocalSymbol *_dbgrSym;
     Base::LocalSymbol *_localsSym;
     Base::LocalSymbol *_valuesSym;

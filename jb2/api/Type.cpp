@@ -35,7 +35,7 @@ KindService Type::kindService;
 TypeKind Type::TYPEKIND=KindService::NoKind;
 bool Type::kindRegistered = false;
 
-Type::Type(LOCATION, TypeKind kind, Extension *ext, std::string name, size_t size, const Type *layout)
+Type::Type(LOCATION, TypeKind kind, Extension *ext, String name, size_t size, const Type *layout)
     : _ext(ext)
     , _createLoc(PASSLOC)
     , _dict(ext->compiler()->dict())
@@ -48,7 +48,7 @@ Type::Type(LOCATION, TypeKind kind, Extension *ext, std::string name, size_t siz
     _dict->registerType(this);
 }
 
-Type::Type(LOCATION, TypeKind kind, Extension *ext, TypeDictionary *dict, std::string name, size_t size, const Type *layout)
+Type::Type(LOCATION, TypeKind kind, Extension *ext, TypeDictionary *dict, String name, size_t size, const Type *layout)
     : _ext(ext)
     , _createLoc(PASSLOC)
     , _dict(dict)
@@ -66,13 +66,13 @@ Type::literal(LOCATION, Compilation *comp, const LiteralBytes *value) const {
     return comp->registerLiteral(PASSLOC, this, value);
 }
 
-std::string
+String
 Type::base_string(bool useHeader) const {
-    std::string s;
+    String s;
     if (useHeader)
         s.append("type ");
-    s.append("t").append(std::to_string(this->id())).append(" ");
-    s.append(std::to_string(this->size())).append(" ");
+    s.append("t").append(String::to_string(this->id())).append(" ");
+    s.append(String::to_string(this->size())).append(" ");
     s.append(this->name()).append(" ");
     return s;
 }
@@ -84,12 +84,12 @@ Type::writeType(TextWriter &w, bool useHeader) const {
     w << " ]";
 }
 
-std::string
+String
 Type::to_string(bool useHeader) const {
-    std::string s;
+    String s;
     s.append(base_string()).append("primitiveType");
     if (_layout)
-        s.append(" layout t").append(std::to_string(_layout->id())).append(" ").append(_layout->name());
+        s.append(" layout t").append(String::to_string(_layout->id())).append(" ").append(_layout->name());
     return s;
 }
 

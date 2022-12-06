@@ -23,7 +23,7 @@
 #define SEMANTICVERSION_INCL
 
 #include <list>
-#include <string>
+#include "util/String.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -38,13 +38,13 @@ protected:
     // TODO: to be used in comparing build IDs
     struct BuildIdentifier {
         enum { isNumeric, isNonNumeric } _kind;
-        std::string _identifier;
+        String _identifier;
         uint64_t _numericIdentifier;
         int compare(const BuildIdentifier & other) const;
     };
 
 public:
-    SemanticVersion(MajorID major, MinorID minor, PatchID patch, std::string preRelease, std::string buildMetadata)
+    SemanticVersion(MajorID major, MinorID minor, PatchID patch, String preRelease, String buildMetadata)
         : _valid(false)
         , _major(major)
         , _minor(minor)
@@ -63,8 +63,8 @@ public:
             validate();
         }
 
-    std::string coreVersion() const;
-    std::string semver() const;
+    String coreVersion() const;
+    String semver() const;
 
     bool isValid() const { return this->_valid; }
     bool isStable() const { return (this->_major > 0); }
@@ -74,8 +74,8 @@ public:
     MajorID major() const { return this->_major; }
     MinorID minor() const { return this->_minor; }
     PatchID patch() const { return this->_patch; }
-    std::string preRelease() const { return this->_preRelease; }
-    std::string buildMetadata() const { return this->_buildMetadata; }
+    String preRelease() const { return this->_preRelease; }
+    String buildMetadata() const { return this->_buildMetadata; }
 
     protected:
     void validate();
@@ -84,10 +84,10 @@ public:
     MajorID _major;
     MinorID _minor;
     PatchID _patch;
-    std::string _preRelease;
-    std::string _buildMetadata;
+    String _preRelease;
+    String _buildMetadata;
 
-    static const std::string invalidString;
+    static const String invalidString;
 };
 
 } // namespace JitBuilder

@@ -35,12 +35,12 @@ LocalSymbolIterator FunctionContext::endLocalSymbolIterator;
 ParameterSymbolIterator FunctionContext::endParameterSymbolIterator;
 FunctionSymbolIterator FunctionContext::endFunctionSymbolIterator;
 
-FunctionContext::FunctionContext(LOCATION, FunctionCompilation *comp, std::string name)
+FunctionContext::FunctionContext(LOCATION, FunctionCompilation *comp, String name)
     : Context(PASSLOC, comp, NULL, NULL, NULL, 1, 1, name) {
 
 }
 
-FunctionContext::FunctionContext(LOCATION, FunctionCompilation *comp, FunctionContext *caller, std::string name)
+FunctionContext::FunctionContext(LOCATION, FunctionCompilation *comp, FunctionContext *caller, String name)
     : Context(PASSLOC, caller, NULL, NULL, NULL, 1, 1, name) {
 
 }
@@ -51,7 +51,7 @@ FunctionContext::fComp() const {
 }
 
 ParameterSymbol *
-FunctionContext::DefineParameter(std::string name, const Type * type) {
+FunctionContext::DefineParameter(String name, const Type * type) {
     ParameterSymbol *parm = new ParameterSymbol(name, type, this->_parameters.size());
     this->_parameters.push_back(parm);
     addSymbol(parm);
@@ -66,7 +66,7 @@ FunctionContext::DefineParameter(ParameterSymbol *parm) {
 }
 
 LocalSymbol *
-FunctionContext::DefineLocal(std::string name, const Type * type) {
+FunctionContext::DefineLocal(String name, const Type * type) {
     Symbol *sym = this->lookupSymbol(name);
     if (sym && sym->isKind<LocalSymbol>())
        return sym->refine<LocalSymbol>();
@@ -84,7 +84,7 @@ FunctionContext::DefineLocal(LocalSymbol *local) {
 }
 
 LocalSymbol *
-FunctionContext::LookupLocal(std::string name) {
+FunctionContext::LookupLocal(String name) {
     for (LocalSymbolIterator lIt = LocalsBegin(); lIt != LocalsEnd(); lIt++) {
         LocalSymbol * local = *lIt;
         if (local->name() == name)
@@ -102,9 +102,9 @@ FunctionContext::LookupLocal(std::string name) {
 
 FunctionSymbol *
 FunctionContext::DefineFunction(LOCATION,
-                                std::string name,
-                                std::string fileName,
-                                std::string lineNumber,
+                                String name,
+                                String fileName,
+                                String lineNumber,
                                 void *entryPoint,
                                 const Type *returnType,
                                 int32_t numParms,
@@ -123,9 +123,9 @@ FunctionContext::DefineFunction(LOCATION,
 
 FunctionSymbol *
 FunctionContext::DefineFunction(LOCATION,
-                                std::string name,
-                                std::string fileName,
-                                std::string lineNumber,
+                                String name,
+                                String fileName,
+                                String lineNumber,
                                 void *entryPoint,
                                 const Type *returnType,
                                 int32_t numParms,
@@ -147,9 +147,9 @@ FunctionContext::DefineFunction(FunctionSymbol *function) {
 // maybe move to Compilation?
 FunctionSymbol *
 FunctionContext::internalDefineFunction(LOCATION,
-                                        std::string name,
-                                        std::string fileName,
-                                        std::string lineNumber,
+                                        String name,
+                                        String fileName,
+                                        String lineNumber,
                                         void *entryPoint,
                                         const Type *returnType,
                                         int32_t numParms,
@@ -163,7 +163,7 @@ FunctionContext::internalDefineFunction(LOCATION,
 }
 
 FunctionSymbol *
-FunctionContext::LookupFunction(std::string name) {
+FunctionContext::LookupFunction(String name) {
     Symbol *sym = getSymbol(name);
     if (sym == NULL || !sym->isKind<FunctionSymbol>())
         return NULL;
@@ -178,7 +178,7 @@ FunctionContext::ResetFunctions() {
 }
 
 Symbol *
-FunctionContext::getSymbol(std::string name) {
+FunctionContext::getSymbol(String name) {
     LocalSymbol *localSym = LookupLocal(name);
     if (localSym)
         return localSym;
