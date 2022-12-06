@@ -56,6 +56,7 @@ Context::Context(LOCATION, Context *parent, LiteralDictionary *useLitDict, Symbo
     , _numEntryPoints(numEntryPoints)
     , _numExitPoints(numExitPoints) {
 
+    parent->addChild(this);
     initEntriesAndExits(PASSLOC, parent->comp());
 }
 
