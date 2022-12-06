@@ -23,6 +23,7 @@
 #define CONTEXT_INCL
 
 #include <assert.h>
+#include <list>
 #include <string>
 #include "IDs.hpp"
 
@@ -78,6 +79,7 @@ public:
 protected:
     void initEntriesAndExits(LOCATION, Compilation *comp);
     void addSymbol(Symbol *sym);
+    void addChild(Context *child) { _children.push_back(child); }
     Compilation *comp() const { return _comp; }
 
     uint64_t _id;
@@ -85,6 +87,7 @@ protected:
     std::string _name;
 
     Context * _parent;
+    std::list<Context *> _children;
 
     LiteralDictionary *_litDict;
     SymbolDictionary *_symDict;
