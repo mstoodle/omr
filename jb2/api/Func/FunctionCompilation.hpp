@@ -73,7 +73,7 @@ public:
 protected:
     virtual void addInitialBuildersToWorklist(BuilderWorklist & worklist);
 
-    std::map<std::string,const FunctionType *> _functionTypesFromName;
+    std::map<String,const FunctionType *> _functionTypesFromName;
 };
 
 } // namespace Func

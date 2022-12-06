@@ -26,6 +26,7 @@
 #include <vector>
 #include "IDs.hpp"
 #include "Iterator.hpp"
+#include "util/String.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -45,8 +46,8 @@ class TypeDictionary {
 
 public:
     TypeDictionary(Compiler *compiler);
-    TypeDictionary(Compiler *compiler, std::string name);
-    TypeDictionary(Compiler *compiler, std::string name, TypeDictionary *linkedDict);
+    TypeDictionary(Compiler *compiler, String name);
+    TypeDictionary(Compiler *compiler, String name, TypeDictionary *linkedDict);
     virtual ~TypeDictionary();
 
     Compiler *compiler() const { return _compiler; }
@@ -59,7 +60,7 @@ public:
     TypeID numTypes() const { return _nextTypeID; }
 
     TypeDictionaryID id() const { return _id; }
-    std::string name() const { return _name; }
+    String name() const { return _name; }
     bool hasLinkedDictionary() const { return _linkedDictionary != NULL; }
     TypeDictionary *linkedDictionary() { return _linkedDictionary; }
 
@@ -73,7 +74,7 @@ protected:
 
     TypeDictionaryID _id;
     Compiler * _compiler;
-    std::string _name;
+    String _name;
     std::vector<const Type *> _types;
     std::vector<const Type *> _ownedTypes;
     TypeID _nextTypeID;

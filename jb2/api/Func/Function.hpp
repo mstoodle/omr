@@ -45,24 +45,24 @@ class Function : public CompileUnit {
 public:
     virtual ~Function();
 
-    virtual std::string kindName() const { return "Function"; }
+    virtual String kindName() const { return "Function"; }
 
 
-    void DefineName(std::string name);
-    void DefineFile(std::string file);
-    void DefineLine(std::string line);
+    void DefineName(String name);
+    void DefineFile(String file);
+    void DefineLine(String line);
 #if 0
-    ParameterSymbol * DefineParameter(std::string name, const Type * type);
+    ParameterSymbol * DefineParameter(String name, const Type * type);
     void DefineReturnType(const Type * type);
-    LocalSymbol * DefineLocal(std::string name, const Type * type);
-    FunctionSymbol * DefineFunction(LOCATION, std::string name, std::string fileName, std::string lineNumber, void *entryPoint, const Type *returnType, int32_t numParms, ...);
-    FunctionSymbol * DefineFunction(LOCATION, std::string name, std::string fileName, std::string lineNumber, void *entryPoint, const Type *returnType, int32_t numParms, const Type **parmTypes);
+    LocalSymbol * DefineLocal(String name, const Type * type);
+    FunctionSymbol * DefineFunction(LOCATION, String name, String fileName, String lineNumber, void *entryPoint, const Type *returnType, int32_t numParms, ...);
+    FunctionSymbol * DefineFunction(LOCATION, String name, String fileName, String lineNumber, void *entryPoint, const Type *returnType, int32_t numParms, const Type **parmTypes);
     const PointerType * PointerTo(LOCATION, const Type *baseType);
 #endif
 
-    std::string name() const { return _givenName; }
-    std::string fileName() const { return _fileName; }
-    std::string lineNumber() const { return _lineNumber; }
+    String name() const { return _givenName; }
+    String fileName() const { return _fileName; }
+    String lineNumber() const { return _lineNumber; }
 
 #if 0
     ParameterSymbolIterator ParametersBegin() const;
@@ -72,12 +72,12 @@ public:
     LocalSymbolIterator LocalsBegin() const;
     LocalSymbolIterator LocalsEnd() const;
     LocalSymbolVector ResetLocals();
-    LocalSymbol * LookupLocal(std::string name);
+    LocalSymbol * LookupLocal(String name);
 
     FunctionSymbolIterator FunctionsBegin() const { return FunctionSymbolIterator(_functions); }
     FunctionSymbolIterator FunctionsEnd() const { return endFunctionIterator; }
     FunctionSymbolVector ResetFunctions();
-    FunctionSymbol *LookupFunction(std::string name) {
+    FunctionSymbol *LookupFunction(String name) {
         Symbol *sym = getSymbol(name);
         if (sym == NULL || !sym->isKind<FunctionSymbol>())
             return NULL;
@@ -92,7 +92,7 @@ public:
     void constructJB1Function(JB1MethodBuilder *j1mb);
     void jbgenProlog(JB1MethodBuilder *j1mb);
 
-    Symbol * getSymbol(std::string name);
+    Symbol * getSymbol(String name);
     void addLocation(Location *loc ) { _locations.push_back(loc); }
 #endif
 
@@ -114,14 +114,14 @@ protected:
     void DefineParameter(ParameterSymbol *parm);
     void DefineLocal(LocalSymbol *local);
     void DefineFunction(FunctionSymbol *function);
-    FunctionSymbol * internalDefineFunction(LOCATION, std::string name, std::string fileName, std::string lineNumber, void *entryPoint, const Type *returnType, int32_t numParms, const Type **parmTypes);
+    FunctionSymbol * internalDefineFunction(LOCATION, String name, String fileName, String lineNumber, void *entryPoint, const Type *returnType, int32_t numParms, const Type **parmTypes);
     #endif
 
     Function              * _outerFunction;
 
-    std::string             _givenName;
-    std::string             _fileName;
-    std::string             _lineNumber;
+    String             _givenName;
+    String             _fileName;
+    String             _lineNumber;
 
     #if 0
     FunctionSymbolVector    _functions; // move to compiler?

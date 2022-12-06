@@ -28,7 +28,7 @@
 namespace OMR {
 namespace JitBuilder {
 
-Strategy::Strategy(Compiler *compiler, std::string name)
+Strategy::Strategy(Compiler *compiler, String name)
     : _id(NoStrategy)
     , _compiler(compiler)
     , _name(name) {

@@ -23,7 +23,7 @@
 #define CREATELOC_INCL
 
 #include <stdint.h>
-#include <string>
+#include "util/String.hpp"
 
 #define LOCATION const char *loc_fileName, uint32_t loc_lineNumber, const char *loc_function
 #define LOC_FILE loc_fileName
@@ -43,12 +43,12 @@ public:
         , _functionName(LOC_FUNC)
     { }
 
-    std::string fileName() const { return std::string(_fileName); }
-    std::string lineNumber() const { return std::to_string(_lineNumber); }
-    std::string functionName() const { return std::string(_functionName); }
+    String fileName() const { return String(_fileName); }
+    String lineNumber() const { return String::to_string(_lineNumber); }
+    String functionName() const { return String(_functionName); }
 
-    std::string to_string() const {
-        return std::string(_functionName).append(" in ").append(_fileName).append(":L").append(std::to_string(_lineNumber));
+    String to_string() const {
+        return String(_functionName).append(" in ").append(_fileName).append(":L").append(String::to_string(_lineNumber));
     }
 
     void overrideFileName(const char *fileName) { _fileName = fileName; }

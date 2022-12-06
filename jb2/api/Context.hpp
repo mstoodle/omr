@@ -39,11 +39,11 @@ class TypeDictionary;
 class Context {
 
 public:
-    Context(LOCATION, Compilation *comp, LiteralDictionary *useLitDict=NULL, SymbolDictionary *useSymDict=NULL, TypeDictionary *useTypeDict=NULL, uint32_t numEntryPoints=1, uint32_t numExitPoints=1, std::string name="");
-    Context(LOCATION, Context *parent, LiteralDictionary *useLitDict=NULL, SymbolDictionary *useSymDict=NULL, TypeDictionary *useTypeDict=NULL, uint32_t numEntryPoints=1, uint32_t numExitPoints=1, std::string name="");
+    Context(LOCATION, Compilation *comp, LiteralDictionary *useLitDict=NULL, SymbolDictionary *useSymDict=NULL, TypeDictionary *useTypeDict=NULL, uint32_t numEntryPoints=1, uint32_t numExitPoints=1, String name="");
+    Context(LOCATION, Context *parent, LiteralDictionary *useLitDict=NULL, SymbolDictionary *useSymDict=NULL, TypeDictionary *useTypeDict=NULL, uint32_t numEntryPoints=1, uint32_t numExitPoints=1, String name="");
 
     ContextID id() const { return _id; }
-    std::string name() const { return _name; }
+    String name() const { return _name; }
 
     LiteralDictionary *litDict() const { return _litDict; }
     SymbolDictionary *symDict() const { return _symDict; }
@@ -74,7 +74,7 @@ public:
         return _builderExitPoints[x];
     }
 
-    Symbol *lookupSymbol(std::string name, bool includeParents=true);
+    Symbol *lookupSymbol(String name, bool includeParents=true);
 
 protected:
     void initEntriesAndExits(LOCATION, Compilation *comp);
@@ -84,7 +84,7 @@ protected:
 
     uint64_t _id;
     Compilation *_comp;
-    std::string _name;
+    String _name;
 
     Context * _parent;
     std::list<Context *> _children;

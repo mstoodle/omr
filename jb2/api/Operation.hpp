@@ -24,12 +24,12 @@
 
 #include <cassert>
 #include <stdint.h>
-#include <string>
 #include <vector>
 #include "CreateLoc.hpp"
 #include "IDs.hpp"
 #include "Iterator.hpp"
 #include "Mapper.hpp"
+#include "util/String.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -127,7 +127,7 @@ public:
     virtual bool expand(OperationReplacer *replacer) const { return false; }
 
     void writeFull(TextWriter & w) const;
-    const std::string & name() const { return _name; }
+    const String & name() const { return _name; }
     virtual void write(TextWriter & w) const;
     virtual void jbgen(JB1MethodBuilder *j1mb) const { }
 
@@ -149,7 +149,7 @@ protected:
     Operation *_next;
     Operation *_prev;
     ActionID _action;
-    const std::string _name;
+    const String _name;
     Location * _location;
     CreateLocation _creationLocation;
 

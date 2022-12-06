@@ -48,13 +48,13 @@ class FunctionContext : public Context {
     friend class FunctionExtension;
 
 public:
-    FunctionContext(LOCATION, FunctionCompilation *comp, std::string name="");
-    FunctionContext(LOCATION, FunctionCompilation *comp, FunctionContext *caller, std::string name="");
+    FunctionContext(LOCATION, FunctionCompilation *comp, String name="");
+    FunctionContext(LOCATION, FunctionCompilation *comp, FunctionContext *caller, String name="");
 
-    ParameterSymbol * DefineParameter(std::string name, const Type * type);
-    LocalSymbol * DefineLocal(std::string name, const Type * type);
-    FunctionSymbol * DefineFunction(LOCATION, std::string name, std::string fileName, std::string lineNumber, void *entryPoint, const Type *returnType, int32_t numParms, ...);
-    FunctionSymbol * DefineFunction(LOCATION, std::string name, std::string fileName, std::string lineNumber, void *entryPoint, const Type *returnType, int32_t numParms, const Type **parmTypes);
+    ParameterSymbol * DefineParameter(String name, const Type * type);
+    LocalSymbol * DefineLocal(String name, const Type * type);
+    FunctionSymbol * DefineFunction(LOCATION, String name, String fileName, String lineNumber, void *entryPoint, const Type *returnType, int32_t numParms, ...);
+    FunctionSymbol * DefineFunction(LOCATION, String name, String fileName, String lineNumber, void *entryPoint, const Type *returnType, int32_t numParms, const Type **parmTypes);
     void DefineReturnType(const Type * type) {
         _returnTypes.push_back(type);
     }
@@ -66,7 +66,7 @@ public:
         this->_locals.clear();
         return prev;
     }
-    LocalSymbol * LookupLocal(std::string name);
+    LocalSymbol * LookupLocal(String name);
 
     ParameterSymbolIterator ParametersBegin() const { return ParameterSymbolIterator(this->_parameters); }
     ParameterSymbolIterator ParametersEnd() const { return endParameterSymbolIterator; }
@@ -79,8 +79,8 @@ public:
     FunctionSymbolIterator FunctionsBegin() const { return FunctionSymbolIterator(_functions); }
     FunctionSymbolIterator FunctionsEnd() const { return endFunctionSymbolIterator; }
     FunctionSymbolVector ResetFunctions();
-    FunctionSymbol *LookupFunction(std::string name);
-    Symbol * getSymbol(std::string name);
+    FunctionSymbol *LookupFunction(String name);
+    Symbol * getSymbol(String name);
 
     int32_t numReturnTypes() const { return _returnTypes.size(); }
     const Type * returnType(int i=0) const {
@@ -95,7 +95,7 @@ protected:
     void DefineParameter(ParameterSymbol *parm);
     void DefineLocal(LocalSymbol *local);
     void DefineFunction(FunctionSymbol *function);
-    FunctionSymbol * internalDefineFunction(LOCATION, std::string name, std::string fileName, std::string lineNumber, void *entryPoint, const Type *returnType, int32_t numParms, const Type **parmTypes);
+    FunctionSymbol * internalDefineFunction(LOCATION, String name, String fileName, String lineNumber, void *entryPoint, const Type *returnType, int32_t numParms, const Type **parmTypes);
 
     ParameterSymbolVector _parameters;
     LocalSymbolVector _locals;

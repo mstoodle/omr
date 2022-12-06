@@ -67,7 +67,7 @@ ParameterSymbol::getSymbolClassKind() {
 }
 
 
-FunctionSymbol::FunctionSymbol(const FunctionType *type, std::string name, std::string fileName, std::string lineNumber, void *entryPoint)
+FunctionSymbol::FunctionSymbol(const FunctionType *type, String name, String fileName, String lineNumber, void *entryPoint)
     : Symbol(getSymbolClassKind(), name, type)
     , _fileName(fileName)
     , _lineNumber(lineNumber)

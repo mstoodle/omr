@@ -27,6 +27,7 @@
 #include <vector>
 #include <deque>
 #include "Visitor.hpp"
+#include "util/String.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -45,7 +46,7 @@ class Value;
 
 class TextWriter : public Visitor {
 public:
-    TextWriter(Compiler * compiler, std::ostream & os, std::string perIndent);
+    TextWriter(Compiler * compiler, std::ostream & os, String perIndent);
 
     void print(Compilation *comp) { start(comp); }
     void print(Builder * b) { start(b); }
@@ -93,8 +94,8 @@ public:
         w._os << v;
         return w;
     }
-    friend TextWriter &operator<<(TextWriter &w, const std::string s) {
-        w._os << s;
+    friend TextWriter &operator<<(TextWriter &w, const String & s) {
+        s.write(w);
         return w;
     }
     friend TextWriter &operator<<(TextWriter &w, const char *s) {
@@ -115,13 +116,13 @@ public:
     void writeType(const Type *type, bool indent=true);
     void writeOperation(Operation *op);
 
-    std::string endl() {
-        return std::string("\n");
+    String endl() {
+        return String("\n");
     }
 
     TextWriter & indent() {
         for (int32_t in=0;in < _indent;in++)
-            _os << _perIndent;
+            _perIndent.write(*this);
         return *this;
     }
     void indentIn() {
@@ -143,7 +144,7 @@ protected:
     void printOperationPrefix(Operation * op);
 
     std::ostream & _os;
-    std::string _perIndent;
+    String _perIndent;
     int32_t _indent;
 };
 

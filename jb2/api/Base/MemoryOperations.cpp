@@ -325,7 +325,7 @@ IndexAt::clone(Builder *b, OperationCloner *cloner) const
    return create(b, cloner->result(), cloner->type(), cloner->operand(0), cloner->operand(1));
    }
 
-Load::Load(Builder * parent, Value * result, std::string localName)
+Load::Load(Builder * parent, Value * result, String localName)
    : OperationR1S1(aLoad, parent, result, parent->fb()->getSymbol(localName))
    {
    }
@@ -442,7 +442,7 @@ LoadIndirect::clone(Builder *b, OperationCloner *cloner) const
    return create(b, cloner->result(), fieldType, cloner->operand());
    }
 
-Store::Store(Builder * parent, std::string name, Value * value)
+Store::Store(Builder * parent, String name, Value * value)
    : OperationR0S1V1(aStore, parent, parent->fb()->getSymbol(name), value)
       { }
 

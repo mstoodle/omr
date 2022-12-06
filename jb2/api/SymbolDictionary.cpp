@@ -19,7 +19,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include <string>
 #include "Compilation.hpp"
 #include "Symbol.hpp"
 #include "SymbolDictionary.hpp"
@@ -40,7 +39,7 @@ SymbolDictionary::SymbolDictionary(Compilation *comp)
 
 }
 
-SymbolDictionary::SymbolDictionary(Compilation *comp, std::string name)
+SymbolDictionary::SymbolDictionary(Compilation *comp, String name)
     : _id(comp->getSymbolDictionaryID())
     , _comp(comp)
     , _name(name)
@@ -50,7 +49,7 @@ SymbolDictionary::SymbolDictionary(Compilation *comp, std::string name)
 }
 
 // Only accessible to subclasses
-SymbolDictionary::SymbolDictionary(Compilation *comp, std::string name, SymbolDictionary * linkedDictionary)
+SymbolDictionary::SymbolDictionary(Compilation *comp, String name, SymbolDictionary * linkedDictionary)
     : _id(comp->getSymbolDictionaryID())
     , _comp(comp)
     , _name(name)
@@ -83,7 +82,7 @@ SymbolDictionary::LookupSymbol(uint64_t id) {
 }
 
 Symbol *
-SymbolDictionary::LookupSymbol(std::string name) {
+SymbolDictionary::LookupSymbol(String name) {
     auto it = _symbolsByName.find(name);
     if (it != _symbolsByName.end())
         return it->second;

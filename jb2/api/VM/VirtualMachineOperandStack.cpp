@@ -228,8 +228,8 @@ VirtualMachineOperandStack::init(LOCATION) {
     memset(_stack, 0, numBytes);
 
     // Create a unique local symbol to hold this OperandStack's base
-    std::string name("VMOS_StackBase_");
-    name.append(std::to_string(_id));
+    String name("VMOS_StackBase_");
+    name.append(String::to_string(_id));
     Func::FunctionContext *fc = _comp->funcContext();
     _stackBaseLocal = fc->DefineLocal(name, bx->PointerTo(LOC, _comp, _elementType));
 

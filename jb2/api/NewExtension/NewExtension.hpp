@@ -24,24 +24,19 @@
 #ifndef NEWEXTENSION_INCL // ### replace NEWEXTENSION with new macro name specific to this extension
 #define NEWEXTENSION_INCL
 
-#include "Extension.hpp"
+#include "JBCore.hpp"
 
 namespace OMR {
 namespace JitBuilder {
-
-class Context;
-class Location;
-class Value;
-
 namespace New {      // ### replace New with a unique namespace you'll use for all code in this Extension
 
 class NewExtension : public Extension { // ### replace NewExtension (globally) with the name of your extension, usually still suffixed with "Extension"
 
 public:
-    NewExtension(LOCATION, Compiler *compiler, bool extended=false, std::string extensionName="vm");
+    NewExtension(LOCATION, Compiler *compiler, bool extended=false, String extensionName="vm");
     virtual ~NewExtension();
 
-    static const std::string NAME;
+    static const String NAME;
 
     virtual const SemanticVersion * semver() const {
         return &version;

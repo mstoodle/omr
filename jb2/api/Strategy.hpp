@@ -47,11 +47,11 @@ class Strategy {
     };
 
     public:
-    Strategy(Compiler *compiler, std::string name);
+    Strategy(Compiler *compiler, String name);
     Strategy *addPass(Pass *pass);
 
     StrategyID id() const { return _id; }
-    std::string name() const { return _name; }
+    String name() const { return _name; }
 
     virtual CompilerReturnCode perform(Compilation *comp);
     virtual void allocateData() { }
@@ -59,7 +59,7 @@ class Strategy {
     protected:
     StrategyID _id;
     Compiler *_compiler;
-    std::string _name;
+    String _name;
     std::list<Pass *> _passes;
     StrategyData *_data;
 };

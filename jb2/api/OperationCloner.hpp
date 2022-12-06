@@ -24,7 +24,6 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include <string>
 #include "Mapper.hpp"
 
 namespace OMR {

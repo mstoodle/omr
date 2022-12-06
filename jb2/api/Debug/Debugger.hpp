@@ -24,21 +24,10 @@
 
 #include <list>
 #include <map>
-#include "CreateLoc.hpp"
-#include "IDs.hpp"
+#include "JBCore.hpp"
 
 namespace OMR {
 namespace JitBuilder {
-
-class Builder;
-class Compiler;
-class InputReader;
-class Operation;
-class Symbol;
-class TextWriter;
-class Type;
-class Value;
-
 namespace Debug {
 
 class DebugDictionary;
@@ -87,10 +76,10 @@ protected:
     virtual void printTypeName(const Type *type);
     virtual void printType(const Type *type);
     virtual void printValue(uint64_t idx);
-    virtual void printSymbol(std::string name);
+    virtual void printSymbol(String name);
     virtual void printHelp();
     virtual void acceptCommands(Operation *op, Operation *nextOp=NULL);
-    virtual void showOp(Operation *op, std::string msg);
+    virtual void showOp(Operation *op, String msg);
 
     virtual void beforeOp(Operation *op, Operation *nextOp);
     virtual void afterOp(Operation *op, Operation *nextOp);
@@ -114,7 +103,7 @@ protected:
     Debugger *_parent;
     TextWriter *_writer;
     InputReader *_reader;
-    std::list<std::string> _commandHistory;
+    std::list<String> _commandHistory;
     uint64_t _time;
     DebuggerFrame *_frame;
     std::map<CompileUnitID, FunctionDebugInfo *> _functionDebugInfos;

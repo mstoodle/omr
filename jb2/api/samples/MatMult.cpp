@@ -205,7 +205,7 @@ testMultiply(Base::BaseExtension *base, const Type *JBType, const char *fmt, voi
     printf("Step 6: create a Logger and register on the function\n");
     Base::FunctionCompilation *comp = func.comp();
     std::cout.setf(std::ios_base::skipws);
-    TextWriter logger(comp, std::cout, std::string("    "));
+    TextWriter logger(comp, std::cout, String("    "));
     TextWriter *log = (DO_LOGGING) ? &logger : NULL;
 
     printf("Step 7: compile the function\n");

@@ -25,13 +25,10 @@
 #include <stdint.h>
 #include <list>
 #include <map>
+#include "JBCore.hpp"
 
 namespace OMR {
 namespace JitBuilder {
-
-class Builder;
-class Operation;
-
 namespace Debug {
 
 class Breakpoint;

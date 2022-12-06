@@ -24,20 +24,10 @@
 
 #include <list>
 #include <map>
-#include "CreateLoc.hpp"
-#include "IDs.hpp"
-#include "typedefs.hpp"
+#include "JBCore.hpp"
 
 namespace OMR {
 namespace JitBuilder {
-
-class Builder;
-class Compiler;
-class Context;
-class Operation;
-class Symbol;
-class Value;
-
 namespace Sim {
 
 class SimDictionary;

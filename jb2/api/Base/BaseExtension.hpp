@@ -57,10 +57,10 @@ protected:
     Func::FunctionExtension *_fx;
 
 public:
-    BaseExtension(LOCATION, Compiler *compiler, bool extended=false, std::string extensionName="");
+    BaseExtension(LOCATION, Compiler *compiler, bool extended=false, String extensionName="");
     virtual ~BaseExtension();
 
-    static const std::string NAME;
+    static const String NAME;
 
     // 1 == FieldSymbol
     uint32_t numSymbolTypes() const { return 1; }
@@ -248,8 +248,8 @@ public:
     virtual bool validateConvertTo(LOCATION, Builder *b, const Type *type, Value *value);
     virtual bool validateMul(LOCATION, Builder *b, Value *left, Value *right);
     virtual bool validateSub(LOCATION, Builder *b, Value *left, Value *right);
-    virtual bool validateIfCmp(LOCATION, Builder *b, Builder *target, Value *left, Value *right, CompilerReturnCode failCode, std::string opCodeName);
-    virtual bool validateIfCmpZero(LOCATION, Builder *b, Builder *target, Value *value, CompilerReturnCode failCode, std::string opCodeName);
+    virtual bool validateIfCmp(LOCATION, Builder *b, Builder *target, Value *left, Value *right, CompilerReturnCode failCode, String opCodeName);
+    virtual bool validateIfCmpZero(LOCATION, Builder *b, Builder *target, Value *value, CompilerReturnCode failCode, String opCodeName);
     virtual bool validateForLoopUp(LOCATION, Builder *b, Func::LocalSymbol *loopVariable, Value *initial, Value *final, Value *bump);
 
 protected:
@@ -259,8 +259,8 @@ protected:
     virtual void failValidateConvertTo(LOCATION, Builder *b, const Type *type, Value *value);
     virtual void failValidateMul(LOCATION, Builder *b, Value *left, Value *right);
     virtual void failValidateSub(LOCATION, Builder *b, Value *left, Value *right);
-    virtual void failValidateIfCmp(LOCATION, Builder *b, Builder *target, Value *left, Value *right, CompilerReturnCode failCode, std::string opCodeName);
-    virtual void failValidateIfCmpZero(LOCATION, Builder *b, Builder *target, Value *value, CompilerReturnCode failCode, std::string opCodeName);
+    virtual void failValidateIfCmp(LOCATION, Builder *b, Builder *target, Value *left, Value *right, CompilerReturnCode failCode, String opCodeName);
+    virtual void failValidateIfCmpZero(LOCATION, Builder *b, Builder *target, Value *value, CompilerReturnCode failCode, String opCodeName);
     virtual void failValidateForLoopUp(LOCATION, Builder *b, Func::LocalSymbol *loopVariable, Value *initial, Value *final, Value *bump);
 
     BaseExtension *_base;

@@ -179,7 +179,7 @@ main(int argc, char *argv[]) {
     ComplexMatMult cmmFunc(LOC, &c, xc);
 
     cout << "Step 5: Set up logging configuration\n";
-    TextWriter logger(&c, std::cout, std::string("    "));
+    TextWriter logger(&c, std::cout, String("    "));
     TextWriter *log = (DO_LOGGING) ? &logger : NULL;
     
     printMatrix(A, N, "A");

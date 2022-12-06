@@ -35,14 +35,14 @@ class LocalSymbol : public Symbol {
     friend class FunctionExtension;
 
 public:
-    LocalSymbol(std::string name, const Type * type)
+    LocalSymbol(String name, const Type * type)
         : Symbol(getSymbolClassKind(), name, type) {
     }
 
     static const SymbolKind getSymbolClassKind();
 
 protected:
-    LocalSymbol(SymbolKind kind, std::string name, const Type * type)
+    LocalSymbol(SymbolKind kind, String name, const Type * type)
         : Symbol(kind, name, type) {
     }
 
@@ -55,17 +55,17 @@ class FunctionSymbol : public Symbol {
     friend class Function;
 
 public:
-    FunctionSymbol(const FunctionType *type, std::string name, std::string fileName, std::string lineNumber, void *entryPoint);
+    FunctionSymbol(const FunctionType *type, String name, String fileName, String lineNumber, void *entryPoint);
     const FunctionType *functionType() const;
-    std::string fileName() const { return _fileName; }
-    std::string lineNumber() const { return _lineNumber; }
+    String fileName() const { return _fileName; }
+    String lineNumber() const { return _lineNumber; }
     void *entryPoint() const { return _entryPoint; }
 
     static const SymbolKind getSymbolClassKind();
 
 protected:
-    std::string _fileName;
-    std::string _lineNumber;
+    String _fileName;
+    String _lineNumber;
     void *_entryPoint;
 
     static SymbolKind SYMBOLKIND;
@@ -76,7 +76,7 @@ class ParameterSymbol : public LocalSymbol {
     friend class FunctionExtension;
 
 public:
-    ParameterSymbol(std::string name, const Type * type, int index)
+    ParameterSymbol(String name, const Type * type, int index)
         : LocalSymbol(getSymbolClassKind(), name, type)
         , _index(index) {
 

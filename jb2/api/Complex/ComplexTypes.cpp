@@ -39,7 +39,7 @@ ComplexType::ComplexType(LOCATION, TypeKind kind, ComplexExtension *cext, const 
     : NumericType(PASSLOC,
                   kind,
                   cext,
-                  std::string("Complex<").append(elementType->name()).append(std::string(">")),
+                  String("Complex<").append(elementType->name()).append(String(">")),
                   elementType->size())
     , _elementType(elementType) {
 }
@@ -61,17 +61,17 @@ ComplexType::xc() {
 bool
 ComplexType::registerJB1Type(JB1MethodBuilder *j1mb) const {
     CompilationException e(LOC, ext()->compiler(), ext()->compiler()->CompileFail_TypeMustBeReduced);
-    e.setMessage(std::string("registerJB1Type: ComplexTypes must be reduced before jb1codegen"));
+    e.setMessage(String("registerJB1Type: ComplexTypes must be reduced before jb1codegen"));
     throw e;
 }
 
 void
 ComplexType::createJB1ConstOp(Location *loc, JB1MethodBuilder *j1mb, Builder *b, Value *result, Literal *lv) const {
     CompilationException e(LOC, ext()->compiler(), ext()->compiler()->CompileFail_TypeMustBeReduced);
-    e.setMessage(std::string("createJB1ConstOp: ComplexTypes must be reduced before jb1codegen"))
-     .appendMessage(std::string("    in builder B").append(std::to_string(b->id())))
-     .appendMessage(std::string("    producing result v").append(std::to_string(result->id())))
-     .appendMessage(std::string("    for literal lv").append(std::to_string(lv->id())));
+    e.setMessage(String("createJB1ConstOp: ComplexTypes must be reduced before jb1codegen"))
+     .appendMessage(String("    in builder B").append(String::to_string(b->id())))
+     .appendMessage(String("    producing result v").append(String::to_string(result->id())))
+     .appendMessage(String("    for literal lv").append(String::to_string(lv->id())));
     throw e;
 }
 
@@ -108,7 +108,8 @@ template<typename T>
 void
 ComplexFloatType<T>::printValue(TextWriter &w, const void *p) const
    {
-   std::complex<T> value = *(reinterpret_cast<const std::complex<T> *>(p));
+   std::complex<T> value = *(reinterpret_cast<const 
+   jjjjjtd::complex<T> *>(p));
    w << name() << " (" << value.real() << "+i" << value.imag() << ")";
    }
 

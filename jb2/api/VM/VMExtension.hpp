@@ -38,10 +38,10 @@ class VMExtension : public Extension {
     friend class VMExtensionChecker;
 
 public:
-    VMExtension(LOCATION, Compiler *compiler, bool extended=false, std::string extensionName="vm");
+    VMExtension(LOCATION, Compiler *compiler, bool extended=false, String extensionName="vm");
     virtual ~VMExtension();
 
-    static const std::string NAME;
+    static const String NAME;
 
     virtual const SemanticVersion * semver() const {
         return &version;
@@ -80,7 +80,7 @@ public:
     void IfCmpUnsignedLessThan(LOCATION, BytecodeBuilder *b, BytecodeBuilder *target, Value *left, Value *right);
     void IfCmpUnsignedGreaterOrEqual(LOCATION, BytecodeBuilder *b, BytecodeBuilder *target, Value *left, Value *right);
     void IfCmpUnsignedGreaterThan(LOCATION, BytecodeBuilder *b, BytecodeBuilder *target, Value *left, Value *right);
-    BytecodeBuilder *OrphanBytecodeBuilder(Base::BaseCompilation *comp, int32_t bcIndex, int32_t bcLength=1, Context *context=NULL, std::string name="");
+    BytecodeBuilder *OrphanBytecodeBuilder(Base::BaseCompilation *comp, int32_t bcIndex, int32_t bcLength=1, Context *context=NULL, String name="");
 
 protected:
     Base::BaseExtension *_bx;

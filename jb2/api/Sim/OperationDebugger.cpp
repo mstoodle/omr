@@ -39,7 +39,7 @@ OperationDebugger::OperationDebugger(LOCATION, Debugger *dbgr, Base::FunctionCom
     , _op(op) {
 
     Base::Function *func = comp->func();
-    DefineName(func->name() + std::string(".op") + std::to_string(op->id()));
+    DefineName(func->name() + String(".op") + std::to_string(op->id()));
     DefineFile("OpDbgr");
     DefineLine(op->name());
 }
@@ -70,9 +70,9 @@ OperationDebugger::copyResult(DebugValue *dest, DebugValue *src) {
     memcpy(dest, src, dbgDict()->_DebugValue->size());
 }
 
-std::string
+String
 OperationDebugger::valueName(Value *v) {
-    return std::string("#_v") + std::to_string(v->id());
+    return String("#_v") + String::to_string(v->id());
 }
 
 // locals are stored in DebugValues in the debugger frame, but operations that access

@@ -61,23 +61,23 @@ FunctionType::FunctionType(LOCATION, Extension *ext, TypeDictionary *dict, const
     , _parmTypes(parmTypes) {
 }
 
-std::string
+String
 FunctionType::typeName(const Type * returnType, int32_t numParms, const Type **parmTypes) {
-    std::string s = std::string("t").append(std::to_string(returnType->id())).append(std::string(" <- ("));
+    String s(String("t").append(String::to_string(returnType->id())).append(String(" <- (")));
     if (numParms > 0)
-        s.append(std::string("0:t")).append(std::to_string(parmTypes[0]->id()));
+        s.append(String("0:t")).append(String::to_string(parmTypes[0]->id()));
     for (auto p = 1; p < numParms; p++) {
         const Type *type = parmTypes[p];
-        s.append(std::string(" ")).append(std::to_string(p)).append(std::string(":t")).append(std::to_string(type->id()));
+        s.append(String(" ")).append(String::to_string(p)).append(String(":t")).append(String::to_string(type->id()));
     }
-    s.append(std::string(")"));
+    s.append(String(")"));
     return s;
 }
 
-std::string
+String
 FunctionType::to_string(bool useHeader) const {
-    std::string s = Type::base_string(useHeader);
-    s.append(std::string("functionType"));
+    String s(Type::base_string(useHeader));
+    s.append(String("functionType"));
     return s;
 }
 

@@ -39,7 +39,7 @@ class BytecodeBuilder: public Builder {
     friend VMExtension;
 
 public:
-    BytecodeBuilder(Base::BaseCompilation *comp, VMExtension *vme, int32_t bcIndex, int32_t bcLength=1, Context *context=NULL, std::string name="");
+    BytecodeBuilder(Base::BaseCompilation *comp, VMExtension *vme, int32_t bcIndex, int32_t bcLength=1, Context *context=NULL, String name="");
     int32_t bcIndex() const { return _bcIndex; }
     int32_t bcLength() const { return _bcLength; }
 
@@ -49,7 +49,7 @@ public:
 
     void propagateVMState(LOCATION, VirtualMachineState *fromState);
 
-    virtual std::string logName() const { return "BytecodeBuilder"; }
+    virtual String logName() const { return String("BytecodeBuilder"); }
     virtual void writeProperties(TextWriter & w) const;
 
     virtual void jbgen(JB1MethodBuilder *j1mb) const;
