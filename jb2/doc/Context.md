@@ -37,11 +37,11 @@ one `GlobalContext` top-level execution context if none is specified. If a `pare
 specified, the parent `Context` must completely overlap the child `Context`, and child
 `Context`s are assumed not to overlap with one another.
 
-A `Context` can hold its own `TypeDictionary` and `SymbolDictionary``.
+A `Context` can hold its own `LiteralDictionary`, `TypeDictionary` and `SymbolDictionary`.
 Implementations may choose to only maintain these dictionaries for specific `Context`
-objects, for example those that are associated with the scope of a `CompileUnit` but
-every `Context` can choose independently of other `Context`s. Each `Context` knows
-about its parent and also its children.
+objects, for example those that are associated with the scope of a `CompileUnit`, but
+every `Context` can choose independently of other `Context`s. Each `Context` knows about
+its parent and also its children `Context`s.
 
 `Symbol` lookup by default delegates to its parent if no `SymbolDictionary` has
 been created for a particular `Context`. However, each lookup can be directed to
