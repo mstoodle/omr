@@ -37,7 +37,7 @@ class Operation;
 
 class Visitor : public Pass {
 public:
-    Visitor(Compiler *compiler, std::string name="", bool visitAppendedBuilders=false);
+    Visitor(Compiler *compiler, String name="", bool visitAppendedBuilders=false);
 
     virtual CompilerReturnCode perform(Compilation *comp);
 
@@ -62,7 +62,7 @@ protected:
     virtual void visitEnd()                               { }
 
     // logging support: output msg to the log if enabled
-    void trace(std::string msg);
+    void trace(String msg);
 
     Compilation *_comp;
     bool _aborted;

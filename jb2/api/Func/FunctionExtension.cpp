@@ -32,7 +32,7 @@ namespace JitBuilder {
 namespace Func {
 
 const SemanticVersion FunctionExtension::version(FUNCTIONEXT_MAJOR,FUNCTIONEXT_MINOR,FUNCTIONEXT_PATCH);
-const std::string FunctionExtension::NAME("jb2func");
+const String FunctionExtension::NAME("jb2func");
 
 extern "C" {
     Extension *create(LOCATION, Compiler *compiler) {
@@ -40,14 +40,14 @@ extern "C" {
     }
 }
 
-FunctionExtension::FunctionExtension(LOCATION, Compiler *compiler, bool extended, std::string extensionName)
+FunctionExtension::FunctionExtension(LOCATION, Compiler *compiler, bool extended, String extensionName)
     : Extension(PASSLOC, compiler, (extended ? extensionName : NAME))
-    , aLoad(registerAction(std::string("Load")))
-    , aStore(registerAction(std::string("Store")))
-    , aCall(registerAction(std::string("Call")))
-    , aCallVoid(registerAction(std::string("CallVoid")))
-    , aReturn(registerAction(std::string("Return")))
-    , aReturnVoid(registerAction(std::string("ReturnVoid")))
+    , aLoad(registerAction(String("Load")))
+    , aStore(registerAction(String("Store")))
+    , aCall(registerAction(String("Call")))
+    , aCallVoid(registerAction(String("CallVoid")))
+    , aReturn(registerAction(String("Return")))
+    , aReturnVoid(registerAction(String("ReturnVoid")))
     , CompileFail_MismatchedArgumentTypes_Call(registerReturnCode("CompileFail_MismatchedArgumentTypes_Call")) {
 
     if (!extended) {
@@ -102,19 +102,19 @@ void
 FunctionExtensionChecker::failValidateCall(LOCATION, Builder *b, FunctionSymbol *target, std::va_list & args) {
     const FunctionType *tgtType = target->functionType();
     CompilationException e(PASSLOC, _func->compiler(), _func->CompileFail_MismatchedArgumentTypes_Call);
-    e.setMessageLine(std::string("Call: mismatched argument types"));
-    for (auto a=0;a < tgtType->numParms();a++) {
+    e.setMessageLine(String("Call: mismatched argument types"));
+    for (int32_t a=0;a < tgtType->numParms();a++) {
         Value *arg = va_arg(args, Value *);
         if (arg->type() != tgtType->parmTypes()[a])
-            e.appendMessageLine(std::string("  X  "));
+            e.appendMessageLine(String("  X  "));
         else
-            e.appendMessageLine(std::string("     "));
-        e.appendMessage(std::string(" p").append(std::to_string(a)).append(std::string(" ")).append(tgtType->parmTypes()[a]->to_string())
-         .append(std::string(" : a")).append(std::to_string(a))
-         .append(std::string(" v")).append(std::to_string(arg->id()))
-         .append(std::string(" ")).append(arg->type()->to_string()));
+            e.appendMessageLine(String("     "));
+        e.appendMessage(String(" p").append(String::to_string(a)).append(String(" ")).append(tgtType->parmTypes()[a]->to_string())
+         .append(String(" : a")).append(String::to_string(a))
+         .append(String(" v")).append(String::to_string(arg->id()))
+         .append(String(" ")).append(arg->type()->to_string()));
     }
-    e.appendMessageLine(std::string("Argument types must match corresponding parameter types (currently exact, should be assignable to)"));
+    e.appendMessageLine(String("Argument types must match corresponding parameter types (currently exact, should be assignable to)"));
     throw e;
 }
 

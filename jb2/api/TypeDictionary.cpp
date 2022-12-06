@@ -20,7 +20,6 @@
  *******************************************************************************/
 
 #include <stdio.h>
-#include <string>
 #include "Compiler.hpp"
 #include "Operation.hpp"
 #include "TextWriter.hpp"
@@ -39,7 +38,7 @@ TypeDictionary::TypeDictionary(Compiler *compiler)
     , _linkedDictionary(NULL) {
 }
 
-TypeDictionary::TypeDictionary(Compiler *compiler, std::string name)
+TypeDictionary::TypeDictionary(Compiler *compiler, String name)
     : _id(compiler->getTypeDictionaryID())
     , _compiler(compiler)
     , _name(name)
@@ -48,7 +47,7 @@ TypeDictionary::TypeDictionary(Compiler *compiler, std::string name)
 }
 
 // Only accessible to subclasses
-TypeDictionary::TypeDictionary(Compiler *compiler, std::string name, TypeDictionary * linkedDict)
+TypeDictionary::TypeDictionary(Compiler *compiler, String name, TypeDictionary * linkedDict)
     : _id(compiler->getTypeDictionaryID())
     , _compiler(compiler)
     , _name(name)

@@ -34,7 +34,7 @@ namespace JitBuilder {
 
 
 const SemanticVersion Extension::version(0,0,0);
-const std::string Extension::NAME("core");
+const String Extension::NAME("core");
 
 // used by Compiler to allocate an actual Extension object
 Extension::Extension(LOCATION, Compiler *compiler)
@@ -43,32 +43,32 @@ Extension::Extension(LOCATION, Compiler *compiler)
     , _compiler(compiler)
     , _createLoc(PASSLOC)
     , NoType(new NoTypeType(LOC, this))
-    , aMergeDef(registerAction(std::string("MergeDef"))) {
+    , aMergeDef(registerAction(String("MergeDef"))) {
 }
 
 // used by subclasses
-Extension::Extension(LOCATION, Compiler *compiler, std::string name)
+Extension::Extension(LOCATION, Compiler *compiler, String name)
     : _id(compiler->getExtensionID())
     , _name(name)
     , _compiler(compiler)
     , _createLoc(PASSLOC)
     , _types()
     , NoType(compiler->lookupExtension<Extension>()->NoType)
-    , aMergeDef(registerAction(std::string("MergeDef"))) {
+    , aMergeDef(registerAction(String("MergeDef"))) {
 }
 
-const std::string
+const String
 Extension::actionName(ActionID id) const {
     return _compiler->actionName(id);
 }
 
 ActionID
-Extension::registerAction(std::string name) {
+Extension::registerAction(String name) {
     return _compiler->assignActionID(name);
 }
 
 CompilerReturnCode
-Extension::registerReturnCode(std::string name) {
+Extension::registerReturnCode(String name) {
     return _compiler->assignReturnCode(name);
 }
 
@@ -103,41 +103,41 @@ Extension::MergeDef(LOCATION, Builder *b, Value *existingDef, Value *newDef) {
 //
 
 Builder *
-Extension::BoundBuilder(LOCATION, Builder *parent, Operation *parentOp, std::string name) {
+Extension::BoundBuilder(LOCATION, Builder *parent, Operation *parentOp, String name) {
     return new Builder(parent, parentOp, name);
 }
 
 Builder *
-Extension::OrphanBuilder(LOCATION, Builder *parent, Context *context, std::string name) {
+Extension::OrphanBuilder(LOCATION, Builder *parent, Context *context, String name) {
     return new Builder(parent, context, name);
 }
 
 Builder *
-Extension::EntryBuilder(LOCATION, Compilation *comp, Context *context, std::string name) {
+Extension::EntryBuilder(LOCATION, Compilation *comp, Context *context, String name) {
     return new Builder(comp, context, name);
 }
 
 Builder *
-Extension::ExitBuilder(LOCATION, Compilation *comp, Context *context, std::string name) {
+Extension::ExitBuilder(LOCATION, Compilation *comp, Context *context, String name) {
     return new Builder(comp, context, name);
 }
 
 Location *
-Extension::SourceLocation(LOCATION, Builder *b, std::string func) {
+Extension::SourceLocation(LOCATION, Builder *b, String func) {
     Location *loc = new Location(b->comp(), func, "");
     b->setLocation(loc);
     return loc;
 }
 
 Location *
-Extension::SourceLocation(LOCATION, Builder *b, std::string func, std::string lineNumber) {
+Extension::SourceLocation(LOCATION, Builder *b, String func, String lineNumber) {
     Location *loc = new Location(b->comp(), func, lineNumber);
     b->setLocation(loc);
     return loc;
 }
 
 Location *
-Extension::SourceLocation(LOCATION, Builder *b, std::string func, std::string lineNumber, int32_t bcIndex) {
+Extension::SourceLocation(LOCATION, Builder *b, String func, String lineNumber, int32_t bcIndex) {
     Location *loc = new Location(b->comp(), func, lineNumber, bcIndex);
     b->setLocation(loc);
     return loc;

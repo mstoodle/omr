@@ -33,7 +33,7 @@
 namespace OMR {
 namespace JitBuilder {
 
-Builder::Builder(Compilation * comp, Context *context, std::string name)
+Builder::Builder(Compilation * comp, Context *context, String name)
     : _id(comp->getBuilderID())
     , _comp(comp)
     , _name(name)
@@ -50,7 +50,7 @@ Builder::Builder(Compilation * comp, Context *context, std::string name)
     , _controlReachesEnd(true) {
 }
 
-Builder::Builder(Builder *parent, Context *context, std::string name)
+Builder::Builder(Builder *parent, Context *context, String name)
     : _id(parent->_comp->getBuilderID())
     , _comp(parent->_comp)
     , _name(name)
@@ -68,7 +68,7 @@ Builder::Builder(Builder *parent, Context *context, std::string name)
     parent->addChild(this);
 }
 
-Builder::Builder(Builder *parent, Operation *boundToOp, std::string name)
+Builder::Builder(Builder *parent, Operation *boundToOp, String name)
     : _id(parent->_comp->getBuilderID())
     , _comp(parent->_comp)
     , _name(name)
@@ -93,12 +93,12 @@ Builder::~Builder() {
 }
 
 Builder *
-Builder::create(Builder *parent, Context *context, std::string name) {
+Builder::create(Builder *parent, Context *context, String name) {
     return new Builder(parent, context, name);
 }
 
 Builder *
-Builder::create(Compilation *comp, Context *context, std::string name) {
+Builder::create(Compilation *comp, Context *context, String name) {
     return new Builder(comp, context, name);
 }
 

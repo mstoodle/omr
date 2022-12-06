@@ -197,9 +197,9 @@ void initializeComplexSupport(TypeDictionary *dict)
    {
    const size_t size = sizeof(complex<double>) * 8;
    StructType *layout = dict->DefineStruct("Complex::layout", size);
-   LiteralValue *realName = LiteralValue::create(dict, std::string("real"));
+   LiteralValue *realName = LiteralValue::create(dict, String("real"));
    dict->DefineField(layout, realName, dict->Double, 8*offsetof(complex<double>, real));
-   LiteralValue *imagName = LiteralValue::create(dict, std::string("imag"));
+   LiteralValue *imagName = LiteralValue::create(dict, String("imag"));
    dict->DefineField(layout, imagName, dict->Double, 8*offsetof(complex<double>, imag));
    dict->CloseStruct(layout);
    Complex = DynamicType::create(dict, "Complex", size, ComplexPrinter, layout, ComplexTypeExploder, ComplexTypeReplacer, ComplexTypeRegistrar);

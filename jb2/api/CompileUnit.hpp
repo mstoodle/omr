@@ -53,12 +53,12 @@ public:
     virtual ~CompileUnit();
 
     CompileUnitID id() const { return _id; }
-    virtual std::string kindName() const { return "CompileUnit"; }
+    virtual String kindName() const { return "CompileUnit"; }
 
     Compiler *compiler() const { return _compiler; }
     const CreateLocation *createLoc() const { return &_createLocation; }
 
-    std::string name() const { return _name; }
+    String name() const { return _name; }
 
     CompiledBody *compiledBody(StrategyID strategy=NoStrategy) const;
     void saveCompiledBody(CompiledBody *body, StrategyID strategy=NoStrategy);
@@ -82,8 +82,8 @@ public:
     //void addLocation(Location *loc ) { _locations.push_back(loc); }
 
 protected:
-    CompileUnit(LOCATION, Compiler *compiler, std::string name=""); // meant to be subclassed
-    CompileUnit(LOCATION, CompileUnit *outerUnit, std::string name="");
+    CompileUnit(LOCATION, Compiler *compiler, String name=""); // meant to be subclassed
+    CompileUnit(LOCATION, CompileUnit *outerUnit, String name="");
 
     virtual void writeSpecific(TextWriter & w) const { }
 
@@ -93,7 +93,7 @@ protected:
 
     CompileUnitID                         _id;
     CreateLocation                        _createLocation;
-    std::string                           _name;
+    String                                _name;
     Compiler                            * _compiler;
     CompileUnit                         * _outerUnit;
     std::map<StrategyID,CompiledBody *>   _bodies;

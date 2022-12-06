@@ -42,14 +42,14 @@ public:
 
     const PointerType * pointerTypeFromBaseType(const Type * baseType);
     void registerPointerType(const PointerType * pType);
-    const StructType * structTypeFromName(std::string name);
+    const StructType * structTypeFromName(String name);
     void registerStructType(const StructType * sType);
 
 protected:
     void setContext(Func::FunctionContext *context) { this->Compilation::setContext(context); }
 
     std::map<const Type *,const PointerType *> _pointerTypeFromBaseType;
-    std::map<std::string,const StructType *> _structTypeFromName;
+    std::map<String,const StructType *> _structTypeFromName;
 };
 
 } // namespace Base

@@ -32,14 +32,14 @@ namespace OMR {
 namespace JitBuilder {
 
 void
-Transformer::trace(std::string msg) {
+Transformer::trace(String msg) {
     TextWriter *log = _comp->logger(traceEnabled());
     if (log)
         log->indent() << msg << log->endl();
 }
 
 bool
-Transformer::performTransformation(Operation * op, Builder * transformed, std::string msg) {
+Transformer::performTransformation(Operation * op, Builder * transformed, String msg) {
     static int64_t lastTransformation = LLONG_MAX;
     int64_t number = _comp->getTransformationID();
     int64_t lastIndex = _comp->config()->lastTransformationIndex();
@@ -48,8 +48,8 @@ Transformer::performTransformation(Operation * op, Builder * transformed, std::s
     if (traceEnabled()) {
         if (succeed) {
             std::ostringstream oss;
-            oss << "( " << number << " ) Transformation: " << msg;
-            trace(oss.str());
+            oss << "( " << number << " ) Transformation: " << msg.c_str();
+            trace(oss.str().c_str());
             TextWriter *log= _comp->logger(traceEnabled());
             LOG_INDENT_REGION(log) {
                 if (log) log->indentIn();
@@ -61,7 +61,7 @@ Transformer::performTransformation(Operation * op, Builder * transformed, std::s
             LOG_OUTDENT
         }
         else
-            trace("Transformation not applied: " + msg);
+            trace(String("Transformation not applied: ") + msg.c_str());
     }
 
     return succeed;
@@ -74,15 +74,15 @@ Transformer::visitOperations(Builder *b, std::vector<bool> & visited, BuilderWor
     // little bit more complicated than usual because we may replace the first operation and have to restart iteration
     for (Operation *op = b->firstOperation(); op != NULL; op = op ? op->next() : b->firstOperation()) {
         if (log) {
-            log->indent() << std::string("Visit ");
+            log->indent() << String("Visit ");
             log->print(op);
         }
 
         Builder *transformation = transformOperation(op);
         if (transformation != NULL) {
             if (performTransformation(op, transformation)) {
-		// reassign parent for each operation in transformation Builder
-		for (Operation *walkOp = op->next(); walkOp->prev() != transformation->lastOperation(); walkOp = walkOp->next()) {
+                // reassign parent for each operation in transformation Builder
+                for (Operation *walkOp = op->next(); walkOp->prev() != transformation->lastOperation(); walkOp = walkOp->next()) {
                     walkOp->setParent(b);
 
                     // scan transformed operations for builder objects we need to traverse
@@ -92,7 +92,7 @@ Transformer::visitOperations(Builder *b, std::vector<bool> & visited, BuilderWor
                             worklist.push_front(inner_b);
                     }
                 }
-		op = op->replace(transformation); // op may now be NULL!
+                op = op->replace(transformation); // op may now be NULL!
             }
         }
         else {
@@ -107,4 +107,3 @@ Transformer::visitOperations(Builder *b, std::vector<bool> & visited, BuilderWor
 
 } // namespace JitBuilder
 } // namespace OMR
-

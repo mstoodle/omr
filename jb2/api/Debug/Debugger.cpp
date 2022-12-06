@@ -140,7 +140,7 @@ Debugger::acceptCommands(Operation *op, Operation *nextOp) {
                     continue;
                 }
             } else {
-                std::string current(line);
+                String current(line);
                 _commandHistory.push_back(current);
             }
 
@@ -243,7 +243,7 @@ Debugger::acceptCommands(Operation *op, Operation *nextOp) {
 }
 
 void
-Debugger::showOp(Operation *op, std::string msg) {
+Debugger::showOp(Operation *op, String msg) {
     TextWriter &w = *_writer;
     w << msg;
     w.writeOperation(op);

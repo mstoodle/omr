@@ -50,7 +50,7 @@ BaseCompilation::registerPointerType(const PointerType *pType) {
 }
 
 const StructType *
-BaseCompilation::structTypeFromName(std::string name) {
+BaseCompilation::structTypeFromName(String name) {
     auto found = _structTypeFromName.find(name);
     if (found != _structTypeFromName.end()) {
         const StructType *t = found->second;

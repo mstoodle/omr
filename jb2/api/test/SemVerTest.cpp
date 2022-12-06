@@ -62,13 +62,13 @@ int main(int argc, char** argv) {
 
 #define EXPECT_VALID_CREATE4(ma,mi,pa,pr,m) \
     do { \
-        SemanticVersion v(ma,mi,pa,std::string(pr),std::string("")); \
+        SemanticVersion v(ma,mi,pa,String(pr),String("")); \
         EXPECT3(m,v,ma,mi,pa); \
     } while(0)
 
 #define EXPECT_VALID_CREATE5(ma,mi,pa,pr,bm,m) \
     do { \
-        SemanticVersion v(ma,mi,pa,std::string(pr),std::string(bm)); \
+        SemanticVersion v(ma,mi,pa,String(pr),String(bm)); \
         EXPECT3(m, v,ma,mi,pa); \
     } while(0)
 
@@ -112,19 +112,19 @@ TEST(SemVerTest, CreationTests) {
 
 #define EXPECT_CORE4(ma,mi,pa,pr ) \
     do { \
-        SemanticVersion v(ma,mi,pa,std::string(pr),std::string("")); \
+        SemanticVersion v(ma,mi,pa,String(pr),String("")); \
         EXPECT_EQ(v.coreVersion(), #ma "." #mi "." #pa) ; \
     } while (0)
 
 #define EXPECT_CORE4bm(ma,mi,pa,bm ) \
     do { \
-        SemanticVersion v(ma,mi,pa,std::string(""),std::string(bm)); \
+        SemanticVersion v(ma,mi,pa,String(""),String(bm)); \
         EXPECT_EQ(v.coreVersion(), #ma "." #mi "." #pa); \
     } while (0)
 
 #define EXPECT_CORE5(ma,mi,pa,pr,bm ) \
     do { \
-        SemanticVersion v(ma,mi,pa,std::string(pr),std::string(bm)); \
+        SemanticVersion v(ma,mi,pa,String(pr),String(bm)); \
         EXPECT_EQ(v.coreVersion(), #ma "." #mi "." #pa); \
     } while (0)
 
@@ -149,19 +149,19 @@ TEST(SemVerTest, CoreNaming) {
 
 #define EXPECT_NAME4(ma,mi,pa,pr,m) \
     do { \
-        SemanticVersion v(ma,mi,pa,std::string(pr),std::string("")); \
+        SemanticVersion v(ma,mi,pa,String(pr),String("")); \
         EXPECT_EQ(v.semver(), #ma "." #mi "." #pa "-" pr)  << m; \
     } while (0)
 
 #define EXPECT_NAME4bm(ma,mi,pa,bm,m) \
     do { \
-        SemanticVersion v(ma,mi,pa,std::string(""),std::string(bm)); \
+        SemanticVersion v(ma,mi,pa,String(""),String(bm)); \
         EXPECT_EQ(v.semver(), #ma "." #mi "." #pa "+" bm) << m; \
     } while (0)
 
 #define EXPECT_NAME5(ma,mi,pa,pr,bm,m) \
     do { \
-        SemanticVersion v(ma,mi,pa,std::string(pr),std::string(bm)); \
+        SemanticVersion v(ma,mi,pa,String(pr),String(bm)); \
         EXPECT_EQ(v.semver(), #ma "." #mi "." #pa "-" pr "+" bm) << m; \
     } while (0)
 

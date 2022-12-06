@@ -38,11 +38,11 @@ class BaseType : public Type {
     friend class BaseExtension;
 
     protected:
-    BaseType(LOCATION, TypeKind kind, Extension *ext, std::string name, size_t size)
+    BaseType(LOCATION, TypeKind kind, Extension *ext, String name, size_t size)
         : Type(PASSLOC, kind, ext, name, size) {
 
     }
-    BaseType(LOCATION, TypeKind kind, Extension *ext, TypeDictionary *dict, std::string name, size_t size)
+    BaseType(LOCATION, TypeKind kind, Extension *ext, TypeDictionary *dict, String name, size_t size)
         : Type(PASSLOC, kind, ext, dict, name, size) {
 
     }
@@ -58,7 +58,7 @@ public:
     static const TypeKind getTypeClassKind();
 
 protected:
-    NumericType(LOCATION, TypeKind kind, Extension *ext, std::string name, size_t size)
+    NumericType(LOCATION, TypeKind kind, Extension *ext, String name, size_t size)
         : BaseType(PASSLOC, TYPEKIND, ext, name, size) {
 
     }
@@ -75,7 +75,7 @@ public:
     static const TypeKind getTypeClassKind();
 
 protected:
-    IntegerType(LOCATION, TypeKind kind, Extension *ext, std::string name, size_t size)
+    IntegerType(LOCATION, TypeKind kind, Extension *ext, String name, size_t size)
         : NumericType(PASSLOC, TYPEKIND, ext, name, size) {
 
     }
@@ -186,7 +186,7 @@ class FloatingPointType : public NumericType {
     static const TypeKind getTypeClassKind();
 
 protected:
-    FloatingPointType(LOCATION, TypeKind kind, Extension *ext, std::string name, size_t size)
+    FloatingPointType(LOCATION, TypeKind kind, Extension *ext, String name, size_t size)
         : NumericType(PASSLOC, kind, ext, name, size) {
 
     }
@@ -260,9 +260,9 @@ public:
 
 protected:
     AddressType(LOCATION, Extension *ext);
-    AddressType(LOCATION, Extension *ext, std::string name);
-    AddressType(LOCATION, Extension *ext, TypeDictionary *dict, std::string name);
-    AddressType(LOCATION, Extension *ext, TypeDictionary *dict, TypeKind kind, std::string name);
+    AddressType(LOCATION, Extension *ext, String name);
+    AddressType(LOCATION, Extension *ext, TypeDictionary *dict, String name);
+    AddressType(LOCATION, Extension *ext, TypeDictionary *dict, TypeKind kind, String name);
 
     static TypeKind TYPEKIND;
     static bool kindRegistered;
@@ -283,7 +283,7 @@ public:
     TypeDictionary *dict() const { return _dict; }
     const Type *baseType() const { return _baseType; }
     PointerTypeHelper *helper() const { return _helper; }
-    std::string name() const { return std::string("PointerTo(") + _baseType->name() + std::string(")"); }
+    String name() const { return String("PointerTo(") + _baseType->name() + String(")"); }
 
     const PointerType *create(LOCATION);
 
@@ -303,7 +303,7 @@ public:
 
     Literal *literal(LOCATION, Compilation *comp, const void * value) const;
     virtual bool literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const;
-    virtual std::string to_string(bool useHeader=false) const;
+    virtual String to_string(bool useHeader=false) const;
     virtual void printValue(TextWriter &w, const void *p) const;
     virtual void printLiteral(TextWriter &w, const Literal *lv) const;
     virtual bool registerJB1Type(JB1MethodBuilder *j1mb) const;
@@ -329,13 +329,13 @@ class FieldType : public BaseType {
 
 public:
     const StructType *owningStruct() const  { return _structType; }
-    std::string fieldName() const { return _fieldName; }
+    String fieldName() const { return _fieldName; }
     const Type *type() const { return _type; }
     size_t offset() const { return _offset; }
 
     Literal *literal(LOCATION, Compilation *comp, const LiteralBytes * structValue) const { return NULL; };
     virtual bool literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const { return false; }
-    virtual std::string to_string(bool useHeader=false) const;
+    virtual String to_string(bool useHeader=false) const;
     virtual void printValue(TextWriter &w, const void *p) const { }
     virtual void printLiteral(TextWriter &w, const Literal *lv) const { }
     virtual bool registerJB1Type(JB1MethodBuilder *j1mb) const;
@@ -344,12 +344,12 @@ public:
 
 protected:
     protected:
-    FieldType(LOCATION, BaseExtension *ext, TypeDictionary *dict, const StructType *structType, std::string fieldName, const Type *type, size_t offset);
+    FieldType(LOCATION, BaseExtension *ext, TypeDictionary *dict, const StructType *structType, String fieldName, const Type *type, size_t offset);
 
-    std::string explodedName(TypeReplacer *repl, std::string & baseName) const;
+    String explodedName(TypeReplacer *repl, String & baseName) const;
 
     const StructType *_structType;
-    std::string _fieldName;
+    String _fieldName;
     const Type *_type;
     size_t _offset;
 
@@ -357,7 +357,7 @@ protected:
     static bool kindRegistered;
 };
 
-typedef std::map<std::string, const FieldType *>::const_iterator FieldIterator;
+typedef std::map<String, const FieldType *>::const_iterator FieldIterator;
 
 class StructTypeBuilder;
 typedef void (StructHelperFunction)(const StructType *sType, StructTypeBuilder *builder);
@@ -370,10 +370,10 @@ class StructTypeBuilder {
 
     // FieldInfo is used to record fields
     struct FieldInfo {
-        std::string _name;
+        String _name;
         const Type * _type;
         size_t _offset;
-        FieldInfo(std::string name, const Type *type, size_t offset)
+        FieldInfo(String name, const Type *type, size_t offset)
             : _name(name), _type(type), _offset(offset) {
         }
     };
@@ -383,10 +383,10 @@ public:
     #if NEED_UNION
     StructTypeBuilder *setUnion(bool v=false); { _buildUnion = v; return this; }
     #endif
-    StructTypeBuilder *setName(std::string n) { _name = n; return this; }
+    StructTypeBuilder *setName(String n) { _name = n; return this; }
     StructTypeBuilder *setSize(size_t size) { _size = size; return this; }
     StructTypeBuilder *setHelper(StructHelperFunction *helper) { _helper = helper; return this; }
-    StructTypeBuilder *addField(std::string name, const Type *fieldType, size_t offset) {
+    StructTypeBuilder *addField(String name, const Type *fieldType, size_t offset) {
         FieldInfo info(name, fieldType, offset);
         _fields.push_back(info);
         return this;
@@ -395,7 +395,7 @@ public:
     BaseExtension *extension() const { return _ext; }
     Base::BaseCompilation *comp() const { return _comp; }
     TypeDictionary *dict() const { return _dict; }
-    std::string name() const { return _name; }
+    String name() const { return _name; }
     size_t size() const { return _size; }
     StructHelperFunction *helper() const { return _helper; }
 
@@ -418,7 +418,7 @@ protected:
     Func::Function * _func;
     Base::BaseCompilation * _comp;
     TypeDictionary * _dict;
-    std::string _name;
+    String _name;
     size_t _size;
     #if NEED_UNION
     bool _buildUnion;
@@ -437,14 +437,14 @@ public:
 
     Literal *literal(LOCATION, Compilation *comp, const LiteralBytes * structValue) const;
     virtual bool literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const;
-    virtual std::string to_string(bool useHeader=false) const;
+    virtual String to_string(bool useHeader=false) const;
     virtual void printValue(TextWriter &w, const void *p) const;
     virtual void printLiteral(TextWriter &w, const Literal *lv) const;
     virtual bool registerJB1Type(JB1MethodBuilder *j1mb) const;
 
     FieldIterator FieldsBegin() const { return _fieldsByName.cbegin(); }
     FieldIterator FieldsEnd() const   { return _fieldsByName.cend(); }
-    const FieldType *LookupField(std::string fieldName) const
+    const FieldType *LookupField(String fieldName) const
         {
         auto it = _fieldsByName.find(fieldName);
         if (it == _fieldsByName.end())
@@ -460,14 +460,14 @@ public:
 
 protected:
     StructType(LOCATION, StructTypeBuilder *builder);
-    virtual const FieldType * addField(LOCATION, Extension *ext, TypeDictionary *dict, std::string name, const Type *type, size_t offset);
-    void registerAllFields(JB1MethodBuilder *j1mb, std::string structName, std::string fNamePrefix, size_t baseOffset) const;
-    void transformFields(TypeReplacer *repl, StructTypeBuilder *stb, StructType *origStruct, std::string baseName, size_t baseOffset) const;
-    void mapTransformedFields(TypeReplacer *repl, const StructType *type, std::string baseName, TypeMapper *mapper) const;
+    virtual const FieldType * addField(LOCATION, Extension *ext, TypeDictionary *dict, String name, const Type *type, size_t offset);
+    void registerAllFields(JB1MethodBuilder *j1mb, String structName, String fNamePrefix, size_t baseOffset) const;
+    void transformFields(TypeReplacer *repl, StructTypeBuilder *stb, StructType *origStruct, String baseName, size_t baseOffset) const;
+    void mapTransformedFields(TypeReplacer *repl, const StructType *type, String baseName, TypeMapper *mapper) const;
 
     size_t _structSize;
 
-    std::map<std::string, const FieldType *> _fieldsByName;
+    std::map<String, const FieldType *> _fieldsByName;
     std::multimap<size_t, const FieldType *> _fieldsByOffset;
 
     static TypeKind TYPEKIND;

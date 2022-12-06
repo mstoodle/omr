@@ -139,7 +139,7 @@ main(int argc, char *argv[]) {
     OperandStackTestFunction pointerFunction(LOC, vmx);
 
     if (verbose) cout << "Step 4: Set up logging configuration\n";
-    TextWriter logger(&compiler, std::cout, std::string("    "));
+    TextWriter logger(&compiler, std::cout, String("    "));
     TextWriter *log = (verbose) ? &logger : NULL;
     
     if (verbose) cout << "Step 5: compile function\n";
@@ -159,7 +159,7 @@ main(int argc, char *argv[]) {
 
     if (verbose) cout << "Step 7: Set up operand stack tests using a Thread structure\n";
     OperandStackTestUsingStructFunction threadFunction(LOC, vmx);
-    TextWriter logger2(&compiler, std::cout, std::string("    "));
+    TextWriter logger2(&compiler, std::cout, String("    "));
     TextWriter *log2 = (verbose) ? &logger : NULL;
 
     if (verbose) cout << "Step 8: compile function\n";
@@ -517,9 +517,9 @@ OperandStackTestFunction::testStack(VM::BytecodeBuilder *b, Base::BaseCompilatio
     UPDATESTACK(b, newStack);
     _fx->Call(LOC, b, _verifyResult11);
 
-    VM::BytecodeBuilder *thenBB = _vmx->OrphanBytecodeBuilder(comp, 1, 1, NULL, "BCI_then");
-    VM::BytecodeBuilder *elseBB = _vmx->OrphanBytecodeBuilder(comp, 2, 1, NULL, "BCI_else");
-    VM::BytecodeBuilder *mergeBB = _vmx->OrphanBytecodeBuilder(comp, 3, 1, NULL, "BCI_merge");
+    VM::BytecodeBuilder *thenBB = _vmx->OrphanBytecodeBuilder(comp, 1, 1, NULL, String("BCI_then"));
+    VM::BytecodeBuilder *elseBB = _vmx->OrphanBytecodeBuilder(comp, 2, 1, NULL, String("BCI_else"));
+    VM::BytecodeBuilder *mergeBB = _vmx->OrphanBytecodeBuilder(comp, 3, 1, NULL, String("BCI_merge"));
 
     Value *v1 = POP(b);
     Value *v2 = POP(b);
@@ -595,7 +595,7 @@ OperandStackTestFunction::buildIL(LOCATION, Func::FunctionCompilation *fcomp, Fu
 
     TestState *vmState = new TestState(LOC, _vmx, stack, stackTop);
 
-    VM::BytecodeBuilder *bb = _vmx->OrphanBytecodeBuilder(comp, 0, 1, NULL, std::string("entry"));
+    VM::BytecodeBuilder *bb = _vmx->OrphanBytecodeBuilder(comp, 0, 1, NULL, String("entry"));
     bb->setVMState(vmState);
     _bx->Goto(LOC, entry, bb);
 
@@ -640,7 +640,7 @@ OperandStackTestUsingStructFunction::buildIL(LOCATION, Func::FunctionCompilation
     VM::VirtualMachineOperandStack *stack = new VM::VirtualMachineOperandStack(LOC, _vmx, comp, 1, stackTop, _bx->STACKVALUETYPE);
 
     TestState *vmState = new TestState(LOC, _vmx, stack, stackTop);
-    VM::BytecodeBuilder *bb = _vmx->OrphanBytecodeBuilder(comp, 0, 1, NULL, std::string("entry"));
+    VM::BytecodeBuilder *bb = _vmx->OrphanBytecodeBuilder(comp, 0, 1, NULL, String("entry"));
     bb->setVMState(vmState);
     _bx->Goto(LOC, entry, bb);
 

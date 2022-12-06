@@ -24,9 +24,9 @@
 
 #include <cassert>
 #include <cstddef>
-#include <string>
 #include <map>
 #include "IDs.hpp"
+#include "util/String.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -45,7 +45,7 @@ public:
 
     Kind getNextKind(Kind k);
 
-    Kind assignKind(Kind baseKind, std::string name);
+    Kind assignKind(Kind baseKind, String name);
     bool isExactMatch(Kind matchee, Kind matcher) {
         return (matchee == matcher);
     }
@@ -57,8 +57,8 @@ protected:
 
     KindServiceID _id;
     Kind _nextKind;
-    std::map<std::string,Kind> _kindFromNameMap;
-    std::map<Kind,std::string> _nameFromKindMap;
+    std::map<String,Kind> _kindFromNameMap;
+    std::map<Kind,String> _nameFromKindMap;
 
     static KindServiceID kindServiceID;
 };

@@ -60,7 +60,7 @@ FunctionCompilation::addInitialBuildersToWorklist(BuilderWorklist & worklist) {
 
 const FunctionType *
 FunctionCompilation::lookupFunctionType(const Type *returnType, int32_t numParms, const Type **parmTypes) {
-    std::string name = FunctionType::typeName(returnType, numParms, parmTypes);
+    String name = FunctionType::typeName(returnType, numParms, parmTypes);
     auto it = _functionTypesFromName.find(name);
     if (it != _functionTypesFromName.end()) {
         const FunctionType *fType = it->second;
@@ -181,13 +181,13 @@ FunctionCompilation::replaceTypes(TypeReplacer *repl) {
             SymbolMapper *parmSymMapper = new SymbolMapper();
             if (repl->isModified(type)) {
                 TypeMapper *parmTypeMapper = repl->mapperForType(type);
-                std::string baseName("");
+                String baseName("");
                 if (parmTypeMapper->size() > 1)
                     baseName = parm->name() + ".";
 
                 LOG_INDENT_REGION(log) {
                     for (int i=0;i < parmTypeMapper->size();i++) {
-                        std::string newName = baseName + parmTypeMapper->name();
+                        String newName(baseName + parmTypeMapper->name());
                         const Type *newType = parmTypeMapper->next();
                         ParameterSymbol *newSym = fc->DefineParameter(newName, newType);
                         parmIndex++;
@@ -233,13 +233,13 @@ FunctionCompilation::replaceTypes(TypeReplacer *repl) {
             SymbolMapper *symMapper = new SymbolMapper();
             if (repl->isModified(type)) {
                 TypeMapper *typeMapper = repl->mapperForType(type);
-                std::string baseName("");
+                String baseName("");
                 if (typeMapper->size() > 1)
                     baseName = local->name() + ".";
 
                 LOG_INDENT_REGION(log) {
                     for (int i=0;i < typeMapper->size();i++) {
-                        std::string newName = baseName + typeMapper->name();
+                        String newName = baseName + typeMapper->name();
                         const Type *newType = typeMapper->next();
                         Symbol *newSym = fc->DefineLocal(newName, newType);
                         symMapper->add(newSym);

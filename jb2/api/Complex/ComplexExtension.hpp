@@ -47,10 +47,10 @@ class ComplexExtensionChecker;
 
 class ComplexExtension : public Extension {
 public:
-    ComplexExtension(LOCATION, Compiler *compiler, bool extended=false, std::string extensionName="");
+    ComplexExtension(LOCATION, Compiler *compiler, bool extended=false, String extensionName="");
     virtual ~ComplexExtension();
 
-    static const std::string NAME;
+    static const String NAME;
 
     virtual const SemanticVersion * semver() const {
         return &version;

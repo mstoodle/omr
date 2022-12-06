@@ -34,7 +34,7 @@
 namespace OMR {
 namespace JitBuilder {
 
-TextWriter::TextWriter(Compiler * compiler, std::ostream & os, std::string perIndent)
+TextWriter::TextWriter(Compiler * compiler, std::ostream & os, String perIndent)
     : Visitor(compiler)
     , _os(os)
     , _perIndent(perIndent)
@@ -207,7 +207,7 @@ TextWriter::writeOperation(Operation * op) {
         return;
     }
 
-    std::string name = actionName(op->action()) + std::string(" ");
+    String name = actionName(op->action()) + String(" ");
     switch (op->action()) {
         case aNone :
             break;

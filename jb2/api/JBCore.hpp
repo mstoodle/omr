@@ -58,6 +58,7 @@
 #include "Value.hpp"
 #include "Visitor.hpp"
 #include "typedefs.hpp"
+#include "util/String.hpp"
 
 #endif // defined(OMR_JITBUILDER_JBCORE_INCL)
 

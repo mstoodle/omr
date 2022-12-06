@@ -30,7 +30,7 @@ namespace New { // ### use your extension's namespace here
 // ###  globally rename NewExtension according to your extension's name
 const SemanticVersion NewExtension::version(VMEXT_MAJOR,VMEXT_MINOR,VMEXT_PATCH);
 const SemanticVersion NewExtension::requiredBaseVersion(REQUIRED_BASEEXT_MAJOR,REQUIRED_BASEEXT_MINOR,REQUIRED_BASEEXT_PATCH);
-const std::string NewExtension::NAME("jb2new"); // ### give your extension a unique library name
+const String NewExtension::NAME("jb2new"); // ### give your extension a unique library name
 
 extern "C" {
     Extension *create(LOCATION, Compiler *compiler) {
@@ -38,7 +38,7 @@ extern "C" {
     }
 }
 
-NewExtension::NewExtension(LOCATION, Compiler *compiler, bool extended, std::string extensionName)
+NewExtension::NewExtension(LOCATION, Compiler *compiler, bool extended, String extensionName)
     : Extension(compiler, (extended ? extensionName : NAME)) {
 
     // ### only needed if depends on Base extension

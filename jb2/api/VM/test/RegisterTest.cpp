@@ -58,7 +58,7 @@ main(int argc, char *argv[]) {
     VMRegisterFunction vmrFunc(LOC, &c);
 
     cout << "Step 4: Set up logging configuration\n";
-    TextWriter logger(&c, std::cout, std::string("    "));
+    TextWriter logger(&c, std::cout, String("    "));
     TextWriter *log = (DO_LOGGING) ? &logger : NULL;
     
     cout << "Step 5: compile vmregister function\n";

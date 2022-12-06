@@ -40,7 +40,7 @@ FieldSymbol::getSymbolClassKind() {
     return SYMBOLKIND;
 }
 
-FieldSymbol::FieldSymbol(std::string name, const StructType *structType, const FieldType *fieldType)
+FieldSymbol::FieldSymbol(String name, const StructType *structType, const FieldType *fieldType)
     : Symbol(getSymbolClassKind(), name, fieldType->type())
     , _structType(structType)
     , _fieldType(fieldType) {

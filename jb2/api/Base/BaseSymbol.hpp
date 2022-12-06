@@ -37,7 +37,7 @@ class FieldSymbol : public Symbol {
     friend class BaseExtension;
 
 public:
-    FieldSymbol(std::string name, const StructType *structType, const FieldType *fieldType);
+    FieldSymbol(String name, const StructType *structType, const FieldType *fieldType);
 
     const StructType *structType() const { return _structType; }
     const FieldType *fieldType() const { return _fieldType; }

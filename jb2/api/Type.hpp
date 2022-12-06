@@ -58,7 +58,7 @@ class Type {
     friend class TypeDictionary;
 
 public:
-    std::string name() const                 { return _name; }
+    String name() const                      { return _name; }
     Extension *ext() const                   { return _ext; }
     TypeDictionary *owningDictionary() const { return _dict; }
     TypeID id() const                        { return _id; }
@@ -83,8 +83,8 @@ public:
         return static_cast<const T *>(this);
     }
 
-    std::string base_string(bool useHeader=false) const;
-    virtual std::string to_string(bool useHeader=false) const;
+    String base_string(bool useHeader=false) const;
+    virtual String to_string(bool useHeader=false) const;
     void writeType(TextWriter & w, bool useHeader=false) const;
     virtual void printValue(TextWriter & w, const void *p) const { }
     virtual void printLiteral(TextWriter & w, const Literal *lv) const { }
@@ -128,8 +128,8 @@ public:
     static const TypeKind getTypeClassKind();
 
 protected:
-    Type(LOCATION, TypeKind kind, Extension *ext, std::string name, size_t size, const Type *layout=NULL);
-    Type(LOCATION, TypeKind kind, Extension *ext, TypeDictionary *dict, std::string name, size_t size, const Type *layout=NULL);
+    Type(LOCATION, TypeKind kind, Extension *ext, String name, size_t size, const Type *layout=NULL);
+    Type(LOCATION, TypeKind kind, Extension *ext, TypeDictionary *dict, String name, size_t size, const Type *layout=NULL);
 
     void transformTypeIfNeeded(TypeReplacer *repl, const Type *type) const;
 
@@ -138,7 +138,7 @@ protected:
     TypeDictionary * _dict;
     const TypeID _id;
     const TypeKind _kind;
-    const std::string _name;
+    const String _name;
     const size_t _size;
     const Type * _layout;
 

@@ -56,10 +56,10 @@ class ParameterSymbol;
 class FunctionExtension : public Extension {
 
 public:
-    FunctionExtension(LOCATION, Compiler *compiler, bool extended=false, std::string extensionName="");
+    FunctionExtension(LOCATION, Compiler *compiler, bool extended=false, String extensionName="");
     virtual ~FunctionExtension();
 
-    static const std::string NAME;
+    static const String NAME;
 
     // 3 == LocalSymbol, ParameterSymbol, FunctionSymbol
     uint32_t numSymbolTypes() const { return 3; }

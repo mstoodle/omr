@@ -31,7 +31,7 @@ namespace Debug {
 
 const SemanticVersion DebugExtension::version(DEBUGEXT_MAJOR,DEBUGEXT_MINOR,DEBUGEXT_PATCH);
 const SemanticVersion DebugExtension::requiredBaseVersion(REQUIRED_BASEEXT_MAJOR,REQUIRED_BASEEXT_MINOR,REQUIRED_BASEEXT_PATCH);
-const std::string DebugExtension::NAME("jb2debug");
+const String DebugExtension::NAME("jb2debug");
 
 extern "C" {
     Extension *create(LOCATION, Compiler *compiler) {
@@ -39,7 +39,7 @@ extern "C" {
     }
 }
 
-DebugExtension::DebugExtension(LOCATION, Compiler *compiler, bool extended, std::string extensionName)
+DebugExtension::DebugExtension(LOCATION, Compiler *compiler, bool extended, String extensionName)
     : Extension(compiler, (extended ? extensionName : NAME)) {
 
     _base = compiler->loadExtension<Base::BaseExtension>(PASSLOC, &requiredBaseVersion);
@@ -58,7 +58,7 @@ DebugExtension::createDebugger(LOCATION, Debugger *caller) {
 
 #ifdef TRACE_DEBUGTHUNK
     std::cout.setf(std::ios_base::skipws);
-    OMR::JitBuilder::TextWriter printer(thunk, std::cout, std::string("    "));
+    OMR::JitBuilder::TextWriter printer(thunk, std::cout, String("    "));
     thunk->setLogger(&printer);
     thunk->config()
                    //->setTraceBuildIL()

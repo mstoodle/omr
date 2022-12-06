@@ -28,6 +28,7 @@
 #include "IDs.hpp"
 #include "Type.hpp" // for TypeKind
 #include "typedefs.hpp"
+#include "util/String.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -51,18 +52,18 @@ class Extension {
 
 public:
     virtual const SemanticVersion * semver() const { return &version; }
-    static const std::string NAME;
+    static const String NAME;
 
     Extension(LOCATION, Compiler *compiler);
 
     Compiler *compiler() const { return _compiler; }
-    std::string name() const { return _name; }
+    String name() const { return _name; }
 
-    const std::string actionName(ActionID a) const;
+    const String actionName(ActionID a) const;
 
 protected:
     ExtensionID _id;
-    std::string _name;
+    String _name;
     Compiler *_compiler;
     CreateLocation _createLoc;
     std::vector<const Type *> _types;
@@ -84,17 +85,17 @@ public:
     // Core pseudo operations
     //
 
-    Builder *BoundBuilder(LOCATION, Builder *parent, Operation *parentOp, std::string name="");
-    Builder *OrphanBuilder(LOCATION, Builder *parent, Context *context=NULL, std::string name="");
-    Location * SourceLocation(LOCATION, Builder *b, std::string func);
-    Location * SourceLocation(LOCATION, Builder *b, std::string func, std::string lineNumber);
-    Location * SourceLocation(LOCATION, Builder *b, std::string func, std::string lineNumber, int32_t bcIndex);
+    Builder *BoundBuilder(LOCATION, Builder *parent, Operation *parentOp, String name="");
+    Builder *OrphanBuilder(LOCATION, Builder *parent, Context *context=NULL, String name="");
+    Location * SourceLocation(LOCATION, Builder *b, String func);
+    Location * SourceLocation(LOCATION, Builder *b, String func, String lineNumber);
+    Location * SourceLocation(LOCATION, Builder *b, String func, String lineNumber, int32_t bcIndex);
 
 protected:
-    Extension(LOCATION, Compiler *compiler, std::string name);
+    Extension(LOCATION, Compiler *compiler, String name);
 
-    ActionID registerAction(std::string name);
-    CompilerReturnCode registerReturnCode(std::string name);
+    ActionID registerAction(String name);
+    CompilerReturnCode registerReturnCode(String name);
     PassID addPass(Pass *pass); 
 
     Value *createValue(const Builder *parent, const Type *type);
@@ -102,8 +103,8 @@ protected:
 
     virtual uint64_t numTypes() const { return static_cast<uint64_t>(_types.size()); }
 
-    Builder *EntryBuilder(LOCATION, Compilation *comp, Context *context, std::string name="");
-    Builder *ExitBuilder(LOCATION, Compilation *comp, Context *context, std::string name="");
+    Builder *EntryBuilder(LOCATION, Compilation *comp, Context *context, String name="");
+    Builder *ExitBuilder(LOCATION, Compilation *comp, Context *context, String name="");
 
     static const SemanticVersion version;
     

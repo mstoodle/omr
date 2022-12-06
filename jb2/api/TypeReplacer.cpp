@@ -107,7 +107,7 @@ using namespace OMR::JitBuilder;
 
 
 TypeReplacer::TypeReplacer(Compiler * compiler)
-    : Transformer(compiler, std::string("TypeReplacer"))
+    : Transformer(compiler, String("TypeReplacer"))
     , _typesTransformed(false) {
 
 }
@@ -257,7 +257,7 @@ TypeReplacer::explodeLayoutTypes(TypeDictionary *dict, const StructType *layout,
         else {
             const Type *mappedType = singleMappedType(t);
             Literal *name = fType->fieldName();
-            std::string fieldName = name->getString();
+            String fieldName = name->getString();
             if (name->kind() == T_typename)
                 fieldName = mappedType->name();
             m->add(mappedType, fieldName, fieldOffset);

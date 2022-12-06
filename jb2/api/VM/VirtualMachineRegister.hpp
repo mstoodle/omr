@@ -75,7 +75,7 @@ public:
     * @param addressOfRegister is the address of the actual register
     * @param doReload whether local register should be Reloaded (default true, MakeCopy will pass false)
     */
-    VirtualMachineRegister(LOCATION, VMExtension *vme, std::string name, Base::BaseCompilation *comp, Value * addressOfRegister, bool doReload=true);
+    VirtualMachineRegister(LOCATION, VMExtension *vme, String name, Base::BaseCompilation *comp, Value * addressOfRegister, bool doReload=true);
 
     // virtualmachinestate api
 
@@ -114,9 +114,9 @@ protected:
      * @param vme the VM extension to use
      * @param func the function being compiled
      */
-    VirtualMachineRegister(LOCATION, VMExtension *vme, std::string name, Base::BaseCompilation * comp, StateKind kind);
+    VirtualMachineRegister(LOCATION, VMExtension *vme, String name, Base::BaseCompilation * comp, StateKind kind);
 
-    std::string _name;
+    String _name;
     Base::BaseCompilation *_comp;
     Func::LocalSymbol * _local;
     uint32_t _adjustByStep;

@@ -40,7 +40,7 @@ VirtualMachineRegister::getStateClassKind() {
 
 VirtualMachineRegister::VirtualMachineRegister(LOCATION,
                                                VMExtension *vme,
-                                               std::string name,
+                                               String name,
                                                Base::BaseCompilation *comp,
                                                Value * addressOfRegister,
                                                bool doReload)
@@ -72,7 +72,7 @@ VirtualMachineRegister::VirtualMachineRegister(LOCATION,
 
 VirtualMachineRegister::VirtualMachineRegister(LOCATION,
                                                VMExtension *vme,
-                                               std::string name,
+                                               String name,
                                                Base::BaseCompilation * comp,
                                                StateKind kind)
         : VirtualMachineState(PASSLOC, vme, kind)

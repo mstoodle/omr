@@ -25,7 +25,6 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <set>
-#include <string>
 #include "Mapper.hpp"
 #include "OperationCloner.hpp"
 

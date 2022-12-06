@@ -75,6 +75,7 @@ add_library(jb2core SHARED
 	TypeReplacer.cpp
 	Value.cpp
 	Visitor.cpp
+	util/String.cpp
 )
 target_link_libraries(jb2core jb2)
 add_subdirectory(test)

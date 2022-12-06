@@ -20,12 +20,13 @@
  *******************************************************************************/
 
 #include <cassert>
+#include <string.h>
 #include "SemanticVersion.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 
-const std::string SemanticVersion::invalidString("INVALID");
+const String SemanticVersion::invalidString("INVALID");
 
 void
 SemanticVersion::validate() {
@@ -43,13 +44,15 @@ SemanticVersion::BuildIdentifier::compare(const SemanticVersion::BuildIdentifier
         return 0;
     }
 
-    if (this->_kind == isNonNumeric && other._kind == isNonNumeric)
-        return this->_identifier.compare(other._identifier);
+    if (this->_kind == isNonNumeric && other._kind == isNonNumeric) {
+        const char *thisStr = this->_identifier.c_str();
+        return strncmp(thisStr, other._identifier.c_str(), strlen(thisStr));
+    }
 
     // below here, the types are mismatched
     if (this->_kind == isNumeric) {
         assert(other._kind == isNonNumeric);
-        return -1; // numberic (this) is lower precendence
+        return -1; // numeric (this) is lower precendence
     }
 
     assert(this->_kind == isNonNumeric);
@@ -124,18 +127,18 @@ SemanticVersion::compare(const SemanticVersion & other) const {
     return 0;
 }
 
-std::string
+String
 SemanticVersion::coreVersion() const {
     if (!_valid)
         return invalidString;
-    return std::to_string(this->_major) + "." + std::to_string(this->_minor) + "." + std::to_string(this->_patch);
+    return String::to_string(this->_major) + "." + String::to_string(this->_minor) + "." + String::to_string(this->_patch);
 }
 
-std::string
+String
 SemanticVersion::semver() const {
     if (!this->_valid)
         return invalidString;
-    std::string sv = this->coreVersion();
+    String sv = this->coreVersion();
     if (this->_preRelease.length() > 0)
         sv = sv + "-" + this->_preRelease;
     if (this->_buildMetadata.length() > 0)

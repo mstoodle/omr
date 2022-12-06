@@ -38,7 +38,7 @@ public:
 
 protected:
     bool traceEnabled() { return _traceEnabled; }
-    TextWriter & trace(Compilation *comp, std::string msg="");
+    TextWriter & trace(Compilation *comp, String msg="");
 
     bool _traceEnabled;
 };

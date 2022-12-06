@@ -28,7 +28,7 @@
 namespace OMR {
 namespace JitBuilder {
 
-Pass::Pass(Compiler *compiler, std::string name)
+Pass::Pass(Compiler *compiler, String name)
     : _id(0)
     , _name(name)
     , _compiler(compiler) {

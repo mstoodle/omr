@@ -40,7 +40,7 @@ VirtualMachineRegisterInStruct::getStateClassKind() {
 
 VirtualMachineRegisterInStruct::VirtualMachineRegisterInStruct(LOCATION,
                                                                VMExtension *vme,
-                                                               std::string name,
+                                                               String name,
                                                                Base::BaseCompilation *comp,
                                                                const Base::FieldType * fieldType,
                                                                Func::LocalSymbol * localHoldingStructAddress,

@@ -26,6 +26,7 @@
 #include "IDs.hpp"
 #include "Loggable.hpp"
 #include "typedefs.hpp"
+#include "util/String.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -39,9 +40,9 @@ class Pass : public Loggable {
     friend class Strategy;
 
 public:
-    Pass(Compiler *compiler, std::string name);
+    Pass(Compiler *compiler, String name);
 
-    std::string name() const { return _name; }
+    String name() const { return _name; }
     PassID id() const { return _id; }
     PassChain *chain() const { return _chain; }
 
@@ -50,7 +51,7 @@ public:
 protected:
     Compiler *_compiler;
     PassID _id;
-    std::string _name;
+    String _name;
     PassChain *_chain;
     bool _traceEnabled;
 };
@@ -59,4 +60,3 @@ protected:
 } // namespace OMR
 
 #endif // !defined(PASS_INCL)
-

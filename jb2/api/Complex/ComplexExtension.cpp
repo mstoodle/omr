@@ -38,7 +38,7 @@ namespace Complex {
 
 const SemanticVersion ComplexExtension::version(COMPLEXEXT_MAJOR,COMPLEXEXT_MINOR,COMPLEXEXT_PATCH);
 const SemanticVersion ComplexExtension::requiredBaseVersion(REQUIRED_BASEEXT_MAJOR,REQUIRED_BASEEXT_MINOR,REQUIRED_BASEEXT_PATCH);
-const std::string ComplexExtension::NAME("complex");
+const String ComplexExtension::NAME("complex");
 
 extern "C" {
     Extension *create(LOCATION, Compiler *comp) {
@@ -46,15 +46,15 @@ extern "C" {
     }
 }
 
-ComplexExtension::ComplexExtension(LOCATION, Compiler *compiler, bool extended, std::string extensionName)
+ComplexExtension::ComplexExtension(LOCATION, Compiler *compiler, bool extended, String extensionName)
     : Extension(compiler, (extended ? extensionName : NAME))
     , _base(compiler->loadExtension<Base::BaseExtension>(PASSLOC, &requiredBaseVersion))
     , ComplexFloat32(new ComplexFloat32Type(PASSLOC, this, _base->Float32))
     , ComplexFloat64(new ComplexFloat64Type(PASSLOC, this, _base->Float64))
-    , aReal(registerAction(std::string("Real")))
-    , aImag(registerAction(std::string("Imag")))
-    , aConjugate(registerAction(std::string("Conjugate")))
-    , aMagnitude(registerAction(std::string("Magnitude")))
+    , aReal(registerAction(String("Real")))
+    , aImag(registerAction(String("Imag")))
+    , aConjugate(registerAction(String("Conjugate")))
+    , aMagnitude(registerAction(String("Magnitude")))
     , CompileFail_BadInputTypes_Real(registerReturnCode("CompileFail_BadInputTypes_Real"))
     , CompileFail_BadInputTypes_Imag(registerReturnCode("CompileFail_BadInputTypes_Imag"))
     , CompileFail_BadInputTypes_Conjugate(registerReturnCode("CompileFail_BadInputTypes_Conjugate"))
@@ -94,9 +94,9 @@ ComplexExtensionChecker::validateReal(LOCATION, Builder *b, Value *value) {
 void
 ComplexExtensionChecker::failValidateReal(LOCATION, Builder *b, Value *value) {
     CompilationException e(PASSLOC, _xc->compiler(), _xc->CompileFail_BadInputTypes_Real);
-    e.setMessageLine(std::string("Real: invalid input type"))
-     .appendMessageLine(std::string("   value ").append(value->type()->to_string()))
-     .appendMessageLine(std::string("value must be one of ComplexFloat32, ComplexFloat64)"));
+    e.setMessageLine(String("Real: invalid input type"))
+     .appendMessageLine(String("   value ").append(value->type()->to_string()))
+     .appendMessageLine(String("value must be one of ComplexFloat32, ComplexFloat64)"));
     throw e;
 }
 
@@ -126,9 +126,9 @@ ComplexExtensionChecker::validateImag(LOCATION, Builder *b, Value *value) {
 void
 ComplexExtensionChecker::failValidateImag(LOCATION, Builder *b, Value *value) {
     CompilationException e(PASSLOC, _xc->compiler(), _xc->CompileFail_BadInputTypes_Imag);
-    e.setMessageLine(std::string("Imag: invalid input type"))
-     .appendMessageLine(std::string("   value ").append(value->type()->to_string()))
-     .appendMessageLine(std::string("value must be one of ComplexFloat32, ComplexFloat64)"));
+    e.setMessageLine(String("Imag: invalid input type"))
+     .appendMessageLine(String("   value ").append(value->type()->to_string()))
+     .appendMessageLine(String("value must be one of ComplexFloat32, ComplexFloat64)"));
     throw e;
 }
 
@@ -158,9 +158,9 @@ ComplexExtensionChecker::validateConjugate(LOCATION, Builder *b, Value *value) {
 void
 ComplexExtensionChecker::failValidateConjugate(LOCATION, Builder *b, Value *value) {
     CompilationException e(PASSLOC, _xc->compiler(), _xc->CompileFail_BadInputTypes_Conjugate);
-    e.setMessageLine(std::string("Conjugate: invalid input type"))
-     .appendMessageLine(std::string("   value ").append(value->type()->to_string()))
-     .appendMessageLine(std::string("value must be one of ComplexFloat32, ComplexFloat64)"));
+    e.setMessageLine(String("Conjugate: invalid input type"))
+     .appendMessageLine(String("   value ").append(value->type()->to_string()))
+     .appendMessageLine(String("value must be one of ComplexFloat32, ComplexFloat64)"));
     throw e;
 }
 
@@ -190,9 +190,9 @@ ComplexExtensionChecker::validateMagnitude(LOCATION, Builder *b, Value *value) {
 void
 ComplexExtensionChecker::failValidateMagnitude(LOCATION, Builder *b, Value *value) {
     CompilationException e(PASSLOC, _xc->compiler(), _xc->CompileFail_BadInputTypes_Magnitude);
-    e.setMessageLine(std::string("Magnitude: invalid input type"))
-     .appendMessageLine(std::string("   value ").append(value->type()->to_string()))
-     .appendMessageLine(std::string("value must be one of ComplexFloat32, ComplexFloat64)"));
+    e.setMessageLine(String("Magnitude: invalid input type"))
+     .appendMessageLine(String("   value ").append(value->type()->to_string()))
+     .appendMessageLine(String("value must be one of ComplexFloat32, ComplexFloat64)"));
     throw e;
 }
 

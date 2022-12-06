@@ -26,6 +26,7 @@
 #include "IDs.hpp"
 #include "typedefs.hpp"
 #include "Type.hpp"
+#include "util/String.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -50,10 +51,10 @@ public:
     // TODO: Move to separate class
     class TypeBuilder {
         struct FieldInfo {
-            std::string _name;
+            String _name;
             const Type * _type;
             size_t _offset;
-            FieldInfo(std::string name, const Type *type, size_t offset)
+            FieldInfo(String name, const Type *type, size_t offset)
                 : _name(name, _type(type), _offset(offset) {
             }
         };
@@ -65,16 +66,16 @@ public:
             , _helper(NULL) {
         }
         TypeBuilder *setExtension(Extension *ext) { _ext = ext; }
-        TypeBuilder *setName(std::string n) { _name = n; }
+        TypeBuilder *setName(String n) { _name = n; }
         TypeBuilder *setSize(size_t size) { _size = size; }
-        TypeBuilder *addField(std::string name, const Type *fieldType, size_t offset) {
+        TypeBuilder *addField(String name, const Type *fieldType, size_t offset) {
             FieldInfo info(name, fieldType, offset);
             _fields.push_back(info);
         }
         TypeBuilder *setHelper(StructHelperFuntion *helper) { _helper = helper; }
 
         Extention *extension() const { return _extension; }
-        std::string name() const { return _name; }
+        String name() const { return _name; }
         size_t size() const { return _size; }
         StructHelperFunction *helper() const { return _helper; }
 
@@ -91,7 +92,7 @@ public:
 
     protected:
         Extension * _ext;
-        std::string _name;
+        String _name;
         size_t _size;
         std::list<FieldInfo> _fields;
         StructHelperFunction _helper;
@@ -101,7 +102,7 @@ public:
     ~FunctionType() { delete[] _parmTypes; }
 
     Literal *literal(LOCATION, Compilation *comp, void * functionValue);
-    virtual std::string to_string(bool useHeader=false) const;
+    virtual String to_string(bool useHeader=false) const;
 
     const Type *returnType() const { return _returnType; }
     int32_t numParms() const { return _numParms; }
@@ -112,7 +113,7 @@ public:
 
     virtual const Type * replace(TypeReplacer *repl);
 
-    static std::string typeName(const Type *returnType, int32_t numParms, const Type **parmTypes);
+    static String typeName(const Type *returnType, int32_t numParms, const Type **parmTypes);
 
     static const TypeKind getTypeClassKind();
 

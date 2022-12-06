@@ -49,8 +49,8 @@ class LiteralDictionary {
 
 public:
     LiteralDictionary(Compilation *comp);
-    LiteralDictionary(Compilation *comp, std::string name);
-    LiteralDictionary(Compilation *comp, std::string name, LiteralDictionary *linkedTypes);
+    LiteralDictionary(Compilation *comp, String name);
+    LiteralDictionary(Compilation *comp, String name, LiteralDictionary *linkedTypes);
     virtual ~LiteralDictionary();
 
     LiteralIterator LiteralsBegin() const { return LiteralIterator(_literals); }
@@ -60,7 +60,7 @@ public:
     void RemoveLiteral(Literal *literal);
 
     LiteralDictionaryID id() const { return _id; }
-    std::string name() const { return _name; }
+    String name() const { return _name; }
     bool hasLinkedDictionary() const { return _linkedDictionary != NULL; }
     LiteralDictionary *linkedDictionary() { return _linkedDictionary; }
 
@@ -73,7 +73,7 @@ protected:
 
     LiteralDictionaryID _id;
     Compilation * _comp;
-    std::string _name;
+    String _name;
     LiteralVector _literals;
     LiteralVector _ownedLiterals;
     std::map<const Type *,LiteralVector *> _literalsByType;

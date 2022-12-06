@@ -102,7 +102,7 @@ TEST(BaseExtension, checkVersionFail) {
     Func::FunctionExtension *fx = c.loadExtension<Func::FunctionExtension>(LOC, NULL, "jb2func"); \
     Base::BaseExtension *bx = c.loadExtension<Base::BaseExtension>(LOC, NULL, "jb2base"); \
     FuncClass func(LOC, &c); \
-    TextWriter logger(&c, std::cout, std::string("    ")); \
+    TextWriter logger(&c, std::cout, String("    ")); \
     TextWriter *log = (DO_LOGGING) ? &logger : NULL; \
     StrategyID sID = c.jb1cgStrategyID; \
     CompilerReturnCode result = bx->compile(LOC, &func, sID, log); \
@@ -117,7 +117,7 @@ TEST(BaseExtension, checkVersionFail) {
     Func::FunctionExtension *fx = c.loadExtension<Func::FunctionExtension>(LOC, NULL, "jb2func"); \
     Base::BaseExtension *bx = c.loadExtension<Base::BaseExtension>(LOC, NULL, "jb2base"); \
     FuncClass func(LOC, &c); \
-    TextWriter logger(&c, std::cout, std::string("    ")); \
+    TextWriter logger(&c, std::cout, String("    ")); \
     TextWriter *log = (DO_LOGGING) ? &logger : NULL; \
     StrategyID sID = c.jb1cgStrategyID; \
     CompilerReturnCode result = bx->compile(LOC, &func, sID, log); \
