@@ -22,16 +22,16 @@
 #ifndef TYPEDEFS_INCL
 #define TYPEDEFS_INCL
 
-#include <deque>
 #include <vector>
 #include "IDs.hpp"
+#include "util/List.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 
 class Builder;
 typedef std::vector<Builder *> BuilderVector;
-typedef std::deque<Builder *> BuilderWorklist;
+typedef List<Builder *> BuilderWorklist;
 
 typedef uint64_t EyeCatcher;
 

@@ -22,7 +22,7 @@
 #ifndef PASSCHAIN_INCL
 #define PASSCHAIN_INCL
 
-#include <deque>
+#include "util/List.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -36,7 +36,7 @@ class Symbol;
 class Type;
 class Value;
 
-class PassChain
+class PassChain {
     enum ChainPolicy {
 	SameOrder=0;
         ReverseOrder=1;
@@ -59,7 +59,7 @@ public:
 
 protected:
     Pass *_pass;
-    std::deque<PassExtension *> _chain;
+    List<PassExtension *> _chain;
 };
 
 } // namespace JitBuilder
