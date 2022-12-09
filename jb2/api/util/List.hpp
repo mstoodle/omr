@@ -22,6 +22,8 @@
 #ifndef LIST_INCL
 #define LIST_INCL
 
+#include <assert.h>
+
 namespace OMR {
 namespace JitBuilder {
 
@@ -122,7 +124,7 @@ public:
     }
 
     uint32_t length() const { return _length; }
-    bool hasItems() const { return _length > 0; }
+    bool empty() const { return _length == 0; }
 
     T back() const {
         assert(_tail != NULL);
