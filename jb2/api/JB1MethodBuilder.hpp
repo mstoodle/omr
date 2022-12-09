@@ -23,7 +23,6 @@
 #define JB1METHODBUILDER_INCL
 
 #include <map>
-#include <string>
 #include "Transformer.hpp"
 
 namespace TR { class BytecodeBuilder; }

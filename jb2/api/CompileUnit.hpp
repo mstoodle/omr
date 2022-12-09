@@ -23,7 +23,6 @@
 #define COMPILEUNIT_INCL
 
 #include <exception>
-#include <string>
 #include <map>
 
 #include "CreateLoc.hpp"

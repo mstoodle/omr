@@ -22,7 +22,6 @@
 #ifndef VISITOR_INCL
 #define VISITOR_INCL
 
-#include <string>
 #include "Pass.hpp"
 #include "typedefs.hpp"
 

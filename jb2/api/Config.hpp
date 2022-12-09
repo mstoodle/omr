@@ -22,8 +22,6 @@
 #ifndef CONFIG_INCL
 #define CONFIG_INCL
 
-#include <string>
-
 namespace OMR {
 namespace JitBuilder {
 

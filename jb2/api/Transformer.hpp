@@ -22,7 +22,6 @@
 #ifndef TRANSFORMER_INCL
 #define TRANSFORMER_INCL
 
-#include <string>
 #include "Visitor.hpp"
 
 namespace OMR {

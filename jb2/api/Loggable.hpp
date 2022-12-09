@@ -22,8 +22,6 @@
 #ifndef LOGGABLE_INCL
 #define LOGGABLE_INCL
 
-#include <string>
-
 namespace OMR {
 namespace JitBuilder {
 

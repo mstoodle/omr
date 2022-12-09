@@ -27,7 +27,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <errno.h>
-#include <string>
 
 #define DO_LOGGING 1
 // #define DO_LOGGING 0

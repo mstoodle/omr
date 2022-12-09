@@ -27,7 +27,6 @@
 #include <iostream>
 #include <map>
 #include <vector>
-#include <string>
 #include <cassert>
 
 #include "typedefs.hpp"
