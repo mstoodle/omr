@@ -22,7 +22,6 @@
 #ifndef BASESYMBOLS_INCL
 #define BASESYMBOLS_INCL
 
-#include <string>
 #include "JBCore.hpp"
 #include "Func/Func.hpp"
 

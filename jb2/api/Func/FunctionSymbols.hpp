@@ -22,7 +22,6 @@
 #ifndef FUNCTIONSYMBOLS_INCL
 #define FUNCTIONSYMBOLS_INCL
 
-#include <string>
 #include "Func/FunctionSymbols.hpp"
 
 namespace OMR {

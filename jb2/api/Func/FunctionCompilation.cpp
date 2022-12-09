@@ -21,7 +21,6 @@
 
 #include <assert.h>
 #include <stdint.h>
-#include <string>
 #include "JBCore.hpp"
 #include "Func/Function.hpp"
 #include "Func/FunctionCompilation.hpp"

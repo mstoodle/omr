@@ -22,7 +22,6 @@
 #ifndef EXTENSION_INCL
 #define EXTENSION_INCL
 
-#include <string>
 #include <vector>
 #include "CreateLoc.hpp"
 #include "IDs.hpp"

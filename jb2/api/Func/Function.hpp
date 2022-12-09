@@ -23,7 +23,6 @@
 #define FUNCTION_INCL
 
 #include <exception>
-#include <string>
 #include <vector>
 #include "JBCore.hpp"
 

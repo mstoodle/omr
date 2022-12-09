@@ -24,7 +24,6 @@
 
 #include <cassert>
 #include <stdint.h>
-#include <string>
 #include <vector>
 #include "IDs.hpp"
 #include "Iterator.hpp"
