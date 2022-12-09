@@ -23,7 +23,6 @@
 #define DEBUGGERFRAME_INCL
 
 #include <stdint.h>
-#include <list>
 #include <map>
 #include "JBCore.hpp"
 
@@ -52,7 +51,7 @@ struct DebuggerFrame {
     Builder * _builderToDebug;
 
     std::map<uint64_t, Operation *> _reentryPoints;
-    std::list<struct Breakpoint *> _breakpoints;
+    List<Breakpoint *> _breakpoints;
 
     DebugValue *getValueInArray(uint8_t *p, uint64_t idx);
     DebugValue *getValue(uint64_t idx);

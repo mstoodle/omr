@@ -24,7 +24,6 @@
 
 #include <cassert>
 #include <exception>
-#include <list>
 #include <map>
 #include <stdint.h>
 #include <vector>

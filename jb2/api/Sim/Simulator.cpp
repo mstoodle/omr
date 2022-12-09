@@ -348,8 +348,8 @@ Debugger::acceptCommands(Operation *op, Operation *nextOp) {
                     *_writer << "Breakpoint " << brkpt->_id << " will stop after operation o" << id << _writer->endl();
                 }
             } else if (strcmp(command, "bl") == 0 || strcmp(command, "breaklist") == 0) {
-                for (auto it=_frame->_breakpoints.begin(); it != _frame->_breakpoints.end(); it++) {
-                    Breakpoint *bp = *it;
+                for (auto it=_frame->_breakpoints.iterator(); it.keepGoing(); it++) {
+                    Breakpoint *bp = it.current();
                     bp->print(_writer);
                 }
             } else if (strcmp(command, "b") == 0) {
@@ -381,8 +381,8 @@ Debugger::showOp(Operation *op, String msg) {
 
 bool
 Debugger::breakBefore(Operation *op) {
-    for (auto it=_frame->_breakpoints.begin(); it != _frame->_breakpoints.end(); it++) {
-        Breakpoint *bp=*it;
+    for (auto it=_frame->_breakpoints.iterator(); it.keepGoing(); it++) {
+        Breakpoint *bp=it.current();
         if (bp->breakBefore(op) || bp->breakAt(_time)) {
             bp->print(_writer);
             if (bp->removeAfterFiring())
@@ -395,12 +395,12 @@ Debugger::breakBefore(Operation *op) {
 
 bool
 Debugger::breakAfter(Operation *op) {
-    for (auto it=_frame->_breakpoints.begin(); it != _frame->_breakpoints.end(); it++) {
-        Breakpoint *bp=*it;
+    for (auto it=_frame->_breakpoints.iterator(); it.keepGoing(); it++) {
+        Breakpoint *bp=it.current();
         if (bp->breakAfter(op)) {
             bp->print(_writer);
             if (bp->removeAfterFiring())
-                _frame->_breakpoints.erase(it);
+                _frame->_breakpoints.remove(it);
             return true;
         }
     }
@@ -409,11 +409,11 @@ Debugger::breakAfter(Operation *op) {
 
 bool
 Debugger::breakBefore(Builder *b) {
-    for (auto it=_frame->_breakpoints.begin(); it != _frame->_breakpoints.end(); it++) {
-        Breakpoint *bp=*it;
+    for (auto it=_frame->_breakpoints.iterator(); it.keepGoing(); it++) {
+        Breakpoint *bp=it.current();
         if (bp->breakBefore(b)) {
             if (bp->removeAfterFiring())
-                _frame->_breakpoints.erase(it);
+                _frame->_breakpoints.remove(it);
 
             if (bp->silent()) {
                 Operation * op = b->firstOperation();

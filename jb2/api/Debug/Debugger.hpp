@@ -22,7 +22,6 @@
 #ifndef DEBUGGER_INCL
 #define DEBUGGER_INCL
 
-#include <list>
 #include <map>
 #include "JBCore.hpp"
 
@@ -103,7 +102,7 @@ protected:
     Debugger *_parent;
     TextWriter *_writer;
     InputReader *_reader;
-    std::list<String> _commandHistory;
+    List<String> _commandHistory;
     uint64_t _time;
     DebuggerFrame *_frame;
     std::map<CompileUnitID, FunctionDebugInfo *> _functionDebugInfos;

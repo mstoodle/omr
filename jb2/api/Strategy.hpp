@@ -22,9 +22,8 @@
 #ifndef STRATEGY_INCL
 #define STRATEGY_INCL
 
-#include <list>
-#include <string>
 #include "typedefs.hpp"
+#include "util/List.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -60,7 +59,7 @@ class Strategy {
     StrategyID _id;
     Compiler *_compiler;
     String _name;
-    std::list<Pass *> _passes;
+    List<Pass *> _passes;
     StrategyData *_data;
 };
 

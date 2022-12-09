@@ -41,4 +41,3 @@ Value::Value(const Builder * parent, const Type * type)
 
 } // namespace JitBuilder
 } // namespace OMR
-

@@ -31,6 +31,7 @@
 #include "IDs.hpp"
 #include "SemanticVersion.hpp"
 #include "typedefs.hpp"
+#include "util/List.hpp"
 
 
 namespace OMR {
@@ -117,7 +118,7 @@ public:
 
 protected:
 
-    std::list<FunctionExtensionChecker *> _checkers;
+    List<FunctionExtensionChecker *> _checkers;
 
     static const MajorID FUNCTIONEXT_MAJOR=0;
     static const MinorID FUNCTIONEXT_MINOR=1;

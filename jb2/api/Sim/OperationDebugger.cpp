@@ -39,7 +39,7 @@ OperationDebugger::OperationDebugger(LOCATION, Debugger *dbgr, Base::FunctionCom
     , _op(op) {
 
     Base::Function *func = comp->func();
-    DefineName(func->name() + String(".op") + std::to_string(op->id()));
+    DefineName(func->name() + String(".op") + String::to_string(op->id()));
     DefineFile("OpDbgr");
     DefineLine(op->name());
 }
