@@ -55,7 +55,7 @@ Op_Call::write(TextWriter & w) const {
     if (_result)
         w << this->_result << " = ";
     w << name() << " " << this->_symbol;
-    for (auto a=0;a < _values.size(); a++) {
+    for (auto a=0;a < this->_numValues; a++) {
         w << " " << this->_values[a];
     }
     w << w.endl();
@@ -66,7 +66,7 @@ Op_Call::jbgen(JB1MethodBuilder *j1mb) const {
     Func::FunctionSymbol *funcSym = symbol()->refine<Func::FunctionSymbol>();
     const Func::FunctionType *funcType = funcSym->functionType();
     //j1mb->DefineFunction(funcSym->name(), funcSym->fileName(), funcSym->lineNumber(), funcSym->entryPoint(), funcType->returnType(), funcType->numParms(), funcType->parmTypes());
-    j1mb->Call(location(), parent(), result(), funcSym->name(), _values);
+    j1mb->Call(location(), parent(), result(), funcSym->name(), _numValues, _values);
 }
 
 
@@ -87,7 +87,7 @@ Op_CallVoid::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
 void
 Op_CallVoid::write(TextWriter & w) const {
     w << name() << " " << this->_symbol;
-    for (auto a=0;a < _values.size(); a++) {
+    for (auto a=0;a < this->_numValues; a++) {
         w << " " << this->_values[a];
     }
     w << w.endl();
@@ -98,7 +98,7 @@ Op_CallVoid::jbgen(JB1MethodBuilder *j1mb) const {
     Func::FunctionSymbol *funcSym = symbol()->refine<Func::FunctionSymbol>();
     const Func::FunctionType *funcType = funcSym->functionType();
     //j1mb->DefineFunction(funcSym->name(), funcSym->fileName(), funcSym->lineNumber(), funcSym->entryPoint(), funcType->returnType(), funcType->numParms(), funcType->parmTypes());
-    j1mb->Call(location(), parent(), funcSym->name(), _values);
+    j1mb->Call(location(), parent(), funcSym->name(), _numValues, _values);
 }
 
 

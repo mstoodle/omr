@@ -146,7 +146,8 @@ main(int argc, char *argv[]) {
     CompilerReturnCode result = bx->compile(LOC, &pointerFunction, compiler.jb1cgStrategyID, log);
     
     if (result != compiler.CompileSuccessful) {
-        cout << "Compile failed: " << result << "\n";
+        cout << "Compile failed: " << compiler.returnCodeName(result).c_str() << "\n";
+        cout << compiler.errorCondition()->message().c_str();
         exit(-1);
     }
 
@@ -165,7 +166,8 @@ main(int argc, char *argv[]) {
     if (verbose) cout << "Step 8: compile function\n";
     result = bx->compile(LOC, &threadFunction, compiler.jb1cgStrategyID, log2);
     if (result != compiler.CompileSuccessful) {
-        cout << "Compile failed: " << result << "\n";
+        cout << "Compile failed: " << compiler.returnCodeName(result).c_str() << "\n";
+        cout << compiler.errorCondition()->message().c_str();
         exit(-1);
     }
 
