@@ -313,13 +313,13 @@ class OperationR0S1VN : public OperationR0S1 {
 public:
     virtual size_t size() const { return sizeof(OperationR0S1VN); }
 
-    virtual int32_t numOperands() const { return _values.size(); }
+    virtual int32_t numOperands() const { return _numValues; }
     virtual Value * operand(int i=0) const {
-        if (i < _values.size()) return _values[i];
+        if (i < _numValues) return _values[i];
         return NULL;
     }
 
-    virtual ValueIterator OperandsBegin() { return ValueIterator(_values); }
+    virtual ValueIterator OperandsBegin() { return ValueIterator(_numValues, _values); }
 
     virtual void write(TextWriter & w) const;
 
@@ -327,14 +327,17 @@ protected:
     OperationR0S1VN(LOCATION, ActionID a, Extension *ext, Builder * parent, Symbol *symbol, int32_t numArgs, std::va_list & args)
         : OperationR0S1(PASSLOC, a, ext, parent, symbol) {
 
+        _numValues = numArgs;
+        _values = new Value *[numArgs];
         for (auto a=0;a < numArgs;a++) {
-            _values.push_back(va_arg(args, Value *));
+            _values[a] = (va_arg(args, Value *));
         }
     }
 
     OperationR0S1VN(LOCATION, ActionID a, Extension *ext, Builder * parent, OperationCloner * cloner);
 
-    std::vector<Value *> _values;
+    size_t _numValues;
+    Value ** _values;
 };
 
 class OperationR1 : public Operation {
@@ -542,13 +545,13 @@ class OperationR1S1VN : public OperationR1S1 {
 public:
     virtual size_t size() const { return sizeof(OperationR1S1VN); }
 
-    virtual int32_t numOperands() const { return _values.size(); }
+    virtual int32_t numOperands() const { return _numValues; }
     virtual Value * operand(int i=0) const {
-        if (i < _values.size()) return _values[i];
+        if (i < _numValues) return _values[i];
         return NULL;
     }
 
-    virtual ValueIterator OperandsBegin() { return ValueIterator(_values); }
+    virtual ValueIterator OperandsBegin() { return ValueIterator(_numValues, _values); }
 
     virtual void write(TextWriter & w) const;
 
@@ -556,14 +559,17 @@ protected:
     OperationR1S1VN(LOCATION, ActionID a, Extension *ext, Builder * parent, Value *result, Symbol *symbol, int32_t numArgs, std::va_list & args)
         : OperationR1S1(PASSLOC, a, ext, parent, result, symbol) {
 
+        _numValues = numArgs;
+        _values = new Value *[numArgs];
         for (auto a=0;a < numArgs;a++) {
-            _values.push_back(va_arg(args, Value *));
+            _values[a] = (va_arg(args, Value *));
         }
     }
 
     OperationR1S1VN(LOCATION, ActionID a, Extension *ext, Builder * parent, OperationCloner * cloner);
 
-    std::vector<Value *> _values;
+    size_t _numValues;
+    Value **_values;
 };
 
 class OperationB1 : public Operation

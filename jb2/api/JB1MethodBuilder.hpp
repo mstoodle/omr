@@ -110,8 +110,8 @@ public:
     void Mul(Location *loc, Builder *b, Value *result, Value *left, Value *right);
     void Sub(Location *loc, Builder *b, Value *result, Value *left, Value *right);
 
-    void Call(Location *loc, Builder *b, Value *result, String targetName, std::vector<Value *> arguments);
-    void Call(Location *loc, Builder *b, String targetName, std::vector<Value *> arguments);
+    void Call(Location *loc, Builder *b, Value *result, String targetName, size_t numArgs, Value **arguments);
+    void Call(Location *loc, Builder *b, String targetName, size_t numArgs, Value **arguments);
     void EntryPoint(Builder *entryBuilder);
     void ForLoopUp(Location *loc, Builder *b, Symbol *loopVariable, Value *initial, Value *final, Value *bump, Builder *loopBody, Builder *loopBreak, Builder *loopContinue);
     void Goto(Location *loc, Builder *b, Builder *target);

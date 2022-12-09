@@ -169,8 +169,10 @@ OperationR0T1V2::write(TextWriter & w) const {
 OperationR0S1VN::OperationR0S1VN(LOCATION, ActionID a, Extension *ext, Builder * parent, OperationCloner * cloner)
     : OperationR0S1(PASSLOC, a, ext, parent, cloner->symbol()) {
 
+    _numValues = cloner->numOperands();
+    _values = new Value *[_numValues];
     for (auto a=0;a < cloner->numOperands(); a++)
-        _values.push_back(cloner->operand(a));
+        _values[a] = (cloner->operand(a));
     }
 
 void
@@ -232,8 +234,10 @@ OperationR1V2T1::write(TextWriter & w) const {
 OperationR1S1VN::OperationR1S1VN(LOCATION, ActionID a, Extension *ext, Builder * parent, OperationCloner * cloner)
     : OperationR1S1(PASSLOC, a, ext, parent, cloner->result(), cloner->symbol()) {
 
+    _numValues = cloner->numOperands();
+    _values = new Value *[_numValues];
     for (auto a=0;a < cloner->numOperands(); a++)
-        _values.push_back(cloner->operand(a));
+        _values[a] = (cloner->operand(a));
     }
 
 void
