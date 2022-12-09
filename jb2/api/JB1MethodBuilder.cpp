@@ -373,25 +373,25 @@ JB1MethodBuilder::EntryPoint(Builder *entryBuilder) {
 }
 
 void
-JB1MethodBuilder::Call(Location *loc, Builder *b, Value *result, String targetName, std::vector<Value *> arguments) {
+JB1MethodBuilder::Call(Location *loc, Builder *b, Value *result, String targetName, size_t numArgs, Value **arguments) {
     TR::IlBuilder *omr_b = map(b);
     omr_b->setBCIndex(loc->bcIndex())->SetCurrentIlGenerator();
     const char *function = findOrCreateString(targetName);
-    TR::IlValue **omr_args = new TR::IlValue *[arguments.size()];
-    for (auto a=0;a < arguments.size();a++)
+    TR::IlValue **omr_args = new TR::IlValue *[numArgs];
+    for (auto a=0;a < numArgs;a++)
         omr_args[a] = map(arguments[a]);
-    registerValue(result, omr_b->Call(function, arguments.size(), omr_args));
+    registerValue(result, omr_b->Call(function, numArgs, omr_args));
 }
 
 void
-JB1MethodBuilder::Call(Location *loc, Builder *b, String targetName, std::vector<Value *> arguments) {
+JB1MethodBuilder::Call(Location *loc, Builder *b, String targetName, size_t numArgs, Value **arguments) {
     TR::IlBuilder *omr_b = map(b);
     omr_b->setBCIndex(loc->bcIndex())->SetCurrentIlGenerator();
     const char *function = findOrCreateString(targetName);
-    TR::IlValue **omr_args = new TR::IlValue *[arguments.size()];
-    for (auto a=0;a < arguments.size();a++)
+    TR::IlValue **omr_args = new TR::IlValue *[numArgs];
+    for (auto a=0;a < numArgs;a++)
         omr_args[a] = map(arguments[a]);
-    TR::IlValue *omr_rv = omr_b->Call(function, arguments.size(), omr_args);
+    TR::IlValue *omr_rv = omr_b->Call(function, numArgs, omr_args);
     assert(omr_rv == NULL);
 }
 

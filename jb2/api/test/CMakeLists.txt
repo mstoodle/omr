@@ -66,10 +66,11 @@ set(GTEST_DIR $(omr_SOURCE_DIR)/third_party/gtest-1.8.0)
 	)
 
 	add_test(
-		NAME JB2TestList
-		COMMAND $<TARGET_FILE:testlist>
+		NAME JB2TestCompiler
+		COMMAND $<TARGET_FILE:testcompiler>
 	)
-	## testlistto
+
+	## testlist
 	add_executable(testlist
 		ListTest.cpp
 	)
@@ -83,4 +84,10 @@ set(GTEST_DIR $(omr_SOURCE_DIR)/third_party/gtest-1.8.0)
 		${JB2_JBCORE_DIR}
 	       	${GTEST_DIR}/include
 	)
+
+	add_test(
+		NAME JB2TestList
+		COMMAND $<TARGET_FILE:testlist>
+	)
+
 #endif()

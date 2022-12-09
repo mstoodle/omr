@@ -178,29 +178,24 @@ public:
         delete item;
         return v;
     }
-    void insertAfter(T v, List<T>::Iterator *cursor) {
-        if (cursor) {
-            List<T>::Item *newItem = new List<T>::Item(v);
-            cursor->current()->insertAfter(newItem);
-            change(1);
-        }
+    void insertAfter(T v, List<T>::Iterator cursor) {
+        List<T>::Item *newItem = new List<T>::Item(v);
+        cursor.current()->insertAfter(newItem);
+        change(1);
     }
-    void insertBefore(T v, List<T>::Iterator *cursor) { 
-        if (cursor) {
-            List<T>::Item *newItem = new List<T>::Item(v);
-            cursor->current()->insertBefore(newItem);
-            change(1);
-        }
+    void insertBefore(T v, List<T>::Iterator cursor) { 
+        List<T>::Item *newItem = new List<T>::Item(v);
+        cursor.current()->insertBefore(newItem);
+        change(1);
     }
-    void remove(List<T>::Iterator *cursor) {
-        if (cursor) {
-            if (cursor == _head)
-                _head = cursor->_next;
-            if (cursor == _tail)
-                _tail = cursor->_prev;
-            delete cursor->current()->remove();
-            change(-1);
-        }
+    void remove(List<T>::Iterator cursor) {
+        List<T>::Item *current = cursor->_cursor;
+        if (current == _head)
+            _head = current->_next;
+        if (current == _tail)
+            _tail = current->_prev;
+        delete current->remove();
+        change(-1);
     }
     void erase() {
         int32_t len=_length;
