@@ -52,7 +52,7 @@ void
 Op_Real::jbgen(JB1MethodBuilder *j1mb) const {
     CompilationException e(LOC, this->_ext->compiler(), this->_ext->compiler()->CompileFail_TypeMustBeReduced);
     e.setMessage(String("Op_Real::jbgen: ComplexTypes must be reduced before jb1codegen"))
-     .appendMessage(String("    Operation B").append(std::to_string(this->parent()->id())).append(String("!op")).append(std::to_string(this->id())));
+     .appendMessage(String("    Operation B").append(String::to_string(this->parent()->id())).append(String("!op")).append(String::to_string(this->id())));
     throw e;
 }
 
@@ -73,7 +73,7 @@ void
 Op_Imag::jbgen(JB1MethodBuilder *j1mb) const {
     CompilationException e(LOC, this->_ext->compiler(), this->_ext->compiler()->CompileFail_TypeMustBeReduced);
     e.setMessage(String("Op_Imag::jbgen: ComplexTypes must be reduced before jb1codegen"))
-     .appendMessage(String("    Operation B").append(std::to_string(this->parent()->id())).append(String("!op")).append(std::to_string(this->id())));
+     .appendMessage(String("    Operation B").append(String::to_string(this->parent()->id())).append(String("!op")).append(String::to_string(this->id())));
     throw e;
 }
 
@@ -115,7 +115,7 @@ void
 Op_Magnitude::jbgen(JB1MethodBuilder *j1mb) const {
     CompilationException e(LOC, this->_ext->compiler(), this->_ext->compiler()->CompileFail_TypeMustBeReduced);
     e.setMessage(String("Op_Magnitude::jbgen: ComplexTypes must be reduced before jb1codegen"))
-     .appendMessage(String("    Operation B").append(std::to_string(this->parent()->id())).append(String("!op")).append(String::to_string(this->id())));
+     .appendMessage(String("    Operation B").append(String::to_string(this->parent()->id())).append(String("!op")).append(String::to_string(this->id())));
     throw e;
 }
 

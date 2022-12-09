@@ -134,7 +134,7 @@ Debugger::acceptCommands(Operation *op, Operation *nextOp) {
         char *line=NULL;
         if (line = _reader.getLine()) {
             if (line[0] == '\n') {
-                if (_commandHistory.size() > 0) { // repeat last
+                if (_commandHistory.length() > 0) { // repeat last
                     strcpy(line, _commandHistory.back().c_str());
                 } else {
                     continue;

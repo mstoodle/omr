@@ -23,9 +23,8 @@
 #define CONTEXT_INCL
 
 #include <assert.h>
-#include <list>
-#include <string>
 #include "IDs.hpp"
+#include "util/List.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -87,7 +86,7 @@ protected:
     String _name;
 
     Context * _parent;
-    std::list<Context *> _children;
+    List<Context *> _children;
 
     LiteralDictionary *_litDict;
     SymbolDictionary *_symDict;

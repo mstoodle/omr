@@ -47,8 +47,8 @@ Strategy::addPass(Pass *pass) {
 CompilerReturnCode
 Strategy::perform(Compilation *comp) {
     CompilerReturnCode rc = _compiler->CompileSuccessful;
-    for (auto it = _passes.begin(); it != _passes.end(); it++) {
-        Pass *pass = *it;
+    for (auto it = _passes.iterator(); it.keepGoing(); it++) {
+        Pass *pass = it.current();
 
         if (comp->logger()) { // TODO should have its own specific trace enabler
             TextWriter &log = *comp->logger();

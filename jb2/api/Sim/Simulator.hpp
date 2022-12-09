@@ -22,7 +22,6 @@
 #ifndef SIMULATOR_INCL
 #define SIMULATOR_INCL
 
-#include <list>
 #include <map>
 #include "JBCore.hpp"
 

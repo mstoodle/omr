@@ -22,7 +22,6 @@
 #ifndef BYTECODEBUILDER_INCL
 #define BYTECODEBUILDER_INCL
 
-#include <list>
 #include <stdint.h>
 #include <stddef.h>
 #include "JBCore.hpp"
@@ -50,7 +49,7 @@ public:
     void propagateVMState(LOCATION, VirtualMachineState *fromState);
 
     virtual String logName() const { return String("BytecodeBuilder"); }
-    virtual void writeProperties(TextWriter & w) const;
+    virtual void writeProperties(TextWriter & w);
 
     virtual void jbgen(JB1MethodBuilder *j1mb) const;
     virtual void jbgenSuccessors(JB1MethodBuilder *j1mb) const;
@@ -71,7 +70,7 @@ protected:
     VirtualMachineState * _vmState;
 
     BytecodeBuilder * _fallThroughBuilder;
-    std::list<BytecodeBuilder *> _successorBuilders;
+    List<BytecodeBuilder *> _successorBuilders;
 };
 
 } // VM

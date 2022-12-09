@@ -20,7 +20,6 @@
  *******************************************************************************/
 
 #include <assert.h>
-#include <list>
 #include <stdint.h>
 #include <string>
 #include "JBCore.hpp"

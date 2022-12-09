@@ -227,7 +227,7 @@ public:
 protected:
     void failValidateOffsetAt(LOCATION, Builder *b, Value *array);
 
-    std::list<BaseExtensionChecker *> _checkers;
+    List<BaseExtensionChecker *> _checkers;
 
     static const MajorID BASEEXT_MAJOR=0;
     static const MinorID BASEEXT_MINOR=1;

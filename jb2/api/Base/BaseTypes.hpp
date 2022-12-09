@@ -22,7 +22,6 @@
 #ifndef BASETYPES_INCL
 #define BASETYPES_INCL
 
-#include <list>
 #include <map>
 #include "JBCore.hpp"
 #include "Func/Func.hpp"
@@ -423,7 +422,7 @@ protected:
     #if NEED_UNION
     bool _buildUnion;
     #endif
-    std::list<FieldInfo> _fields;
+    List<FieldInfo> _fields;
     StructHelperFunction *_helper;
     StructType *_structType;
 };
