@@ -22,7 +22,6 @@
 #ifndef SEMANTICVERSION_INCL
 #define SEMANTICVERSION_INCL
 
-#include <list>
 #include "util/String.hpp"
 
 namespace OMR {

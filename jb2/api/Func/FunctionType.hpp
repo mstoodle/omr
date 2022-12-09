@@ -22,11 +22,7 @@
 #ifndef FUNCTIONTYPES_INCL
 #define FUNCTIONTYPES_INCL
 
-#include <string>
-#include "IDs.hpp"
-#include "typedefs.hpp"
-#include "Type.hpp"
-#include "util/String.hpp"
+#include "JBCore.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -94,7 +90,7 @@ public:
         Extension * _ext;
         String _name;
         size_t _size;
-        std::list<FieldInfo> _fields;
+        List<FieldInfo> _fields;
         StructHelperFunction _helper;
     };
     #endif

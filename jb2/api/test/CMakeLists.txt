@@ -45,7 +45,6 @@ set(GTEST_DIR $(omr_SOURCE_DIR)/third_party/gtest-1.8.0)
 	       	${GTEST_DIR}/include
 	)
 
-	#omr_add_test( NAME JitBuilderTest COMMAND $<TARGET_FILE:jitbuildertest> --gtest_output=xml:${CMAKE_CURRENT_BINARY_DIR}/jitbuildertest-results.xml)
 	add_test(
 		NAME JB2TestSemVer
 		COMMAND $<TARGET_FILE:testsemver>
@@ -66,9 +65,22 @@ set(GTEST_DIR $(omr_SOURCE_DIR)/third_party/gtest-1.8.0)
 	       	${GTEST_DIR}/include
 	)
 
-	#omr_add_test( NAME JitBuilderTest COMMAND $<TARGET_FILE:jitbuildertest> --gtest_output=xml:${CMAKE_CURRENT_BINARY_DIR}/jitbuildertest-results.xml)
 	add_test(
-		NAME JB2TestCompiler
-		COMMAND $<TARGET_FILE:testcompiler>
+		NAME JB2TestList
+		COMMAND $<TARGET_FILE:testlist>
+	)
+	## testlistto
+	add_executable(testlist
+		ListTest.cpp
+	)
+	target_link_libraries(testlist
+		jb2core
+		jb2
+		omrGtest
+		${CMAKE_DL_LIBS}
+	)
+	target_include_directories(testlist PRIVATE
+		${JB2_JBCORE_DIR}
+	       	${GTEST_DIR}/include
 	)
 #endif()

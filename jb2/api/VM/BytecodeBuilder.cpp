@@ -125,7 +125,7 @@ BytecodeBuilder::transferVMState(LOCATION, BytecodeBuilder *b) {
 }
 
 void
-BytecodeBuilder::writeProperties(TextWriter & w) const {
+BytecodeBuilder::writeProperties(TextWriter & w) {
     this->Builder::writeProperties(w);
 
     w.indent() << "[ bcIndex " << bcIndex() << " ]" << w.endl();
@@ -136,8 +136,8 @@ BytecodeBuilder::writeProperties(TextWriter & w) const {
     else
         w.indent() << "[ fallThroughBuilder NULL ]" << w.endl();
 
-    for (auto it=_successorBuilders.begin(); it != _successorBuilders.end(); it++) {
-        BytecodeBuilder *succ = *it;
+    for (auto it=_successorBuilders.iterator(); it.keepGoing(); it++) {
+        BytecodeBuilder *succ = it.current();
         w.indent() << "[ successorBuilder " << succ << " ]" << w.endl();
     }
 }
@@ -152,8 +152,8 @@ BytecodeBuilder::jbgenSuccessors(JB1MethodBuilder *j1mb) const {
     if (_controlReachesEnd && _fallThroughBuilder)
         j1mb->addFallThroughBuilder(this, _fallThroughBuilder);
 
-    for (auto it = _successorBuilders.begin(); it != _successorBuilders.end(); it++) {
-        BytecodeBuilder *succ = *it;
+    for (auto it = _successorBuilders.iterator(); it.keepGoing(); it++) {
+        BytecodeBuilder *succ = it.current();
         j1mb->addSuccessorBuilder(this, succ);
     }
 }

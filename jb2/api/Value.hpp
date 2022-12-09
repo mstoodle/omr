@@ -23,8 +23,8 @@
 #define VALUE_INCL
 
 #include <stdint.h>
-#include <list>
 #include "IDs.hpp"
+#include "util/List.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -48,15 +48,17 @@ public:
 
     virtual size_t size() const { return sizeof(Value); }
 
+    List<Operation *>::Iterator definitions() { return _definitions.iterator(); }
+
 protected:
     static Value * create(const Builder * parent, const Type * type);
     Value(const Builder * parent, const Type * type);
-    void addDefinition(const Operation *op) { _definitions.push_back(op); }
+    void addDefinition(Operation *op) { _definitions.push_back(op); }
 
     ValueID   _id;
     const Builder * _parent;
     const Type * _type;
-    std::list<const Operation *> _definitions;
+    List<Operation *> _definitions;
 };
 
 } // namespace JitBuilder
