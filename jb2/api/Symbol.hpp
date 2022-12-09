@@ -23,7 +23,6 @@
 #define SYMBOL_INCL
 
 #include <cassert>
-#include <string>
 #include <vector>
 #include "IDs.hpp"
 #include "KindService.hpp"

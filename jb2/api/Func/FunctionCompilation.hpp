@@ -24,7 +24,6 @@
 
 #include <map>
 #include <stdint.h>
-#include <string>
 #include <vector>
 #include "Compilation.hpp"
 #include "typedefs.hpp"

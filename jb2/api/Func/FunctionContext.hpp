@@ -22,7 +22,6 @@
 #ifndef FUNCTIONCONTEXT_INCL
 #define FUNCTIONCONTEXT_INCL
 
-#include <string>
 #include <vector>
 #include "Context.hpp"
 #include "Func/FunctionExtension.hpp"

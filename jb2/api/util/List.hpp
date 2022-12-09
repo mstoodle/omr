@@ -22,8 +22,6 @@
 #ifndef LIST_INCL
 #define LIST_INCL
 
-#include <string>
-
 namespace OMR {
 namespace JitBuilder {
 
