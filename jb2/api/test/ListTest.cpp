@@ -50,8 +50,8 @@ TEST(JB2List, PushAndPopFront) {
     EXPECT_EQ(p, 3) << "should pop_front 3 off second";
     p = list.pop_front();
     EXPECT_EQ(p, 2) << "should pop_front 2 off third";
-    bool d = list.hasItems();
-    EXPECT_FALSE(d) << "snould not be able to pop_front any more items";
+    bool d = list.empty();
+    EXPECT_TRUE(d) << "snould not be able to pop_front any more items";
     EXPECT_EQ(list.length(), 0) << "should be empty list";
 }
 
@@ -70,8 +70,8 @@ TEST(JB2List, PushAndPopBack) {
     EXPECT_EQ(p, 3) << "should pop_front 3 off second";
     p = list.pop_back();
     EXPECT_EQ(p, 2) << "should pop_front 2 off third";
-    bool d = list.hasItems();
-    EXPECT_FALSE(d) << "snould not be able to pop_front any more items";
+    bool d = list.empty();
+    EXPECT_TRUE(d) << "snould not be able to pop_front any more items";
     EXPECT_EQ(list.length(), 0) << "should be empty list";
 }
 
@@ -87,8 +87,8 @@ TEST(JB2List, PushFrontAndPopBack) {
     EXPECT_EQ(*p, 3) << "should pop_back 3 off second";
     p = list.pop_back();
     EXPECT_EQ(*p, 5) << "should pop_back 5 off third";
-    bool d = list.hasItems();
-    EXPECT_FALSE(d) << "snould not be able to pop_front any more items";
+    bool d = list.empty();
+    EXPECT_TRUE(d) << "snould not be able to pop_front any more items";
     EXPECT_EQ(list.length(), 0) << "should be empty list";
 }
 
