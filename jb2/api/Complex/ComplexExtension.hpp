@@ -23,9 +23,7 @@
 #define COMPLEXEXTENSION_INCL
 
 #include <complex>
-#include <map>
 #include "JBCore.hpp"
-#include <vector>
 #include "Base/BaseTypes.hpp"
 #include "ComplexTypes.hpp"
 
@@ -102,7 +100,7 @@ public:
     protected:
     StrategyID _jb1cgStrategyID;
 
-    std::vector<ComplexExtensionChecker *> _checkers;
+    List<ComplexExtensionChecker *> _checkers;
 
     static const MajorID COMPLEXEXT_MAJOR=0;
     static const MinorID COMPLEXEXT_MINOR=1;
