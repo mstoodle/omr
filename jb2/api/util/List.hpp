@@ -23,6 +23,7 @@
 #define LIST_INCL
 
 #include <assert.h>
+#include "Iterator.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -67,34 +68,90 @@ protected:
     };
 
 public:
-    class Iterator {
+    class Iterator : public OMR::JitBuilder::Iterator<T> {
         friend class List<T>;
 
     public:
-        void operator++(int) { assert(_cursor != NULL && !detectChange()); _cursor = _cursor->_next; }
-        void operator--(int) { assert(_cursor != NULL && !detectChange()); _cursor = _cursor->_prev; }
-        T current()          { assert(_cursor != NULL && !detectChange()); return _cursor->_item; }
-        T next()             { assert(_cursor != NULL && !detectChange()); _cursor = _cursor->_next; return current(); }
-        T prev()             { assert(_cursor != NULL && !detectChange()); _cursor = _cursor->_prev; return current(); }
-        bool keepGoing()     { if (detectChange()) return false; return (_cursor != NULL); }
-        bool detectChange()  { return (_list->_changeID != _listSnapshot); }
-        void resetBegin()    { _cursor = _list->_head; }
-        void resetEnd()      { _cursor = _list->_tail; }
+        // Rule of 3:
+        Iterator(const Iterator & other)
+            : OMR::JitBuilder::Iterator<T>(other)
+            , _list(other._list)
+            , _cursor(other._cursor)
+            , _listSnapshot(other._listSnapshot)
+            , _detectChanges(other._detectChanges) {
+        }
+        virtual ~Iterator() { }
+        Iterator &operator=(const Iterator & other) {
+            assert(_list == other._list);
+            //_list = other._list;
+            _cursor = other._cursor;
+            _listSnapshot = other._listSnapshot;
+            _detectChanges = other._detectChanges;
+            return *this;
+        }
 
+        // Rule of 5:
+        Iterator(Iterator && other)
+            : OMR::JitBuilder::Iterator<T>(other)
+            , _list(other._list)
+            , _cursor(other._cursor)
+            , _listSnapshot(other._listSnapshot)
+            , _detectChanges(other._detectChanges) {
+        }
+        Iterator &operator=(Iterator && other)
+            {
+            assert(_list == other._list);
+            //_list = other._list;
+            _cursor = other._cursor;
+            _listSnapshot = other._listSnapshot;
+            _detectChanges = other._detectChanges;
+            return *this;
+        }
+
+        // forward iteration
+        void reset()               { _cursor = _list->_head; }
+        bool hasItem()             { if (detectChange()) return false; return (_cursor != NULL); }
+        void operator++(int32_t) {
+            assert(_cursor != NULL && !detectChange());
+            //while (i > 0 && _cursor != NULL) {
+            _cursor = _cursor->_next;
+            //    i--;
+            //}
+            //assert(i == 0);
+        }
+        T item()                   { assert(_cursor != NULL && !detectChange()); return _cursor->_item; };
+
+        // backward iteration
+        void resetEnd()            { _cursor = _list->_tail; }
+        void operator--(int32_t i) {
+            assert(_cursor != NULL && !detectChange());
+            //while (i > 0 && _cursor != NULL) {
+            _cursor = _cursor->_prev;
+            //    i--;
+            //}
+            //assert(i == 0);
+        }
     protected:
-        Iterator(const List<T> *originalList, bool startForward=true, bool detectChanges=true, bool makeCopy=false)
+        Iterator(const List<T> * const originalList, bool startForward=true, bool detectChanges=true, bool makeCopy=false)
             : _list(originalList->copy(makeCopy))
             , _cursor(NULL)
             , _listSnapshot(originalList->_changeID)
             , _detectChanges(detectChanges) {
 
             if (startForward)
-                resetBegin();
+                reset();
             else
                 resetEnd();
         }
+        Iterator() // used by ShortIterator
+            : _list(NULL)
+            , _cursor(NULL)
+            , _listSnapshot(0)
+            , _detectChanges(false) {
+        }
+        virtual bool detectChange()  { return (_list->_changeID != _listSnapshot); }
 
-        const List<T> *_list;
+        const List<T> * const _list;
         List<T>::Item *_cursor;
         List<T>::ChangeID _listSnapshot;
         bool _detectChanges;
@@ -107,9 +164,63 @@ public:
         , _changeID(0)
         , _length(0) {
     }
+
+    List(T one)
+        : _head(NULL)
+        , _tail(NULL)
+        , _changeID(0)
+        , _length(0) {
+
+        push_back(one);
+    }
+
+    List(T one, T two)
+        : _head(NULL)
+        , _tail(NULL)
+        , _changeID(0)
+        , _length(0) {
+
+        push_back(one);
+        push_back(two);
+    }
+
+    List(T one, T two, T three)
+        : _head(NULL)
+        , _tail(NULL)
+        , _changeID(0)
+        , _length(0) {
+
+        push_back(one);
+        push_back(two);
+        push_back(three);
+    }
+
+    List(int numArgs, ...)
+        : _head(NULL)
+        , _tail(NULL)
+        , _changeID(0)
+        , _length(0) {
+
+        va_list(args);
+        va_start(args, numArgs);
+        for (int a=0;a < numArgs;a++)
+            push_back(va_arg(args, T));
+        va_end(args);
+    }
+
+    List(T *array, int arraySize)
+        : _head(NULL)
+        , _tail(NULL)
+        , _changeID(0)
+        , _length(0) {
+
+        for (int a=0;a < arraySize;a++)
+            push_back(va_arg(array, T));
+    }
+
     List(const List<T> * source) {
-        for (auto it = source->fwdIterator(); it.keepGoing(); it++) {
-            push_back(it.current());
+        for (auto it = source->fwdIterator(); it.hasItem(); it++) {
+            push_back(it.item());
         }
         change(source->length());
     }
@@ -117,7 +228,7 @@ public:
         List<T>::Item *p=_head;
         while (p) {
             List<T>::Item *next = p->_next;
-            delete p;
+            JB2::deallocate<List<T>::Item>(p, 1);
             p = next;
         }
         change(-_length);
@@ -135,7 +246,7 @@ public:
         return _head->_item;
     }
     void push_front(T v) {
-        List<T>::Item *newItem = new List<T>::Item(v, NULL, _head);
+        List<T>::Item *newItem = new (JB2::allocate<List<T>::Item>(1)) List<T>::Item(v, NULL, _head);
         if (_head)
             _head->_prev = newItem;
         _head = newItem;
@@ -157,7 +268,7 @@ public:
         return v;
     }
     void push_back(T v) {
-        List<T>::Item *newItem = new List<T>::Item(v, _tail, NULL);
+        List<T>::Item *newItem = new (JB2::allocate<List<T>::Item>(1)) List<T>::Item(v, _tail, NULL);
         if (_tail)
             _tail->_next = newItem;
         _tail = newItem;
@@ -179,17 +290,27 @@ public:
         return v;
     }
     void insertAfter(T v, List<T>::Iterator cursor) {
-        List<T>::Item *newItem = new List<T>::Item(v);
+        List<T>::Item *newItem = new (JB2::allocate<List<T>::Item>(1)) List<T>::Item(v);
         cursor.current()->insertAfter(newItem);
         change(1);
     }
     void insertBefore(T v, List<T>::Iterator cursor) { 
-        List<T>::Item *newItem = new List<T>::Item(v);
+        List<T>::Item *newItem = new (JB2::allocate<List<T>::Item>(1)) List<T>::Item(v);
         cursor.current()->insertBefore(newItem);
         change(1);
     }
+
+    List<T>::Iterator find(T v) {
+        for (auto it = iterator(); it.hasItem(); it++ ) {
+            if (v == it.item())
+                return it;
+        }
+        return List<T>::Iterator();
+    }
+
+    // this doesn't work...need to return a new iterator!
     void remove(List<T>::Iterator cursor) {
-        List<T>::Item *current = cursor->_cursor;
+        List<T>::Item *current = cursor._cursor;
         if (current == _head)
             _head = current->_next;
         if (current == _tail)
@@ -199,7 +320,7 @@ public:
     }
     void erase() {
         int32_t len=_length;
-        for (auto it = iterator(); it.keepGoing();) {
+        for (auto it = iterator(); it.hasItem();) {
             List<T>::Item *item = it._cursor;
             it++; // must precede removal or else next pointer is lost
             item->remove();
@@ -208,7 +329,7 @@ public:
     }
 
     const List<T> *copy(bool makeCopy=true) const {
-        return makeCopy ? (new List<T>(this)) : this;
+        return makeCopy ? (new (JB2::allocate<List<T>>(1)) List<T>(this)) : this;
     }
 
     List<T>::Iterator iterator(bool forward=true, bool detectChanges=true, bool makeCopy=false) const {
