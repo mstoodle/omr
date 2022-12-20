@@ -22,9 +22,8 @@
 #ifndef TEXTWRITER_INCL
 #define TEXTWRITER_INCL
 
-#include <iostream>
+#include "common.hpp"
 #include <iomanip>
-#include <vector>
 #include "Visitor.hpp"
 #include "util/String.hpp"
 

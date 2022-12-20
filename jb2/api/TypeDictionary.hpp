@@ -22,10 +22,7 @@
 #ifndef TYPEDICTIONARY_INCL
 #define TYPEDICTIONARY_INCL
 
-#include <stdint.h>
-#include <vector>
-#include "IDs.hpp"
-#include "Iterator.hpp"
+#include "common.hpp"
 #include "util/String.hpp"
 
 namespace OMR {
@@ -38,7 +35,6 @@ class Extension;
 class OperationBuilder;
 
 class TypeDictionary {
-    friend class DebugDictionary;
     friend class DynamicType;
     friend class Extension;
     friend class OperationBuilder;
@@ -52,8 +48,10 @@ public:
 
     Compiler *compiler() const { return _compiler; }
 
-    TypeIterator TypesBegin() const { return TypeIterator(_types); }
-    TypeIterator TypesEnd() const { return TypeIterator(); }
+    //TypeIterator TypesBegin() const { return TypeIterator(_types); }
+    //TypeIterator TypesEnd() const { return TypeIterator(); }
+    TypeListIterator typesIterator() const { return _types.iterator(); }
+    TypeListIterator modifiableTypesIterator() { return _types.iterator(true, false, false); }
 
     const Type *LookupType(uint64_t id);
     void RemoveType(const Type *type);
@@ -75,8 +73,8 @@ protected:
     TypeDictionaryID _id;
     Compiler * _compiler;
     String _name;
-    std::vector<const Type *> _types;
-    std::vector<const Type *> _ownedTypes;
+    List<const Type *> _types;
+    List<const Type *> _ownedTypes;
     TypeID _nextTypeID;
     TypeDictionary * _linkedDictionary;
 };

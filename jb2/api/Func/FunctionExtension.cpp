@@ -57,8 +57,8 @@ FunctionExtension::FunctionExtension(LOCATION, Compiler *compiler, bool extended
 
 FunctionExtension::~FunctionExtension() {
     // what about other types!?
-    for (auto it = _checkers.iterator(); it.keepGoing(); it++) {
-        FunctionExtensionChecker *checker = it.current();
+    for (auto it = _checkers.iterator(); it.hasItem(); it++) {
+        FunctionExtensionChecker *checker = it.item();
         delete checker;
     }
     _checkers.erase();
@@ -121,8 +121,8 @@ FunctionExtensionChecker::failValidateCall(LOCATION, Builder *b, FunctionSymbol 
 Value *
 FunctionExtension::Call(LOCATION, Builder *b, FunctionSymbol *target, ...) {
     const FunctionType *tgtType = target->functionType();
-    for (auto it = _checkers.iterator(); it.keepGoing(); it++) {
-        FunctionExtensionChecker *checker = it.current();
+    for (auto it = _checkers.iterator(); it.hasItem(); it++) {
+        FunctionExtensionChecker *checker = it.item();
         std::va_list args;
         va_start(args, target);
         if (checker->validateCall(PASSLOC, b, target, args))

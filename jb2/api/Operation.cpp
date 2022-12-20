@@ -30,6 +30,7 @@
 #include "Operation.hpp"
 #include "OperationCloner.hpp"
 //#include "OperationReplacer.hpp"
+#include "Type.hpp"
 #include "TypeDictionary.hpp"
 #include "Value.hpp"
 #include "TextWriter.hpp"
@@ -37,12 +38,6 @@
 namespace OMR {
 namespace JitBuilder {
 
-BuilderIterator Operation::builderEndIterator;
-CaseIterator Operation::caseEndIterator;
-LiteralIterator Operation::literalEndIterator;
-SymbolIterator Operation::symbolEndIterator;
-TypeIterator Operation::typeEndIterator;
-ValueIterator Operation::valueEndIterator;
 
 Operation::Operation(LOCATION, ActionID a, Extension *ext, Builder * parent, Operation *next, Operation *prev)
     : _id(parent->comp()->getOperationID())

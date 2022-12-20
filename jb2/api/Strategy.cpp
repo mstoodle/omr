@@ -47,8 +47,8 @@ Strategy::addPass(Pass *pass) {
 CompilerReturnCode
 Strategy::perform(Compilation *comp) {
     CompilerReturnCode rc = _compiler->CompileSuccessful;
-    for (auto it = _passes.iterator(); it.keepGoing(); it++) {
-        Pass *pass = it.current();
+    for (auto it = _passes.iterator(); it.hasItem(); it++) {
+        Pass *pass = it.item();
 
         if (comp->logger()) { // TODO should have its own specific trace enabler
             TextWriter &log = *comp->logger();
@@ -79,4 +79,3 @@ Strategy::perform(Compilation *comp) {
 
 } // namespace JitBuilder
 } // namespace OMR
-

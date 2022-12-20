@@ -23,18 +23,11 @@
 #define FUNCTIONCONTEXT_INCL
 
 #include <vector>
-#include "Context.hpp"
+#include "JBCore.hpp"
 #include "Func/FunctionExtension.hpp"
 
 namespace OMR {
 namespace JitBuilder {
-
-class Operation;
-class Symbol;
-class TextWriter;
-class Type;
-class TypeDictionary;
-
 namespace Func {
 
 class LocalSymbol;
@@ -55,35 +48,25 @@ public:
     FunctionSymbol * DefineFunction(LOCATION, String name, String fileName, String lineNumber, void *entryPoint, const Type *returnType, int32_t numParms, ...);
     FunctionSymbol * DefineFunction(LOCATION, String name, String fileName, String lineNumber, void *entryPoint, const Type *returnType, int32_t numParms, const Type **parmTypes);
     void DefineReturnType(const Type * type) {
-        _returnTypes.push_back(type);
+        size_t index = _returnTypes.length();
+        _returnTypes.assign(index, type);
     }
 
-    LocalSymbolIterator LocalsBegin() const { return LocalSymbolIterator(this->_locals); }
-    LocalSymbolIterator LocalsEnd() const { return endLocalSymbolIterator; }
-    LocalSymbolVector ResetLocals() {
-        LocalSymbolVector prev = this->_locals;
-        this->_locals.clear();
-        return prev;
-    }
+    LocalSymbolIterator locals() const { return this->_locals.iterator(); }
+    LocalSymbolList resetLocals();
     LocalSymbol * LookupLocal(String name);
 
-    ParameterSymbolIterator ParametersBegin() const { return ParameterSymbolIterator(this->_parameters); }
-    ParameterSymbolIterator ParametersEnd() const { return endParameterSymbolIterator; }
-    ParameterSymbolVector ResetParameters() {
-        ParameterSymbolVector prev = this->_parameters;
-        this->_parameters.clear();
-        return prev;
-    }
+    ParameterSymbolIterator parameters() const { return this->_parameters.iterator(); }
+    ParameterSymbolList resetParameters();
 
-    FunctionSymbolIterator FunctionsBegin() const { return FunctionSymbolIterator(_functions); }
-    FunctionSymbolIterator FunctionsEnd() const { return endFunctionSymbolIterator; }
-    FunctionSymbolVector ResetFunctions();
+    FunctionSymbolIterator functions() const { return this->_functions.iterator(); }
+    FunctionSymbolList resetFunctions();
     FunctionSymbol *LookupFunction(String name);
     Symbol * getSymbol(String name);
 
-    int32_t numReturnTypes() const { return _returnTypes.size(); }
+    int32_t numReturnTypes() const { return _returnTypes.length(); }
     const Type * returnType(int i=0) const {
-        if (_returnTypes.size() > i)
+        if (_returnTypes.length() > i)
             return this->_returnTypes[i];
         return NULL;
     }
@@ -96,15 +79,11 @@ protected:
     void DefineFunction(FunctionSymbol *function);
     FunctionSymbol * internalDefineFunction(LOCATION, String name, String fileName, String lineNumber, void *entryPoint, const Type *returnType, int32_t numParms, const Type **parmTypes);
 
-    ParameterSymbolVector _parameters;
-    LocalSymbolVector _locals;
-    FunctionSymbolVector _functions;
+    ParameterSymbolList _parameters;
+    LocalSymbolList _locals;
+    FunctionSymbolList _functions;
 
-    std::vector<const Type *> _returnTypes;
-
-    static LocalSymbolIterator endLocalSymbolIterator;
-    static ParameterSymbolIterator endParameterSymbolIterator;
-    static FunctionSymbolIterator endFunctionSymbolIterator;
+    TypeArray _returnTypes;
 };
 
 } // namespace Func

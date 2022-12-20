@@ -23,11 +23,8 @@
 #define LITERAL_INCL
 
 #include <map>
-#include <stdint.h>
-#include <vector>
+#include "common.hpp"
 #include "CreateLoc.hpp"
-#include "IDs.hpp"
-#include "typedefs.hpp"
 
 namespace OMR {
 namespace JitBuilder {

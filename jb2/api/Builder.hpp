@@ -22,11 +22,7 @@
 #ifndef BUILDER_INCL
 #define BUILDER_INCL
 
-#include <cassert>
-#include <stdint.h>
-#include <vector>
-#include "IDs.hpp"
-#include "Iterator.hpp"
+#include "common.hpp"
 #include "util/String.hpp"
 
 namespace OMR {
@@ -45,9 +41,6 @@ class Value;
 class TextWriter;
 class Transformer;
 class TypeDictionary;
-
-typedef std::vector<Operation *> OperationVector;
-typedef OperationVector::iterator OperationIterator;
 
 class Builder
     {
@@ -97,9 +90,8 @@ public:
 
     Context * context() const                           { return _context; }
 
-    int32_t numChildren() const                         { return _children.size(); }
-    BuilderIterator ChildrenBegin() const               { return BuilderIterator(_children); }
-    BuilderIterator ChildrenEnd() const                 { return BuilderIterator(); }
+    int32_t numChildren() const                         { return _children.length(); }
+    BuilderListIterator childrenIterator() const        { return _children.iterator(); }
 
     int32_t numOperations() const                       { return _operationCount; }
     Operation *firstOperation() const                   { return _firstOperation; }
@@ -143,22 +135,22 @@ public:
     void addChild(Builder *child);
     Builder * add(Operation * op);
 
-    BuilderID              _id;
-    Compilation          * _comp;
-    String                 _name;
-    Builder              * _parent;
-    std::vector<Builder *> _children;
-    Context              * _context;
-    Builder              * _successor;
-    OperationVector        _operations;
-    int32_t                _operationCount;
-    Operation            * _firstOperation;
-    Operation            * _lastOperation;
-    Location             * _currentLocation;
-    Operation            * _boundToOperation;
-    bool                   _isTarget;
-    bool                   _isBound;
-    bool                   _controlReachesEnd;
+    BuilderID            _id;
+    Compilation        * _comp;
+    String               _name;
+    Builder            * _parent;
+    List<Builder *>      _children;
+    Context            * _context;
+    Builder            * _successor;
+    List<Operation *>    _operations;
+    int32_t              _operationCount;
+    Operation          * _firstOperation;
+    Operation          * _lastOperation;
+    Location           * _currentLocation;
+    Operation          * _boundToOperation;
+    bool                 _isTarget;
+    bool                 _isBound;
+    bool                 _controlReachesEnd;
     };
 
 } // namespace JitBuilder

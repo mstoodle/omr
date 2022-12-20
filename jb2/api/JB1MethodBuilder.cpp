@@ -63,8 +63,8 @@ JB1MethodBuilder::registerTypes(TypeDictionary *dict) {
     std::vector<bool> mappedTypes(numTypes);
     while (numTypes > 0) {
         TypeID startNumTypes = numTypes;
-        for (auto it = dict->TypesBegin(); it != dict->TypesEnd(); it++) {
-            const Type *type = *it;
+        for (auto it = dict->typesIterator(); it.hasItem(); it++) {
+            const Type *type = it.item();
             if (mappedTypes[type->id()] != true) {
                 bool mapped = type->registerJB1Type(this);
                 if (mapped) {
@@ -763,8 +763,8 @@ JBCodeGenerator::generateFunctionAPI(FunctionBuilder *fb) {
     TypeID numTypes = _comp->numTypes();
     while (numTypes > 0) {
         TypeID startNumTypes = numTypes;
-        for (auto it = dict->TypesBegin(); it !+ dict->TypeEnd(); it++) {
-            Type *type = *it;
+        for (auto it = dict->typesIterator(); it.hasItem(); it++) {
+            Type *type = it.item();
             if (_types[type->id()] == NULL) {
                 bool mapped = type->registerJB1Type(this)
                 if (mapped) {
@@ -778,8 +778,8 @@ JBCodeGenerator::generateFunctionAPI(FunctionBuilder *fb) {
 
 #if 0
     if (log) log->indent() << "First pass:" << log->endl();
-    for (TypeIterator typeIt = types->TypesBegin(); typeIt != types->TypesEnd(); typeIt++) {
-        Type * type = *typeIt;
+    for (TypeIterator typeIt = types->typesIterator(); typeIt.hasItem(); typeIt++) {
+        Type * type = typeIt.item();
         if (log) {
             log->indent();
             log->writeType(type, true);
@@ -803,8 +803,8 @@ JBCodeGenerator::generateFunctionAPI(FunctionBuilder *fb) {
     }
 
     // Second pass: map all Pointer types now that anything a Pointer can point to has been mapped
-    for (TypeIterator typeIt = types->TypesBegin(); typeIt != types->TypesEnd(); typeIt++) {
-        Type * type = *typeIt;
+    for (TypeIterator typeIt = types->typesIterator(); typeIt.hasItem(); typeIt++) {
+        Type * type = typeIt.item();
         if (type->isPointer()) {
             TR::IlType *ptrIlType = mapPointerType(typesJB1, static_cast<PointerType *>(type));
             storeType(type, ptrIlType);
@@ -816,8 +816,8 @@ JBCodeGenerator::generateFunctionAPI(FunctionBuilder *fb) {
     // in this process, any inner structs/unions are inlined into containing struct
 
     // Third pass: revisit all Structs and Unions to iterate over field types to map them
-    for (TypeIterator typeIt = types->TypesBegin(); typeIt != types->TypesEnd(); typeIt++) {
-        Type * type = *typeIt;
+    for (TypeIterator typeIt = types->typesIterator(); typeIt.hasItem(); typeIt++) {
+        Type * type = typeIt.item();
         if (type->isStruct()) {
             StructType *sType = static_cast<StructType *>(type);
             char * structName = findOrCreateString(sType->name());
@@ -834,8 +834,8 @@ JBCodeGenerator::generateFunctionAPI(FunctionBuilder *fb) {
 
     // All types should be represented in the JB1 layer now, and mapTypes should be set up for every
     // type in TypeDictionary
-    for (TypeIterator typeIt = types->TypesBegin(); typeIt != types->TypesEnd(); typeIt++) {
-        Type * type = *typeIt;
+    for (TypeIterator typeIt = types->typesIterator(); typeIt.hasItem(); typeIt++) {
+        Type * type = typeIt.item();
         assert(type->isField() || mapType(type) != NULL);
     }
 #endif

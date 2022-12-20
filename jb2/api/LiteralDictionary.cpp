@@ -55,23 +55,23 @@ LiteralDictionary::LiteralDictionary(Compilation *comp, String name, LiteralDict
     , _nextLiteralID(linkedLiterals->_nextLiteralID)
     , _linkedDictionary(linkedLiterals) {
 
-    for (LiteralIterator it = linkedLiterals->LiteralsBegin(); it != linkedLiterals->LiteralsEnd(); it++) {
-        Literal *literal = *it;
+    for (auto it = linkedLiterals->literalIterator(); it.hasItem(); it++) {
+        Literal *literal = it.item();
         addNewLiteral(literal);
     }
 }
 
 LiteralDictionary::~LiteralDictionary() {
-    for (auto it = _ownedLiterals.begin(); it != _ownedLiterals.end(); it++) {
-        Literal *literal = *it;
+    for (auto it = _ownedLiterals.iterator(); it.hasItem(); it++) {
+        Literal *literal = it.item();
         delete literal;
     }
 }
 
 Literal *
 LiteralDictionary::LookupLiteral(LiteralID id) {
-    for (auto it = LiteralsBegin(); it != LiteralsEnd(); it++) {
-        Literal *literal = *it;
+    for (auto it = literalIterator(); it.hasItem(); it++) {
+        Literal *literal = it.item();
         if (literal->id() == id)
             return literal;
     }
@@ -81,25 +81,21 @@ LiteralDictionary::LookupLiteral(LiteralID id) {
 
 void
 LiteralDictionary::RemoveLiteral(Literal *literal) {
-    // brutal performance; should really collect these and do in one pass
-    for (auto it = _literals.begin(); it != _literals.end(); ) {
-       if (*it == literal)
-          it = _literals.erase(it);
-       else
-          ++it;
-   }
+    auto it = _literals.find(literal);
+    if (it.hasItem())
+        _literals.remove(it);
 }
 
 void
 LiteralDictionary::addNewLiteral(Literal *literal) {
-    LiteralVector *typeList = NULL;
+    LiteralList *typeList = NULL;
     const Type *type = literal->type();
     auto it = _literalsByType.find(type);
     if (it != _literalsByType.end()) {
         typeList = it->second;
     }
     else {
-        typeList = new LiteralVector;
+        typeList = new LiteralList;
         _literalsByType.insert({type, typeList});
     }
     typeList->push_back(literal);
@@ -108,19 +104,19 @@ LiteralDictionary::addNewLiteral(Literal *literal) {
 
 Literal *
 LiteralDictionary::registerLiteral(LOCATION, const Type *type, const LiteralBytes *value) {
-    LiteralVector *typeList = NULL;
+    LiteralList *typeList = NULL;
     auto it = _literalsByType.find(type);
     if (it != _literalsByType.end()) {
         typeList = it->second;
-        for (auto it = typeList->begin(); it != typeList->end();it++) {
-            Literal *other = *it;
+        for (auto it = typeList->iterator(); it.hasItem();it++) {
+            Literal *other = it.item();
             if (type->literalsAreEqual(value, other->value())) {
                 return other;
             }
         }
     }
     else {
-        typeList = new LiteralVector;
+        typeList = new LiteralList;
         _literalsByType.insert({type, typeList});
     }
 
@@ -128,6 +124,7 @@ LiteralDictionary::registerLiteral(LOCATION, const Type *type, const LiteralByte
     typeList->push_back(literal);
     _literals.push_back(literal);
     _ownedLiterals.push_back(literal);
+
     return literal;
 }
 
@@ -137,8 +134,8 @@ LiteralDictionary::write(TextWriter &w) {
     w.indentIn();
     if (this->hasLinkedDictionary())
         w.indent() << "[ linkedDictionary " << this->linkedDictionary() << " ]" << w.endl();
-    for (LiteralIterator literalIt = this->LiteralsBegin();literalIt != this->LiteralsEnd();literalIt++) {
-        Literal *literal = *literalIt;
+    for (auto it = this->literalIterator();it.hasItem();it++) {
+        Literal *literal = it.item();
         literal->write(w);
         w << w.endl();
     }

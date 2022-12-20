@@ -428,9 +428,9 @@ TypeReplacer::transformTypes(TypeDictionary *dict)
       log->indent() << "Types to explode:" << log->endl();
       LOG_INDENT_REGION(log)
          {
-         for (auto it = dict->TypesBegin();it != dict->TypesEnd();it++)
+         for (auto it = dict->typesIterator();it.hasItem();it++)
             {
-            const Type *type = *it;
+            const Type *type = it.item();
             if (_typesToExplode.find(type->id()) != _typesToExplode.end())
                log->indent() << type << log->endl();
             }
@@ -441,9 +441,9 @@ TypeReplacer::transformTypes(TypeDictionary *dict)
       log->indent() << "Types to replace:" << log->endl();
       LOG_INDENT_REGION(log)
          {
-         for (auto it = dict->TypesBegin();it != dict->TypesEnd();it++)
+         for (auto it = dict->typesIterator();it.hasItem();it++)
             {
-            const Type *type = *it;
+            const Type *type = it.item();
             auto it2 = _typesToReplace.find(type->id());
             if (it2 != _typesToReplace.end())
                log->indent() << "Replace " << type << " with " << dict->LookupType(it2->second) << log->endl();
@@ -460,9 +460,9 @@ TypeReplacer::transformTypes(TypeDictionary *dict)
 
    LOG_INDENT_REGION(log)
       {
-      for (TypeIterator typeIt = dict->TypesBegin(); typeIt != dict->TypesEnd(); typeIt++)
+      for (auto it = dict->typesIterator(); it.hasItem(); it++)
          {
-         const Type *type = *typeIt;
+         const Type *type = it.item();
          transformTypeIfNeeded(type);
          }
       }
@@ -477,9 +477,9 @@ TypeReplacer::transformTypes(TypeDictionary *dict)
       log->indent() << "Types to remove in final step:" << log->endl();
       LOG_INDENT_REGION(log)
          {
-         for (auto it = dict->TypesBegin();it != dict->TypesEnd();it++)
+         for (auto it = dict->typesIterator();it.hasItem();it++)
             {
-            const Type *type = *it;
+            const Type *type = it.item();
             if (_typesToRemove.find(type) != _typesToRemove.end())
                log->indent() << type << log->endl();
             }
@@ -501,8 +501,8 @@ TypeReplacer::visitPreCompilation(Compilation * comp) {
     if (log) log->indent() << "TypeReplacer::look for new Types:" << log->endl();
     LOG_INDENT_REGION(log) {
         TypeDictionary *dict = comp->typedict();
-        for (auto it = dict->TypesBegin(); it != dict->TypesEnd(); it++) {
-            const Type *type = *it;
+        for (auto it = dict->typesIterator(); it.hasItem(); it++) {
+            const Type *type = it.item();
             transformTypeIfNeeded(type);
         }
     }

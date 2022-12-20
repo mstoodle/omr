@@ -606,8 +606,8 @@ StructTypeBuilder::StructTypeBuilder(BaseExtension *ext, Base::BaseCompilation *
 
 void
 StructTypeBuilder::createFields(LOCATION) {
-    for (auto it = _fields.iterator(); it.keepGoing(); it++) {
-        FieldInfo info = it.current();
+    for (auto it = _fields.iterator(); it.hasItem(); it++) {
+        FieldInfo info = it.item();
         _structType->addField(PASSLOC, _ext, _dict, info._name, info._type, info._offset);
     }
 }

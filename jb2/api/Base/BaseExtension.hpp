@@ -114,7 +114,6 @@ public:
     const ActionID aIfCmpUnsignedGreaterOrEqual;
     const ActionID aIfCmpUnsignedLessThan;
     const ActionID aIfCmpUnsignedLessOrEqual;
-    const ActionID aReturn;
 
     // Memory actions
     const ActionID aLoadAt;
@@ -183,8 +182,6 @@ public:
     void IfCmpUnsignedLessThan(LOCATION, Builder *b, Builder *target, Value *left, Value *right);
     void IfCmpUnsignedGreaterOrEqual(LOCATION, Builder *b, Builder *target, Value *left, Value *right);
     void IfCmpUnsignedGreaterThan(LOCATION, Builder *b, Builder *target, Value *left, Value *right);
-    void Return(LOCATION, Builder *b);
-    void Return(LOCATION, Builder *b, Value *v);
 
     // Memory operations
     Value * LoadAt(LOCATION, Builder *b, Value *ptrValue);

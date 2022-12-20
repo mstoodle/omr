@@ -31,10 +31,6 @@ namespace OMR {
 namespace JitBuilder {
 namespace Func {
 
-LocalSymbolIterator FunctionContext::endLocalSymbolIterator;
-ParameterSymbolIterator FunctionContext::endParameterSymbolIterator;
-FunctionSymbolIterator FunctionContext::endFunctionSymbolIterator;
-
 FunctionContext::FunctionContext(LOCATION, FunctionCompilation *comp, String name)
     : Context(PASSLOC, comp, NULL, NULL, NULL, 1, 1, name) {
 
@@ -52,7 +48,7 @@ FunctionContext::fComp() const {
 
 ParameterSymbol *
 FunctionContext::DefineParameter(String name, const Type * type) {
-    ParameterSymbol *parm = new ParameterSymbol(name, type, this->_parameters.size());
+    ParameterSymbol *parm = new ParameterSymbol(name, type, this->_parameters.length());
     this->_parameters.push_back(parm);
     addSymbol(parm);
     return parm;
@@ -60,7 +56,7 @@ FunctionContext::DefineParameter(String name, const Type * type) {
 
 void
 FunctionContext::DefineParameter(ParameterSymbol *parm) {
-    assert(parm->index() == this->_parameters.size());
+    assert(parm->index() == this->_parameters.length());
     this->_parameters.push_back(parm);
     addSymbol(parm);
 }
@@ -85,19 +81,40 @@ FunctionContext::DefineLocal(LocalSymbol *local) {
 
 LocalSymbol *
 FunctionContext::LookupLocal(String name) {
-    for (LocalSymbolIterator lIt = LocalsBegin(); lIt != LocalsEnd(); lIt++) {
-        LocalSymbol * local = *lIt;
+    for (auto it = locals(); it.hasItem(); it++) {
+        LocalSymbol * local = it.item();
         if (local->name() == name)
             return local;
     }
 
-    for (ParameterSymbolIterator pIt = ParametersBegin(); pIt != ParametersEnd(); pIt++) {
-        ParameterSymbol * parameter = *pIt;
+    for (auto it = parameters(); it.hasItem(); it++) {
+        ParameterSymbol * parameter = it.item();
         if (parameter->name() == name)
             return parameter;
     }
 
     return NULL;
+}
+
+LocalSymbolList
+FunctionContext::resetLocals() {
+    LocalSymbolList prev = this->_locals;
+    this->_locals.erase();
+    return prev;
+}
+
+ParameterSymbolList
+FunctionContext::resetParameters() {
+    ParameterSymbolList prev = this->_parameters;
+    this->_parameters.erase();
+    return prev;
+}
+
+FunctionSymbolList
+FunctionContext::resetFunctions() {
+    FunctionSymbolList prev = _functions;
+    _functions.erase();
+    return prev;
 }
 
 FunctionSymbol *
@@ -170,21 +187,14 @@ FunctionContext::LookupFunction(String name) {
     return sym->refine<FunctionSymbol>();
 }
 
-FunctionSymbolVector
-FunctionContext::ResetFunctions() {
-    FunctionSymbolVector prev = _functions;
-    _functions.clear();
-    return prev;
-}
-
 Symbol *
 FunctionContext::getSymbol(String name) {
     LocalSymbol *localSym = LookupLocal(name);
     if (localSym)
         return localSym;
 
-    for (FunctionSymbolIterator fIt = FunctionsBegin(); fIt != FunctionsEnd(); fIt++) {
-        FunctionSymbol * function = *fIt;
+    for (auto fIt = functions(); fIt.hasItem(); fIt++) {
+        FunctionSymbol * function = fIt.item();
         if (function->name() == name)
             return function;
     }

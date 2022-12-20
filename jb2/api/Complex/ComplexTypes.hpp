@@ -23,23 +23,13 @@
 #define COMPLEXTYPES_INCL
 
 #include <complex>
-#include <stdint.h>
 #include <map>
-#include "CreateLoc.hpp"
+#include "JBCore.hpp"
 #include "Base/BaseTypes.hpp"
-#include "IDs.hpp"
-#include "SemanticVersion.hpp"
-#include "typedefs.hpp"
 
 
 namespace OMR {
 namespace JitBuilder {
-
-class Compilation;
-class Literal;
-class Location;
-class Value;
-
 namespace Complex {
 
 class ComplexExtension;
