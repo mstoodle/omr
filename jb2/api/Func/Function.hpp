@@ -23,7 +23,6 @@
 #define FUNCTION_INCL
 
 #include <exception>
-#include <vector>
 #include "JBCore.hpp"
 
 namespace OMR {
@@ -66,16 +65,16 @@ public:
 #if 0
     ParameterSymbolIterator ParametersBegin() const;
     ParameterSymbolIterator ParametersEnd() const;
-    ParameterSymbolVector ResetParameters();
+    ParameterSymbolList ResetParameters();
 
     LocalSymbolIterator LocalsBegin() const;
     LocalSymbolIterator LocalsEnd() const;
-    LocalSymbolVector ResetLocals();
+    LocalSymbolList ResetLocals();
     LocalSymbol * LookupLocal(String name);
 
     FunctionSymbolIterator FunctionsBegin() const { return FunctionSymbolIterator(_functions); }
     FunctionSymbolIterator FunctionsEnd() const { return endFunctionIterator; }
-    FunctionSymbolVector ResetFunctions();
+    FunctionSymbolList ResetFunctions();
     FunctionSymbol *LookupFunction(String name) {
         Symbol *sym = getSymbol(name);
         if (sym == NULL || !sym->isKind<FunctionSymbol>())
@@ -123,7 +122,6 @@ protected:
     String             _lineNumber;
 
     #if 0
-    FunctionSymbolVector    _functions; // move to compiler?
     Debugger              * _debuggerObject;
     static FunctionSymbolIterator endFunctionIterator;
     #endif

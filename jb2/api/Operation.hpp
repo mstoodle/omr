@@ -1367,7 +1367,7 @@ class Switch : public OperationR0V1
       }
    virtual BuilderIterator BuildersBegin()
       {
-      std::vector<Builder *> it;
+      List<Builder *> it;
       it.push_back(_defaultTarget);
       for (auto cIt = CasesBegin(); cIt != CasesEnd(); cIt++)
          it.push_back((*cIt)->builder());
@@ -1389,7 +1389,7 @@ class Switch : public OperationR0V1
    Switch(Builder * parent, Value *selector, Builder *defaultCase, int numCases, Case ** cases);
 
    Builder *_defaultTarget;
-   std::vector<Case *> _cases;
+   List<Case *> _cases;
    };
 
 class CreateLocalArray : public OperationR1L1T1
