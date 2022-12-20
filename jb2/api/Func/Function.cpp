@@ -19,7 +19,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include <vector>
 #include "JBCore.hpp"
 #include "Func/FunctionExtension.hpp"
 #include "Func/Function.hpp"
@@ -207,12 +206,12 @@ Function::ParametersEnd() const {
     return comp()->nativeContext()->ParametersEnd();
 }
 
-ParameterSymbolVector
+ParameterSymbolList
 Function::ResetParameters() {
     return comp()->nativeContext()->ResetParameters();
 }
 
-LocalSymbolVector
+LocalSymbolList
 Function::ResetLocals() {
     return comp()->nativeContext()->ResetLocals();
 }
@@ -234,9 +233,9 @@ Function::LookupLocal(String name) {
     return NULL;
 }
 
-FunctionSymbolVector
+FunctionSymbolList
 Function::ResetFunctions() {
-    FunctionSymbolVector prev = _functions;
+    FunctionSymbolList prev = _functions;
     _functions.clear();
     return prev;
 }

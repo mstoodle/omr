@@ -206,15 +206,15 @@ struct BreakpointStepOver : public InternalBreakpoint {
     }
 
     virtual bool breakBefore(Operation *op) {
-        for (auto opIt = _stopOps.begin(); opIt != _stopOps.end(); opIt++) {
-            Operation *stopOp = *opIt;
+        for (auto opIt = _stopOps.iterator(); opIt.hasItem(); opIt++) {
+            Operation *stopOp = opIt.item();
             if (op == stopOp)
                 return fire();
         }
         return false;
     }
 
-    std::vector<Operation *> _stopOps;
+    List<Operation *> _stopOps;
 };
 
 struct BreakpointBeforeBuilder : public Breakpoint {

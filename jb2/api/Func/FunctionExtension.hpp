@@ -23,7 +23,6 @@
 #define FUNCTIONEXTENSION_INCL
 
 #include <map>
-#include <vector>
 #include "JBCore.hpp"
 
 namespace OMR {

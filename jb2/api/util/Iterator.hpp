@@ -24,7 +24,6 @@
 
 #include <assert.h>
 #include <stdarg.h>
-#include <vector>
 
 #include "../JB2.hpp"
 

@@ -22,6 +22,7 @@
 #ifndef VISITOR_INCL
 #define VISITOR_INCL
 
+#include <vector>
 #include "common.hpp"
 #include "Pass.hpp"
 

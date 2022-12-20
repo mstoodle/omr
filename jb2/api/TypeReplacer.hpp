@@ -25,7 +25,6 @@
 
 #include <map>
 #include <set>
-#include <vector>
 #include "Transformer.hpp"
 #include "Mapper.hpp"
 #include "Type.hpp"
