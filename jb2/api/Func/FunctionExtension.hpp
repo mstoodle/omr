@@ -22,28 +22,12 @@
 #ifndef FUNCTIONEXTENSION_INCL
 #define FUNCTIONEXTENSION_INCL
 
-#include <cstdarg>
 #include <map>
-#include <stdint.h>
 #include <vector>
-#include "CreateLoc.hpp"
-#include "Extension.hpp"
-#include "IDs.hpp"
-#include "SemanticVersion.hpp"
-#include "typedefs.hpp"
-#include "util/List.hpp"
-
+#include "JBCore.hpp"
 
 namespace OMR {
 namespace JitBuilder {
-
-class Builder;
-class Compilation;
-class Location;
-class Symbol;
-class Type;
-class Value;
-
 namespace Func {
 
 class Function;
@@ -143,14 +127,14 @@ protected:
     FunctionExtension *_func;
 };
 
-typedef std::vector<FunctionSymbol *> FunctionSymbolVector;
-typedef Iterator<FunctionSymbol>  FunctionSymbolIterator;
+typedef List<FunctionSymbol *> FunctionSymbolList;
+typedef FunctionSymbolList::Iterator FunctionSymbolIterator;
 
-typedef std::vector<LocalSymbol *> LocalSymbolVector;
-typedef Iterator<LocalSymbol> LocalSymbolIterator;
+typedef List<LocalSymbol *> LocalSymbolList;
+typedef LocalSymbolList::Iterator LocalSymbolIterator;
 
-typedef std::vector<ParameterSymbol *> ParameterSymbolVector;
-typedef Iterator<ParameterSymbol> ParameterSymbolIterator;
+typedef List<ParameterSymbol *> ParameterSymbolList;
+typedef ParameterSymbolList::Iterator ParameterSymbolIterator;
 
 } // namespace Func
 } // namespace JitBuilder

@@ -22,12 +22,9 @@
 #ifndef OPERATION_INCL
 #define OPERATION_INCL
 
-#include <cassert>
-#include <stdint.h>
-#include <vector>
+#include <cstdarg>
+#include "common.hpp"
 #include "CreateLoc.hpp"
-#include "IDs.hpp"
-#include "Iterator.hpp"
 #include "Mapper.hpp"
 #include "util/String.hpp"
 
@@ -72,42 +69,35 @@ public:
     virtual size_t size() const                         { return sizeof(Operation); }
     virtual bool isDynamic() const                      { return false; }
 
-    virtual LiteralIterator LiteralsBegin()             { return LiteralIterator(); }
-            LiteralIterator &LiteralsEnd()              { return literalEndIterator; }
+    virtual BuilderIterator builders()                  { return BuilderIterator(); }
+    virtual int32_t numBuilders() const                 { return 0; }
+    virtual Builder *builder(int i=0) const             { return NULL; }
+
+    virtual LiteralIterator literals()                  { return LiteralIterator(); }
     virtual int32_t numLiterals() const                 { return 0; }
     virtual Literal * literal(int i=0) const            { assert(0); return 0; }
 
-    virtual SymbolIterator SymbolsBegin()               { return SymbolIterator(); }
-            SymbolIterator &SymbolsEnd()                { return symbolEndIterator; }
+    virtual SymbolIterator symbols()                    { return SymbolIterator(); }
     virtual int32_t numSymbols() const                  { return 0; }
     virtual Symbol *symbol(int i=0) const               { assert(0); return 0; }
 
-    virtual ValueIterator OperandsBegin()               { return ValueIterator(); }
-            ValueIterator &OperandsEnd()                { return valueEndIterator; }
+    virtual ValueIterator operands()                    { return ValueIterator(); }
     virtual int32_t numOperands() const                 { return 0; }
     virtual Value * operand(int i=0) const              { return NULL; }
 
-    virtual ValueIterator ResultsBegin()                { return ValueIterator(); }
-            ValueIterator &ResultsEnd()                 { return valueEndIterator; }
+    virtual ValueIterator results()                     { return ValueIterator(); }
     virtual int32_t numResults() const                  { return 0; }
     virtual Value * result(int i=0) const               { return NULL; }
  
     // Change to mayReadShadow() and mustReadShadow
-    virtual SymbolIterator ReadSymbolsBegin()           { return SymbolIterator(); }
-            SymbolIterator ReadSymbolsEnd()             { return symbolEndIterator; }
+    virtual SymbolIterator readSymbols()                { return SymbolIterator(); }
     virtual int32_t numReadSymbols() const              { return 0; }
     virtual Symbol * readSymbol(int i=0) const          { return NULL; }
 
     // Change to mayWriteShadow() and mustWriteShadow
-    virtual SymbolIterator WrittenSymbolsBegin()        { return SymbolIterator(); }
-            SymbolIterator WrittenSymbolsEnd()          { return symbolEndIterator; }
+    virtual SymbolIterator writtenSymbols()             { return SymbolIterator(); }
     virtual int32_t numWrittenSymbols() const           { return 0; }
     virtual Symbol * writtenSymbol(int i=0) const       { return NULL; }
-
-    virtual BuilderIterator BuildersBegin()             { return BuilderIterator(); }
-            BuilderIterator &BuildersEnd()              { return builderEndIterator; }
-    virtual int32_t numBuilders() const                 { return 0; }
-    virtual Builder *builder(int i=0) const             { return NULL; }
 
 #ifdef CASES_BECOME_CORE
     virtual CaseIterator CasesBegin()                   { return CaseIterator(); }
@@ -116,8 +106,7 @@ public:
     virtual Case * getCase(int i=0) const               { return NULL; }
 #endif
 
-    virtual TypeIterator TypesBegin()                   { return TypeIterator(); }
-            TypeIterator &TypesEnd()                    { return typeEndIterator; }
+    virtual TypeIterator types()                        { return TypeIterator(); }
     virtual int32_t numTypes() const                    { return 0; }
     virtual const Type * type(int i=0) const            { return NULL; }
 
@@ -152,13 +141,6 @@ protected:
     const String _name;
     Location * _location;
     CreateLocation _creationLocation;
-
-    static BuilderIterator builderEndIterator;
-    static CaseIterator caseEndIterator;
-    static LiteralIterator literalEndIterator;
-    static SymbolIterator symbolEndIterator;
-    static TypeIterator typeEndIterator;
-    static ValueIterator valueEndIterator;
 };
 
 
@@ -177,7 +159,7 @@ public:
         if (i == 0) return _symbol;
         return NULL;
     }
-    virtual SymbolIterator SymbolsBegin() { return SymbolIterator(_symbol); }
+    virtual SymbolIterator symbols() { return SymbolIterator(_symbol); }
 
     virtual void write(TextWriter & w) const;
 
@@ -200,7 +182,7 @@ public:
         if (i == 0) return _value;
         return NULL;
     }
-    virtual ValueIterator OperandsBegin() { return ValueIterator(_value); }
+    virtual ValueIterator operands() { return ValueIterator(_value); }
 
     virtual void write(TextWriter & w) const;
 
@@ -225,7 +207,7 @@ class OperationR0T1 : public Operation
       if (i == 0) return _type;
       return NULL;
       }
-   virtual TypeIterator TypesBegin()       { return TypeIterator(_type); }
+   virtual TypeIterator types()       { return TypeIterator(_type); }
 
    protected:
    OperationR0T1(LOCATION, ActionID a, Extension *ext, Builder *parent, const Type *type)
@@ -245,7 +227,7 @@ public:
         if (i == 1) return _value;
         return NULL;
     }
-    virtual ValueIterator OperandsBegin()       { return ValueIterator(_base, _value); }
+    virtual ValueIterator operands()       { return ValueIterator(_base, _value); }
 
     virtual void write(TextWriter & w) const;
 
@@ -269,7 +251,7 @@ public:
         return NULL;
     }
 
-    virtual ValueIterator OperandsBegin()       { return ValueIterator(_value); }
+    virtual ValueIterator operands()       { return ValueIterator(_value); }
 
     virtual void write(TextWriter & w) const;
 
@@ -294,7 +276,7 @@ public:
     virtual Value * getLeft() const  { return _left; }
     virtual Value * getRight() const { return _right; }
 
-    virtual ValueIterator OperandsBegin()       { return ValueIterator(_left, _right); }
+    virtual ValueIterator operands()       { return ValueIterator(_left, _right); }
 
     virtual void write(TextWriter & w) const;
 
@@ -319,7 +301,7 @@ public:
         return NULL;
     }
 
-    virtual ValueIterator OperandsBegin() { return ValueIterator(_numValues, _values); }
+    virtual ValueIterator operands() { return ValueIterator(_numValues, _values); }
 
     virtual void write(TextWriter & w) const;
 
@@ -343,12 +325,12 @@ protected:
 class OperationR1 : public Operation {
 public:
     virtual size_t size() const                { return sizeof(OperationR1); }
-    virtual ValueIterator ResultsBegin()       { return ValueIterator(_result); }
     virtual int32_t numResults() const         { return 1; }
     virtual Value * result(int i=0) const {
         if (i == 0) return _result;
         return NULL;
     }
+    virtual ValueIterator results()       { return ValueIterator(_result); }
 
 protected:
      OperationR1(LOCATION, ActionID a, Extension *ext, Builder * parent, Value * result)
@@ -368,7 +350,7 @@ public:
         if (i == 0) return _v;
         return NULL;
     }
-    virtual LiteralIterator LiteralsBegin() { return LiteralIterator(_v); }
+    virtual LiteralIterator literals() { return LiteralIterator(_v); }
     virtual void write(TextWriter & w) const;
 
 protected:
@@ -388,7 +370,7 @@ public:
         if (i == 0) return _elementType;
         return NULL;
     }
-    virtual TypeIterator TypesBegin() { return TypeIterator(_elementType); }
+    virtual TypeIterator types() { return TypeIterator(_elementType); }
     virtual void write(TextWriter & w) const;
 
 protected:
@@ -408,7 +390,7 @@ public:
         if (i == 0) return _symbol;
         return NULL;
     }
-    virtual SymbolIterator SymbolsBegin() { return SymbolIterator(_symbol); }
+    virtual SymbolIterator symbols() { return SymbolIterator(_symbol); }
     virtual void write(TextWriter & w) const;
 
 protected:
@@ -429,7 +411,7 @@ public:
         if (i == 0) return _type;
         return NULL;
     }
-    virtual TypeIterator TypesBegin() { return TypeIterator(_type); }
+    virtual TypeIterator types() { return TypeIterator(_type); }
 
     virtual void write(TextWriter & w) const;
 
@@ -452,7 +434,7 @@ public:
         return NULL;
     }
 
-    virtual ValueIterator OperandsBegin()       { return ValueIterator(_value); }
+    virtual ValueIterator operands()       { return ValueIterator(_value); }
 
     virtual void write(TextWriter & w) const;
 
@@ -474,7 +456,7 @@ public:
         return NULL;
     }
 
-    virtual TypeIterator TypesBegin()       { return TypeIterator(_type); }
+    virtual TypeIterator types()       { return TypeIterator(_type); }
 
     virtual void write(TextWriter & w) const;
 
@@ -500,7 +482,7 @@ public:
     virtual Value * getLeft() const  { return _left; }
     virtual Value * getRight() const { return _right; }
 
-    virtual ValueIterator OperandsBegin()       { return ValueIterator(_left, _right); }
+    virtual ValueIterator operands()       { return ValueIterator(_left, _right); }
 
     virtual void write(TextWriter & w) const;
 
@@ -525,7 +507,7 @@ public:
         if (i == 0) return _type;
         return NULL;
     }
-    virtual TypeIterator TypesBegin() { return TypeIterator(_type); }
+    virtual TypeIterator types() { return TypeIterator(_type); }
 
     virtual Value * getAddress() const { return _left; }
     virtual Value * getValue() const { return _right; }
@@ -551,7 +533,7 @@ public:
         return NULL;
     }
 
-    virtual ValueIterator OperandsBegin() { return ValueIterator(_numValues, _values); }
+    virtual ValueIterator operands() { return ValueIterator(_numValues, _values); }
 
     virtual void write(TextWriter & w) const;
 
@@ -583,7 +565,7 @@ class OperationB1 : public Operation
       return NULL;
       }
 
-   virtual BuilderIterator BuildersBegin()       { return BuilderIterator(_builder); }
+   virtual BuilderIterator builders()       { return BuilderIterator(_builder); }
 
    protected:
    OperationB1(LOCATION, ActionID a, Extension *ext, Builder * parent, Builder * b)
@@ -604,7 +586,7 @@ class OperationB1R0V1 : public OperationR0V1
       if (i == 0) return _builder;
       return NULL;
       }
-   virtual BuilderIterator BuildersBegin()       { return BuilderIterator(_builder); }
+   virtual BuilderIterator builders()       { return BuilderIterator(_builder); }
 
    protected:
    OperationB1R0V1(LOCATION, ActionID a, Extension *ext, Builder * parent, Builder * b, Value * value)
@@ -625,7 +607,7 @@ class OperationB1R0V2 : public OperationR0V2
       if (i == 0) return _builder;
       return NULL;
       }
-   virtual BuilderIterator BuildersBegin()       { return BuilderIterator(_builder); }
+   virtual BuilderIterator builders()       { return BuilderIterator(_builder); }
 
    protected:
    OperationB1R0V2(LOCATION, ActionID a, Extension *ext, Builder * parent, Builder * b, Value * left, Value * right)
@@ -1083,7 +1065,7 @@ class ForLoop : public Operation
       if (i == 0) return _countsUp;
       return NULL;
       }
-   virtual LiteralIterator LiteralsBegin()             { return LiteralIterator(_countsUp); }
+   virtual LiteralIterator litIterator()             { return LiteralIterator(_countsUp); }
 
    virtual int32_t numSymbols() const                  { return 1; }
    virtual Symbol *symbol(int i=0) const

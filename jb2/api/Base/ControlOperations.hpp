@@ -271,7 +271,7 @@ public:
         if (i == 0) return _loopVariable;
         return NULL;
     }
-    virtual SymbolIterator SymbolsBegin() {
+    virtual SymbolIterator symbols() {
         return SymbolIterator(_loopVariable);
     }
 
@@ -282,12 +282,12 @@ public:
         else if (i == 2) return _bump;
         return NULL;
     }
-    virtual ValueIterator OperandsBegin() {
+    virtual ValueIterator operands() {
         return ValueIterator(_initial, _final, _bump);
     }
 
     virtual int32_t numBuilders() const {
-        return 1 + ((_loopBreak != NULL) ? 1 : 0) + ((_loopContinue != NULL) ? 1 : 0);
+        return 3;
     }
     virtual Builder * builder(int32_t i=0) const {
         if (i == 0) return _loopBody;
@@ -295,14 +295,8 @@ public:
         else if (i == 2) return _loopContinue;
         return NULL;
     }
-    virtual BuilderIterator BuildersBegin() {
-        if (_loopBreak) {
-            if (_loopContinue) {
-                return BuilderIterator(_loopBody, _loopBreak, _loopContinue);
-            }
-            return BuilderIterator(_loopBody, _loopBreak);
-        }
-        return BuilderIterator(_loopBody);
+    virtual BuilderIterator builders() {
+        return BuilderIterator(_loopBody, _loopBreak, _loopContinue);
     }
 
 protected:
@@ -313,40 +307,10 @@ protected:
     Value * _final;
     Value * _bump;
     Builder *_loopBody;
-    Builder *_loopBreak; // can be NULL
-    Builder *_loopContinue; // can be NULL
+    Builder *_loopBreak;
+    Builder *_loopContinue;
     };
 
-// eventually generalize to handle multiple return values but not needed yet
-class Op_Return : public Operation {
-    friend class BaseExtension;
-
-public:
-    virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-    virtual void write(TextWriter &w) const;
-    virtual void jbgen(JB1MethodBuilder *j1mb) const;
-
-    virtual int32_t numOperands() const { return _value ? 1 : 0; }
-    virtual Value * operand(int32_t i=0) const
-        {
-        if (i == 0)
-            return _value; // may still be NULL!
-        return NULL;
-        }
-
-    virtual ValueIterator OperandsBegin()
-        {
-        if (_value)
-            return ValueIterator(_value);
-        else
-            return OperandsEnd();
-        }
-
-protected:
-    Op_Return(LOCATION, Extension *ext, Builder * parent, ActionID aReturn);
-    Op_Return(LOCATION, Extension *ext, Builder * parent, ActionID aReturn, Value * v);
-    Value * _value;
-    };
 
 #if 0
 // keep handy during migration
@@ -535,7 +499,7 @@ class ForLoop : public Operation
         if (i == 0) return _countsUp;
         return NULL;
         }
-    virtual LiteralIterator LiteralsBegin()                 { return LiteralIterator(_countsUp); }
+    virtual LiteralIterator litIterator()                 { return LiteralIterator(_countsUp); }
 
     virtual int32_t numSymbols() const                        { return 1; }
     virtual Symbol *symbol(int i=0) const
@@ -865,4 +829,3 @@ class CreateLocalStruct : public OperationR1T1
 } // namespace OMR
 
 #endif // !defined(CONTROLOPERATIONS_INCL)
-

@@ -55,6 +55,7 @@ add_library(jb2core SHARED
 	Extension.cpp
 	InputReader.cpp
 	JB1.cpp
+	JB2.cpp
 	KindService.cpp
 	Literal.cpp
 	LiteralDictionary.cpp

@@ -53,24 +53,24 @@ TypeDictionary::TypeDictionary(Compiler *compiler, String name, TypeDictionary *
     , _name(name)
     , _nextTypeID(linkedDict->_nextTypeID)
     , _linkedDictionary(linkedDict) {
-    for (TypeIterator typeIt = linkedDict->TypesBegin(); typeIt != linkedDict->TypesEnd(); typeIt++) {
-        const Type *type = *typeIt;
+    for (auto it = linkedDict->typesIterator(); it.hasItem(); it++) {
+        const Type *type = it.item();
         internalRegisterType(type);
     }
     _nextTypeID = linkedDict->_nextTypeID;
 }
 
 TypeDictionary::~TypeDictionary() {
-    for (auto it = _ownedTypes.begin(); it != _ownedTypes.end(); it++) {
-        const Type *type = *it;
+    for (auto it = _ownedTypes.iterator(true, false, false); it.hasItem(); it++) {
+        const Type *type = it.item();
         delete type;
     }
 }
 
 const Type *
 TypeDictionary::LookupType(TypeID id) {
-    for (auto it = TypesBegin(); it != TypesEnd(); it++) {
-        const Type *type = *it;
+    for (auto it = typesIterator(); it.hasItem(); it++) {
+        const Type *type = it.item();
         if (type->id() == id)
             return type;
     }
@@ -81,12 +81,9 @@ TypeDictionary::LookupType(TypeID id) {
 void
 TypeDictionary::RemoveType(const Type *type) {
     // TODO should really collect these and do in one pass
-    for (auto it = _types.begin(); it != _types.end(); ) {
-        if (*it == type)
-            it = _types.erase(it);
-        else
-            ++it;
-   }
+    auto it = _types.find(type);
+    if (it.hasItem())
+        _types.remove(it);
 }
 
 void
@@ -95,8 +92,8 @@ TypeDictionary::write(TextWriter &w) {
     w.indentIn();
     if (this->hasLinkedDictionary())
         w.indent() << "[ linkedDictionary " << this->linkedDictionary() << " ]" << w.endl();
-    for (TypeIterator typeIt = this->TypesBegin();typeIt != this->TypesEnd();typeIt++) {
-        const Type *type = *typeIt;
+    for (auto it = this->typesIterator();it.hasItem();it++) {
+        const Type *type = it.item();
         w.indent();
         type->writeType(w, true);
         w << w.endl();

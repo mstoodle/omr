@@ -22,12 +22,8 @@
 #ifndef SYMBOLDICTIONARY_INCL
 #define SYMBOLDICTIONARY_INCL
 
-#include <stdint.h>
+#include "common.hpp"
 #include <map>
-#include <vector>
-#include "IDs.hpp"
-#include "Iterator.hpp"
-#include "typedefs.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -52,8 +48,7 @@ public:
     SymbolDictionary(Compilation *comp, String name, SymbolDictionary *linkedTypes);
     virtual ~SymbolDictionary();
 
-    SymbolIterator SymbolsBegin() const { return SymbolIterator(_symbols); }
-    SymbolIterator SymbolsEnd() const { return SymbolIterator(); }
+    SymbolListIterator symbolIterator() const { return _symbols.iterator(); }
 
     Symbol *LookupSymbol(SymbolID id);
     Symbol *LookupSymbol(String name);
@@ -74,9 +69,9 @@ protected:
     SymbolDictionaryID _id;
     Compilation * _comp;
     String _name;
-    SymbolVector _symbols;
-    SymbolVector _ownedSymbols;
-    std::map<const Type *,SymbolVector *> _symbolsByType;
+    SymbolList _symbols;
+    SymbolList _ownedSymbols;
+    std::map<const Type *,SymbolList *> _symbolsByType;
     std::map<String, Symbol *> _symbolsByName;
     SymbolID _nextSymbolID;
     SymbolDictionary * _linkedDictionary;
@@ -86,4 +81,3 @@ protected:
 } // namespace OMR
 
 #endif // defined(SYMBOLDICTIONARY_INCL)
-

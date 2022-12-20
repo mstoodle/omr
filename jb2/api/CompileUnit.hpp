@@ -22,13 +22,8 @@
 #ifndef COMPILEUNIT_INCL
 #define COMPILEUNIT_INCL
 
-#include <exception>
 #include <map>
-
-#include "CreateLoc.hpp"
-#include "IDs.hpp"
-#include "Iterator.hpp"
-#include "typedefs.hpp"
+#include "common.hpp"
 
 #define TOSTR(x) #x
 #define LINETOSTR(x) TOSTR(x)

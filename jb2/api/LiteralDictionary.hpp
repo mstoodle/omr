@@ -23,12 +23,8 @@
 #define LITERALDICTIONARY_INCL
 
 
-#include <stdint.h>
 #include <map>
-#include <vector>
-#include "IDs.hpp"
-#include "Iterator.hpp"
-#include "typedefs.hpp"
+#include "common.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -53,8 +49,7 @@ public:
     LiteralDictionary(Compilation *comp, String name, LiteralDictionary *linkedTypes);
     virtual ~LiteralDictionary();
 
-    LiteralIterator LiteralsBegin() const { return LiteralIterator(_literals); }
-    LiteralIterator LiteralsEnd() const { return LiteralIterator(); }
+    LiteralListIterator literalIterator() const { return _literals.iterator(); }
 
     Literal *LookupLiteral(LiteralID id);
     void RemoveLiteral(Literal *literal);
@@ -74,9 +69,9 @@ protected:
     LiteralDictionaryID _id;
     Compilation * _comp;
     String _name;
-    LiteralVector _literals;
-    LiteralVector _ownedLiterals;
-    std::map<const Type *,LiteralVector *> _literalsByType;
+    LiteralList _literals;
+    LiteralList _ownedLiterals;
+    std::map<const Type *,LiteralList *> _literalsByType;
     LiteralID _nextLiteralID;
     LiteralDictionary * _linkedDictionary;
     };

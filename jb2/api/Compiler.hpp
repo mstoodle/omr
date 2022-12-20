@@ -22,14 +22,9 @@
 #ifndef COMPILER_INCL
 #define COMPILER_INCL
 
-#include <cassert>
-#include <exception>
+#include "common.hpp"
 #include <map>
-#include <stdint.h>
-#include <vector>
-#include "IDs.hpp"
 #include "CreateLoc.hpp"
-#include "typedefs.hpp"
 #include "util/String.hpp"
 
 namespace OMR {
@@ -60,7 +55,7 @@ class Compiler {
     friend class Strategy;
     friend class TypeDictionary;
 
-    typedef std::vector<Pass *> PassChain;
+    typedef Array<Pass *> PassChain;
     typedef std::map<PassID, PassChain> PassRegistry;
 
 public:

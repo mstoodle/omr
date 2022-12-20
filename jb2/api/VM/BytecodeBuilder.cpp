@@ -136,8 +136,8 @@ BytecodeBuilder::writeProperties(TextWriter & w) {
     else
         w.indent() << "[ fallThroughBuilder NULL ]" << w.endl();
 
-    for (auto it=_successorBuilders.iterator(); it.keepGoing(); it++) {
-        BytecodeBuilder *succ = it.current();
+    for (auto it=_successorBuilders.iterator(); it.hasItem(); it++) {
+        BytecodeBuilder *succ = it.item();
         w.indent() << "[ successorBuilder " << succ << " ]" << w.endl();
     }
 }
@@ -152,8 +152,8 @@ BytecodeBuilder::jbgenSuccessors(JB1MethodBuilder *j1mb) const {
     if (_controlReachesEnd && _fallThroughBuilder)
         j1mb->addFallThroughBuilder(this, _fallThroughBuilder);
 
-    for (auto it = _successorBuilders.iterator(); it.keepGoing(); it++) {
-        BytecodeBuilder *succ = it.current();
+    for (auto it = _successorBuilders.iterator(); it.hasItem(); it++) {
+        BytecodeBuilder *succ = it.item();
         j1mb->addSuccessorBuilder(this, succ);
     }
 }

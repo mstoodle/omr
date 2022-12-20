@@ -22,8 +22,8 @@
 #ifndef VISITOR_INCL
 #define VISITOR_INCL
 
+#include "common.hpp"
 #include "Pass.hpp"
-#include "typedefs.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -47,8 +47,8 @@ public:
 protected:
 
     // more dramatic visit patterns can be done by overriding these functions
-    virtual void visitBuilder(Builder * b, std::vector<bool> & visited, BuilderWorklist & list);
-    virtual void visitOperations(Builder * b, std::vector<bool> & visited, BuilderWorklist & worklist);
+    virtual void visitBuilder(Builder * b, std::vector<bool> & visited, BuilderList & list);
+    virtual void visitOperations(Builder * b, std::vector<bool> & visited, BuilderList & worklist);
     virtual void abort();
 
     // subclass Visitor and override these functions as needed

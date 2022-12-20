@@ -48,7 +48,7 @@ FunctionCompilation::funcContext() const {
 }
 
 void
-FunctionCompilation::addInitialBuildersToWorklist(BuilderWorklist & worklist) {
+FunctionCompilation::addInitialBuildersToWorklist(BuilderList & worklist) {
     #if 0
     func()->addInitialBuildersToWorklist(worklist);
     #endif
@@ -92,16 +92,16 @@ FunctionCompilation::write(TextWriter &w) const {
     w.indent() << "[ name " << func()->name() << " ]" << w.endl();
     w.indent() << "[ origin " << func()->createLoc()->to_string() << " ]" << w.endl();
     w.indent() << "[ returnType " << fc->returnType() << "]" << w.endl();
-    for (ParameterSymbolIterator paramIt = fc->ParametersBegin();paramIt != fc->ParametersEnd(); paramIt++) {
-        const ParameterSymbol *parameter = *paramIt;
+    for (auto paramIt = fc->parameters();paramIt.hasItem(); paramIt++) {
+        const ParameterSymbol *parameter = paramIt.item();
         w.indent() << "[ parameter " << parameter << " ]" << w.endl();
     }
-    for (LocalSymbolIterator localIt = fc->LocalsBegin();localIt != fc->LocalsEnd();localIt++) {
-        const LocalSymbol *local = *localIt;
+    for (auto localIt = fc->locals();localIt.hasItem();localIt++) {
+        const LocalSymbol *local = localIt.item();
         w.indent() << "[ local " << local << " ]" << w.endl();
     }
-    for (FunctionSymbolIterator functionIt = fc->FunctionsBegin();functionIt != fc->FunctionsEnd();functionIt++) {
-        const FunctionSymbol *function = *functionIt;
+    for (auto functionIt = fc->functions();functionIt.hasItem();functionIt++) {
+        const FunctionSymbol *function = functionIt.item();
         w.indent() << "[ function " << function << " ]" << w.endl();
     }
     w.indent() << "[ entryPoint " << fc->builderEntryPoint() << " ]" << w.endl();
@@ -116,16 +116,16 @@ FunctionCompilation::constructJB1Function(JB1MethodBuilder *j1mb) {
     j1mb->FunctionLine(func()->lineNumber());
     j1mb->FunctionReturnType(funcContext()->returnType());
 
-    for (ParameterSymbolIterator paramIt = funcContext()->ParametersBegin();paramIt != funcContext()->ParametersEnd(); paramIt++) {
-        const ParameterSymbol *parameter = *paramIt;
+    for (auto paramIt = funcContext()->parameters();paramIt.hasItem(); paramIt++) {
+        const ParameterSymbol *parameter = paramIt.item();
         j1mb->Parameter(parameter->name(), parameter->type());
     }
-    for (LocalSymbolIterator localIt = funcContext()->LocalsBegin();localIt != funcContext()->LocalsEnd();localIt++) {
-        const LocalSymbol *symbol = *localIt;
+    for (auto localIt = funcContext()->locals();localIt.hasItem();localIt++) {
+        const LocalSymbol *symbol = localIt.item();
         j1mb->Local(symbol->name(), symbol->type());
     }
-    for (FunctionSymbolIterator fnIt = funcContext()->FunctionsBegin();fnIt != funcContext()->FunctionsEnd();fnIt++) {
-        const FunctionSymbol *fSym = *fnIt;
+    for (auto fnIt = funcContext()->functions();fnIt.hasItem();fnIt++) {
+        const FunctionSymbol *fSym = fnIt.item();
         const FunctionType *fType = fSym->functionType();
         j1mb->DefineFunction(fSym->name(),
                              fSym->fileName(),
@@ -162,8 +162,8 @@ FunctionCompilation::replaceTypes(TypeReplacer *repl) {
 
     // replace parameters if needed, creating new Symbols if needed
     bool changeSomeParm = false;
-    for (auto pIt = fc->ParametersBegin(); pIt != fc->ParametersEnd(); pIt++) {
-        ParameterSymbol *parm = *pIt;
+    for (auto pIt = fc->parameters(); pIt.hasItem(); pIt++) {
+        ParameterSymbol *parm = pIt.item();
         if (repl->isModified(parm->type())) {
             changeSomeParm = true;
             break;
@@ -171,10 +171,10 @@ FunctionCompilation::replaceTypes(TypeReplacer *repl) {
     }
 
     if (changeSomeParm) {
-        ParameterSymbolVector prevParameters = fc->ResetParameters();
+        ParameterSymbolList prevParameters = fc->resetParameters();
         int32_t parmIndex = 0;
-        for (auto pIt = prevParameters.begin(); pIt != prevParameters.end(); pIt++) {
-            ParameterSymbol *parm = *pIt;
+        for (auto pIt = prevParameters.iterator(); pIt.hasItem(); pIt++) {
+            ParameterSymbol *parm = pIt.item();
             const Type *type = parm->type();
             SymbolMapper *parmSymMapper = new SymbolMapper();
             if (repl->isModified(type)) {
@@ -213,8 +213,8 @@ FunctionCompilation::replaceTypes(TypeReplacer *repl) {
 
     // replace locals if needed, creating new Symbols if needed
     bool changeSomeLocal = false;
-    for (auto lIt = fc->LocalsBegin(); lIt != fc->LocalsEnd(); lIt++) {
-        Symbol *local = *lIt;
+    for (auto lIt = fc->locals(); lIt.hasItem(); lIt++) {
+        Symbol *local = lIt.item();
         if (repl->isModified(local->type())) {
             changeSomeLocal = true;
             break;
@@ -222,9 +222,9 @@ FunctionCompilation::replaceTypes(TypeReplacer *repl) {
     }
 
     if (changeSomeLocal) {
-        LocalSymbolVector locals = fc->ResetLocals();
-        for (auto lIt = locals.begin(); lIt != locals.end(); lIt++) {
-            LocalSymbol *local = *lIt;
+        LocalSymbolList locals = fc->resetLocals();
+        for (auto lIt = locals.iterator(); lIt.hasItem(); lIt++) {
+            LocalSymbol *local = lIt.item();
             const Type *type = local->type();
             if (log) log->indent() << "Local " << local->name() << " (" << type->name() << " t" << type->id() << "):" << log->endl();
 
@@ -257,8 +257,8 @@ FunctionCompilation::replaceTypes(TypeReplacer *repl) {
 
     // replace functions if needed, creating new Symbols if needed
     bool changeSomeFunction = false;
-    for (auto fnIt = fc->FunctionsBegin(); fnIt != fc->FunctionsEnd(); fnIt++) {
-        FunctionSymbol *function = *fnIt;
+    for (auto fnIt = fc->functions(); fnIt.hasItem(); fnIt++) {
+        FunctionSymbol *function = fnIt.item();
         if (repl->isModified(function->functionType())) {
             changeSomeFunction = true;
             break;
@@ -266,9 +266,9 @@ FunctionCompilation::replaceTypes(TypeReplacer *repl) {
     }
  
     if (changeSomeFunction) {
-        FunctionSymbolVector functions = fc->ResetFunctions();
-        for (auto fnIt = functions.begin(); fnIt != functions.end(); fnIt++) {
-            FunctionSymbol *function = *fnIt;
+        FunctionSymbolList functions = fc->resetFunctions();
+        for (auto fnIt = functions.iterator(); fnIt.hasItem(); fnIt++) {
+            FunctionSymbol *function = fnIt.item();
             const FunctionType *type = function->functionType();
             if (log) log->indent() << "Function " << function->name() << " (" << type->name() << " t" << type->id() << "):" << log->endl();
 
