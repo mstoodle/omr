@@ -102,8 +102,8 @@ ComplexExtensionChecker::failValidateReal(LOCATION, Builder *b, Value *value) {
 
 Value *
 ComplexExtension::Real(LOCATION, Builder *b, Value *value) {
-    for (auto it = _checkers.begin(); it != _checkers.end(); it++) {
-        ComplexExtensionChecker *checker = static_cast<ComplexExtensionChecker *>(*it);
+    for (auto it = _checkers.iterator(); it.hasItem(); it++) {
+        ComplexExtensionChecker *checker = it.item();
         if (checker->validateReal(PASSLOC, b, value))
             break;
     }
@@ -134,8 +134,8 @@ ComplexExtensionChecker::failValidateImag(LOCATION, Builder *b, Value *value) {
 
 Value *
 ComplexExtension::Imag(LOCATION, Builder *b, Value *value) {
-    for (auto it = _checkers.begin(); it != _checkers.end(); it++) {
-        ComplexExtensionChecker *checker = static_cast<ComplexExtensionChecker *>(*it);
+    for (auto it = _checkers.iterator(); it.hasItem(); it++) {
+        ComplexExtensionChecker *checker = it.item();
         if (checker->validateImag(PASSLOC, b, value))
             break;
     }
@@ -166,8 +166,8 @@ ComplexExtensionChecker::failValidateConjugate(LOCATION, Builder *b, Value *valu
 
 Value *
 ComplexExtension::Conjugate(LOCATION, Builder *b, Value *value) {
-    for (auto it = _checkers.begin(); it != _checkers.end(); it++) {
-        ComplexExtensionChecker *checker = static_cast<ComplexExtensionChecker *>(*it);
+    for (auto it = _checkers.iterator(); it.hasItem(); it++) {
+        ComplexExtensionChecker *checker = it.item();
         if (checker->validateConjugate(PASSLOC, b, value))
             break;
     }
@@ -198,8 +198,8 @@ ComplexExtensionChecker::failValidateMagnitude(LOCATION, Builder *b, Value *valu
 
 Value *
 ComplexExtension::Magnitude(LOCATION, Builder *b, Value *value) {
-    for (auto it = _checkers.begin(); it != _checkers.end(); it++) {
-        ComplexExtensionChecker *checker = static_cast<ComplexExtensionChecker *>(*it);
+    for (auto it = _checkers.iterator(); it.hasItem(); it++) {
+        ComplexExtensionChecker *checker = it.item();
         if (checker->validateMagnitude(PASSLOC, b, value))
             break;
     }
