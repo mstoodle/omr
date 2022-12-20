@@ -104,7 +104,7 @@ protected:
     //uint32_t                _numExitPoints;
     //Builder              ** _builderExitPoints;
 
-    //std::vector<Location *> _locations;
+    //List<Location *>        _locations;
 };
 
 } // namespace JitBuilder

@@ -22,7 +22,6 @@
 #ifndef FUNCTIONCONTEXT_INCL
 #define FUNCTIONCONTEXT_INCL
 
-#include <vector>
 #include "JBCore.hpp"
 #include "Func/FunctionExtension.hpp"
 
