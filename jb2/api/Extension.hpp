@@ -22,11 +22,8 @@
 #ifndef EXTENSION_INCL
 #define EXTENSION_INCL
 
-#include <vector>
+#include "common.hpp"
 #include "CreateLoc.hpp"
-#include "IDs.hpp"
-#include "Type.hpp" // for TypeKind
-#include "typedefs.hpp"
 #include "util/String.hpp"
 
 namespace OMR {
@@ -65,7 +62,7 @@ protected:
     String _name;
     Compiler *_compiler;
     CreateLocation _createLoc;
-    std::vector<const Type *> _types;
+    Array<const Type *> _types;
 
 public:
     // 
@@ -100,7 +97,7 @@ protected:
     Value *createValue(const Builder *parent, const Type *type);
     void addOperation(Builder *b, Operation *op);
 
-    virtual uint64_t numTypes() const { return static_cast<uint64_t>(_types.size()); }
+    virtual uint64_t numTypes() const { return static_cast<uint64_t>(_types.length()); }
 
     Builder *EntryBuilder(LOCATION, Compilation *comp, Context *context, String name="");
     Builder *ExitBuilder(LOCATION, Compilation *comp, Context *context, String name="");

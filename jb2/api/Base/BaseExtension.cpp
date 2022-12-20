@@ -93,7 +93,6 @@ BaseExtension::BaseExtension(LOCATION, Compiler *compiler, bool extended, String
     , aIfCmpUnsignedGreaterOrEqual(registerAction(String("IfCmpUnsignedGreaterOrEqual")))
     , aIfCmpUnsignedLessThan(registerAction(String("IfCmpUnsignedLessThan")))
     , aIfCmpUnsignedLessOrEqual(registerAction(String("IfCmpUnsignedLessOrEqual")))
-    , aReturn(registerAction(String("Return")))
     , CompileFail_BadInputTypes_Add(registerReturnCode("CompileFail_BadInputTypes_Add"))
     , CompileFail_BadInputTypes_ConvertTo(registerReturnCode("CompileFail_BadInputTypes_ConvertTo"))
     , CompileFail_BadInputTypes_Mul(registerReturnCode("CompileFail_BadInputTypes_Mul"))
@@ -226,8 +225,8 @@ BaseExtensionChecker::failValidateAdd(LOCATION, Builder *b, Value *left, Value *
 
 Value *
 BaseExtension::Add(LOCATION, Builder *b, Value *left, Value *right) {
-    for (auto it = _checkers.iterator(); it.keepGoing(); it++) {
-        BaseExtensionChecker *checker = it.current();
+    for (auto it = _checkers.iterator(); it.hasItem(); it++) {
+        BaseExtensionChecker *checker = it.item();
         if (checker->validateAdd(PASSLOC, b, left, right))
             break;
     }
@@ -284,8 +283,8 @@ BaseExtensionChecker::failValidateConvertTo(LOCATION, Builder *b, const Type *ty
 
 Value *
 BaseExtension::ConvertTo(LOCATION, Builder *b, const Type *type, Value *value) {
-    for (auto it = _checkers.iterator(); it.keepGoing(); it++) {
-        BaseExtensionChecker *checker = it.current();
+    for (auto it = _checkers.iterator(); it.hasItem(); it++) {
+        BaseExtensionChecker *checker = it.item();
         if (checker->validateConvertTo(PASSLOC, b, type, value))
             break;
     }
@@ -335,8 +334,8 @@ BaseExtensionChecker::failValidateMul(LOCATION, Builder *b, Value *left, Value *
 
 Value *
 BaseExtension::Mul(LOCATION, Builder *b, Value *left, Value *right) {
-    for (auto it = _checkers.iterator(); it.keepGoing(); it++) {
-        BaseExtensionChecker *checker = it.current();
+    for (auto it = _checkers.iterator(); it.hasItem(); it++) {
+        BaseExtensionChecker *checker = it.item();
         if (checker->validateMul(PASSLOC, b, left, right))
             break;
     }
@@ -392,8 +391,8 @@ BaseExtensionChecker::failValidateSub(LOCATION, Builder *b, Value *left, Value *
 
 Value *
 BaseExtension::Sub(LOCATION, Builder *b, Value *left, Value *right) {
-    for (auto it = _checkers.iterator(); it.keepGoing(); it++) {
-        BaseExtensionChecker *checker = it.current();
+    for (auto it = _checkers.iterator(); it.hasItem(); it++) {
+        BaseExtensionChecker *checker = it.item();
         if (checker->validateSub(PASSLOC, b, left, right))
             break;
     }
@@ -442,8 +441,8 @@ BaseExtensionChecker::failValidateCall(LOCATION, Builder *b, Func::FunctionSymbo
 Value *
 BaseExtension::Call(LOCATION, Builder *b, Func::FunctionSymbol *target, ...) {
     const Func::FunctionType *tgtType = target->functionType();
-    for (auto it = _checkers.iterator(); it.keepGoing(); it++) {
-        BaseExtensionChecker *checker = it.current();
+    for (auto it = _checkers.iterator(); it.hasItem(); it++) {
+        BaseExtensionChecker *checker = it.item();
         std::va_list args;
         va_start(args, target);
         if (checker->validateCall(PASSLOC, b, target, args))
@@ -501,8 +500,8 @@ BaseExtensionChecker::failValidateForLoopUp(LOCATION, Builder *b, Func::LocalSym
 ForLoopBuilder *
 BaseExtension::ForLoopUp(LOCATION, Builder *b, Func::LocalSymbol *loopVariable,
                          Value *initial, Value *final, Value *bump) {
-    for (auto it = _checkers.iterator(); it.keepGoing(); it++) {
-        BaseExtensionChecker *checker = it.current();
+    for (auto it = _checkers.iterator(); it.hasItem(); it++) {
+        BaseExtensionChecker *checker = it.item();
         if (checker->validateForLoopUp(PASSLOC, b, loopVariable, initial, final, bump))
             break;
     }
@@ -590,8 +589,8 @@ BaseExtensionChecker::failValidateIfCmpZero(LOCATION, Builder *b, Builder *targe
 
 void
 BaseExtension::IfCmpEqual(LOCATION, Builder *b, Builder *target, Value *left, Value *right) {
-    for (auto it = _checkers.iterator(); it.keepGoing(); it++) {
-        BaseExtensionChecker *checker = it.current();
+    for (auto it = _checkers.iterator(); it.hasItem(); it++) {
+        BaseExtensionChecker *checker = it.item();
         if (checker->validateIfCmp(PASSLOC, b, target, left, right, CompileFail_BadInputTypes_IfCmpEqual, "IfCmpEqual"))
             break;
     }
@@ -601,8 +600,8 @@ BaseExtension::IfCmpEqual(LOCATION, Builder *b, Builder *target, Value *left, Va
 
 void
 BaseExtension::IfCmpEqualZero(LOCATION, Builder *b, Builder *target, Value *value) {
-    for (auto it = _checkers.iterator(); it.keepGoing(); it++) {
-        BaseExtensionChecker *checker = it.current();
+    for (auto it = _checkers.iterator(); it.hasItem(); it++) {
+        BaseExtensionChecker *checker = it.item();
         if (checker->validateIfCmpZero(PASSLOC, b, target, value, CompileFail_BadInputTypes_IfCmpEqualZero, "IfCmpEqualZero"))
             break;
     }
@@ -612,8 +611,8 @@ BaseExtension::IfCmpEqualZero(LOCATION, Builder *b, Builder *target, Value *valu
 
 void
 BaseExtension::IfCmpGreaterThan(LOCATION, Builder *b, Builder *target, Value *left, Value *right) {
-    for (auto it = _checkers.iterator(); it.keepGoing(); it++) {
-        BaseExtensionChecker *checker = it.current();
+    for (auto it = _checkers.iterator(); it.hasItem(); it++) {
+        BaseExtensionChecker *checker = it.item();
         if (checker->validateIfCmp(PASSLOC, b, target, left, right, CompileFail_BadInputTypes_IfCmpGreaterThan, "IfCmpGreaterThan"))
             break;
     }
@@ -623,8 +622,8 @@ BaseExtension::IfCmpGreaterThan(LOCATION, Builder *b, Builder *target, Value *le
 
 void
 BaseExtension::IfCmpGreaterOrEqual(LOCATION, Builder *b, Builder *target, Value *left, Value *right) {
-    for (auto it = _checkers.iterator(); it.keepGoing(); it++) {
-        BaseExtensionChecker *checker = it.current();
+    for (auto it = _checkers.iterator(); it.hasItem(); it++) {
+        BaseExtensionChecker *checker = it.item();
         if (checker->validateIfCmp(PASSLOC, b, target, left, right, CompileFail_BadInputTypes_IfCmpGreaterOrEqual, "IfCmpGreaterOrEqual"))
             break;
     }
@@ -634,8 +633,8 @@ BaseExtension::IfCmpGreaterOrEqual(LOCATION, Builder *b, Builder *target, Value 
 
 void
 BaseExtension::IfCmpLessThan(LOCATION, Builder *b, Builder *target, Value *left, Value *right) {
-    for (auto it = _checkers.iterator(); it.keepGoing(); it++) {
-        BaseExtensionChecker *checker = it.current();
+    for (auto it = _checkers.iterator(); it.hasItem(); it++) {
+        BaseExtensionChecker *checker = it.item();
         if (checker->validateIfCmp(PASSLOC, b, target, left, right, CompileFail_BadInputTypes_IfCmpLessThan, "IfCmpLessThan"))
             break;
     }
@@ -645,8 +644,8 @@ BaseExtension::IfCmpLessThan(LOCATION, Builder *b, Builder *target, Value *left,
 
 void
 BaseExtension::IfCmpLessOrEqual(LOCATION, Builder *b, Builder *target, Value *left, Value *right) {
-    for (auto it = _checkers.iterator(); it.keepGoing(); it++) {
-        BaseExtensionChecker *checker = it.current();
+    for (auto it = _checkers.iterator(); it.hasItem(); it++) {
+        BaseExtensionChecker *checker = it.item();
         if (checker->validateIfCmp(PASSLOC, b, target, left, right, CompileFail_BadInputTypes_IfCmpLessOrEqual, "IfCmpLessOrEqual"))
             break;
     }
@@ -656,8 +655,8 @@ BaseExtension::IfCmpLessOrEqual(LOCATION, Builder *b, Builder *target, Value *le
 
 void
 BaseExtension::IfCmpNotEqual(LOCATION, Builder *b, Builder *target, Value *left, Value *right) {
-    for (auto it = _checkers.iterator(); it.keepGoing(); it++) {
-        BaseExtensionChecker *checker = it.current();
+    for (auto it = _checkers.iterator(); it.hasItem(); it++) {
+        BaseExtensionChecker *checker = it.item();
         if (checker->validateIfCmp(PASSLOC, b, target, left, right, CompileFail_BadInputTypes_IfCmpNotEqual, "IfCmpNotEqual"))
             break;
     }
@@ -667,8 +666,8 @@ BaseExtension::IfCmpNotEqual(LOCATION, Builder *b, Builder *target, Value *left,
 
 void
 BaseExtension::IfCmpNotEqualZero(LOCATION, Builder *b, Builder *target, Value *value) {
-    for (auto it = _checkers.iterator(); it.keepGoing(); it++) {
-        BaseExtensionChecker *checker = it.current();
+    for (auto it = _checkers.iterator(); it.hasItem(); it++) {
+        BaseExtensionChecker *checker = it.item();
         if (checker->validateIfCmpZero(PASSLOC, b, target, value, CompileFail_BadInputTypes_IfCmpNotEqualZero, "IfCmpNotEqualZero"))
             break;
     }
@@ -678,8 +677,8 @@ BaseExtension::IfCmpNotEqualZero(LOCATION, Builder *b, Builder *target, Value *v
 
 void
 BaseExtension::IfCmpUnsignedGreaterThan(LOCATION, Builder *b, Builder *target, Value *left, Value *right) {
-    for (auto it = _checkers.iterator(); it.keepGoing(); it++) {
-        BaseExtensionChecker *checker = it.current();
+    for (auto it = _checkers.iterator(); it.hasItem(); it++) {
+        BaseExtensionChecker *checker = it.item();
         if (checker->validateIfCmp(PASSLOC, b, target, left, right, CompileFail_BadInputTypes_IfCmpUnsignedGreaterThan, "IfCmpUnsignedGreaterThan"))
             break;
     }
@@ -689,8 +688,8 @@ BaseExtension::IfCmpUnsignedGreaterThan(LOCATION, Builder *b, Builder *target, V
 
 void
 BaseExtension::IfCmpUnsignedGreaterOrEqual(LOCATION, Builder *b, Builder *target, Value *left, Value *right) {
-    for (auto it = _checkers.iterator(); it.keepGoing(); it++) {
-        BaseExtensionChecker *checker = it.current();
+    for (auto it = _checkers.iterator(); it.hasItem(); it++) {
+        BaseExtensionChecker *checker = it.item();
         if (checker->validateIfCmp(PASSLOC, b, target, left, right, CompileFail_BadInputTypes_IfCmpUnsignedGreaterOrEqual, "IfCmpUnsignedGreaterOrEqual"))
             break;
     }
@@ -700,8 +699,8 @@ BaseExtension::IfCmpUnsignedGreaterOrEqual(LOCATION, Builder *b, Builder *target
 
 void
 BaseExtension::IfCmpUnsignedLessThan(LOCATION, Builder *b, Builder *target, Value *left, Value *right) {
-    for (auto it = _checkers.iterator(); it.keepGoing(); it++) {
-        BaseExtensionChecker *checker = it.current();
+    for (auto it = _checkers.iterator(); it.hasItem(); it++) {
+        BaseExtensionChecker *checker = it.item();
         if (checker->validateIfCmp(PASSLOC, b, target, left, right, CompileFail_BadInputTypes_IfCmpUnsignedLessThan, "IfCmpUnsignedLessThan"))
             break;
     }
@@ -711,8 +710,8 @@ BaseExtension::IfCmpUnsignedLessThan(LOCATION, Builder *b, Builder *target, Valu
 
 void
 BaseExtension::IfCmpUnsignedLessOrEqual(LOCATION, Builder *b, Builder *target, Value *left, Value *right) {
-    for (auto it = _checkers.iterator(); it.keepGoing(); it++) {
-        BaseExtensionChecker *checker = it.current();
+    for (auto it = _checkers.iterator(); it.hasItem(); it++) {
+        BaseExtensionChecker *checker = it.item();
         if (checker->validateIfCmp(PASSLOC, b, target, left, right, CompileFail_BadInputTypes_IfCmpUnsignedLessOrEqual, "IfCmpUnsignedLessOrEqual"))
             break;
     }
@@ -720,15 +719,6 @@ BaseExtension::IfCmpUnsignedLessOrEqual(LOCATION, Builder *b, Builder *target, V
     addOperation(b, new Op_IfCmpUnsignedLessOrEqual(PASSLOC, this, b, aIfCmpUnsignedLessOrEqual, target, left, right));
 }
 
-void
-BaseExtension::Return(LOCATION, Builder *b) {
-    addOperation(b, new Op_Return(PASSLOC, this, b, this->aReturn));
-}
-
-void
-BaseExtension::Return(LOCATION, Builder *b, Value *v) {
-    addOperation(b, new Op_Return(PASSLOC, this, b, this->aReturn, v));
-}
 
 //
 // Memory operations

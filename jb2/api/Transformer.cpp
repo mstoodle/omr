@@ -68,7 +68,7 @@ Transformer::performTransformation(Operation * op, Builder * transformed, String
 }
 
 void
-Transformer::visitOperations(Builder *b, std::vector<bool> & visited, BuilderWorklist & worklist) {
+Transformer::visitOperations(Builder *b, std::vector<bool> & visited, BuilderList & worklist) {
     TextWriter * log = _comp->logger(traceEnabled());
 
     // little bit more complicated than usual because we may replace the first operation and have to restart iteration
@@ -86,8 +86,8 @@ Transformer::visitOperations(Builder *b, std::vector<bool> & visited, BuilderWor
                     walkOp->setParent(b);
 
                     // scan transformed operations for builder objects we need to traverse
-                    for (BuilderIterator bIt = walkOp->BuildersBegin(); bIt != walkOp->BuildersEnd(); bIt++) {
-                        Builder *inner_b = *bIt;
+                    for (BuilderIterator bIt = walkOp->builders(); bIt.hasItem(); bIt++) {
+                        Builder *inner_b = bIt.item();
                         if (inner_b && !visited[inner_b->id()])
                             worklist.push_front(inner_b);
                     }
@@ -96,8 +96,8 @@ Transformer::visitOperations(Builder *b, std::vector<bool> & visited, BuilderWor
             }
         }
         else {
-            for (BuilderIterator bIt = op->BuildersBegin(); bIt != op->BuildersEnd(); bIt++) {
-                Builder * inner_b = *bIt;
+            for (BuilderIterator bIt = op->builders(); bIt.hasItem(); bIt++) {
+                Builder * inner_b = bIt.item();
                 if (inner_b)
                     worklist.push_front(inner_b);
             }

@@ -142,8 +142,8 @@ Builder::writeProperties(TextWriter & w) const {
     if (numChildren() > 0) {
         w.indent() << "[ children" << w.endl();
         w.indentIn();
-        for (BuilderIterator bIt = ChildrenBegin(); bIt != ChildrenEnd(); bIt++) {
-             Builder *child = *bIt;
+        for (BuilderListIterator it = childrenIterator(); it.hasItem(); it++) {
+             Builder *child = it.item();
              w.indent() << "[ " << child << " ]" << w.endl();
          }
          w.indentOut();

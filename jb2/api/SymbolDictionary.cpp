@@ -25,7 +25,6 @@
 #include "TextWriter.hpp"
 #include "Type.hpp"
 #include "Value.hpp"
-#include "typedefs.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -56,24 +55,24 @@ SymbolDictionary::SymbolDictionary(Compilation *comp, String name, SymbolDiction
     , _nextSymbolID(linkedDictionary->_nextSymbolID)
     , _linkedDictionary(linkedDictionary) {
 
-    for (SymbolIterator symIt = linkedDictionary->SymbolsBegin(); symIt != linkedDictionary->SymbolsEnd(); symIt++) {
-         Symbol *sym = *symIt;
+    for (auto it = linkedDictionary->symbolIterator(); it.hasItem(); it++) {
+         Symbol *sym = it.item();
          internalRegisterSymbol(sym);
     }
     _nextSymbolID = linkedDictionary->_nextSymbolID;
 }
 
 SymbolDictionary::~SymbolDictionary() {
-    for (auto it = _ownedSymbols.begin(); it != _ownedSymbols.end(); it++) {
-        Symbol *sym = *it;
+    for (auto it = _ownedSymbols.iterator(); it.hasItem(); it++) {
+        Symbol *sym = it.item();
         delete sym;
     }
 }
 
 Symbol *
 SymbolDictionary::LookupSymbol(uint64_t id) {
-    for (auto it = SymbolsBegin(); it != SymbolsEnd(); it++) {
-        Symbol *sym = *it;
+    for (auto it = symbolIterator(); it.hasItem(); it++) {
+        Symbol *sym = it.item();
         if (sym->id() == id)
             return sym;
     }
@@ -92,25 +91,21 @@ SymbolDictionary::LookupSymbol(String name) {
 
 void
 SymbolDictionary::RemoveSymbol(Symbol *sym) {
-    // TODO: should really collect these and do in one pass
-    for (auto it = _symbols.begin(); it != _symbols.end(); ) {
-       if (*it == sym)
-          it = _symbols.erase(it);
-       else
-          ++it;
-   }
+    auto it = _symbols.find(sym);
+    if (it.hasItem())
+        _symbols.remove(it);
 }
 
 void
 SymbolDictionary::internalRegisterSymbol(Symbol *symbol) {
-    SymbolVector *typeList = NULL;
+    SymbolList *typeList = NULL;
     const Type *type = symbol->type();
     auto it = _symbolsByType.find(type);
     if (it != _symbolsByType.end()) {
         typeList = it->second;
     }
     else {
-        typeList = new SymbolVector;
+        typeList = new SymbolList;
         _symbolsByType.insert({type, typeList});
     }
     typeList->push_back(symbol);
@@ -132,8 +127,8 @@ SymbolDictionary::write(TextWriter &w) {
     if (this->hasLinkedDictionary())
         w.indent() << "[ linkedDictionary " << this->linkedDictionary() << " ]" << w.endl();
 
-    for (SymbolIterator symbolIt = this->SymbolsBegin();symbolIt != this->SymbolsEnd();symbolIt++) {
-        Symbol *symbol = *symbolIt;
+    for (auto it = this->symbolIterator();it.hasItem();it++) {
+        Symbol *symbol = it.item();
         w.indent();
         symbol->write(w);
     }

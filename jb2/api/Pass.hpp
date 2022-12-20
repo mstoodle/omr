@@ -22,10 +22,8 @@
 #ifndef PASS_INCL
 #define PASS_INCL
 
-#include "CreateLoc.hpp"
-#include "IDs.hpp"
+#include "common.hpp"
 #include "Loggable.hpp"
-#include "typedefs.hpp"
 #include "util/String.hpp"
 
 namespace OMR {

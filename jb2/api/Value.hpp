@@ -22,9 +22,7 @@
 #ifndef VALUE_INCL
 #define VALUE_INCL
 
-#include <stdint.h>
-#include "IDs.hpp"
-#include "util/List.hpp"
+#include "common.hpp"
 
 namespace OMR {
 namespace JitBuilder {

@@ -22,6 +22,7 @@
 #ifndef OMR_JITBUILDER_JBCORE_INCL
 #define OMR_JITBUILDER_JBCORE_INCL
 
+#include "common.hpp"
 #include "Builder.hpp"
 #include "Compilation.hpp"
 #include "CompiledBody.hpp"
@@ -31,9 +32,7 @@
 #include "Context.hpp"
 #include "CreateLoc.hpp"
 #include "Extension.hpp"
-#include "IDs.hpp"
 #include "InputReader.hpp"
-#include "Iterator.hpp"
 #include "JB1.hpp"
 #include "JB1CodeGenerator.hpp"
 #include "JB1MethodBuilder.hpp"
@@ -57,8 +56,6 @@
 #include "TypeReplacer.hpp"
 #include "Value.hpp"
 #include "Visitor.hpp"
-#include "typedefs.hpp"
-#include "util/List.hpp"
 #include "util/String.hpp"
 
 #endif // defined(OMR_JITBUILDER_JBCORE_INCL)

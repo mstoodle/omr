@@ -23,11 +23,8 @@
 #define COMPILATION_INCL
 
 
-#include <stdint.h>
+#include "common.hpp"
 #include "CreateLoc.hpp"
-#include "IDs.hpp"
-#include "Iterator.hpp"
-#include "typedefs.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -88,8 +85,7 @@ class Compilation {
 
     TransformationID getTransformationID() { return _nextTransformationID++; }
 
-    BuilderIterator buildersBegin() { return BuilderIterator(_builders); }
-    BuilderIterator buildersEnd() { return endBuilderIterator; }
+    BuilderIterator buildersIterator() { return _builders.fwdIterator(); }
 
     void setLogger(TextWriter * logger) { _logger = logger; }
     TextWriter * logger(bool enabled=true) const { return enabled ? _logger : NULL; }
@@ -106,7 +102,7 @@ class Compilation {
 protected:
     void setContext(Context *context) { _context = context; }
 
-    virtual void addInitialBuildersToWorklist(BuilderWorklist & worklist);
+    virtual void addInitialBuildersToWorklist(BuilderList & worklist);
     Literal *registerLiteral(LOCATION, const Type *type, const LiteralBytes *value);
 
     BuilderID getBuilderID() { return _nextBuilderID++; }
@@ -145,8 +141,7 @@ protected:
 
     TextWriter * _logger;
 
-
-    BuilderVector _builders;
+    Array<Builder *> _builders;
 
     static BuilderIterator endBuilderIterator;
     static LiteralIterator endLiteralIterator;

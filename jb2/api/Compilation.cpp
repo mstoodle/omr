@@ -70,9 +70,9 @@ Compilation::~Compilation() {
 }
 
 void
-Compilation::addInitialBuildersToWorklist(BuilderWorklist & worklist) {
-    for (auto it = _builders.begin();it != _builders.end(); it++) {
-        Builder *b = *it;
+Compilation::addInitialBuildersToWorklist(BuilderList & worklist) {
+    for (auto it = _builders.iterator();it.hasItem(); it++) {
+        Builder *b = it.item();
         worklist.push_back(b);
     }
 }

@@ -391,40 +391,6 @@ Op_IfCmpUnsignedLessOrEqual::jbgen(JB1MethodBuilder *j1mb) const {
     j1mb->IfCmpUnsignedLessOrEqual(location(), parent(), builder(), operand(0), operand(1));
 }
 
-//
-// Return
-//
-Op_Return::Op_Return(LOCATION, Extension *ext, Builder * parent, ActionID aReturn)
-    : Operation(PASSLOC, aReturn, ext, parent), _value(NULL) {
-    parent->setControlReachesEnd(false);
-}
-
-Op_Return::Op_Return(LOCATION, Extension *ext, Builder * parent, ActionID aReturn, Value * v)
-    : Operation(PASSLOC, aReturn, ext, parent), _value(v) {
-    parent->setControlReachesEnd(false);
-}
-
-Operation *
-Op_Return::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    if (NULL != _value)
-        return new Op_Return(PASSLOC, this->_ext, b, this->action(), cloner->operand());
-    else
-        return new Op_Return(PASSLOC, this->_ext, b, this->action());
-}
-
-void
-Op_Return::write(TextWriter & w) const {
-    w << name();
-    if (_value)
-        w << " " << operand();
-    w << w.endl();
-}
-
-void
-Op_Return::jbgen(JB1MethodBuilder *j1mb) const {
-    j1mb->Return(location(), parent(), operand());
-}
-
 
 #if 0
 // keep around and handy during migration

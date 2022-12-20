@@ -23,21 +23,10 @@
 #define FUNCTIONCOMPILATION_INCL
 
 #include <map>
-#include <stdint.h>
-#include <vector>
-#include "Compilation.hpp"
-#include "typedefs.hpp"
+#include "JBCore.hpp"
 
 namespace OMR {
 namespace JitBuilder {
-
-class Compiler;
-class Config;
-class JB1MethodBuilder;
-class TextWriter;
-class TypeDictionary;
-class TypeReplacer;
-
 namespace Func {
 
 class Function;
@@ -70,7 +59,7 @@ public:
     virtual void replaceTypes(TypeReplacer *repl);
 
 protected:
-    virtual void addInitialBuildersToWorklist(BuilderWorklist & worklist);
+    virtual void addInitialBuildersToWorklist(BuilderList & worklist);
 
     std::map<String,const FunctionType *> _functionTypesFromName;
 };

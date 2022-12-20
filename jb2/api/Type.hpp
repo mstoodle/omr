@@ -22,16 +22,8 @@
 #ifndef TYPE_INCL
 #define TYPE_INCL
 
-#include <stdint.h>
-#include <stdarg.h>
-#include <iostream>
-#include <map>
-#include <vector>
-#include <cassert>
-
-#include "typedefs.hpp"
+#include "common.hpp"
 #include "CreateLoc.hpp"
-#include "IDs.hpp"
 #include "KindService.hpp"
 #include "Mapper.hpp"
 

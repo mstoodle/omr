@@ -24,23 +24,14 @@
 
 #include <complex>
 #include <map>
-#include <stdint.h>
+#include "JBCore.hpp"
 #include <vector>
-#include "CreateLoc.hpp"
 #include "Base/BaseTypes.hpp"
-#include "IDs.hpp"
-#include "SemanticVersion.hpp"
-#include "typedefs.hpp"
 #include "ComplexTypes.hpp"
 
 
 namespace OMR {
 namespace JitBuilder {
-
-class Builder;
-class Location;
-class Value;
-
 namespace Complex {
 
 class ComplexExtensionChecker;

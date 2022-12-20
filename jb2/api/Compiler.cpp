@@ -104,6 +104,7 @@ Compiler::~Compiler() {
     _extensions.clear();
     if (_errorCondition)
         delete _errorCondition;
+    //JB2::report();
 }
 
 extern "C" {

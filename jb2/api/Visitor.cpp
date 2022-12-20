@@ -52,7 +52,7 @@ Visitor::start(Compilation *comp) {
     visitBegin();
 
     {
-        BuilderWorklist worklist;
+        BuilderList worklist;
         std::vector<bool> visited(_comp->maxBuilderID());
         _comp->addInitialBuildersToWorklist(worklist);
 
@@ -82,7 +82,7 @@ Visitor::abort() {
 
 void
 Visitor::start(Builder * b) {
-    BuilderWorklist worklist;
+    BuilderList worklist;
     std::vector<bool> visited(_comp->maxBuilderID());
     visitBuilder(b, visited, worklist);
 }
@@ -93,7 +93,7 @@ Visitor::start(Operation * op) {
 }
 
 void
-Visitor::visitBuilder(Builder *b, std::vector<bool> & visited, BuilderWorklist & worklist) {
+Visitor::visitBuilder(Builder *b, std::vector<bool> & visited, BuilderList & worklist) {
     int64_t id = b->id();
     if (visited[id])
         return;
@@ -106,12 +106,12 @@ Visitor::visitBuilder(Builder *b, std::vector<bool> & visited, BuilderWorklist &
 }
 
 void
-Visitor::visitOperations(Builder *b, std::vector<bool> & visited, BuilderWorklist & worklist) {
+Visitor::visitOperations(Builder *b, std::vector<bool> & visited, BuilderList & worklist) {
     for (Operation *op = b->firstOperation(); op != NULL; op = op->next()) {
         visitOperation(op);
 
-        for (BuilderIterator bIt = op->BuildersBegin(); bIt != op->BuildersEnd(); bIt++) {
-            Builder * inner_b = *bIt;
+        for (auto it = op->builders(); it.hasItem(); it++) {
+            Builder * inner_b = it.item();
             if (inner_b && !visited[inner_b->id()])
                 worklist.push_front(inner_b);
         }
@@ -128,4 +128,3 @@ Visitor::trace(String msg) {
 
 } // namespace JitBuilder
 } // namespace OMR
-

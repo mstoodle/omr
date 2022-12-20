@@ -135,7 +135,7 @@ TEST(BaseExtension, checkVersionFail) {
     CONSTFUNC(type, seq, v) \
     TEST(BaseExtension, createConst ## type ## Function ## seq) { \
         typedef ctype (FuncProto)(); \
-        COMPILE_FUNC(Const ## type ## Function ## seq, FuncProto, f, true); \
+        COMPILE_FUNC(Const ## type ## Function ## seq, FuncProto, f, false); \
         EXPECT_EQ(f(), v) << "Compiled f() returns " << v; \
     }
 

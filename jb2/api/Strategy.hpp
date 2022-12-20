@@ -22,8 +22,7 @@
 #ifndef STRATEGY_INCL
 #define STRATEGY_INCL
 
-#include "typedefs.hpp"
-#include "util/List.hpp"
+#include "common.hpp"
 
 namespace OMR {
 namespace JitBuilder {

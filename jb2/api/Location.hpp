@@ -22,8 +22,7 @@
 #ifndef LOCATION_INCL
 #define LOCATION_INCL
 
-#include <stdint.h>
-#include "IDs.hpp"
+#include "common.hpp"
 #include "util/String.hpp"
 
 namespace OMR {
