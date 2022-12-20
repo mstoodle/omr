@@ -131,40 +131,38 @@ TEST(JB2List, Iterator) {
     list.push_front(&x);
     list.push_front(&y);
     list.push_front(&z);
-    auto it = list.fwdIterator();
-    EXPECT_TRUE(it.keepGoing()) << "should keepGoing";
-    p = it.current(); EXPECT_EQ(*p, 5) << "should see 5 first";
-    it++; p = it.current();    EXPECT_EQ(*p, 3) << "should see 3 next";
-    it++; p = it.current();    EXPECT_EQ(*p, 2) << "should see 2 next";
-    it++;                      EXPECT_FALSE(it.keepGoing()) << "should not keepGoing";
+    auto it = list.fwdIterator(); EXPECT_TRUE(it.hasItem()) << "should have item";
+    p = it.item();                EXPECT_EQ(*p, 5) << "should see 5 first";
+    it++; p = it.item();          EXPECT_EQ(*p, 3) << "should see 3 next";
+    it++; p = it.item();          EXPECT_EQ(*p, 2) << "should see 2 next";
+    it++;                         EXPECT_FALSE(it.hasItem()) << "should not have item";
 
-    it = list.revIterator();
-    EXPECT_TRUE(it.keepGoing()) << "should keepGoing";
-    p = it.current(); EXPECT_EQ(*p, 2) << "should see 2 first";
-    it--; p = it.current();    EXPECT_EQ(*p, 3) << "should see 3 next";
-    it--; p = it.current();    EXPECT_EQ(*p, 5) << "should see 5 next";
-    it--;                      EXPECT_FALSE(it.keepGoing()) << "should not keepGoing";
+    it = list.revIterator(); EXPECT_TRUE(it.hasItem()) << "should have item";
+    p = it.item();           EXPECT_EQ(*p, 2) << "should see 2 first";
+    it--; p = it.item();     EXPECT_EQ(*p, 3) << "should see 3 next";
+    it--; p = it.item();     EXPECT_EQ(*p, 5) << "should see 5 next";
+    it--;                    EXPECT_FALSE(it.hasItem()) << "should not have item";
 
     auto fit=list.fwdIterator();
     auto rit=list.revIterator();
     int *pf, *pr;
-    pf = fit.current();
-    pr = rit.current();
+    pf = fit.item();
+    pr = rit.item();
     EXPECT_EQ(*pf, 5) << "fwd should see 5 first";
     EXPECT_EQ(*pr, 2) << "rev should see 2 first";
     fit++; rit--;
-    pf = fit.current();
-    pr = rit.current();
+    pf = fit.item();
+    pr = rit.item();
     EXPECT_EQ(*pf, 3) << "fwd should see 3 next";
     EXPECT_EQ(*pr, 3) << "rev should see 3 next";
     fit++; rit--;
-    pf = fit.current();
-    pr = rit.current();
+    pf = fit.item();
+    pr = rit.item();
     EXPECT_EQ(*pf, 2) << "fwd should see 2 next";
     EXPECT_EQ(*pr, 5) << "rev should see 5 next";
     fit++; rit--;
-    EXPECT_FALSE(fit.keepGoing()) << "fwd iterator should not keepGoing";
-    EXPECT_FALSE(rit.keepGoing()) << "rev iterator should not keepGoing";
+    EXPECT_FALSE(fit.hasItem()) << "fwd iterator should not have item";
+    EXPECT_FALSE(rit.hasItem()) << "rev iterator should not have item";
 }
 
 // tests for insertAfter, insertBefore
