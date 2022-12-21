@@ -30,6 +30,8 @@ namespace JitBuilder {
 typedef uint64_t ActionID;
 const ActionID NoAction=0;
 
+typedef uint64_t BitIndex;
+
 typedef uint64_t BuilderID;
 const BuilderID NoBuilder=0;
 

@@ -38,7 +38,7 @@ class Transformer : public Visitor {
     Transformer * setTraceEnabled(bool v=true) { _traceEnabled = v; return this; }
 
 protected:
-    virtual void visitOperations(Builder *b, std::vector<bool> & visited, BuilderList & worklist);
+    virtual void visitOperations(Builder *b, BitVector & visited, BuilderList & worklist);
 
     protected:
     bool traceEnabled() { return _traceEnabled; }
@@ -64,4 +64,3 @@ protected:
 } // namespace OMR
 
 #endif // defined(TRANSFORMER_INCL)
-
