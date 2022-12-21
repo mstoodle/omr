@@ -60,16 +60,16 @@ JB1MethodBuilder::~JB1MethodBuilder() {
 void
 JB1MethodBuilder::registerTypes(TypeDictionary *dict) {
     TypeID numTypes = dict ->numTypes();
-    std::vector<bool> mappedTypes(numTypes);
+    BitVector mappedTypes(numTypes);
     while (numTypes > 0) {
         TypeID startNumTypes = numTypes;
         for (auto it = dict->typesIterator(); it.hasItem(); it++) {
             const Type *type = it.item();
-            if (mappedTypes[type->id()] != true) {
+            if (mappedTypes.getBit(type->id()) != true) {
                 bool mapped = type->registerJB1Type(this);
                 if (mapped) {
                     numTypes--;
-                    mappedTypes[type->id()] = true;
+                    mappedTypes.setBit(type->id());
                 }
             }
         }

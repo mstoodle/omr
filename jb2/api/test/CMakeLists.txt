@@ -42,7 +42,7 @@ set(GTEST_DIR $(omr_SOURCE_DIR)/third_party/gtest-1.8.0)
 	)
 	target_include_directories(testsemver PRIVATE
 		${JB2_JBCORE_DIR}
-	       	${GTEST_DIR}/include
+	    ${GTEST_DIR}/include
 	)
 
 	add_test(
@@ -82,12 +82,32 @@ set(GTEST_DIR $(omr_SOURCE_DIR)/third_party/gtest-1.8.0)
 	)
 	target_include_directories(testlist PRIVATE
 		${JB2_JBCORE_DIR}
-	       	${GTEST_DIR}/include
+	    ${GTEST_DIR}/include
 	)
 
 	add_test(
 		NAME JB2TestList
 		COMMAND $<TARGET_FILE:testlist>
+	)
+
+	## testbv
+	add_executable(testbv
+		BitVectorTest.cpp
+	)
+	target_link_libraries(testbv
+		jb2core
+		jb2
+		omrGtest
+		${CMAKE_DL_LIBS}
+	)
+	target_include_directories(testbv PRIVATE
+		${JB2_JBCORE_DIR}
+	    ${GTEST_DIR}/include
+	)
+
+	add_test(
+		NAME JB2TestBitVector
+		COMMAND $<TARGET_FILE:testbv>
 	)
 
 #endif()

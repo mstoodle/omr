@@ -22,9 +22,9 @@
 #ifndef VISITOR_INCL
 #define VISITOR_INCL
 
-#include <vector>
 #include "common.hpp"
 #include "Pass.hpp"
+#include "util/BitVector.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -48,8 +48,8 @@ public:
 protected:
 
     // more dramatic visit patterns can be done by overriding these functions
-    virtual void visitBuilder(Builder * b, std::vector<bool> & visited, BuilderList & list);
-    virtual void visitOperations(Builder * b, std::vector<bool> & visited, BuilderList & worklist);
+    virtual void visitBuilder(Builder * b, BitVector & visited, BuilderList & list);
+    virtual void visitOperations(Builder * b, BitVector & visited, BuilderList & worklist);
     virtual void abort();
 
     // subclass Visitor and override these functions as needed
@@ -73,4 +73,3 @@ protected:
 } // namespace OMR
 
 #endif // defined(VISITOR_INCL)
-

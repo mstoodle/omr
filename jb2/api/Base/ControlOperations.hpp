@@ -738,25 +738,24 @@ class Switch : public OperationR0V1
 
     virtual Value * getSelector() const { return _value; }
 
-    virtual int32_t numBuilders() const { return 1 + _cases.size(); }
+    virtual int32_t numBuilders() const { return 1 + _cases.length(); }
     virtual Builder *builder(int32_t i=0) const
         {
         if (i == 0)
             return _defaultTarget;
-        else if (i-1 < _cases.size())
+        else if (i-1 < _cases.length())
             return _cases[i-1]->builder();
         return NULL;
         }
     virtual BuilderIterator BuildersBegin()
         {
-        std::vector<Builder *> it;
-        it.push_back(_defaultTarget);
+        BuilderIterator it(_defaultTarget);
         for (auto cIt = CasesBegin(); cIt != CasesEnd(); cIt++)
             it.push_back((*cIt)->builder());
         return BuilderIterator(it);
         }
 
-    virtual int32_t numCases() const  { return _cases.size(); }
+    virtual int32_t numCases() const  { return _cases.length(); }
     virtual CaseIterator CasesBegin() { return CaseIterator(_cases); }
 
     static void initializeTypeProductions(TypeDictionary * types, TypeGraph * graph);
@@ -771,7 +770,7 @@ class Switch : public OperationR0V1
     Switch(Builder * parent, Value *selector, Builder *defaultCase, int numCases, Case ** cases);
 
     Builder *_defaultTarget;
-    std::vector<Case *> _cases;
+    Array<Case *> _cases;
     };
 
 class CreateLocalArray : public OperationR1L1T1
