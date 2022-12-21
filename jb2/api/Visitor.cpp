@@ -53,7 +53,7 @@ Visitor::start(Compilation *comp) {
 
     {
         BuilderList worklist;
-        std::vector<bool> visited(_comp->maxBuilderID());
+        BitVector visited(_comp->maxBuilderID());
         _comp->addInitialBuildersToWorklist(worklist);
 
         visitPreCompilation(_comp);
@@ -83,7 +83,7 @@ Visitor::abort() {
 void
 Visitor::start(Builder * b) {
     BuilderList worklist;
-    std::vector<bool> visited(_comp->maxBuilderID());
+    BitVector visited(_comp->maxBuilderID());
     visitBuilder(b, visited, worklist);
 }
 
@@ -93,12 +93,12 @@ Visitor::start(Operation * op) {
 }
 
 void
-Visitor::visitBuilder(Builder *b, std::vector<bool> & visited, BuilderList & worklist) {
+Visitor::visitBuilder(Builder *b, BitVector & visited, BuilderList & worklist) {
     int64_t id = b->id();
-    if (visited[id])
+    if (visited.getBit(id))
         return;
 
-    visited[id] = true;
+    visited.setBit(id);
 
     visitBuilderPreOps(b);
     visitOperations(b, visited, worklist);
@@ -106,13 +106,13 @@ Visitor::visitBuilder(Builder *b, std::vector<bool> & visited, BuilderList & wor
 }
 
 void
-Visitor::visitOperations(Builder *b, std::vector<bool> & visited, BuilderList & worklist) {
+Visitor::visitOperations(Builder *b, BitVector & visited, BuilderList & worklist) {
     for (Operation *op = b->firstOperation(); op != NULL; op = op->next()) {
         visitOperation(op);
 
         for (auto it = op->builders(); it.hasItem(); it++) {
             Builder * inner_b = it.item();
-            if (inner_b && !visited[inner_b->id()])
+            if (inner_b && !visited.getBit(inner_b->id()))
                 worklist.push_front(inner_b);
         }
     }

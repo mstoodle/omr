@@ -226,7 +226,7 @@ protected:
         return JB2::allocate<T>(arraySize);
     }
     void deallocate(T *array, size_t arraySize) {
-        JB2::deallocate(array, arraySize);
+        JB2::deallocate<T>(array, arraySize);
     }
 
     ChangeID _changeID;
