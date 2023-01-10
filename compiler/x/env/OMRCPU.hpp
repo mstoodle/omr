@@ -55,11 +55,13 @@ protected:
    CPU() : OMR::CPU() {}
    CPU(const OMRProcessorDesc& processorDescription) : OMR::CPU(processorDescription) {}
 
+   static TR_X86CPUIDBuffer *cpuIDBuf;
 public:
 
    static TR::CPU detect(OMRPortLibrary * const omrPortLib);
 
-   static void initializeTargetProcessorInfo(bool force = false);
+   static void initializeTargetProcessorInfo();
+   static void destroyTargetProcessorInfo();
 
    TR_X86CPUIDBuffer *queryX86TargetCPUID();
    const char *getX86ProcessorVendorId();
