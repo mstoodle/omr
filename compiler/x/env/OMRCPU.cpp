@@ -80,8 +80,6 @@ OMR::X86::CPU::initializeTargetProcessorInfo(bool force)
    OMR::X86::CodeGenerator::initializeX86TargetProcessorInfo(force);
    }
 
-TR_X86CPUIDBuffer *OMR::X86::CPU::cpuIDBuf = NULL;
-
 void
 OMR::X86::CPU::destroyTargetProcessorInfo()
    {
@@ -89,6 +87,8 @@ OMR::X86::CPU::destroyTargetProcessorInfo()
       free(cpuIDBuf);
    cpuIDBuf = NULL;
    }
+
+TR_X86CPUIDBuffer *OMR::X86::CPU::cpuIDBuf = NULL;
 
 TR_X86CPUIDBuffer *
 OMR::X86::CPU::queryX86TargetCPUID()
