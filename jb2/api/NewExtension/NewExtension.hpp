@@ -31,10 +31,10 @@ namespace JitBuilder {
 namespace New {      // ### replace New with a unique namespace you'll use for all code in this Extension
 
 class NewExtension : public Extension { // ### replace NewExtension (globally) with the name of your extension, usually still suffixed with "Extension"
+    JBALLOC_(NewExtension)
 
 public:
     NewExtension(LOCATION, Compiler *compiler, bool extended=false, String extensionName="vm");
-    virtual ~NewExtension();
 
     static const String NAME;
 

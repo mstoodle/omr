@@ -36,18 +36,21 @@ namespace OMR {
 namespace JitBuilder {
 namespace Complex {
 
+INIT_JBALLOC_REUSECAT(ComplexExtension, Extension)
+
 const SemanticVersion ComplexExtension::version(COMPLEXEXT_MAJOR,COMPLEXEXT_MINOR,COMPLEXEXT_PATCH);
 const SemanticVersion ComplexExtension::requiredBaseVersion(REQUIRED_BASEEXT_MAJOR,REQUIRED_BASEEXT_MINOR,REQUIRED_BASEEXT_PATCH);
 const String ComplexExtension::NAME("complex");
 
 extern "C" {
-    Extension *create(LOCATION, Compiler *comp) {
-        return new ComplexExtension(PASSLOC, comp);
+    Extension *create(LOCATION, Compiler *compiler) {
+        Allocator *mem = compiler->mem();
+        return new (mem) ComplexExtension(MEM_PASSLOC(mem), compiler);
     }
 }
 
-ComplexExtension::ComplexExtension(LOCATION, Compiler *compiler, bool extended, String extensionName)
-    : Extension(compiler, (extended ? extensionName : NAME))
+ComplexExtension::ComplexExtension(MEM_LOCATION(a), Compiler *compiler, bool extended, String extensionName)
+    : Extension(a, compiler, (extended ? extensionName : NAME))
     , _base(compiler->loadExtension<Base::BaseExtension>(PASSLOC, &requiredBaseVersion))
     , ComplexFloat32(new ComplexFloat32Type(PASSLOC, this, _base->Float32))
     , ComplexFloat64(new ComplexFloat64Type(PASSLOC, this, _base->Float64))

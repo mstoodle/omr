@@ -19,13 +19,15 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#include "JBCore.hpp"
 #include "Base/BaseExtension.hpp" // ### only needed if depends on Base extension
-#include "Compiler.hpp"
 #include "NewExtension.hpp" // ### include your extension's header here
 
 namespace OMR {
 namespace JitBuilder {
 namespace New { // ### use your extension's namespace here
+
+INIT_JBALLOC_REUSECAT(NewExtension, Extension)
 
 // ###  globally rename NewExtension according to your extension's name
 const SemanticVersion NewExtension::version(VMEXT_MAJOR,VMEXT_MINOR,VMEXT_PATCH);
@@ -34,12 +36,13 @@ const String NewExtension::NAME("jb2new"); // ### give your extension a unique l
 
 extern "C" {
     Extension *create(LOCATION, Compiler *compiler) {
-        return new NewExtension(PASSLOC, compiler);
+        Allocator *mem = compiler->mem();
+        return new (mem) NewExtension(MEM_PASSLOC(mem), compiler);
     }
 }
 
-NewExtension::NewExtension(LOCATION, Compiler *compiler, bool extended, String extensionName)
-    : Extension(compiler, (extended ? extensionName : NAME)) {
+NewExtension::NewExtension(MEM_LOCATION(a), Compiler *compiler, bool extended, String extensionName)
+    : Extension(a, compiler, (extended ? extensionName : NAME)) {
 
     // ### only needed if depends on Base extension
     _base = compiler->loadExtension<Base::BaseExtension>(PASSLOC, &requiredBaseVersion);
