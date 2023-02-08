@@ -39,9 +39,10 @@ class Type;
 class Value;
 
 class OperationReplacer : public OperationCloner {
+    JBALLOC_(OperationReplacer)
+
 public:
-    OperationReplacer(Operation *op);
-    ~OperationReplacer();
+    OperationReplacer(Allocator *a, Operation *op);
 
     void setResultMapper(ValueMapper *m, uint32_t i=0) { if (i < _numResults) _resultMappers[i] = m; }
     void setOperandMapper(ValueMapper *m, uint32_t i=0) { if (i < _numOperands) _operandMappers[i] = m; }

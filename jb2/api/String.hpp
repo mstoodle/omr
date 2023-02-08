@@ -23,25 +23,22 @@
 #define STRING_INCL
 
 #include <string>
+#include "Allocatable.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 
-class TextWriter;
+class TextLogger;
 
-class String {
-    friend class TextWriter;
+class String : public Allocatable {
+    JBALLOC_(String)
+
+    friend class TextLogger;
 
 public:
-    String()
-        : _string("") {
-    }
-    String(const char *s) 
-        : _string(s) {
-    }
-    String(const String & s)
-        : _string(s._string) {
-    }
+    ALL_ALLOC_ALLOWED_NOARGS(String);
+    ALL_ALLOC_ALLOWED(String, const char *s);
+    ALL_ALLOC_ALLOWED(String, const String & s);
 
     String operator=(const char *s) {
         _string = std::string(s);
@@ -57,7 +54,7 @@ public:
         return _string.length();
     }
 
-    void write(TextWriter & w) const;
+    void log(TextLogger & log) const;
 
     String append(const String & other) {
         _string = _string.append(other._string);
@@ -84,28 +81,28 @@ public:
     }
 
     static String to_string(int64_t v) {
-        String *str = new String(std::to_string(v).c_str());
-        return *str;
+        String str(std::to_string(v).c_str());
+        return str;
     }
     static String to_string(uint64_t v) {
-        String *str = new String(std::to_string(v).c_str());
-        return *str;
+        String str(std::to_string(v).c_str());
+        return str;
     }
     static String to_string(int32_t v) {
-        String *str = new String(std::to_string(v).c_str());
-        return *str;
+        String str(std::to_string(v).c_str());
+        return str;
     }
     static String to_string(uint32_t v) {
-        String *str = new String(std::to_string(v).c_str());
-        return *str;
+        String str(std::to_string(v).c_str());
+        return str;
     }
     static String to_string(int16_t v) {
-        String *str = new String(std::to_string(v).c_str());
-        return *str;
+        String str(std::to_string(v).c_str());
+        return str;
     }
     static String to_string(uint16_t v) {
-        String *str = new String(std::to_string(v).c_str());
-        return *str;
+        String str(std::to_string(v).c_str());
+        return str;
     }
 
 protected:

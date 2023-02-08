@@ -27,6 +27,8 @@ namespace OMR {
 namespace JitBuilder {
 namespace VM {
 
+INIT_JBALLOC_REUSECAT(VMExtension, Extension)
+
 const SemanticVersion VMExtension::version(VMEXT_MAJOR,VMEXT_MINOR,VMEXT_PATCH);
 const String VMExtension::NAME("jb2vm");
 
@@ -39,12 +41,13 @@ extern "C" {
         Base::BaseExtension *bx = compiler->loadExtension<Base::BaseExtension>(PASSLOC, &requiredBaseVersion);
         if (bx == NULL)
             return NULL;
-        return new VMExtension(PASSLOC, compiler);
+        Allocator *mem = compiler->mem();
+        return new (mem) VMExtension(MEM_PASSLOC(mem), compiler);
     }
 }
 
-VMExtension::VMExtension(LOCATION, Compiler *compiler, bool extended, String extensionName)
-    : Extension(PASSLOC, compiler, (extended ? extensionName : NAME)) {
+VMExtension::VMExtension(MEM_LOCATION(a), Compiler *compiler, bool extended, String extensionName)
+    : Extension(MEM_PASSLOC(a), compiler, (extended ? extensionName : NAME)) {
 
     _bx = compiler->lookupExtension<Base::BaseExtension>();
     _fx = compiler->lookupExtension<Func::FunctionExtension>();
@@ -133,7 +136,8 @@ VMExtension::IfCmpUnsignedGreaterThan(LOCATION, BytecodeBuilder *b, BytecodeBuil
 
 BytecodeBuilder *
 VMExtension::OrphanBytecodeBuilder(Base::BaseCompilation *comp, int32_t bcIndex, int32_t bcLength, Context *context, String name) {
-    return new BytecodeBuilder(comp, this, bcIndex, bcLength, context, name);
+    Allocator *mem = comp->mem();
+    return registerBuilder<BytecodeBuilder>(comp, new (mem) BytecodeBuilder(mem, comp, this, bcIndex, bcLength, context, name));
 }
 
 } // namespace VM

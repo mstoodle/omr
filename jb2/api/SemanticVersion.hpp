@@ -22,7 +22,8 @@
 #ifndef SEMANTICVERSION_INCL
 #define SEMANTICVERSION_INCL
 
-#include "util/String.hpp"
+#include "common.hpp"
+#include "String.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -31,7 +32,9 @@ typedef uint16_t MajorID;
 typedef uint16_t MinorID;
 typedef uint16_t PatchID;
 
-class SemanticVersion {
+class SemanticVersion : public Allocatable {
+    JBALLOC_NO_DESTRUCTOR_(SemanticVersion)
+
 protected:
 
     // TODO: to be used in comparing build IDs
@@ -43,8 +46,9 @@ protected:
     };
 
 public:
-    SemanticVersion(MajorID major, MinorID minor, PatchID patch, String preRelease, String buildMetadata)
-        : _valid(false)
+    SemanticVersion(Allocator *a, MajorID major, MinorID minor, PatchID patch, String preRelease, String buildMetadata)
+        : Allocatable(a)
+        , _valid(false)
         , _major(major)
         , _minor(minor)
         , _patch(patch)
@@ -52,8 +56,29 @@ public:
         , _buildMetadata(buildMetadata) {
             validate();
         }
+    SemanticVersion(MajorID major, MinorID minor, PatchID patch, String preRelease, String buildMetadata)
+        : Allocatable()
+        , _valid(false)
+        , _major(major)
+        , _minor(minor)
+        , _patch(patch)
+        , _preRelease(preRelease)
+        , _buildMetadata(buildMetadata) {
+            validate();
+        }
+    SemanticVersion(Allocator *a, MajorID major=0, MinorID minor=0, PatchID patch=0)
+        : Allocatable(a)
+        , _valid(false)
+        , _major(major)
+        , _minor(minor)
+        , _patch(patch)
+        , _preRelease("")
+        , _buildMetadata("") {
+            validate();
+        }
     SemanticVersion(MajorID major=0, MinorID minor=0, PatchID patch=0)
-        : _valid(false)
+        : Allocatable()
+        , _valid(false)
         , _major(major)
         , _minor(minor)
         , _patch(patch)

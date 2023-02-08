@@ -20,9 +20,10 @@
  *******************************************************************************/
 
 #include <stdio.h>
+#include "AllocationCategoryClasses.hpp"
 #include "Compiler.hpp"
 #include "Operation.hpp"
-#include "TextWriter.hpp"
+#include "TextLogger.hpp"
 #include "Type.hpp"
 #include "TypeDictionary.hpp"
 #include "Value.hpp"
@@ -30,27 +31,82 @@
 namespace OMR {
 namespace JitBuilder {
 
-TypeDictionary::TypeDictionary(Compiler *compiler)
-    : _id(compiler->getTypeDictionaryID())
-    , _compiler(compiler)
+INIT_JBALLOC_ON(TypeDictionary, Dictionaries)
+
+TypeDictionary::TypeDictionary(Allocator *a, Compiler *compiler)
+    : Allocatable(a)
+    , _id(compiler->getTypeDictionaryID())
     , _name("")
+    , _compiler(compiler)
+    , _mem(compiler->mem())
+    , _types(NULL, _mem)
+    , _ownedTypes(NULL, _mem)
+    , _nextTypeID(0)
+    , _linkedDictionary(NULL) {
+}
+
+TypeDictionary::TypeDictionary(Compiler *compiler)
+    : Allocatable()
+    , _id(compiler->getTypeDictionaryID())
+    , _name("")
+    , _compiler(compiler)
+    , _mem(compiler->mem())
+    , _types(NULL, _mem)
+    , _ownedTypes(NULL, _mem)
+    , _nextTypeID(0)
+    , _linkedDictionary(NULL) {
+}
+
+TypeDictionary::TypeDictionary(Allocator *a, Compiler *compiler, String name)
+    : Allocatable(a)
+    , _id(compiler->getTypeDictionaryID())
+    , _name(name)
+    , _compiler(compiler)
+    , _mem(compiler->mem())
+    , _types(NULL, _mem)
+    , _ownedTypes(NULL, _mem)
     , _nextTypeID(0)
     , _linkedDictionary(NULL) {
 }
 
 TypeDictionary::TypeDictionary(Compiler *compiler, String name)
     : _id(compiler->getTypeDictionaryID())
-    , _compiler(compiler)
     , _name(name)
+    , _compiler(compiler)
+    , _mem(compiler->mem())
+    , _types(NULL, _mem)
+    , _ownedTypes(NULL, _mem)
     , _nextTypeID(0)
     , _linkedDictionary(NULL) {
 }
 
 // Only accessible to subclasses
-TypeDictionary::TypeDictionary(Compiler *compiler, String name, TypeDictionary * linkedDict)
-    : _id(compiler->getTypeDictionaryID())
-    , _compiler(compiler)
+TypeDictionary::TypeDictionary(Allocator *a, Compiler *compiler, String name, TypeDictionary * linkedDict)
+    : Allocatable(a)
+    , _id(compiler->getTypeDictionaryID())
     , _name(name)
+    , _compiler(compiler)
+    , _mem(compiler->mem())
+    , _types(NULL, _mem)
+    , _ownedTypes(NULL, _mem)
+    , _nextTypeID(linkedDict->_nextTypeID)
+    , _linkedDictionary(linkedDict) {
+    for (auto it = linkedDict->typesIterator(); it.hasItem(); it++) {
+        const Type *type = it.item();
+        internalRegisterType(type);
+    }
+    _nextTypeID = linkedDict->_nextTypeID;
+}
+
+// Only accessible to subclasses
+TypeDictionary::TypeDictionary(Compiler *compiler, String name, TypeDictionary * linkedDict)
+    : Allocatable()
+    , _id(compiler->getTypeDictionaryID())
+    , _name(name)
+    , _compiler(compiler)
+    , _mem(compiler->mem())
+    , _types(NULL, _mem)
+    , _ownedTypes(NULL, _mem)
     , _nextTypeID(linkedDict->_nextTypeID)
     , _linkedDictionary(linkedDict) {
     for (auto it = linkedDict->typesIterator(); it.hasItem(); it++) {
@@ -65,6 +121,7 @@ TypeDictionary::~TypeDictionary() {
         const Type *type = it.item();
         delete type;
     }
+    _ownedTypes.erase();
 }
 
 const Type *
@@ -87,19 +144,19 @@ TypeDictionary::RemoveType(const Type *type) {
 }
 
 void
-TypeDictionary::write(TextWriter &w) {
-    w.indent() << "[ TypeDictionary " << this << " \"" << this->name() << "\"" << w.endl();
-    w.indentIn();
+TypeDictionary::log(TextLogger &lgr) {
+    lgr.indent() << "[ TypeDictionary " << this << " \"" << this->name() << "\"" << lgr.endl();
+    lgr.indentIn();
     if (this->hasLinkedDictionary())
-        w.indent() << "[ linkedDictionary " << this->linkedDictionary() << " ]" << w.endl();
+        lgr.indent() << "[ linkedDictionary " << this->linkedDictionary() << " ]" << lgr.endl();
     for (auto it = this->typesIterator();it.hasItem();it++) {
         const Type *type = it.item();
-        w.indent();
-        type->writeType(w, true);
-        w << w.endl();
+        lgr.indent();
+        type->logType(lgr, true);
+        lgr << lgr.endl();
     }
-    w.indentOut();
-    w.indent() << "]" << w.endl();
+    lgr.indentOut();
+    lgr.indent() << "]" << lgr.endl();
 }
 
 void

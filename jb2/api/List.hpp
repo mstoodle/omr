@@ -23,25 +23,35 @@
 #define LIST_INCL
 
 #include <assert.h>
+#include "Allocatable.hpp"
 #include "Iterator.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 
+class Compiler;
+
 template <typename T>
-class List {
+class List : public Allocatable {
+
+    JBALLOC_NO_DESTRUCTOR(List<T>, NoAllocationCategory)
 
     typedef uint64_t ChangeID;
 
 protected:
-    class Item {
+    class Item : public Allocatable {
+        JBALLOC_NO_DESTRUCTOR(List<T>::Item, NoAllocationCategory)
+
         friend class List<T>;
     public:
-        Item(T item, List<T>::Item *prev=NULL, List<T>::Item *next=NULL)
-            : _item(item)
+        Item(Allocator *a, T item, List<T>::Item *prev=NULL, List<T>::Item *next=NULL)
+            : Allocatable(a)
+            , _item(item)
             , _prev(prev)
             , _next(next) {
         }
+
+        virtual ~Item() { }
 
         void insertAfter(List<T>::Item *item) {
             item->_next = _next;
@@ -73,6 +83,14 @@ public:
 
     public:
         // Rule of 3:
+        Iterator()
+            : OMR::JitBuilder::Iterator<T>(NULL)
+            , _list(NULL)
+            , _cursor(NULL)
+            , _listSnapshot(0)
+            , _detectChanges(false) {
+        }
+
         Iterator(const Iterator & other)
             : OMR::JitBuilder::Iterator<T>(other)
             , _list(other._list)
@@ -132,8 +150,9 @@ public:
             //assert(i == 0);
         }
     protected:
-        Iterator(const List<T> * const originalList, bool startForward=true, bool detectChanges=true, bool makeCopy=false)
-            : _list(originalList->copy(makeCopy))
+        Iterator(Allocator *a, const List<T> * const originalList, bool startForward=true, bool detectChanges=true, bool makeCopy=false)
+            : OMR::JitBuilder::Iterator<T>(a)
+            , _list(originalList->copy(makeCopy))
             , _cursor(NULL)
             , _listSnapshot(originalList->_changeID)
             , _detectChanges(detectChanges) {
@@ -143,12 +162,14 @@ public:
             else
                 resetEnd();
         }
+        #if 0
         Iterator() // used by ShortIterator
             : _list(NULL)
             , _cursor(NULL)
             , _listSnapshot(0)
             , _detectChanges(false) {
         }
+        #endif
         virtual bool detectChange()  { return (_list->_changeID != _listSnapshot); }
 
         const List<T> * const _list;
@@ -158,25 +179,60 @@ public:
     };
 
 public:
-    List()
-        : _head(NULL)
+    List(Allocator *a)
+        : Allocatable(a)
+        , _head(NULL)
         , _tail(NULL)
+        , _itemAllocator(a)
+        , _changeID(0)
+        , _length(0) {
+    }
+    List(Allocator *a, Allocator *itemAllocator)
+        : Allocatable(a)
+        , _head(NULL)
+        , _tail(NULL)
+        , _itemAllocator(itemAllocator)
         , _changeID(0)
         , _length(0) {
     }
 
-    List(T one)
-        : _head(NULL)
+    List(Allocator *a, T one)
+        : Allocatable(a)
+        , _head(NULL)
         , _tail(NULL)
+        , _itemAllocator(a)
+        , _changeID(0)
+        , _length(0) {
+
+        push_back(one);
+    }
+    List(Allocator *a, Allocator *itemAllocator, T one)
+        : Allocatable(a)
+        , _head(NULL)
+        , _tail(NULL)
+        , _itemAllocator(itemAllocator)
         , _changeID(0)
         , _length(0) {
 
         push_back(one);
     }
 
-    List(T one, T two)
-        : _head(NULL)
+    List(Allocator *a, T one, T two)
+        : Allocatable(a)
+        , _head(NULL)
         , _tail(NULL)
+        , _itemAllocator(a)
+        , _changeID(0)
+        , _length(0) {
+
+        push_back(one);
+        push_back(two);
+    }
+    List(Allocator *a, Allocator *itemAllocator, T one, T two)
+        : Allocatable(a)
+        , _head(NULL)
+        , _tail(NULL)
+        , _itemAllocator(itemAllocator)
         , _changeID(0)
         , _length(0) {
 
@@ -184,9 +240,23 @@ public:
         push_back(two);
     }
 
-    List(T one, T two, T three)
-        : _head(NULL)
+    List(Allocator *a, T one, T two, T three)
+        : Allocatable(a)
+        , _head(NULL)
         , _tail(NULL)
+        , _itemAllocator(a)
+        , _changeID(0)
+        , _length(0) {
+
+        push_back(one);
+        push_back(two);
+        push_back(three);
+    }
+    List(Allocator *a, Allocator *itemAllocator, T one, T two, T three)
+        : Allocatable(a)
+        , _head(NULL)
+        , _tail(NULL)
+        , _itemAllocator(itemAllocator)
         , _changeID(0)
         , _length(0) {
 
@@ -195,9 +265,25 @@ public:
         push_back(three);
     }
 
-    List(int numArgs, ...)
-        : _head(NULL)
+    List(Allocator *a, int numArgs, ...)
+        : Allocatable(a)
+        , _head(NULL)
         , _tail(NULL)
+        , _itemAllocator(a)
+        , _changeID(0)
+        , _length(0) {
+
+        va_list(args);
+        va_start(args, numArgs);
+        for (int a=0;a < numArgs;a++)
+            push_back(va_arg(args, T));
+        va_end(args);
+    }
+    List(Allocator *a, Allocator *itemAllocator, int numArgs, ...)
+        : Allocatable(a)
+        , _head(NULL)
+        , _tail(NULL)
+        , _itemAllocator(itemAllocator)
         , _changeID(0)
         , _length(0) {
 
@@ -208,9 +294,22 @@ public:
         va_end(args);
     }
 
-    List(T *array, int arraySize)
-        : _head(NULL)
+    List(Allocator *a, T *array, int arraySize)
+        : Allocatable(a)
+        , _head(NULL)
         , _tail(NULL)
+        , _itemAllocator(a)
+        , _changeID(0)
+        , _length(0) {
+
+        for (int a=0;a < arraySize;a++)
+            push_back(va_arg(array, T));
+    }
+    List(Allocator *a, Allocator *itemAllocator, T *array, int arraySize)
+        : Allocatable(a)
+        , _head(NULL)
+        , _tail(NULL)
+        , _itemAllocator(itemAllocator)
         , _changeID(0)
         , _length(0) {
 
@@ -218,17 +317,44 @@ public:
             push_back(va_arg(array, T));
     }
 
-    List(const List<T> * source) {
+    List(const List<T> * source)
+        : Allocatable(source->allocator())
+        , _head(NULL)
+        , _tail(NULL)
+        , _itemAllocator(source->_itemAllocator)
+        , _changeID(0)
+        , _length(0) {
         for (auto it = source->fwdIterator(); it.hasItem(); it++) {
             push_back(it.item());
         }
-        change(source->length());
+    }
+    List(Allocator *a, const List<T> * source)
+        : Allocatable(a)
+        , _head(NULL)
+        , _tail(NULL)
+        , _itemAllocator(a)
+        , _changeID(0)
+        , _length(0) {
+        for (auto it = source->fwdIterator(); it.hasItem(); it++) {
+            push_back(it.item());
+        }
+    }
+    List(Allocator *a, Allocator *itemAllocator, const List<T> * source)
+        : Allocatable(a)
+        , _head(NULL)
+        , _tail(NULL)
+        , _itemAllocator(itemAllocator)
+        , _changeID(0)
+        , _length(0) {
+        for (auto it = source->fwdIterator(); it.hasItem(); it++) {
+            push_back(it.item());
+        }
     }
     virtual ~List() {
         List<T>::Item *p=_head;
         while (p) {
             List<T>::Item *next = p->_next;
-            JB2::deallocate<List<T>::Item>(p, 1);
+            delete p;
             p = next;
         }
         change(-_length);
@@ -246,7 +372,7 @@ public:
         return _head->_item;
     }
     void push_front(T v) {
-        List<T>::Item *newItem = new (JB2::allocate<List<T>::Item>(1)) List<T>::Item(v, NULL, _head);
+        List<T>::Item *newItem = new (_itemAllocator) List<T>::Item(_itemAllocator, v, NULL, _head);
         if (_head)
             _head->_prev = newItem;
         _head = newItem;
@@ -268,7 +394,7 @@ public:
         return v;
     }
     void push_back(T v) {
-        List<T>::Item *newItem = new (JB2::allocate<List<T>::Item>(1)) List<T>::Item(v, _tail, NULL);
+        List<T>::Item *newItem = new (_itemAllocator) List<T>::Item(_itemAllocator, v, _tail, NULL);
         if (_tail)
             _tail->_next = newItem;
         _tail = newItem;
@@ -290,12 +416,12 @@ public:
         return v;
     }
     void insertAfter(T v, List<T>::Iterator cursor) {
-        List<T>::Item *newItem = new (JB2::allocate<List<T>::Item>(1)) List<T>::Item(v);
+        List<T>::Item *newItem = new (_itemAllocator) List<T>::Item(_itemAllocator, v);
         cursor.current()->insertAfter(newItem);
         change(1);
     }
     void insertBefore(T v, List<T>::Iterator cursor) { 
-        List<T>::Item *newItem = new (JB2::allocate<List<T>::Item>(1)) List<T>::Item(v);
+        List<T>::Item *newItem = new (_itemAllocator) List<T>::Item(_itemAllocator, v);
         cursor.current()->insertBefore(newItem);
         change(1);
     }
@@ -323,23 +449,24 @@ public:
         for (auto it = iterator(); it.hasItem();) {
             List<T>::Item *item = it._cursor;
             it++; // must precede removal or else next pointer is lost
-            item->remove();
+            delete item->remove();
         }
         change(-len);
+        _head = _tail = NULL;
     }
 
     const List<T> *copy(bool makeCopy=true) const {
-        return makeCopy ? (new (JB2::allocate<List<T>>(1)) List<T>(this)) : this;
+        return makeCopy ? (new (_itemAllocator) List<T>(_itemAllocator, this)) : this;
     }
 
     List<T>::Iterator iterator(bool forward=true, bool detectChanges=true, bool makeCopy=false) const {
-        return List<T>::Iterator(this, forward, detectChanges, makeCopy);
+        return List<T>::Iterator(_itemAllocator, this, forward, detectChanges, makeCopy);
     }
     List<T>::Iterator fwdIterator(bool detectChanges=true, bool makeCopy=false) const {
-        return List<T>::Iterator(this, true, detectChanges, makeCopy);
+        return List<T>::Iterator(_itemAllocator, this, true, detectChanges, makeCopy);
     }
     List<T>::Iterator revIterator(bool detectChanges=true, bool makeCopy=false) const {
-        return List<T>::Iterator(this, false, detectChanges, makeCopy);
+        return List<T>::Iterator(_itemAllocator, this, false, detectChanges, makeCopy);
     }
 
 protected:
@@ -347,6 +474,7 @@ protected:
 
     List<T>::Item *_head;
     List<T>::Item *_tail;
+    Allocator * _itemAllocator;
     List<T>::ChangeID _changeID;
     int32_t _length;
 };

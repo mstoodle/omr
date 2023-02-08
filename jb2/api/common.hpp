@@ -26,10 +26,11 @@
 #include <cassert>
 #include <exception>
 #include <iostream>
+#include "Allocatable.hpp"
 #include "IDs.hpp"
-#include "util/Array.hpp"
-#include "util/Iterator.hpp"
-#include "util/List.hpp"
+#include "Array.hpp"
+#include "Iterator.hpp"
+#include "List.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -75,4 +76,3 @@ typedef ForwardSimpleIterator<Value *> ValueIterator;
 } // namespace OMR
 
 #endif // defined(COMMON_INCL)
-

@@ -44,25 +44,25 @@ int main(int argc, char** argv) {
 
 #define EXPECT_VALID_CREATE1(v2,v3,ma,m) \
     do { \
-        SemanticVersion v(ma); \
+        SemanticVersion v((MajorID)ma); \
         EXPECT3(m,v,ma,v2,v3); \
     } while(0)
 
 #define EXPECT_VALID_CREATE2(v3,ma,mi,m) \
     do { \
-        SemanticVersion v(ma,mi); \
+        SemanticVersion v((MajorID)ma,mi); \
         EXPECT3(m,v,ma,mi,v3); \
     } while(0)
 
 #define EXPECT_VALID_CREATE3(ma,mi,pa,m) \
     do { \
-        SemanticVersion v(ma,mi,pa); \
+        SemanticVersion v((MajorID)ma,mi,pa); \
         EXPECT3(m,v,ma,mi,pa); \
     } while(0)
 
 #define EXPECT_VALID_CREATE4(ma,mi,pa,pr,m) \
     do { \
-        SemanticVersion v(ma,mi,pa,String(pr),String("")); \
+        SemanticVersion v((MajorID)ma,mi,pa,String(pr),String("")); \
         EXPECT3(m,v,ma,mi,pa); \
     } while(0)
 
@@ -106,25 +106,25 @@ TEST(SemVerTest, CreationTests) {
 
 #define EXPECT_CORE3(ma,mi,pa ) \
     do { \
-        SemanticVersion v(ma,mi,pa); \
+        SemanticVersion v((MajorID)ma,mi,pa); \
         EXPECT_EQ(v.coreVersion(), #ma "." #mi "." #pa) << "SemanticVersion(" #ma "," #mi "," #pa ")"; \
     } while (0)
 
 #define EXPECT_CORE4(ma,mi,pa,pr ) \
     do { \
-        SemanticVersion v(ma,mi,pa,String(pr),String("")); \
+        SemanticVersion v((MajorID)ma,mi,pa,String(pr),String("")); \
         EXPECT_EQ(v.coreVersion(), #ma "." #mi "." #pa) ; \
     } while (0)
 
 #define EXPECT_CORE4bm(ma,mi,pa,bm ) \
     do { \
-        SemanticVersion v(ma,mi,pa,String(""),String(bm)); \
+        SemanticVersion v((MajorID)ma,mi,pa,String(""),String(bm)); \
         EXPECT_EQ(v.coreVersion(), #ma "." #mi "." #pa); \
     } while (0)
 
 #define EXPECT_CORE5(ma,mi,pa,pr,bm ) \
     do { \
-        SemanticVersion v(ma,mi,pa,String(pr),String(bm)); \
+        SemanticVersion v((MajorID)ma,mi,pa,String(pr),String(bm)); \
         EXPECT_EQ(v.coreVersion(), #ma "." #mi "." #pa); \
     } while (0)
 
@@ -143,25 +143,25 @@ TEST(SemVerTest, CoreNaming) {
 
 #define EXPECT_NAME3(ma,mi,pa,m) \
     do { \
-        SemanticVersion v(ma,mi,pa); \
+        SemanticVersion v((MajorID)ma,mi,pa); \
         EXPECT_EQ(v.semver(), #ma "." #mi "." #pa) << m; \
     } while (0)
 
 #define EXPECT_NAME4(ma,mi,pa,pr,m) \
     do { \
-        SemanticVersion v(ma,mi,pa,String(pr),String("")); \
+        SemanticVersion v((MajorID)ma,mi,pa,String(pr),String("")); \
         EXPECT_EQ(v.semver(), #ma "." #mi "." #pa "-" pr)  << m; \
     } while (0)
 
 #define EXPECT_NAME4bm(ma,mi,pa,bm,m) \
     do { \
-        SemanticVersion v(ma,mi,pa,String(""),String(bm)); \
+        SemanticVersion v((MajorID)ma,mi,pa,String(""),String(bm)); \
         EXPECT_EQ(v.semver(), #ma "." #mi "." #pa "+" bm) << m; \
     } while (0)
 
 #define EXPECT_NAME5(ma,mi,pa,pr,bm,m) \
     do { \
-        SemanticVersion v(ma,mi,pa,String(pr),String(bm)); \
+        SemanticVersion v((MajorID)ma,mi,pa,String(pr),String(bm)); \
         EXPECT_EQ(v.semver(), #ma "." #mi "." #pa "-" pr "+" bm) << m; \
     } while (0)
 
@@ -182,11 +182,11 @@ TEST(SemVerTest, FullNaming) {
 #define EXPECT_INCOMPATIBLE(v1,v2,m) EXPECT_FALSE(v1.isCompatibleWith(v2)) << m
 
 TEST(SemVerTest, Compatibility) {
-    SemanticVersion v1(3,1,0);
-    SemanticVersion v2(3,1,1);
-    SemanticVersion v3(3,2,0);
-    SemanticVersion v4(4,0,0);
-    SemanticVersion v5(3,2,1);
+    SemanticVersion v1((MajorID)3,1,0);
+    SemanticVersion v2((MajorID)3,1,1);
+    SemanticVersion v3((MajorID)3,2,0);
+    SemanticVersion v4((MajorID)4,0,0);
+    SemanticVersion v5((MajorID)3,2,1);
     EXPECT_COMPATIBLE(v2, v1, "only patch version increase");
     EXPECT_COMPATIBLE(v1, v2, "only patch version decrease");
     EXPECT_COMPATIBLE(v3, v1, "only minor version increase");
@@ -196,15 +196,15 @@ TEST(SemVerTest, Compatibility) {
     EXPECT_COMPATIBLE(v5, v1, "minor and patch increase");
     EXPECT_INCOMPATIBLE(v1, v5, "minor and patch decrease");
 
-    SemanticVersion v6(3,0,0,"alpha","");
+    SemanticVersion v6((MajorID)3,0,0,"alpha","");
     EXPECT_INCOMPATIBLE(v6, v5, "preRelease comes before normal release");
     EXPECT_COMPATIBLE(v5, v6, "normal release comes after preRelease");
 
-    SemanticVersion v7(3,0,0,"","001");
+    SemanticVersion v7((MajorID)3,0,0,"","001");
     EXPECT_COMPATIBLE(v5, v7, "build meta data or not does not affect compatibility");
     EXPECT_INCOMPATIBLE(v7, v5, "build meta data or not does not affect incompatibility");
 
-    SemanticVersion v8(3,0,0,"alpha","001");
+    SemanticVersion v8((MajorID)3,0,0,"alpha","001");
     EXPECT_INCOMPATIBLE(v8, v5, "preRelease incompatible with normal release even with build metadata");
     EXPECT_COMPATIBLE(v5, v8, "normal release compatible with preRelese even with build metadata");
 }

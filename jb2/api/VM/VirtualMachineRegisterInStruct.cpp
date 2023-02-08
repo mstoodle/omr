@@ -26,6 +26,8 @@ namespace OMR {
 namespace JitBuilder {
 namespace VM {
 
+INIT_JBALLOC_REUSECAT(VirtualMachineRegisterInStruct, VirtualMachineState)
+
 StateKind VirtualMachineRegisterInStruct::STATEKIND = KindService::NoKind;
 bool VirtualMachineRegisterInStruct::kindRegistered = false;
 
@@ -38,14 +40,14 @@ VirtualMachineRegisterInStruct::getStateClassKind() {
     return STATEKIND;
 }
 
-VirtualMachineRegisterInStruct::VirtualMachineRegisterInStruct(LOCATION,
+VirtualMachineRegisterInStruct::VirtualMachineRegisterInStruct(MEM_LOCATION(a),
                                                                VMExtension *vme,
                                                                String name,
                                                                Base::BaseCompilation *comp,
                                                                const Base::FieldType * fieldType,
                                                                Func::LocalSymbol * localHoldingStructAddress,
                                                                bool doReload)
-    : VirtualMachineRegister(PASSLOC, vme, name, comp, getStateClassKind())
+    : VirtualMachineRegister(MEM_PASSLOC(a), vme, name, comp, getStateClassKind())
     , _localHoldingStructAddress(localHoldingStructAddress)
     , _fieldType(fieldType) {
 
@@ -80,7 +82,8 @@ VirtualMachineRegisterInStruct::Commit(LOCATION, Builder *b) {
 
 VirtualMachineState *
 VirtualMachineRegisterInStruct::MakeCopy(LOCATION, Builder *b) {
-    return new  VirtualMachineRegisterInStruct(PASSLOC, _vme, _name, _comp, _fieldType, _localHoldingStructAddress, false);
+    Allocator *mem = allocator();
+    return new (mem) VirtualMachineRegisterInStruct(MEM_PASSLOC(mem), _vme, _name, _comp, _fieldType, _localHoldingStructAddress, false);
 }
 
 void

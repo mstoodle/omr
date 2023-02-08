@@ -31,23 +31,24 @@ namespace JitBuilder {
 
 class Compilation;
 class LiteralDictionary;
-class TextWriter;
+class TextLogger;
 class Type;
 
-class Literal {
+class Literal : public Allocatable {
+    JBALLOC_(Literal)
+
     friend class Compilation;
 
 public:
-    Literal(LOCATION, Compilation *comp, const Type *t, const LiteralBytes *v);
-    Literal(LOCATION, LiteralDictionary *litDict, const Type *t, const LiteralBytes *v);
-    ~Literal();
+    Literal(MEM_LOCATION(a), Compilation *comp, const Type *t, const LiteralBytes *v);
+    Literal(MEM_LOCATION(a), LiteralDictionary *litDict, const Type *t, const LiteralBytes *v);
 
     LiteralID id() const { return _id; }
     const Type *type() const { return _type; }
     template<typename T>
     const T value() const { return *reinterpret_cast<T *>(_pValue); }
     const LiteralBytes *value() const { return _pValue; }
-    void write(TextWriter & w) const;
+    void log(TextLogger & lgr) const;
     bool operator==(Literal & other);
 
     const int64_t getInteger() const;

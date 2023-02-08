@@ -28,6 +28,8 @@ namespace OMR {
 namespace JitBuilder {
 namespace VM {
 
+INIT_JBALLOC_REUSECAT(VirtualMachineOperandStack, VirtualMachineState)
+
 StateKind VirtualMachineOperandStack::STATEKIND = KindService::NoKind;
 bool VirtualMachineOperandStack::kindRegistered = false;
 
@@ -40,7 +42,7 @@ VirtualMachineOperandStack::getStateClassKind() {
     return STATEKIND;
 }
 
-VirtualMachineOperandStack::VirtualMachineOperandStack(LOCATION,
+VirtualMachineOperandStack::VirtualMachineOperandStack(MEM_LOCATION(a),
                                                        VMExtension *vme,
                                                        Base::BaseCompilation *comp,
                                                        int32_t sizeHint,
@@ -48,7 +50,7 @@ VirtualMachineOperandStack::VirtualMachineOperandStack(LOCATION,
                                                        const Type *elementType,
                                                        bool growsUp,
                                                        int32_t stackInitialOffset)
-    : VirtualMachineState(PASSLOC, vme, getStateClassKind())
+    : VirtualMachineState(MEM_PASSLOC(a), vme, getStateClassKind())
     , _comp(comp)
     , _stackTopRegister(stackTopRegister)
     , _elementType(elementType)
@@ -60,8 +62,8 @@ VirtualMachineOperandStack::VirtualMachineOperandStack(LOCATION,
     init(PASSLOC);
 }
 
-VirtualMachineOperandStack::VirtualMachineOperandStack(LOCATION, VirtualMachineOperandStack *other)
-    : VirtualMachineState(PASSLOC, other->_vme, getStateClassKind())
+VirtualMachineOperandStack::VirtualMachineOperandStack(MEM_LOCATION(a), VirtualMachineOperandStack *other)
+    : VirtualMachineState(MEM_PASSLOC(a), other->_vme, getStateClassKind())
     , _comp(other->_comp)
     , _stackTopRegister(other->_stackTopRegister)
     , _elementType(other->_elementType)
@@ -71,11 +73,15 @@ VirtualMachineOperandStack::VirtualMachineOperandStack(LOCATION, VirtualMachineO
     , _pushAmount(other->_pushAmount)
     , _stackBaseLocal(other->_stackBaseLocal) {
 
-    _stack = new Value *[_stackMax];
+    _stack = a->allocate<Value *>(_stackMax);
     int32_t numBytes = _stackMax * sizeof(Value *);
     memcpy(_stack, other->_stack, numBytes);
 }
 
+VirtualMachineOperandStack::~VirtualMachineOperandStack() {
+    if (_stack)
+        allocator()->deallocate(_stack);
+}
 
 // commits the simulated operand stack of values to the virtual machine state
 // the given builder object is where the operations to commit the state will be inserted
@@ -116,7 +122,8 @@ VirtualMachineOperandStack::Reload(LOCATION, Builder* b) {
 // If VirtualMachineOperandStack is subclassed, this function *must* also be implemented in the subclass!
 VirtualMachineState *
 VirtualMachineOperandStack::MakeCopy(LOCATION, Builder *b) {
-    return new VirtualMachineOperandStack(PASSLOC, this);
+    Allocator *mem = allocator();
+    return new (mem) VirtualMachineOperandStack(MEM_PASSLOC(mem), this);
 }
 
 void
@@ -205,13 +212,16 @@ VirtualMachineOperandStack::grow(int32_t growAmount) {
         growAmount = 1;
 
     int32_t newMax = _stackMax + growAmount;
-    Value ** newStack = new Value *[newMax];
+    Value ** newStack = allocator()->allocate<Value *>(newMax);
 
     int32_t newBytes = newMax * sizeof(Value *);
     memset(newStack, 0, newBytes);
 
     int32_t numBytes = _stackMax * sizeof(Value *);
     memcpy(newStack, _stack, numBytes);
+
+    if (_stack)
+        allocator()->deallocate(_stack);
 
     _stack = newStack;
     _stackMax = newMax;
@@ -222,7 +232,7 @@ VirtualMachineOperandStack::init(LOCATION) {
     Base::BaseExtension *bx = _vme->bx();
     Func::FunctionExtension *fx = _vme->fx();
 
-    _stack = new Value *[_stackMax];
+    _stack = allocator()->allocate<Value *>(_stackMax);
 
     int32_t numBytes = _stackMax * sizeof(Value *);
     memset(_stack, 0, numBytes);

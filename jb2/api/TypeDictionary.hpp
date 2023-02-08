@@ -23,7 +23,7 @@
 #define TYPEDICTIONARY_INCL
 
 #include "common.hpp"
-#include "util/String.hpp"
+#include "String.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -34,17 +34,18 @@ class DynamicType;
 class Extension;
 class OperationBuilder;
 
-class TypeDictionary {
+class TypeDictionary : public Allocatable {
+    JBALLOC_(TypeDictionary)
+
     friend class DynamicType;
     friend class Extension;
     friend class OperationBuilder;
     friend class Type;
 
 public:
-    TypeDictionary(Compiler *compiler);
-    TypeDictionary(Compiler *compiler, String name);
-    TypeDictionary(Compiler *compiler, String name, TypeDictionary *linkedDict);
-    virtual ~TypeDictionary();
+    ALL_ALLOC_ALLOWED(TypeDictionary, Compiler *compiler);
+    ALL_ALLOC_ALLOWED(TypeDictionary, Compiler *compiler, String name);
+    ALL_ALLOC_ALLOWED(TypeDictionary, Compiler *compiler, String name, TypeDictionary *linkedDict);
 
     Compiler *compiler() const { return _compiler; }
 
@@ -62,7 +63,7 @@ public:
     bool hasLinkedDictionary() const { return _linkedDictionary != NULL; }
     TypeDictionary *linkedDictionary() { return _linkedDictionary; }
 
-    void write(TextWriter &w);
+    void log(TextLogger &lgr);
 
     void registerType(const Type *type);
 
@@ -71,8 +72,9 @@ protected:
     TypeID getTypeID() { return _nextTypeID++; }
 
     TypeDictionaryID _id;
-    Compiler * _compiler;
     String _name;
+    Compiler * _compiler;
+    Allocator * _mem;
     List<const Type *> _types;
     List<const Type *> _ownedTypes;
     TypeID _nextTypeID;

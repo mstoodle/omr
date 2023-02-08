@@ -23,7 +23,7 @@
 #define BUILDER_INCL
 
 #include "common.hpp"
-#include "util/String.hpp"
+#include "String.hpp"
 
 namespace OMR {
 namespace JitBuilder { 
@@ -38,20 +38,20 @@ class OperationBuilder;
 class OperationCloner;
 class Type;
 class Value;
-class TextWriter;
+class TextLogger;
 class Transformer;
 class TypeDictionary;
 
-class Builder
+class Builder : public Allocatable
     {
+    JBALLOC_(Builder);
+
     friend class Extension;
     friend class Operation;
     friend class OperationBuilder;
     friend class Transformer;
 
 public:
-    virtual ~Builder();
-
     Compilation *comp() const { return _comp; }
 
     static Builder * create(Builder *parent, Context *context=NULL, String name="");
@@ -111,6 +111,7 @@ public:
         return _currentLocation;
     }
     void setLocation(Location * loc) {
+        _myLocation = false;
         _currentLocation = loc;
     }
 
@@ -119,17 +120,17 @@ public:
     }
 
     virtual String logName() const { return String("Builder"); }
-    virtual void writeProperties(TextWriter & w) const;
-    virtual void writePrefix(TextWriter & w) const;
-    virtual void writeSuffix(TextWriter & w) const;
+    virtual void logProperties(TextLogger & log) const;
+    virtual void logPrefix(TextLogger & log) const;
+    virtual void logSuffix(TextLogger & log) const;
 
     virtual void jbgen(JB1MethodBuilder *j1mb) const;
     virtual void jbgenSuccessors(JB1MethodBuilder *j1mb) const;
 
     protected:
-    Builder(Compilation *comp, Context *context=NULL, String name="");
-    Builder(Builder *parent, Context *context=NULL, String name="");
-    Builder(Builder *parent, Operation *boundToOp, String name="");
+    DYNAMIC_ALLOC_ONLY(Builder, Compilation *comp, Context *context=NULL, String name="");
+    DYNAMIC_ALLOC_ONLY(Builder, Builder *parent, Context *context=NULL, String name="");
+    DYNAMIC_ALLOC_ONLY(Builder, Builder *parent, Operation *boundToOp, String name="");
 
     void setParent(Builder *parent);
     void addChild(Builder *child);
@@ -146,6 +147,7 @@ public:
     int32_t              _operationCount;
     Operation          * _firstOperation;
     Operation          * _lastOperation;
+    bool                 _myLocation;
     Location           * _currentLocation;
     Operation          * _boundToOperation;
     bool                 _isTarget;

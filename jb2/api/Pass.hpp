@@ -24,7 +24,7 @@
 
 #include "common.hpp"
 #include "Loggable.hpp"
-#include "util/String.hpp"
+#include "String.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -34,11 +34,13 @@ class Compiler;
 class PassChain;
 
 class Pass : public Loggable {
+    JBALLOC_(Pass)
+
     friend class Extension;
     friend class Strategy;
 
 public:
-    Pass(Compiler *compiler, String name);
+    DYNAMIC_ALLOC_ONLY(Pass, Compiler *compiler, String name);
 
     String name() const { return _name; }
     PassID id() const { return _id; }

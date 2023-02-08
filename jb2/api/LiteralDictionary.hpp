@@ -34,8 +34,12 @@ class DebugDictionary;
 class DynamicType;
 class Extension;
 class OperationBuilder;
+class TextLogger;
 
-class LiteralDictionary {
+class LiteralDictionary : public Allocatable {
+    JBALLOC_(LiteralDictionary)
+
+    friend class Compiler;
     friend class Compilation;
     friend class DebugDictionary;
     friend class DynamicType;
@@ -44,10 +48,9 @@ class LiteralDictionary {
     friend class OperationBuilder;
 
 public:
-    LiteralDictionary(Compilation *comp);
-    LiteralDictionary(Compilation *comp, String name);
-    LiteralDictionary(Compilation *comp, String name, LiteralDictionary *linkedTypes);
-    virtual ~LiteralDictionary();
+    ALL_ALLOC_ALLOWED(LiteralDictionary, Compiler *compiler);
+    ALL_ALLOC_ALLOWED(LiteralDictionary, Compiler *compiler, String name);
+    ALL_ALLOC_ALLOWED(LiteralDictionary, Compiler *compiler, String name, LiteralDictionary *linkedTypes);
 
     LiteralListIterator literalIterator() const { return _literals.iterator(); }
 
@@ -59,7 +62,7 @@ public:
     bool hasLinkedDictionary() const { return _linkedDictionary != NULL; }
     LiteralDictionary *linkedDictionary() { return _linkedDictionary; }
 
-    void write(TextWriter &w);
+    void log(TextLogger &lgr);
 
 protected:
     LiteralID getLiteralID() { return _nextLiteralID++; }
@@ -67,7 +70,8 @@ protected:
     Literal *registerLiteral(LOCATION, const Type *type, const LiteralBytes *value);
 
     LiteralDictionaryID _id;
-    Compilation * _comp;
+    Compiler * _compiler;
+    Allocator *_mem;
     String _name;
     LiteralList _literals;
     LiteralList _ownedLiterals;

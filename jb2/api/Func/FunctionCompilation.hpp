@@ -36,17 +36,18 @@ class PointerType;
 class StructType;
 
 class FunctionCompilation : public Compilation {
+    JBALLOC(FunctionCompilation, NoAllocationCategory)
+
     friend class FunctionExtension;
 
 public:
-    FunctionCompilation(Compiler *compiler, Function *func, StrategyID strategy=NoStrategy, TypeDictionary *dict=NULL, Config *localConfig=NULL);
-    virtual ~FunctionCompilation() { }
+    FunctionCompilation(Compiler *compiler, Function *func, StrategyID strategy=NoStrategy, LiteralDictionary *litdict=NULL, SymbolDictionary *symdict=NULL, TypeDictionary *typedict=NULL, Config *localConfig=NULL);
 
     Function *func() const;
 
     FunctionContext *funcContext() const;
 
-    virtual void write(TextWriter & w) const;
+    virtual void log(TextLogger & lgr) const;
 
     virtual void constructJB1Function(JB1MethodBuilder *j1mb);
     virtual void jbgenProlog(JB1MethodBuilder *j1mb);

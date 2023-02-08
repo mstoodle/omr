@@ -31,6 +31,7 @@ namespace JitBuilder {
 class Builder;
 class Case;
 class FunctionBuilder;
+class JB1MethodBuilder;
 class Location;
 class Operation;
 class PointerType;
@@ -41,8 +42,10 @@ class Value;
 typedef void *TRType;
 
 class JB1CodeGenerator : public Visitor {
+    JBALLOC_(JB1CodeGenerator)
+
 public:
-    JB1CodeGenerator(Compiler *compiler);
+    DYNAMIC_ALLOC_ONLY(JB1CodeGenerator, Compiler *compiler);
 
     void * entryPoint() const  { return _entryPoint; }
     int32_t returnCode() const { return _compileReturnCode; }

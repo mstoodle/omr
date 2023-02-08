@@ -25,8 +25,11 @@
 namespace OMR {
 namespace JitBuilder {
 
-Location::Location(Compilation *comp, String fileName, String lineNumber)
-    : _id(comp->getLocationID())
+INIT_JBALLOC_ON(Location, IL)
+
+Location::Location(Allocator *a, Compilation *comp, String fileName, String lineNumber)
+    : Allocatable(a)
+    , _id(comp->getLocationID())
     , _comp(comp)
     , _fileName(fileName)
     , _lineNumber(lineNumber)
@@ -34,8 +37,9 @@ Location::Location(Compilation *comp, String fileName, String lineNumber)
 
     }
 
-Location::Location(Compilation *comp, String fileName, String lineNumber, int32_t bcIndex)
-    : _id(comp->getLocationID())
+Location::Location(Allocator *a, Compilation *comp, String fileName, String lineNumber, int32_t bcIndex)
+    : Allocatable(a)
+    , _id(comp->getLocationID())
     , _comp(comp)
     , _fileName(fileName)
     , _lineNumber(lineNumber)
@@ -43,6 +47,9 @@ Location::Location(Compilation *comp, String fileName, String lineNumber, int32_
 
     }
 
+Location::~Location() {
+
+}
+
 } // namespace JitBuilder
 } // namespace OMR
-

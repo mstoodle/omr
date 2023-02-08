@@ -31,239 +31,221 @@ namespace Base {
 
 class BaseExtension;
 
-class Op_Call : public OperationR1S1VN {
-    friend class BaseExtension;
-
-public:
-    virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-    virtual void write(TextWriter &w) const;
-    virtual void jbgen(JB1MethodBuilder *j1mb) const;
-
-protected:
-    Op_Call(LOCATION, Extension *ext, Builder * parent, ActionID aCall, Value *result, Func::FunctionSymbol *target, std::va_list & args);
-    Op_Call(LOCATION, Extension *ext, Builder * parent, ActionID aCall, Func::FunctionSymbol *target, std::va_list & args);
-    Op_Call(LOCATION, Extension *ext, Builder * parent, ActionID aCall, OperationCloner *cloner)
-        : OperationR1S1VN(PASSLOC, aCall, ext, parent, cloner) {
-    }
-};
-
-class Op_CallVoid : public OperationR0S1VN {
-    friend class BaseExtension;
-
-public:
-    virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-    virtual void write(TextWriter &w) const;
-    virtual void jbgen(JB1MethodBuilder *j1mb) const;
-
-protected:
-    Op_CallVoid(LOCATION, Extension *ext, Builder * parent, ActionID aCallVoid, Value *result, Func::FunctionSymbol *target, std::va_list & args);
-    Op_CallVoid(LOCATION, Extension *ext, Builder * parent, ActionID aCallVoid, Func::FunctionSymbol *target, std::va_list & args);
-    Op_CallVoid(LOCATION, Extension *ext, Builder * parent, ActionID aCallVoid, OperationCloner *cloner)
-        : OperationR0S1VN(PASSLOC, aCallVoid, ext, parent, cloner) {
-    }
-};
-
 class Op_Goto : public OperationB1 {
-    friend class BaseExtension;
+    JBALLOC_(Op_Goto)
 
+    friend class BaseExtension;
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-    virtual void write(TextWriter &w) const;
+    virtual void log(TextLogger & lgr) const;
     virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
-    Op_Goto(LOCATION, Extension *ext, Builder * parent, ActionID aGoto, Builder *target)
-        : OperationB1(PASSLOC, aGoto, ext, parent, target) {
+    Op_Goto(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aGoto, Builder *target)
+        : OperationB1(MEM_PASSLOC(a), aGoto, ext, parent, target) {
 
     }
 };
 
 class Op_IfCmpEqual : public OperationB1R0V2 {
-    friend class BaseExtension;
+    JBALLOC_(Op_IfCmpEqual)
 
+    friend class BaseExtension;
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-    virtual void write(TextWriter &w) const;
+    virtual void log(TextLogger & lgr) const;
     virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
-    Op_IfCmpEqual(LOCATION, Extension *ext, Builder * parent, ActionID aIfCmpEqual, Builder *target, Value *left, Value *right)
-        : OperationB1R0V2(PASSLOC, aIfCmpEqual, ext, parent, target, left, right) {
+    Op_IfCmpEqual(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aIfCmpEqual, Builder *target, Value *left, Value *right)
+        : OperationB1R0V2(MEM_PASSLOC(a), aIfCmpEqual, ext, parent, target, left, right) {
 
     }
 };
 
 class Op_IfCmpEqualZero : public OperationB1R0V1 {
-    friend class BaseExtension;
+    JBALLOC_(Op_IfCmpEqualZero)
 
+    friend class BaseExtension;
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-    virtual void write(TextWriter &w) const;
+    virtual void log(TextLogger & lgr) const;
     virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
-    Op_IfCmpEqualZero(LOCATION, Extension *ext, Builder * parent, ActionID aIfCmpEqualZero, Builder *target, Value *value)
-        : OperationB1R0V1(PASSLOC, aIfCmpEqualZero, ext, parent, target, value) {
+    Op_IfCmpEqualZero(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aIfCmpEqualZero, Builder *target, Value *value)
+        : OperationB1R0V1(MEM_PASSLOC(a), aIfCmpEqualZero, ext, parent, target, value) {
 
     }
 };
 
 class Op_IfCmpGreaterThan : public OperationB1R0V2 {
-    friend class BaseExtension;
+    JBALLOC_(Op_IfCmpGreaterThan)
 
+    friend class BaseExtension;
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-    virtual void write(TextWriter &w) const;
+    virtual void log(TextLogger & lgr) const;
     virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
-    Op_IfCmpGreaterThan(LOCATION, Extension *ext, Builder * parent, ActionID aIfCmpGreaterThan, Builder *target, Value *left, Value *right)
-        : OperationB1R0V2(PASSLOC, aIfCmpGreaterThan, ext, parent, target, left, right) {
+    Op_IfCmpGreaterThan(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aIfCmpGreaterThan, Builder *target, Value *left, Value *right)
+        : OperationB1R0V2(MEM_PASSLOC(a), aIfCmpGreaterThan, ext, parent, target, left, right) {
 
     }
 };
 
 class Op_IfCmpGreaterOrEqual : public OperationB1R0V2 {
-    friend class BaseExtension;
+    JBALLOC_(Op_IfCmpGreaterOrEqual)
 
+    friend class BaseExtension;
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-    virtual void write(TextWriter &w) const;
+    virtual void log(TextLogger & lgr) const;
     virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
-    Op_IfCmpGreaterOrEqual(LOCATION, Extension *ext, Builder * parent, ActionID aIfCmpGreaterOrEqual, Builder *target, Value *left, Value *right)
-        : OperationB1R0V2(PASSLOC, aIfCmpGreaterOrEqual, ext, parent, target, left, right) {
+    Op_IfCmpGreaterOrEqual(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aIfCmpGreaterOrEqual, Builder *target, Value *left, Value *right)
+        : OperationB1R0V2(MEM_PASSLOC(a), aIfCmpGreaterOrEqual, ext, parent, target, left, right) {
 
     }
 };
 
 class Op_IfCmpLessThan : public OperationB1R0V2 {
-    friend class BaseExtension;
+    JBALLOC_(Op_IfCmpLessThan)
 
+    friend class BaseExtension;
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-    virtual void write(TextWriter &w) const;
+    virtual void log(TextLogger & lgr) const;
     virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
-    Op_IfCmpLessThan(LOCATION, Extension *ext, Builder * parent, ActionID aIfCmpLessThan, Builder *target, Value *left, Value *right)
-        : OperationB1R0V2(PASSLOC, aIfCmpLessThan, ext, parent, target, left, right) {
+    Op_IfCmpLessThan(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aIfCmpLessThan, Builder *target, Value *left, Value *right)
+        : OperationB1R0V2(MEM_PASSLOC(a), aIfCmpLessThan, ext, parent, target, left, right) {
 
     }
 };
 
 class Op_IfCmpLessOrEqual : public OperationB1R0V2 {
-    friend class BaseExtension;
+    JBALLOC_(Op_IfCmpLessOrEqual)
 
+    friend class BaseExtension;
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-    virtual void write(TextWriter &w) const;
+    virtual void log(TextLogger & lgr) const;
     virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
-    Op_IfCmpLessOrEqual(LOCATION, Extension *ext, Builder * parent, ActionID aIfCmpLessOrEqual, Builder *target, Value *left, Value *right)
-        : OperationB1R0V2(PASSLOC, aIfCmpLessOrEqual, ext, parent, target, left, right) {
+    Op_IfCmpLessOrEqual(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aIfCmpLessOrEqual, Builder *target, Value *left, Value *right)
+        : OperationB1R0V2(MEM_PASSLOC(a), aIfCmpLessOrEqual, ext, parent, target, left, right) {
 
     }
 };
 
 class Op_IfCmpNotEqual : public OperationB1R0V2 {
-    friend class BaseExtension;
+    JBALLOC_(Op_IfCmpNotEqual)
 
+    friend class BaseExtension;
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-    virtual void write(TextWriter &w) const;
+    virtual void log(TextLogger & lgr) const;
     virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
-    Op_IfCmpNotEqual(LOCATION, Extension *ext, Builder * parent, ActionID aIfCmpNotEqual, Builder *target, Value *left, Value *right)
-        : OperationB1R0V2(PASSLOC, aIfCmpNotEqual, ext, parent, target, left, right) {
+    Op_IfCmpNotEqual(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aIfCmpNotEqual, Builder *target, Value *left, Value *right)
+        : OperationB1R0V2(MEM_PASSLOC(a), aIfCmpNotEqual, ext, parent, target, left, right) {
 
     }
 };
 
 class Op_IfCmpNotEqualZero : public OperationB1R0V1 {
-    friend class BaseExtension;
+    JBALLOC_(Op_IfCmpNotEqualZero)
 
+    friend class BaseExtension;
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-    virtual void write(TextWriter &w) const;
+    virtual void log(TextLogger & lgr) const;
     virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
-    Op_IfCmpNotEqualZero(LOCATION, Extension *ext, Builder * parent, ActionID aIfCmpNotEqualZero, Builder *target, Value *value)
-        : OperationB1R0V1(PASSLOC, aIfCmpNotEqualZero, ext, parent, target, value) {
+    Op_IfCmpNotEqualZero(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aIfCmpNotEqualZero, Builder *target, Value *value)
+        : OperationB1R0V1(MEM_PASSLOC(a), aIfCmpNotEqualZero, ext, parent, target, value) {
 
     }
 };
 
 class Op_IfCmpUnsignedGreaterThan : public OperationB1R0V2 {
-    friend class BaseExtension;
+    JBALLOC_(Op_IfCmpUnsignedGreaterThan)
 
+    friend class BaseExtension;
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-    virtual void write(TextWriter &w) const;
+    virtual void log(TextLogger & lgr) const;
     virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
-    Op_IfCmpUnsignedGreaterThan(LOCATION, Extension *ext, Builder * parent, ActionID aIfCmpUnsignedGreaterThan, Builder *target, Value *left, Value *right)
-        : OperationB1R0V2(PASSLOC, aIfCmpUnsignedGreaterThan, ext, parent, target, left, right) {
+    Op_IfCmpUnsignedGreaterThan(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aIfCmpUnsignedGreaterThan, Builder *target, Value *left, Value *right)
+        : OperationB1R0V2(MEM_PASSLOC(a), aIfCmpUnsignedGreaterThan, ext, parent, target, left, right) {
 
     }
 };
 
 class Op_IfCmpUnsignedGreaterOrEqual : public OperationB1R0V2 {
-    friend class BaseExtension;
+    JBALLOC_(Op_IfCmpUnsignedGreaterOrEqual)
 
+    friend class BaseExtension;
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-    virtual void write(TextWriter &w) const;
+    virtual void log(TextLogger & lgr) const;
     virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
-    Op_IfCmpUnsignedGreaterOrEqual(LOCATION, Extension *ext, Builder * parent, ActionID aIfCmpUnsignedGreaterOrEqual, Builder *target, Value *left, Value *right)
-        : OperationB1R0V2(PASSLOC, aIfCmpUnsignedGreaterOrEqual, ext, parent, target, left, right) {
+    Op_IfCmpUnsignedGreaterOrEqual(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aIfCmpUnsignedGreaterOrEqual, Builder *target, Value *left, Value *right)
+        : OperationB1R0V2(MEM_PASSLOC(a), aIfCmpUnsignedGreaterOrEqual, ext, parent, target, left, right) {
 
     }
 };
 
 class Op_IfCmpUnsignedLessThan : public OperationB1R0V2 {
-    friend class BaseExtension;
+    JBALLOC_(Op_IfCmpUnsignedLessThan)
 
+    friend class BaseExtension;
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-    virtual void write(TextWriter &w) const;
+    virtual void log(TextLogger & lgr) const;
     virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
-    Op_IfCmpUnsignedLessThan(LOCATION, Extension *ext, Builder * parent, ActionID aIfCmpUnsignedLessThan, Builder *target, Value *left, Value *right)
-        : OperationB1R0V2(PASSLOC, aIfCmpUnsignedLessThan, ext, parent, target, left, right) {
+    Op_IfCmpUnsignedLessThan(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aIfCmpUnsignedLessThan, Builder *target, Value *left, Value *right)
+        : OperationB1R0V2(MEM_PASSLOC(a), aIfCmpUnsignedLessThan, ext, parent, target, left, right) {
 
     }
 };
 
 class Op_IfCmpUnsignedLessOrEqual : public OperationB1R0V2 {
-    friend class BaseExtension;
+    JBALLOC_(Op_IfCmpUnsignedLessOrEqual)
 
+    friend class BaseExtension;
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-    virtual void write(TextWriter &w) const;
+    virtual void log(TextLogger & lgr) const;
     virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
-    Op_IfCmpUnsignedLessOrEqual(LOCATION, Extension *ext, Builder * parent, ActionID aIfCmpUnsignedLessOrEqual, Builder *target, Value *left, Value *right)
-        : OperationB1R0V2(PASSLOC, aIfCmpUnsignedLessOrEqual, ext, parent, target, left, right) {
+    Op_IfCmpUnsignedLessOrEqual(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aIfCmpUnsignedLessOrEqual, Builder *target, Value *left, Value *right)
+        : OperationB1R0V2(MEM_PASSLOC(a), aIfCmpUnsignedLessOrEqual, ext, parent, target, left, right) {
 
     }
 };
 
 class Op_ForLoopUp : public Operation {
-    friend class BaseExtension;
+    JBALLOC_(Op_ForLoopUp)
 
+    friend class BaseExtension;
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-    virtual void write(TextWriter &w) const;
+    virtual void log(TextLogger & lgr) const;
     virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
     virtual int32_t numSymbols() const { return 1; }
@@ -272,7 +254,7 @@ public:
         return NULL;
     }
     virtual SymbolIterator symbols() {
-        return SymbolIterator(_loopVariable);
+        return SymbolIterator(allocator(), _loopVariable);
     }
 
     virtual int32_t numOperands() const { return 3; }
@@ -283,7 +265,7 @@ public:
         return NULL;
     }
     virtual ValueIterator operands() {
-        return ValueIterator(_initial, _final, _bump);
+        return ValueIterator(allocator(), _initial, _final, _bump);
     }
 
     virtual int32_t numBuilders() const {
@@ -296,11 +278,11 @@ public:
         return NULL;
     }
     virtual BuilderIterator builders() {
-        return BuilderIterator(_loopBody, _loopBreak, _loopContinue);
+        return BuilderIterator(allocator(), _loopBody, _loopBreak, _loopContinue);
     }
 
 protected:
-    Op_ForLoopUp(LOCATION, Extension *ext, Builder * parent, ActionID aForLoopUp, ForLoopBuilder *loopBuilder);
+    Op_ForLoopUp(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aForLoopUp, ForLoopBuilder *loopBuilder);
 
     Func::LocalSymbol *_loopVariable;
     Value * _initial;

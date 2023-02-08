@@ -52,21 +52,23 @@ TEST(BaseExtension, loadExtension) {
 }
 
 TEST(BaseExtension, cannotLoadUnknownExtension) {
-    Compiler c("testNotBase");
+    TextLogger logger(std::cout, String("    "));
+    Config cfg;
+    Compiler c("testNotBase", &cfg);
     Base::BaseExtension *ext = c.loadExtension<Base::BaseExtension>(LOC, NULL, "unknown");
     EXPECT_EQ(ext, nullptr) << "notbase extension correctly could not be loaded";
 }
 
 TEST(BaseExtension, checkVersionPass) {
     Compiler c("testBase");
-    SemanticVersion v(0,0,0);
+    SemanticVersion v((MajorID)0,0,0);
     Base::BaseExtension *ext = c.loadExtension<Base::BaseExtension>(LOC, &v, "jb2base");
     EXPECT_NE(ext, nullptr) << "Base extension with v(0,0,0) loaded";
 }
 
 TEST(BaseExtension, checkVersionFail) {
     Compiler c("testBase");
-    SemanticVersion v(1,0,0);
+    SemanticVersion v((MajorID)1,0,0);
     Base::BaseExtension *ext = c.loadExtension<Base::BaseExtension>(LOC, &v, "jb2base");
     EXPECT_EQ(ext, nullptr) << "Base extension with v(1,0,0) correctly could not be loaded";
 }
@@ -98,29 +100,36 @@ TEST(BaseExtension, checkVersionFail) {
     };
 
 #define COMPILE_FUNC(FuncClass, FuncProto, f, DO_LOGGING) \
-    Compiler c("testBase"); \
+    TextLogger logger(std::cout, String("    ")); \
+    Config cfg; \
+    Compiler c("testBase", &cfg); \
     Func::FunctionExtension *fx = c.loadExtension<Func::FunctionExtension>(LOC, NULL, "jb2func"); \
     Base::BaseExtension *bx = c.loadExtension<Base::BaseExtension>(LOC, NULL, "jb2base"); \
     FuncClass func(LOC, &c); \
-    TextWriter logger(&c, std::cout, String("    ")); \
-    TextWriter *log = (DO_LOGGING) ? &logger : NULL; \
+    TextWriter *writer = c.textWriter(logger); \
+    TextWriter *wrt = (DO_LOGGING) ? writer : NULL; \
     StrategyID sID = c.jb1cgStrategyID; \
-    CompilerReturnCode result = bx->compile(LOC, &func, sID, log); \
+    CompilerReturnCode result = bx->compile(LOC, &func, sID, wrt); \
     EXPECT_EQ((int)result, (int)c.CompileSuccessful) << "Compiled function ok"; \
     CompiledBody *body = func.compiledBody(sID); \
     EXPECT_NE(body, nullptr) << "Compiled function ok"; \
     FuncProto *f = body->nativeEntryPoint<FuncProto>(); \
     EXPECT_NE(f, nullptr)
 
+//    cfg.setTraceCompilerAllocations() \
+//       ->setLogger(&logger); \
+
 #define COMPILE_FUNC_TO_FAIL(FuncClass, expectedFailureCode, DO_LOGGING) \
-    Compiler c("testBase"); \
+    TextLogger logger(std::cout, String("    ")); \
+    Config cfg; \
+    Compiler c("testBase", &cfg); \
     Func::FunctionExtension *fx = c.loadExtension<Func::FunctionExtension>(LOC, NULL, "jb2func"); \
     Base::BaseExtension *bx = c.loadExtension<Base::BaseExtension>(LOC, NULL, "jb2base"); \
     FuncClass func(LOC, &c); \
-    TextWriter logger(&c, std::cout, String("    ")); \
-    TextWriter *log = (DO_LOGGING) ? &logger : NULL; \
+    TextWriter *writer = c.textWriter(logger); \
+    TextWriter *wrt = (DO_LOGGING) ? writer : NULL; \
     StrategyID sID = c.jb1cgStrategyID; \
-    CompilerReturnCode result = bx->compile(LOC, &func, sID, log); \
+    CompilerReturnCode result = bx->compile(LOC, &func, sID, wrt); \
     EXPECT_EQ((int)result, (int)expectedFailureCode) << "Function compilation expected to fail";
 
 // Test function that returns a constant value
@@ -927,8 +936,8 @@ TESTBADSUBTYPES(Float64,Float64,Int8,Int16,Int32,Int64,Float32)
           Value * final = _fx->Load(LOC, b, finalSym); \
           auto bumpSym=fc->LookupLocal("bump"); \
           Value * bump = _fx->Load(LOC, b, bumpSym); \
-          Base::ForLoopBuilder *loop = _bx->ForLoopUp(LOC, b, iterVarSym, initial, final, bump); { \
-              Builder *loopBody = loop->loopBody(); \
+          Base::ForLoopBuilder loop = _bx->ForLoopUp(LOC, b, iterVarSym, initial, final, bump); { \
+              Builder *loopBody = loop.loopBody(); \
               _bx->Increment(LOC, loopBody, counterSym); \
           } \
           _fx->Return(LOC, b, _fx->Load(LOC, b, counterSym)); })

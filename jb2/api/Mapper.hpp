@@ -22,23 +22,26 @@
 #ifndef MAPPER_INCL
 #define MAPPER_INCL
 
-#include "util/String.hpp"
+#include "common.hpp"
+#include "String.hpp"
 
 
 namespace OMR {
 namespace JitBuilder {
 
 template <typename T>
-class Mapper {
-private:
+class Mapper : public Allocatable {
+    //JBALLOC_NO_DESTRUCTOR_(Mapper)
 
-    struct Element {
-        Element(T *t, String name="", size_t offset=0)
-            : _item(t)
+private:
+    struct Element : public Allocatable {
+        Element(Allocator *a, T *t, String name="", size_t offset=0)
+            : Allocatable(a)
+            , _item(t)
             , _name(name)
             , _offset(offset)
             , _next(NULL) {
-	}
+	    }
 
         T *_item;
         String _name;
@@ -47,14 +50,32 @@ private:
     };
 
 public:
-    Mapper() : _head(NULL), _tail(NULL), _current(NULL), _size(0) { }
-    Mapper(T *t, String name="", size_t offset=0)
-        : _head(NULL)
+    Mapper(Allocator *a)
+        : Allocatable(a)
+        , _head(NULL)
+        , _tail(NULL)
+        , _current(NULL)
+        , _size(0) {
+
+    }
+
+    Mapper(Allocator *a, T *t, String name="", size_t offset=0)
+        : Allocatable(a)
+        , _head(NULL)
         , _tail(NULL)
         , _current(NULL)
         , _size(0) {
 
         add(t, name, offset);
+    }
+    virtual ~Mapper() {
+        Allocator *mem = allocator();
+        Element *p = _head;
+        while (p) {
+            Element *n = p->_next;
+            mem->deallocate(p);
+            p = n;
+        }
     }
 
     size_t size()  { return _size; }
@@ -71,9 +92,10 @@ public:
     //   2) _items has one item and TypeReplacer will call next() many times to reuse that item
     //          with different items returned by another Mapper (like "scalar" expansion)
 
-    void start()   { _current = _head; }
+    void start() { _current = _head; }
     void add(T *t, String name="", size_t offset=0) {
-        Element *elem = new Element(t, name, offset);
+        Allocator *mem = allocator();
+        Element *elem = new (mem) Element(mem, t, name, offset);
         if (_head == NULL) {
             _head = elem;
             _current = _head;
@@ -126,20 +148,26 @@ private:
     size_t   _size;
 };
 
+
 class Builder;
 typedef Mapper<Builder> BuilderMapper;
+//INIT_JBALLOC_TEMPLATE(Mapper, Builder, TypeReplacement::allocCat())
 
 class Literal;
 typedef Mapper<Literal> LiteralMapper;
+//INIT_JBALLOC_TEMPLATE(Mapper, Literal, TypeReplacement::allocCat())
 
 class Symbol;
 typedef Mapper<Symbol> SymbolMapper;
+//INIT_JBALLOC_TEMPLATE(Mapper, Symbol, TypeReplacement::allocCat())
 
 class Type;
 typedef Mapper<const Type> TypeMapper;
+//INIT_JBALLOC_TEMPLATE(Mapper, Type, TypeReplacement::allocCat())
 
 class Value;
 typedef Mapper<Value> ValueMapper;
+//INIT_JBALLOC_TEMPLATE(Mapper, Value, TypeReplacement::allocCat())
 
 
 } // namespace JitBuilder

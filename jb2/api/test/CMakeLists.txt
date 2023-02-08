@@ -47,7 +47,7 @@ set(GTEST_DIR $(omr_SOURCE_DIR)/third_party/gtest-1.8.0)
 
 	add_test(
 		NAME JB2TestSemVer
-		COMMAND $<TARGET_FILE:testsemver>
+		COMMAND valgrind --error-exitcode=1 $<TARGET_FILE:testsemver>
 	)
 
 	## testcompiler
@@ -67,7 +67,7 @@ set(GTEST_DIR $(omr_SOURCE_DIR)/third_party/gtest-1.8.0)
 
 	add_test(
 		NAME JB2TestCompiler
-		COMMAND $<TARGET_FILE:testcompiler>
+		COMMAND valgrind --error-exitcode=1 $<TARGET_FILE:testcompiler>
 	)
 
 	## testlist
@@ -87,7 +87,7 @@ set(GTEST_DIR $(omr_SOURCE_DIR)/third_party/gtest-1.8.0)
 
 	add_test(
 		NAME JB2TestList
-		COMMAND $<TARGET_FILE:testlist>
+		COMMAND valgrind --error-exitcode=1 $<TARGET_FILE:testlist>
 	)
 
 	## testbv
@@ -107,7 +107,7 @@ set(GTEST_DIR $(omr_SOURCE_DIR)/third_party/gtest-1.8.0)
 
 	add_test(
 		NAME JB2TestBitVector
-		COMMAND $<TARGET_FILE:testbv>
+		COMMAND valgrind --error-exitcode=1 $<TARGET_FILE:testbv>
 	)
 
 #endif()

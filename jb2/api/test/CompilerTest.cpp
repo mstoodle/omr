@@ -52,12 +52,15 @@ TEST(BasicJB2, basicInitAndShutdown) {
     shutdownJit();
     EXPECT_EQ(numInitializationCalls, 0) << "Check 1 compiler initialized";
 }
+
 TEST(BasicJB2, compilerCreation) {
     {
         Compiler c("test");
         EXPECT_EQ(c.name(), "test") << "Compiler gets the name test";
         EXPECT_FALSE(c.config() == NULL) << "Compiler creates a Config";
-        EXPECT_FALSE(c.dict() == NULL) << "Compiler creates a Dictionary";
+        EXPECT_FALSE(c.litDict() == NULL) << "Compiler creates a LiteralDictionary";
+        EXPECT_FALSE(c.symDict() == NULL) << "Compiler creates a SymbolDictionary";
+        EXPECT_FALSE(c.typeDict() == NULL) << "Compiler creates a TypeDictionary";
     }
     {
         Config cfg;
@@ -67,6 +70,68 @@ TEST(BasicJB2, compilerCreation) {
     }
 }
 
+TEST(BasicJB2, multipleCompilers) {
+    Compiler c1("test1");
+    {
+        Compiler c2("test2");
+        {
+            Compiler c3("test3");
+            {
+                Compiler c4("test4");
+                {
+                    Compiler c5("test5");
+
+                    EXPECT_EQ(c5.name(), "test5") << "Compiler c5 gets the name test";
+                    EXPECT_FALSE(c5.config() == NULL) << "Compiler c5 creates a Config";
+                    EXPECT_FALSE(c5.litDict() == NULL) << "Compiler c5 creates a LiteralDictionary";
+                    EXPECT_FALSE(c5.symDict() == NULL) << "Compiler c5 creates a SymbolDictionary";
+                    EXPECT_FALSE(c5.typeDict() == NULL) << "Compiler c5 creates a TypeDictionary";
+
+                    EXPECT_EQ(c4.name(), "test4") << "Compiler c4 gets the name test";
+                    EXPECT_FALSE(c4.config() == NULL) << "Compiler c4 creates a Config";
+                    EXPECT_FALSE(c4.litDict() == NULL) << "Compiler c4 creates a LiteralDictionary";
+                    EXPECT_FALSE(c4.symDict() == NULL) << "Compiler c4 creates a SymbolDictionary";
+                    EXPECT_FALSE(c4.typeDict() == NULL) << "Compiler c4 creates a TypeDictionary";
+
+                    EXPECT_EQ(c3.name(), "test3") << "Compiler c3 gets the name test";
+                    EXPECT_FALSE(c3.config() == NULL) << "Compiler c3 creates a Config";
+                    EXPECT_FALSE(c3.litDict() == NULL) << "Compiler c3 creates a LiteralDictionary";
+                    EXPECT_FALSE(c3.symDict() == NULL) << "Compiler c3 creates a SymbolDictionary";
+                    EXPECT_FALSE(c3.typeDict() == NULL) << "Compiler c3 creates a TypeDictionary";
+
+                    EXPECT_EQ(c2.name(), "test2") << "Compiler c2 gets the name test";
+                    EXPECT_FALSE(c2.config() == NULL) << "Compiler c2 creates a Config";
+                    EXPECT_FALSE(c2.litDict() == NULL) << "Compiler c2 creates a LiteralDictionary";
+                    EXPECT_FALSE(c2.symDict() == NULL) << "Compiler c2 creates a SymbolDictionary";
+                    EXPECT_FALSE(c2.typeDict() == NULL) << "Compiler c2 creates a TypeDictionary";
+
+                    EXPECT_EQ(c1.name(), "test1") << "Compiler c1 gets the name test";
+                    EXPECT_FALSE(c1.config() == NULL) << "Compiler c1 creates a Config";
+                    EXPECT_FALSE(c1.litDict() == NULL) << "Compiler c1 creates a LiteralDictionary";
+                    EXPECT_FALSE(c1.symDict() == NULL) << "Compiler c1 creates a SymbolDictionary";
+                    EXPECT_FALSE(c1.typeDict() == NULL) << "Compiler c1 creates a TypeDictionary";
+                }
+            }
+        }
+    }
+}
+#if 0
+TEST(BasicJB2, extensions) {
+    Compiler c1("c1");
+    Extension e1(&c1, "e1");
+    EXPECT_EQ(c1.lookupExtension<Extension>("e1"), &e1), "Extesion e1 is registered on c1";
+    Compiler c2("c2");
+    Extension e2(&c2, "e2");
+    EXPECT_EQ(c2.lookupExtension<Extension>("e2"), &e2), "Extesion e2 is registered on c2";
+    EXPECT_TRUE(c1.lookupExtension<Extension>("e2") == NULL), "Extesion e2 is not registered on c1";
+    Extension e3(&c1, "e3");
+    EXPECT_EQ(c1.lookupExtension<Extension>("e3"), &e3), "Extesion e3 is registered on c1";
+    EXPECT_TRUE(c2.lookupExtension<Extension>("e3") == NULL), "Extesion e3 is not registered on c2";
+    Extension e4(&c2, "e4");
+    EXPECT_EQ(c2.lookupExtension<Extension>("e4"), &e4), "Extesion e4 is registered on c2";
+    EXPECT_TRUE(c1.lookupExtension<Extension>("e4") == NULL), "Extesion e4 is not registered on c1";
+}
+#endif
 #if 0
 TEST(BasicJB2, extensions) {
     Compiler c1("c1");

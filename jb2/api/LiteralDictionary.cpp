@@ -19,39 +19,89 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "Compilation.hpp"
+#include "AllocationCategoryClasses.hpp"
+#include "Compiler.hpp"
 #include "Operation.hpp"
 #include "Literal.hpp"
 #include "LiteralDictionary.hpp"
-#include "TextWriter.hpp"
+#include "TextLogger.hpp"
 #include "Type.hpp"
 #include "Value.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 
+INIT_JBALLOC_ON(LiteralDictionary, Dictionaries)
 
-LiteralDictionary::LiteralDictionary(Compilation *comp)
-    : _id(comp->getLiteralDictionaryID())
-    , _comp(comp)
+LiteralDictionary::LiteralDictionary(Allocator *a, Compiler *compiler)
+    : Allocatable(a)
+    , _id(compiler->getLiteralDictionaryID())
+    , _compiler(compiler)
+    , _mem(a)
     , _name("")
+    , _literals(NULL, _mem)
+    , _ownedLiterals(NULL, _mem)
+    , _nextLiteralID(NoLiteral+1)
+    , _linkedDictionary(NULL) {
+}
+LiteralDictionary::LiteralDictionary(Compiler *compiler)
+    : Allocatable()
+    ,  _id(compiler->getLiteralDictionaryID())
+    , _compiler(compiler)
+    , _mem(compiler->mem())
+    , _name("")
+    , _literals(NULL, _mem)
+    , _ownedLiterals(NULL, _mem)
     , _nextLiteralID(NoLiteral+1)
     , _linkedDictionary(NULL) {
 }
 
-LiteralDictionary::LiteralDictionary(Compilation *comp, String name)
-    : _id(comp->getLiteralDictionaryID())
-    , _comp(comp)
+LiteralDictionary::LiteralDictionary(Allocator *a, Compiler *compiler, String name)
+    : Allocatable(a)
+    , _id(compiler->getLiteralDictionaryID())
+    , _compiler(compiler)
+    , _mem(a)
     , _name(name)
+    , _literals(NULL, _mem)
+    , _ownedLiterals(NULL, _mem)
+    , _nextLiteralID(NoLiteral+1)
+    , _linkedDictionary(NULL) {
+}
+LiteralDictionary::LiteralDictionary(Compiler *compiler, String name)
+    : _id(compiler->getLiteralDictionaryID())
+    , _compiler(compiler)
+    , _mem(compiler->mem())
+    , _name(name)
+    , _literals(NULL, _mem)
+    , _ownedLiterals(NULL, _mem)
     , _nextLiteralID(NoLiteral+1)
     , _linkedDictionary(NULL) {
 }
 
-// Only accessible to subclasses
-LiteralDictionary::LiteralDictionary(Compilation *comp, String name, LiteralDictionary * linkedLiterals)
-    : _id(comp->getLiteralDictionaryID())
-    , _comp(comp)
+LiteralDictionary::LiteralDictionary(Allocator *a, Compiler *compiler, String name, LiteralDictionary * linkedLiterals)
+    : Allocatable(a)
+    , _id(compiler->getLiteralDictionaryID())
+    , _compiler(compiler)
+    , _mem(a)
     , _name(name)
+    , _literals(NULL, _mem)
+    , _ownedLiterals(NULL, _mem)
+    , _nextLiteralID(linkedLiterals->_nextLiteralID)
+    , _linkedDictionary(linkedLiterals) {
+
+    for (auto it = linkedLiterals->literalIterator(); it.hasItem(); it++) {
+        Literal *literal = it.item();
+        addNewLiteral(literal);
+    }
+}
+LiteralDictionary::LiteralDictionary(Compiler *compiler, String name, LiteralDictionary * linkedLiterals)
+    : Allocatable()
+    , _id(compiler->getLiteralDictionaryID())
+    , _compiler(compiler)
+    , _mem(compiler->mem())
+    , _name(name)
+    , _literals(NULL, _mem)
+    , _ownedLiterals(NULL, _mem)
     , _nextLiteralID(linkedLiterals->_nextLiteralID)
     , _linkedDictionary(linkedLiterals) {
 
@@ -65,6 +115,12 @@ LiteralDictionary::~LiteralDictionary() {
     for (auto it = _ownedLiterals.iterator(); it.hasItem(); it++) {
         Literal *literal = it.item();
         delete literal;
+    }
+    _ownedLiterals.erase();
+
+    for (auto it = _literalsByType.begin(); it != _literalsByType.end(); it++) {
+        LiteralList *tl = it->second;
+        delete tl;
     }
 }
 
@@ -88,17 +144,17 @@ LiteralDictionary::RemoveLiteral(Literal *literal) {
 
 void
 LiteralDictionary::addNewLiteral(Literal *literal) {
-    LiteralList *typeList = NULL;
+    LiteralList *litList = NULL;
     const Type *type = literal->type();
     auto it = _literalsByType.find(type);
     if (it != _literalsByType.end()) {
-        typeList = it->second;
+        litList = it->second;
     }
     else {
-        typeList = new LiteralList;
-        _literalsByType.insert({type, typeList});
+        litList = new (_mem) LiteralList(_mem);
+        _literalsByType.insert({type, litList});
     }
-    typeList->push_back(literal);
+    litList->push_back(literal);
     _literals.push_back(literal);
 }
 
@@ -116,11 +172,11 @@ LiteralDictionary::registerLiteral(LOCATION, const Type *type, const LiteralByte
         }
     }
     else {
-        typeList = new LiteralList;
+        typeList = new (_mem) LiteralList(_mem);
         _literalsByType.insert({type, typeList});
     }
 
-    Literal *literal = new Literal(PASSLOC, _comp, type, value);
+    Literal *literal = new (_mem) Literal(MEM_PASSLOC(_mem), this, type, value);
     typeList->push_back(literal);
     _literals.push_back(literal);
     _ownedLiterals.push_back(literal);
@@ -129,18 +185,18 @@ LiteralDictionary::registerLiteral(LOCATION, const Type *type, const LiteralByte
 }
 
 void
-LiteralDictionary::write(TextWriter &w) {
-    w.indent() << "[ LiteralDictionary " << this << " \"" << this->name() << "\"" << w.endl();
-    w.indentIn();
+LiteralDictionary::log(TextLogger &lgr) {
+    lgr.indent() << "[ LiteralDictionary " << this << " \"" << this->name() << "\"" << lgr.endl();
+    lgr.indentIn();
     if (this->hasLinkedDictionary())
-        w.indent() << "[ linkedDictionary " << this->linkedDictionary() << " ]" << w.endl();
+        lgr.indent() << "[ linkedDictionary " << this->linkedDictionary() << " ]" << lgr.endl();
     for (auto it = this->literalIterator();it.hasItem();it++) {
         Literal *literal = it.item();
-        literal->write(w);
-        w << w.endl();
+        literal->log(lgr);
+        lgr << lgr.endl();
     }
-    w.indentOut();
-    w.indent() << "]" << w.endl();
+    lgr.indentOut();
+    lgr.indent() << "]" << lgr.endl();
 }
 
 } // namespace JitBuilder

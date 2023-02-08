@@ -37,66 +37,26 @@ class LocalSymbol;
 class ParameterSymbol;
 
 class Function : public CompileUnit {
+    JBALLOC(Function, NoAllocationCategory)
+
     friend class FunctionCompilation;
     friend class FunctionExtension;
 
 public:
-    virtual ~Function();
-
     virtual String kindName() const { return "Function"; }
 
 
     void DefineName(String name);
     void DefineFile(String file);
     void DefineLine(String line);
-#if 0
-    ParameterSymbol * DefineParameter(String name, const Type * type);
-    void DefineReturnType(const Type * type);
-    LocalSymbol * DefineLocal(String name, const Type * type);
-    FunctionSymbol * DefineFunction(LOCATION, String name, String fileName, String lineNumber, void *entryPoint, const Type *returnType, int32_t numParms, ...);
-    FunctionSymbol * DefineFunction(LOCATION, String name, String fileName, String lineNumber, void *entryPoint, const Type *returnType, int32_t numParms, const Type **parmTypes);
-    const PointerType * PointerTo(LOCATION, const Type *baseType);
-#endif
 
     String name() const { return _givenName; }
     String fileName() const { return _fileName; }
     String lineNumber() const { return _lineNumber; }
 
-#if 0
-    ParameterSymbolIterator ParametersBegin() const;
-    ParameterSymbolIterator ParametersEnd() const;
-    ParameterSymbolList ResetParameters();
-
-    LocalSymbolIterator LocalsBegin() const;
-    LocalSymbolIterator LocalsEnd() const;
-    LocalSymbolList ResetLocals();
-    LocalSymbol * LookupLocal(String name);
-
-    FunctionSymbolIterator FunctionsBegin() const { return FunctionSymbolIterator(_functions); }
-    FunctionSymbolIterator FunctionsEnd() const { return endFunctionIterator; }
-    FunctionSymbolList ResetFunctions();
-    FunctionSymbol *LookupFunction(String name) {
-        Symbol *sym = getSymbol(name);
-        if (sym == NULL || !sym->isKind<FunctionSymbol>())
-            return NULL;
-        return sym->refine<FunctionSymbol>();
-    }
-
-    int32_t numValues() const;
-    int32_t numLocals() const;
-    int32_t numReturnValues() const;
-    const Type * returnType(unsigned i=0) const;
-
-    void constructJB1Function(JB1MethodBuilder *j1mb);
-    void jbgenProlog(JB1MethodBuilder *j1mb);
-
-    Symbol * getSymbol(String name);
-    void addLocation(Location *loc ) { _locations.push_back(loc); }
-#endif
-
 protected:
-    Function(LOCATION, Compiler *compiler); // meant to be subclassed
-    Function(LOCATION, Function *outerFunction);
+    ALL_ALLOC_ALLOWED(Function, LOCATION, Compiler *compiler); // meant to be subclassed
+    ALL_ALLOC_ALLOWED(Function, LOCATION, Function *outerFunction);
 
     static FunctionCompilation *fcomp(Compilation *comp);
     static FunctionContext *fcontext(Compilation *comp);
@@ -108,23 +68,11 @@ protected:
     virtual bool initContext(LOCATION, FunctionCompilation *comp, FunctionContext *fc) { return true; }
     virtual bool buildIL(LOCATION, FunctionCompilation *comp, FunctionContext *fc) { return true; }
 
-    #if 0
-    void DefineParameter(ParameterSymbol *parm);
-    void DefineLocal(LocalSymbol *local);
-    void DefineFunction(FunctionSymbol *function);
-    FunctionSymbol * internalDefineFunction(LOCATION, String name, String fileName, String lineNumber, void *entryPoint, const Type *returnType, int32_t numParms, const Type **parmTypes);
-    #endif
-
-    Function              * _outerFunction;
+    Function         * _outerFunction;
 
     String             _givenName;
     String             _fileName;
     String             _lineNumber;
-
-    #if 0
-    Debugger              * _debuggerObject;
-    static FunctionSymbolIterator endFunctionIterator;
-    #endif
 };
 
 } // namespace Func

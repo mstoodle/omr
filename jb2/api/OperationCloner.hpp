@@ -24,6 +24,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include "Allocatable.hpp"
 #include "Mapper.hpp"
 
 namespace OMR {
@@ -36,10 +37,11 @@ class Symbol;
 class Type;
 class Value;
 
-class OperationCloner {
+class OperationCloner : public Allocatable {
+    JBALLOC_(OperationCloner)
+
 public:
-    OperationCloner(Operation *op);
-    ~OperationCloner();
+    OperationCloner(Allocator *a, Operation *op);
 
     void init();
     void reset();

@@ -20,15 +20,19 @@
  *******************************************************************************/
 
 #include <dlfcn.h>
+#include "AllocatorTracker.hpp"
 #include "Compilation.hpp"
 #include "Compiler.hpp"
 #include "Config.hpp"
 #include "Extension.hpp"
 #include "JB1.hpp"
 #include "JB1CodeGenerator.hpp"
+#include "LiteralDictionary.hpp"
 #include "Pass.hpp"
 #include "SemanticVersion.hpp"
 #include "Strategy.hpp"
+#include "SymbolDictionary.hpp"
+#include "TextWriter.hpp"
 #include "Type.hpp"
 #include "TypeDictionary.hpp"
 
@@ -38,73 +42,136 @@ namespace JitBuilder {
 CompilerID Compiler::nextCompilerID = 1; // 0 is reserved
 EyeCatcher Compiler::EYE_CATCHER_COMPILER=0xAABBCCDDDDCCBBAA;
 
-Compiler::Compiler(String name, Config *config, Compiler *parent)
-    : _eyeCatcher(EYE_CATCHER_COMPILER)
-    , _id(nextCompilerID++)
-    , _name(name)
-    , _myConfig(config == NULL)
-    , _config(config != NULL ? config : new Config())
-    , _parent(parent)
-    , _jb1(JB1::instance())
-    , _nextExtensionID(NoExtension+1)
-    , _extensions()
-    , _nextActionID(NoAction+1)
-    , _actionNames()
-    , _nextPassID(NoPass+1)
-    , _registeredPassNames()
-    , _passRegistry()
-    , _nextCompilationID(NoCompilation)
-    , _nextCompileUnitID(NoCompileUnit)
-    , _nextCompiledBodyID(NoCompiledBody)
-    , _nextContextID(NoContext)
-    , _nextReturnCode(0)
-    , _returnCodeNames()
-    , _nextStrategyID(NoStrategy+1)
-    , _strategies()
-    , _nextTypeID(NoTypeID+1)
-    , _types()
-    , _nextTypeDictionaryID(0)
-    , _target(NULL)
-    , _compiler(NULL)
-    , _dict(new TypeDictionary(this, name + "::root"))
-    , _errorCondition(NULL)
-    , CompileSuccessful(assignReturnCode("CompileSuccessful"))
-    , CompileNotStarted(assignReturnCode("CompileNotStarted"))
-    , CompileFailed(assignReturnCode("CompileFailed"))
-    , CompileFail_UnknownStrategyID(assignReturnCode("CompileFail_UnknownStrategy"))
-    , CompileFail_IlGen(assignReturnCode("CompileFail_IlGen"))
-    , CompileFail_TypeMustBeReduced(assignReturnCode("CompileFail_TypeMustBeReduced"))
-    , CompilerError_Extension_CouldNotLoad(assignReturnCode("CompilerError_Extension_CouldNotLoad"))
-    , CompilerError_Extension_HasNoCreateFunction(assignReturnCode("CompilerError_Extension_HasNoCreateFunction"))
-    , CompilerError_Extension_CouldNotCreate(assignReturnCode("CompilerError_Extension_CouldNotCreate"))
-    , CompilerError_Extension_VersionMismatch(assignReturnCode("CompilerError_Extension_VersionMismatch")) {
+INIT_JBALLOC(Compiler);
 
+#define CTOR_FIELDS(p,n,cfg,m) \
+    , _eyeCatcher(EYE_CATCHER_COMPILER) \
+    , _id(nextCompilerID++) \
+    , _name(n) \
+    , _mallocAllocator() \
+    , _baseAllocator(((m) != NULL) ? (m) : (&_mallocAllocator)) \
+    , _myConfig((cfg) == NULL) \
+    , _config(_myConfig ? new (_baseAllocator) Config(_baseAllocator) : (cfg)) \
+    , _mem(_config->compilerAllocator(_baseAllocator)) \
+    , _parent(p) \
+    , _jb1(JB1::instance()) \
+    , _nextExtensionID(NoExtension+1) \
+    , _extensions() \
+    , _nextActionID(NoAction+1) \
+    , _actionNames() \
+    , _nextPassID(NoPass+1) \
+    , _registeredPassNames() \
+    , _passRegistry() \
+    , _nextCompilationID(NoCompilation) \
+    , _nextCompileUnitID(NoCompileUnit) \
+    , _nextCompiledBodyID(NoCompiledBody) \
+    , _nextContextID(NoContext) \
+    , _nextReturnCode(0) \
+    , _returnCodeNames() \
+    , _nextStrategyID(NoStrategy+1) \
+    , _strategies() \
+    , _nextTypeID(NoTypeID+1) \
+    , _types() \
+    , _nextTypeDictionaryID(0) \
+    , _target(NULL) \
+    , _compiler(NULL) \
+    , _litDict(new (_mem) LiteralDictionary(_mem, this, name + " Compiler Literal Dictionary")) \
+    , _symDict(new (_mem) SymbolDictionary(_mem, this, name + " Compiler Symbol Dictionary")) \
+    , _typeDict(new (_mem) TypeDictionary(_mem, this, name + " Compiler Type Dictionary")) \
+    , _textWriters(NULL, _mem) \
+    , _errorCondition(NULL) \
+    , CompileSuccessful(assignReturnCode("CompileSuccessful")) \
+    , CompileNotStarted(assignReturnCode("CompileNotStarted")) \
+    , CompileFailed(assignReturnCode("CompileFailed")) \
+    , CompileFail_UnknownStrategyID(assignReturnCode("CompileFail_UnknownStrategy")) \
+    , CompileFail_IlGen(assignReturnCode("CompileFail_IlGen")) \
+    , CompileFail_TypeMustBeReduced(assignReturnCode("CompileFail_TypeMustBeReduced")) \
+    , CompilerError_Extension_CouldNotLoad(assignReturnCode("CompilerError_Extension_CouldNotLoad")) \
+    , CompilerError_Extension_HasNoCreateFunction(assignReturnCode("CompilerError_Extension_HasNoCreateFunction")) \
+    , CompilerError_Extension_CouldNotCreate(assignReturnCode("CompilerError_Extension_CouldNotCreate")) \
+    , CompilerError_Extension_VersionMismatch(assignReturnCode("CompilerError_Extension_VersionMismatch"))
+
+
+Compiler::Compiler(Allocator *a, String name, Config *config)
+    : Allocatable(a)
+    CTOR_FIELDS(NULL, name, config, a) {
+
+    init();
+}
+
+Compiler::Compiler(String name, Config *config)
+    : Allocatable()
+    CTOR_FIELDS(NULL, name, config, NULL) {
+
+    init();
+}
+
+Compiler::Compiler(Allocator *a, Compiler *parent, String name, Config *config)
+    : Allocatable(a)
+    CTOR_FIELDS(parent, name, config, a) {
+
+    init();
+}
+
+Compiler::Compiler(Compiler *parent, String name, Config *config)
+    : Allocatable()
+    CTOR_FIELDS(parent, name, config, NULL) {
+
+    init();
+}
+
+#undef CTOR_FIELDS
+
+void
+Compiler::init() {
     _jb1->initialize();
 
-    Strategy *jb1cgStrategy = new Strategy(this, "jb1cg");
-    Pass *jb1cg = new JB1CodeGenerator(this);
+    Strategy *jb1cgStrategy = new (_mem, Extension::allocCat()) Strategy(_mem, this, "jb1cg");
+    Pass *jb1cg = new (_mem) JB1CodeGenerator(_mem, this);
     jb1cgStrategy->addPass(jb1cg);
     jb1cgStrategyID = jb1cgStrategy->id();
-
-    // has to be last since Extension's constructor will use this object
-    if (parent == NULL)
-        addExtension(new Extension(LOC, this));
+    
+    if (_parent == NULL) // if there's a parent, it will be able to find Extension
+        addExtension(new (_mem) Extension(_mem, LOC, this));
 }
 
 Compiler::~Compiler() {
-    _jb1->shutdown();
-    if (_dict != NULL)
-        delete _dict;
-    if (_myConfig && _config != NULL)
-        delete _config;
     for (auto it = _extensions.begin();it != _extensions.end();it++) {
         Extension *ext = it->second;
         delete ext;
      }
     _extensions.clear();
-    if (_errorCondition)
+
+    for (auto it = _strategies.begin();it != _strategies.end();it++) {
+        Strategy *st = it->second;
+        delete st;
+    }
+    _strategies.clear();
+
+    _jb1->shutdown();
+
+    if (_litDict != NULL)
+        delete _litDict;
+    if (_symDict != NULL)
+        delete _symDict;
+    if (_typeDict != NULL)
+        delete _typeDict;
+
+    for (auto wIt = _textWriters.iterator(); wIt.hasItem(); wIt++) {
+        TextWriter *w = wIt.item();
+        delete w;
+    }
+
+    if (_errorCondition != NULL)
         delete _errorCondition;
+
+    _config->destructCompilerAllocator(_mem);
+
     //JB2::report();
+
+    if (_myConfig && _config != NULL)
+        delete _config;
+
 }
 
 extern "C" {
@@ -236,8 +303,24 @@ Compiler::lookupStrategy(StrategyID id) {
     return it->second;
 }
 
+TextWriter *
+Compiler::textWriter(TextLogger & lgr) {
+    for (auto it=_textWriters.iterator(); it.hasItem(); it++) {
+        TextWriter *w = it.item();
+        if (&(w->logger()) == &lgr)
+            return w;
+    }
+
+    TextWriter *w = new (_mem) TextWriter(_mem, this, lgr);
+    _textWriters.push_front(w);
+    return w;
+}
+
 CompilerReturnCode
 Compiler::compile(LOCATION, Compilation *comp, StrategyID strategyID) {
+    if (_errorCondition != NULL)
+        clearErrorCondition();
+
     try {
 
         bool success = comp->prepareIL(PASSLOC);
@@ -251,21 +334,36 @@ Compiler::compile(LOCATION, Compilation *comp, StrategyID strategyID) {
         if (!st)
             return CompileFail_UnknownStrategyID;
 
-        return st->perform(comp);
+        CompilerReturnCode rc =  st->perform(comp);
+
+        comp->freeIL(PASSLOC);
+
+        return rc;
 
     } catch (CompilationException e) {
         // only if config.verboseErrors()?
-        std::cerr << "Location: " << e.locationLine().c_str();
-        std::cerr << e._message.c_str();
-        return e._result;
+        if (config()->verboseErrors()) {
+           std::cerr << "Location: " << e.locationLine().c_str();
+           std::cerr << e.message().c_str();
+        }
+        comp->freeIL(PASSLOC);
+        return e.result();
     }
 
     return CompileSuccessful;
 }
 
 void
+Compiler::clearErrorCondition() {
+    if (_errorCondition != NULL) {
+        delete _errorCondition;
+        _errorCondition = NULL;
+    }
+}
+
+void
 Compiler::extensionCouldNotLoad(LOCATION, String name, char *dlerrorMsg) {
-    CompilationException *e = new CompilationException(PASSLOC, this, this->CompilerError_Extension_CouldNotLoad);
+    CompilationException *e = new (_mem) CompilationException(MEM_PASSLOC(_mem), this, this->CompilerError_Extension_CouldNotLoad);
     (*e).setMessageLine(String("Extension could not be loaded"))
         .appendMessageLine(String("Library name: ").append(name))
         .appendMessageLine(String("dlerror() reports ").append(String(dlerrorMsg)));
@@ -274,7 +372,7 @@ Compiler::extensionCouldNotLoad(LOCATION, String name, char *dlerrorMsg) {
 
 void
 Compiler::extensionHasNoCreateFunction(LOCATION, Extension *ext, String name, char *dlerrorMsg) {
-    CompilationException *e = new CompilationException(PASSLOC, this, this->CompilerError_Extension_HasNoCreateFunction);
+    CompilationException *e = new (_mem) CompilationException(MEM_PASSLOC(_mem), this, this->CompilerError_Extension_HasNoCreateFunction);
     (*e).setMessageLine(String("Extension does not have a create() function"))
         .appendMessageLine(String("Library loaded: ").append(name))
         .appendMessageLine(String("dlerror() reports ").append(String(dlerrorMsg)));
@@ -283,7 +381,7 @@ Compiler::extensionHasNoCreateFunction(LOCATION, Extension *ext, String name, ch
 
 void
 Compiler::extensionCouldNotCreate(LOCATION, String name) {
-    CompilationException *e = new CompilationException(PASSLOC, this, this->CompilerError_Extension_CouldNotCreate);
+    CompilationException *e = new (_mem) CompilationException(MEM_PASSLOC(_mem), this, this->CompilerError_Extension_CouldNotCreate);
     (*e).setMessageLine(String("Extension create() function returned NULL"))
         .appendMessageLine(String("Library loaded: ").append(name));
     _errorCondition = e;
@@ -291,7 +389,7 @@ Compiler::extensionCouldNotCreate(LOCATION, String name) {
 
 void
 Compiler::extensionVersionMismatch(LOCATION, String name, const SemanticVersion * version, const SemanticVersion * extensionVersion) {
-    CompilationException *e = new CompilationException(PASSLOC, this, this->CompilerError_Extension_VersionMismatch);
+    CompilationException *e = new (_mem) CompilationException(MEM_PASSLOC(_mem), this, this->CompilerError_Extension_VersionMismatch);
     (*e).setMessageLine(String("Extension version mismatch"))
         .appendMessageLine(String("Requested: major ").append(String::to_string(version->major())))
         .appendMessageLine(String("           minor ").append(String::to_string(version->minor())))
@@ -307,5 +405,29 @@ Compiler::notifyRecompile(CompileUnit *unit, CompiledBody *oldBody, CompiledBody
     // TODO: notify registered Listeners
 }
 
+CompilationException::CompilationException(Allocator *a,
+                                           LOCATION,
+                                           Compiler *compiler,
+                                           CompilerReturnCode result)
+    : std::exception(), Allocatable(a)
+    , _compiler(compiler)
+    , _result(result)
+    , _location(PASSLOC)
+    , _message(String("CompilationException")) {
+}
+
+CompilationException::CompilationException(LOCATION,
+                                           Compiler *compiler,
+                                           CompilerReturnCode result)
+    : std::exception(), Allocatable()
+    , _compiler(compiler)
+    , _result(result)
+    , _location(PASSLOC)
+    , _message(String("CompilationException")) {
+}
+
+CompilationException::~CompilationException() {
+
+}
 } // namespace JitBuilder
 } // namespace OMR

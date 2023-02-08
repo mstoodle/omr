@@ -19,10 +19,36 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "String.hpp"
-#include "../TextWriter.hpp"
+#ifndef ALLOCATORTRACER_INCL
+#define ALLOCATORTRACER_INCL
 
-void
-OMR::JitBuilder::String::write(TextWriter & w) const {
-    w << _string.c_str();
-}
+#include <cassert>
+#include "Allocator.hpp"
+
+namespace OMR {
+namespace JitBuilder {
+
+class TextLogger;
+
+class AllocatorTracer : public Allocator {
+    JBALLOC_(AllocatorTracer)
+
+public:
+    AllocatorTracer(const char * name, Allocator * allocatorToBeTraced, TextLogger & logger)
+        : Allocator(name, allocatorToBeTraced)
+        , _logger(logger) {
+
+        assert(allocatorToBeTraced != NULL);
+    }
+
+    virtual void * allocate(size_t size, AllocationCategoryID cat);
+    virtual void deallocate(void *ptr);
+
+protected:
+    TextLogger & _logger;
+};
+
+} // namespace JitBuilder
+} // namespace OMR
+
+#endif // defined(ALLOCATORTRACER_INCL)

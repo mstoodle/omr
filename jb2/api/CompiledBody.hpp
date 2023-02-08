@@ -32,10 +32,11 @@ namespace JitBuilder {
 class CompileUnit;
 class Context;
 
-class CompiledBody {
+class CompiledBody : public Allocatable {
+    JBALLOC(CompiledBody, NoAllocationCategory)
 
 public:
-    CompiledBody(CompileUnit *unit, Context *context, StrategyID strategy);
+    DYNAMIC_ALLOC_ONLY(CompiledBody, CompileUnit *unit, Context *context, StrategyID strategy);
 
     CompiledBodyID id() const { return _id; }
     CompileUnit *unit() const { return _unit; }

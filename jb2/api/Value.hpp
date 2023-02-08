@@ -33,7 +33,9 @@ class Operation;
 class OperationCloner;
 class Type;
 
-class Value {
+class Value : public Allocatable {
+    JBALLOC_(Value)
+
     friend class Builder;
     friend class Extension;
     friend class Operation;
@@ -50,7 +52,7 @@ public:
 
 protected:
     static Value * create(const Builder * parent, const Type * type);
-    Value(const Builder * parent, const Type * type);
+    Value(Allocator *a, const Builder * parent, const Type * type);
     void addDefinition(Operation *op) { _definitions.push_back(op); }
 
     ValueID   _id;
@@ -63,4 +65,3 @@ protected:
 } // namespace OMR
 
 #endif // defined(VALUE_INCL)
-

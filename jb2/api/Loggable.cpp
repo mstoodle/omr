@@ -20,18 +20,35 @@
  *******************************************************************************/
 
 #include "Compilation.hpp"
+#include "Compiler.hpp"
 #include "Loggable.hpp"
-#include "TextWriter.hpp"
+#include "TextLogger.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 
-TextWriter &
+INIT_JBALLOC_REUSECAT(Loggable, Passes)
+
+Loggable::Loggable(Allocator *a)
+    : Allocatable(a) {
+
+}
+
+Loggable::Loggable()
+    : Allocatable() {
+
+}
+
+Loggable::~Loggable() {
+    // didn't allocate anything to nothin to do
+}
+
+TextLogger &
 Loggable::trace(Compilation *comp, String msg) {
-    TextWriter *log = comp->logger(traceEnabled());
-    if (log)
-        log->indent() << msg << log->endl();
-    return *log;
+    TextLogger *lgr = comp->logger(traceEnabled());
+    if (lgr)
+        lgr->indent() << msg << lgr->endl();
+    return *lgr;
 }
 
 } // namespace JitBuilder

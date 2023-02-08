@@ -25,17 +25,30 @@
 #include "Compilation.hpp"
 #include "Config.hpp"
 #include "Operation.hpp"
+#include "TextLogger.hpp"
 #include "TextWriter.hpp"
 #include "Transformer.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 
+INIT_JBALLOC_REUSECAT(Transformer, Passes)
+
+Transformer::Transformer(Allocator *a, Compiler *compiler, String name)
+    : Visitor(a, compiler, name)
+    , _traceEnabled(false) {
+
+}
+
+Transformer::~Transformer() {
+
+}
+
 void
 Transformer::trace(String msg) {
-    TextWriter *log = _comp->logger(traceEnabled());
-    if (log)
-        log->indent() << msg << log->endl();
+    TextLogger *lgr = _comp->logger(traceEnabled());
+    if (lgr)
+        lgr->indent() << msg << lgr->endl();
 }
 
 bool
@@ -50,15 +63,18 @@ Transformer::performTransformation(Operation * op, Builder * transformed, String
             std::ostringstream oss;
             oss << "( " << number << " ) Transformation: " << msg.c_str();
             trace(oss.str().c_str());
-            TextWriter *log= _comp->logger(traceEnabled());
-            LOG_INDENT_REGION(log) {
-                if (log) log->indentIn();
-                if (log) log->print(op);
-                if (log) log->indent() << "Replaced with operations from : " << log->endl();
-                if (log) log->print(transformed);
-                if (log) log->indentOut();
-            }
+            TextWriter *w= _comp->writer(traceEnabled());
+            if (w) {
+                TextLogger &lgr = w->logger();
+                LOG_INDENT_REGION(lgr) {
+                    lgr.indentIn();
+                    w->print(op);
+                    lgr.indent() << "Replaced with operations from : " << lgr.endl();
+                    w->print(transformed);
+                    lgr.indentOut();
+                }
             LOG_OUTDENT
+            }
         }
         else
             trace(String("Transformation not applied: ") + msg.c_str());
@@ -69,13 +85,13 @@ Transformer::performTransformation(Operation * op, Builder * transformed, String
 
 void
 Transformer::visitOperations(Builder *b, BitVector & visited, BuilderList & worklist) {
-    TextWriter * log = _comp->logger(traceEnabled());
+    TextWriter * w = _comp->writer(traceEnabled());
 
     // little bit more complicated than usual because we may replace the first operation and have to restart iteration
     for (Operation *op = b->firstOperation(); op != NULL; op = op ? op->next() : b->firstOperation()) {
-        if (log) {
-            log->indent() << String("Visit ");
-            log->print(op);
+        if (w) {
+            w->logger().indent() << String("Visit ");
+            w->print(op);
         }
 
         Builder *transformation = transformOperation(op);

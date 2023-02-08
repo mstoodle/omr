@@ -25,6 +25,12 @@
 namespace OMR {
 namespace JitBuilder {
 
+PassChain::PassChain(Pass *pass)
+    : _pass(pass)
+    , _chain(NULL, pass->compiler()->mem()) {
+
+}
+
 bool
 PassChain::ProcessBuilder(Pass *p, Builder *b) {
     for (auto it = _chain.begin(); it != _chain.end(); it++) {

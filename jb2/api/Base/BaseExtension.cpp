@@ -35,6 +35,8 @@ namespace OMR {
 namespace JitBuilder {
 namespace Base {
 
+INIT_JBALLOC_REUSECAT(BaseExtension, Extension)
+
 const SemanticVersion BaseExtension::version(BASEEXT_MAJOR,BASEEXT_MINOR,BASEEXT_PATCH);
 const String BaseExtension::NAME("jb2base");
 
@@ -48,20 +50,21 @@ extern "C" {
         Func::FunctionExtension *fx = compiler->loadExtension<Func::FunctionExtension>(PASSLOC, &neededFuncVersion);
         if (fx == NULL)
             return NULL;
-        return new BaseExtension(PASSLOC, compiler);
+        Allocator *mem = compiler->mem();
+        return new (mem) BaseExtension(MEM_PASSLOC(mem), compiler);
     }
 }
 
-BaseExtension::BaseExtension(LOCATION, Compiler *compiler, bool extended, String extensionName)
-    : Extension(PASSLOC, compiler, (extended ? extensionName : NAME))
+BaseExtension::BaseExtension(MEM_LOCATION(a), Compiler *compiler, bool extended, String extensionName)
+    : Extension(MEM_PASSLOC(a), compiler, (extended ? extensionName : NAME))
     , _fx(compiler->lookupExtension<Func::FunctionExtension>())
-    , Int8(new Int8Type(PASSLOC, this))
-    , Int16(new Int16Type(PASSLOC, this))
-    , Int32(new Int32Type(PASSLOC, this))
-    , Int64(new Int64Type(PASSLOC, this))
-    , Float32(new Float32Type(PASSLOC, this))
-    , Float64(new Float64Type(PASSLOC, this))
-    , Address(new AddressType(PASSLOC, this))
+    , Int8(new (a) Int8Type(MEM_PASSLOC(a), this))
+    , Int16(new (a) Int16Type(MEM_PASSLOC(a), this))
+    , Int32(new (a) Int32Type(MEM_PASSLOC(a), this))
+    , Int64(new (a) Int64Type(MEM_PASSLOC(a), this))
+    , Float32(new (a) Float32Type(MEM_PASSLOC(a), this))
+    , Float64(new (a) Float64Type(MEM_PASSLOC(a), this))
+    , Address(new (a) AddressType(MEM_PASSLOC(a), this))
     , Word(compiler->platformWordSize() == 64 ? this->Int64->refine<Type>() : this->Int32->refine<Type>())
     , aConst(registerAction(String("Const")))
     , aAdd(registerAction(String("Add")))
@@ -112,23 +115,19 @@ BaseExtension::BaseExtension(LOCATION, Compiler *compiler, bool extended, String
     , CompileFail_BadInputTypes_ForLoopUp(registerReturnCode("CompileFail_BadInputTypes_ForLoopUp"))
     , CompileFail_BadInputArray_OffsetAt(registerReturnCode("CompileFail_BadInputArray_OffsetAt"))
     , CompileFail_MismatchedArgumentTypes_Call(registerReturnCode("CompileFail_MismatchedArgumentTypes_Call"))
-    , _checkers() {
+    , _checkers(NULL, a) {
 
     assert(_fx);
     if (!extended) {
-        _checkers.push_back(new BaseExtensionChecker(this));
+        _checkers.push_back(new (a) BaseExtensionChecker(a, this));
     }
 }
 
 BaseExtension::~BaseExtension() {
-    delete Address;
-    delete Float64;
-    delete Float32;
-    delete Int64;
-    delete Int32;
-    delete Int16;
-    delete Int8;
-    // what about other types!?
+    for (auto it=_checkers.iterator();it.hasItem();it++) {
+        BaseExtensionChecker *checker = it.item();
+        delete checker;
+    }
 }
 
 void
@@ -137,22 +136,26 @@ BaseExtension::registerChecker(BaseExtensionChecker *checker) {
 }
 
 CompilerReturnCode
-BaseExtension::compile(LOCATION, Func::Function *func, StrategyID strategy, TextWriter *logger) {
+BaseExtension::compile(LOCATION, Func::Function *func, StrategyID strategy, TextWriter *w) {
 
     if (strategy == NoStrategy)
         strategy = _compiler->jb1cgStrategyID;
 
-    BaseCompilation comp(_compiler, func, strategy, NULL, NULL);
+    LiteralDictionary litDict(_compiler, "Compilation LiteralDictionary", _compiler->litDict());
+    SymbolDictionary symDict(_compiler, "Compilation SymbolDictionary", _compiler->symDict());
+    TypeDictionary typeDict(_compiler, "Compilation TypeDictionary", _compiler->typeDict());
+    BaseCompilation comp(_compiler, func, strategy, &litDict, &symDict, &typeDict, NULL);
     Func::FunctionContext context(PASSLOC, &comp);
     comp.setContext(&context);
-    comp.setLogger(logger);
+    comp.setWriter(w);
 
     CompilerReturnCode rc = _compiler->compile(PASSLOC, &comp, strategy);
     if (rc != _compiler->CompileSuccessful) {
         return rc;
     }
 
-    CompiledBody *body = new CompiledBody(func, &context, strategy);
+    Allocator *mem = comp.mem();
+    CompiledBody *body = new (mem) CompiledBody(mem, func, &context, strategy);
     func->saveCompiledBody(body, strategy);
 
     return _compiler->CompileSuccessful;
@@ -165,11 +168,15 @@ BaseExtension::compile(LOCATION, Func::Function *func, StrategyID strategy, Text
 
 Value *
 BaseExtension::Const(LOCATION, Builder *b, Literal * lv) {
+    Allocator *mem = b->comp()->mem();
     Value * result = createValue(b, lv->type());
-    addOperation(b, new Op_Const(PASSLOC, this, b, this->aConst, result, lv));
+    addOperation(b, new (mem) Op_Const(MEM_PASSLOC(mem), this, b, this->aConst, result, lv));
     return result;
 }
 
+
+BaseExtensionChecker::~BaseExtensionChecker() {
+}
 
 //
 // Arithmetic operations
@@ -237,8 +244,9 @@ BaseExtension::Add(LOCATION, Builder *b, Value *left, Value *right) {
         right = save;
     }
 
+    Allocator *mem = b->comp()->mem();
     Value *result = createValue(b, left->type());
-    addOperation(b, new Op_Add(PASSLOC, this, b, aAdd, result, left, right));
+    addOperation(b, new (mem) Op_Add(MEM_PASSLOC(mem), this, b, aAdd, result, left, right));
     return result;
 }
 
@@ -289,8 +297,9 @@ BaseExtension::ConvertTo(LOCATION, Builder *b, const Type *type, Value *value) {
             break;
     }
 
+    Allocator *mem = b->comp()->mem();
     Value *result = createValue(b, type);
-    addOperation(b, new Op_ConvertTo(PASSLOC, this, b, aConvertTo, result, type, value));
+    addOperation(b, new (mem) Op_ConvertTo(MEM_PASSLOC(mem), this, b, aConvertTo, result, type, value));
     return result;
 }
 
@@ -340,8 +349,9 @@ BaseExtension::Mul(LOCATION, Builder *b, Value *left, Value *right) {
             break;
     }
 
+    Allocator *mem = b->comp()->mem();
     Value *result = createValue(b, left->type());
-    addOperation(b, new Op_Mul(PASSLOC, this, b, aMul, result, left, right));
+    addOperation(b, new (mem) Op_Mul(MEM_PASSLOC(mem), this, b, aMul, result, left, right));
     return result;
 }
 
@@ -397,8 +407,9 @@ BaseExtension::Sub(LOCATION, Builder *b, Value *left, Value *right) {
             break;
     }
 
+    Allocator *mem = b->comp()->mem();
     Value *result = createValue(b, left->type());
-    addOperation(b, new Op_Sub(PASSLOC, this, b, aSub, result, left, right));
+    addOperation(b, new (mem) Op_Sub(MEM_PASSLOC(mem), this, b, aSub, result, left, right));
     return result;
 }
 
@@ -438,6 +449,7 @@ BaseExtensionChecker::failValidateCall(LOCATION, Builder *b, Func::FunctionSymbo
     throw e;
 }
 
+#if 0
 Value *
 BaseExtension::Call(LOCATION, Builder *b, Func::FunctionSymbol *target, ...) {
     const Func::FunctionType *tgtType = target->functionType();
@@ -453,16 +465,17 @@ BaseExtension::Call(LOCATION, Builder *b, Func::FunctionSymbol *target, ...) {
     std::va_list args;
     va_start(args, target);
 
+    Allocator *mem = b->comp()->mem();
     Value *result = NULL;
     if (target->functionType()->returnType() != NoType) {
         result = createValue(b, target->functionType()->returnType());
-        addOperation(b, new Op_Call(PASSLOC, this, b, aCall, result, target, args));
+        addOperation(b, new (mem) Op_Call(MEM_PASSLOC(mem), this, b, aCall, result, target, args));
     } else {
-        addOperation(b, new Op_CallVoid(PASSLOC, this, b, aCall, target, args));
+        addOperation(b, new (mem) Op_CallVoid(MEM_PASSLOC(mem), this, b, aCall, target, args));
     }
     return result;
 }
-
+#endif
 
 bool
 BaseExtensionChecker::validateForLoopUp(LOCATION, Builder *b, Func::LocalSymbol *loopVariable, Value *initial, Value *final, Value *bump) {
@@ -497,7 +510,7 @@ BaseExtensionChecker::failValidateForLoopUp(LOCATION, Builder *b, Func::LocalSym
     throw e;
 }
 
-ForLoopBuilder *
+ForLoopBuilder
 BaseExtension::ForLoopUp(LOCATION, Builder *b, Func::LocalSymbol *loopVariable,
                          Value *initial, Value *final, Value *bump) {
     for (auto it = _checkers.iterator(); it.hasItem(); it++) {
@@ -506,19 +519,21 @@ BaseExtension::ForLoopUp(LOCATION, Builder *b, Func::LocalSymbol *loopVariable,
             break;
     }
 
-    ForLoopBuilder *loopBuilder = new ForLoopBuilder();
-    loopBuilder->setLoopVariable(loopVariable)
-               ->setInitialValue(initial)
-               ->setFinalValue(final)
-               ->setBumpValue(bump);
-    addOperation(b, new Op_ForLoopUp(PASSLOC, this, b, this->aForLoopUp, loopBuilder));
+    ForLoopBuilder loopBuilder;
+    loopBuilder.setLoopVariable(loopVariable)
+               .setInitialValue(initial)
+               .setFinalValue(final)
+               .setBumpValue(bump);
+    Allocator *mem = b->comp()->mem();
+    addOperation(b, new (mem) Op_ForLoopUp(MEM_PASSLOC(mem), this, b, this->aForLoopUp, &loopBuilder));
     return loopBuilder;
 }
 
 
 void
 BaseExtension::Goto(LOCATION, Builder *b, Builder *target) {
-    addOperation(b, new Op_Goto(PASSLOC, this, b, this->aGoto, target));
+    Allocator *mem = b->comp()->mem();
+    addOperation(b, new (mem) Op_Goto(MEM_PASSLOC(mem), this, b, this->aGoto, target));
 }
 
 
@@ -595,7 +610,8 @@ BaseExtension::IfCmpEqual(LOCATION, Builder *b, Builder *target, Value *left, Va
             break;
     }
 
-    addOperation(b, new Op_IfCmpEqual(PASSLOC, this, b, aIfCmpEqual, target, left, right));
+    Allocator *mem = b->comp()->mem();
+    addOperation(b, new (mem) Op_IfCmpEqual(MEM_PASSLOC(mem), this, b, aIfCmpEqual, target, left, right));
 }
 
 void
@@ -606,7 +622,8 @@ BaseExtension::IfCmpEqualZero(LOCATION, Builder *b, Builder *target, Value *valu
             break;
     }
 
-    addOperation(b, new Op_IfCmpEqualZero(PASSLOC, this, b, aIfCmpEqualZero, target, value));
+    Allocator *mem = b->comp()->mem();
+    addOperation(b, new (mem) Op_IfCmpEqualZero(MEM_PASSLOC(mem), this, b, aIfCmpEqualZero, target, value));
 }
 
 void
@@ -617,7 +634,8 @@ BaseExtension::IfCmpGreaterThan(LOCATION, Builder *b, Builder *target, Value *le
             break;
     }
 
-    addOperation(b, new Op_IfCmpGreaterThan(PASSLOC, this, b, aIfCmpGreaterThan, target, left, right));
+    Allocator *mem = b->comp()->mem();
+    addOperation(b, new (mem) Op_IfCmpGreaterThan(MEM_PASSLOC(mem), this, b, aIfCmpGreaterThan, target, left, right));
 }
 
 void
@@ -628,7 +646,8 @@ BaseExtension::IfCmpGreaterOrEqual(LOCATION, Builder *b, Builder *target, Value 
             break;
     }
 
-    addOperation(b, new Op_IfCmpGreaterOrEqual(PASSLOC, this, b, aIfCmpGreaterOrEqual, target, left, right));
+    Allocator *mem = b->comp()->mem();
+    addOperation(b, new (mem) Op_IfCmpGreaterOrEqual(MEM_PASSLOC(mem), this, b, aIfCmpGreaterOrEqual, target, left, right));
 }
 
 void
@@ -639,7 +658,8 @@ BaseExtension::IfCmpLessThan(LOCATION, Builder *b, Builder *target, Value *left,
             break;
     }
 
-    addOperation(b, new Op_IfCmpLessThan(PASSLOC, this, b, aIfCmpLessThan, target, left, right));
+    Allocator *mem = b->comp()->mem();
+    addOperation(b, new (mem) Op_IfCmpLessThan(MEM_PASSLOC(mem), this, b, aIfCmpLessThan, target, left, right));
 }
 
 void
@@ -650,7 +670,8 @@ BaseExtension::IfCmpLessOrEqual(LOCATION, Builder *b, Builder *target, Value *le
             break;
     }
 
-    addOperation(b, new Op_IfCmpLessOrEqual(PASSLOC, this, b, aIfCmpLessOrEqual, target, left, right));
+    Allocator *mem = b->comp()->mem();
+    addOperation(b, new (mem) Op_IfCmpLessOrEqual(MEM_PASSLOC(mem), this, b, aIfCmpLessOrEqual, target, left, right));
 }
 
 void
@@ -661,7 +682,8 @@ BaseExtension::IfCmpNotEqual(LOCATION, Builder *b, Builder *target, Value *left,
             break;
     }
 
-    addOperation(b, new Op_IfCmpNotEqual(PASSLOC, this, b, aIfCmpNotEqual, target, left, right));
+    Allocator *mem = b->comp()->mem();
+    addOperation(b, new (mem) Op_IfCmpNotEqual(MEM_PASSLOC(mem), this, b, aIfCmpNotEqual, target, left, right));
 }
 
 void
@@ -672,7 +694,8 @@ BaseExtension::IfCmpNotEqualZero(LOCATION, Builder *b, Builder *target, Value *v
             break;
     }
 
-    addOperation(b, new Op_IfCmpNotEqualZero(PASSLOC, this, b, aIfCmpNotEqualZero, target, value));
+    Allocator *mem = b->comp()->mem();
+    addOperation(b, new (mem) Op_IfCmpNotEqualZero(MEM_PASSLOC(mem), this, b, aIfCmpNotEqualZero, target, value));
 }
 
 void
@@ -683,7 +706,8 @@ BaseExtension::IfCmpUnsignedGreaterThan(LOCATION, Builder *b, Builder *target, V
             break;
     }
 
-    addOperation(b, new Op_IfCmpUnsignedGreaterThan(PASSLOC, this, b, aIfCmpUnsignedGreaterThan, target, left, right));
+    Allocator *mem = b->comp()->mem();
+    addOperation(b, new (mem) Op_IfCmpUnsignedGreaterThan(MEM_PASSLOC(mem), this, b, aIfCmpUnsignedGreaterThan, target, left, right));
 }
 
 void
@@ -694,7 +718,8 @@ BaseExtension::IfCmpUnsignedGreaterOrEqual(LOCATION, Builder *b, Builder *target
             break;
     }
 
-    addOperation(b, new Op_IfCmpUnsignedGreaterOrEqual(PASSLOC, this, b, aIfCmpUnsignedGreaterOrEqual, target, left, right));
+    Allocator *mem = b->comp()->mem();
+    addOperation(b, new (mem) Op_IfCmpUnsignedGreaterOrEqual(MEM_PASSLOC(mem), this, b, aIfCmpUnsignedGreaterOrEqual, target, left, right));
 }
 
 void
@@ -705,7 +730,8 @@ BaseExtension::IfCmpUnsignedLessThan(LOCATION, Builder *b, Builder *target, Valu
             break;
     }
 
-    addOperation(b, new Op_IfCmpUnsignedLessThan(PASSLOC, this, b, aIfCmpUnsignedLessThan, target, left, right));
+    Allocator *mem = b->comp()->mem();
+    addOperation(b, new (mem) Op_IfCmpUnsignedLessThan(MEM_PASSLOC(mem), this, b, aIfCmpUnsignedLessThan, target, left, right));
 }
 
 void
@@ -716,7 +742,8 @@ BaseExtension::IfCmpUnsignedLessOrEqual(LOCATION, Builder *b, Builder *target, V
             break;
     }
 
-    addOperation(b, new Op_IfCmpUnsignedLessOrEqual(PASSLOC, this, b, aIfCmpUnsignedLessOrEqual, target, left, right));
+    Allocator *mem = b->comp()->mem();
+    addOperation(b, new (mem) Op_IfCmpUnsignedLessOrEqual(MEM_PASSLOC(mem), this, b, aIfCmpUnsignedLessOrEqual, target, left, right));
 }
 
 
@@ -728,8 +755,9 @@ Value *
 BaseExtension::LoadAt(LOCATION, Builder *b, Value *ptrValue) {
     assert(ptrValue->type()->isKind<PointerType>());
     const Type *baseType = ptrValue->type()->refine<PointerType>()->baseType();
+    Allocator *mem = b->comp()->mem();
     Value * result = createValue(b, baseType);
-    addOperation(b, new Op_LoadAt(PASSLOC, this, b, this->aLoadAt, result, ptrValue));
+    addOperation(b, new (mem) Op_LoadAt(MEM_PASSLOC(mem), this, b, this->aLoadAt, result, ptrValue));
     return result;
 }
 
@@ -738,15 +766,17 @@ BaseExtension::StoreAt(LOCATION, Builder *b, Value *ptrValue, Value *value) {
     assert(ptrValue->type()->isKind<PointerType>());
     const Type *baseType = ptrValue->type()->refine<PointerType>()->baseType();
     assert(baseType == value->type());
-    addOperation(b, new Op_StoreAt(PASSLOC, this, b, this->aStoreAt, ptrValue, value));
+    Allocator *mem = b->comp()->mem();
+    addOperation(b, new (mem) Op_StoreAt(MEM_PASSLOC(mem), this, b, this->aStoreAt, ptrValue, value));
 }
 
 Value *
 BaseExtension::LoadField(LOCATION, Builder *b, const FieldType *fieldType, Value *structValue) {
     assert(structValue->type()->isKind<StructType>());
     assert(fieldType->owningStruct() == structValue->type());
+    Allocator *mem = b->comp()->mem();
     Value * result = createValue(b, fieldType->type());
-    addOperation(b, new Op_LoadField(PASSLOC, this, b, this->aLoadField, result, fieldType, structValue));
+    addOperation(b, new (mem) Op_LoadField(MEM_PASSLOC(mem), this, b, this->aLoadField, result, fieldType, structValue));
     return result;
 }
 
@@ -754,7 +784,8 @@ void
 BaseExtension::StoreField(LOCATION, Builder *b, const FieldType *fieldType, Value *structValue, Value *value) {
     assert(structValue->type()->isKind<StructType>());
     assert(fieldType->owningStruct() == structValue->type());
-    addOperation(b, new Op_StoreField(PASSLOC, this, b, this->aStoreField, fieldType, structValue, value));
+    Allocator *mem = b->comp()->mem();
+    addOperation(b, new (mem) Op_StoreField(MEM_PASSLOC(mem), this, b, this->aStoreField, fieldType, structValue, value));
 }
 
 Value *
@@ -762,8 +793,9 @@ BaseExtension::LoadFieldAt(LOCATION, Builder *b, const FieldType *fieldType, Val
     assert(pStruct->type()->isKind<PointerType>());
     const Type *structType = pStruct->type()->refine<PointerType>()->baseType();
     assert(fieldType->owningStruct() == structType);
+    Allocator *mem = b->comp()->mem();
     Value * result = createValue(b, fieldType->type());
-    addOperation(b, new Op_LoadFieldAt(PASSLOC, this, b, this->aLoadFieldAt, result, fieldType, pStruct));
+    addOperation(b, new (mem) Op_LoadFieldAt(MEM_PASSLOC(mem), this, b, this->aLoadFieldAt, result, fieldType, pStruct));
     return result;
 }
 
@@ -772,17 +804,19 @@ BaseExtension::StoreFieldAt(LOCATION, Builder *b, const FieldType *fieldType, Va
     assert(pStruct->type()->isKind<PointerType>());
     const Type *structType = pStruct->type()->refine<PointerType>()->baseType();
     assert(fieldType->owningStruct() == structType);
-    addOperation(b, new Op_StoreFieldAt(PASSLOC, this, b, this->aStoreFieldAt, fieldType, pStruct, value));
+    Allocator *mem = b->comp()->mem();
+    addOperation(b, new (mem) Op_StoreFieldAt(MEM_PASSLOC(mem), this, b, this->aStoreFieldAt, fieldType, pStruct, value));
 }
 
 Value *
 BaseExtension::CreateLocalArray(LOCATION, Builder *b, Literal *numElements, const PointerType *pElementType) {
-   assert(numElements->type()->isKind<IntegerType>());
-   Value * result = createValue(b, pElementType);
-   const Type *elementType = pElementType->baseType();
-   // assert concrete type
-   addOperation(b, new Op_CreateLocalArray(PASSLOC, this, b, this->aCreateLocalArray, result, numElements, pElementType));
-   return result;
+    assert(numElements->type()->isKind<IntegerType>());
+    const Type *elementType = pElementType->baseType();
+    Allocator *mem = b->comp()->mem();
+    Value * result = createValue(b, pElementType);
+    // assert concrete type
+    addOperation(b, new (mem) Op_CreateLocalArray(MEM_PASSLOC(mem), this, b, this->aCreateLocalArray, result, numElements, pElementType));
+    return result;
 }
 
 Value *
@@ -790,8 +824,9 @@ BaseExtension::CreateLocalStruct(LOCATION, Builder *b, const PointerType *pStruc
     const Type *baseType = pStructType->baseType();
     assert(baseType->isKind<StructType>());
     const StructType *structType = baseType->refine<StructType>();
+    Allocator *mem = b->comp()->mem();
     Value * result = createValue(b, pStructType);
-    addOperation(b, new Op_CreateLocalStruct(PASSLOC, this, b, this->aCreateLocalStruct, result, structType));
+    addOperation(b, new (mem) Op_CreateLocalStruct(MEM_PASSLOC(mem), this, b, this->aCreateLocalStruct, result, structType));
     return result;
 }
 
@@ -799,8 +834,9 @@ Value *
 BaseExtension::IndexAt(LOCATION, Builder *b, Value *base, Value *index) {
     const Type *pElementType = base->type();
     assert(pElementType->isKind<PointerType>());
+    Allocator *mem = b->comp()->mem();
     Value *result = createValue(b, pElementType);
-    addOperation(b, new Op_IndexAt(PASSLOC, this, b, aIndexAt, result, base, index));
+    addOperation(b, new (mem) Op_IndexAt(MEM_PASSLOC(mem), this, b, aIndexAt, result, base, index));
     return result;
 }
 
