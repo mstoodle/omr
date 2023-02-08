@@ -22,21 +22,25 @@
 #ifndef LOGGABLE_INCL
 #define LOGGABLE_INCL
 
+#include "Allocatable.hpp"
+
 namespace OMR {
 namespace JitBuilder {
 
 class Compilation;
-class TextWriter;
+class TextLogger;
 
-class Loggable {
+class Loggable : public Allocatable {
+    JBALLOC_(Loggable)
+
 public:
-    Loggable() { }
+    ALL_ALLOC_ALLOWED_NOARGS(Loggable);
 
     Loggable * setTraceEnabled(bool v=true) { _traceEnabled = v; return this; }
 
 protected:
     bool traceEnabled() { return _traceEnabled; }
-    TextWriter & trace(Compilation *comp, String msg="");
+    TextLogger & trace(Compilation *comp, String msg="");
 
     bool _traceEnabled;
 };

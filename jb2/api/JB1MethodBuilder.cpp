@@ -27,7 +27,7 @@
 #include "Location.hpp"
 #include "Operation.hpp"
 #include "Symbol.hpp"
-#include "TextWriter.hpp"
+#include "TextLogger.hpp"
 #include "Type.hpp"
 #include "TypeDictionary.hpp"
 #include "Value.hpp"
@@ -41,6 +41,8 @@
 namespace OMR {
 namespace JitBuilder {
 
+INIT_JBALLOC_REUSECAT(JB1MethodBuilder, CodeGeneration)
+
 JB1MethodBuilder::JB1MethodBuilder(Compilation *comp)
     : Loggable()
     , _comp(comp)
@@ -51,6 +53,10 @@ JB1MethodBuilder::JB1MethodBuilder(Compilation *comp)
 }
 
 JB1MethodBuilder::~JB1MethodBuilder() {
+    for (auto it=_strings.begin();it != _strings.end(); it++) {
+        char *s = it->second;
+        delete[] s;
+    }
 }
 
 //
@@ -60,7 +66,8 @@ JB1MethodBuilder::~JB1MethodBuilder() {
 void
 JB1MethodBuilder::registerTypes(TypeDictionary *dict) {
     TypeID numTypes = dict ->numTypes();
-    BitVector mappedTypes(numTypes);
+    Allocator myMem("Type mapping", _comp->mem());
+    BitVector mappedTypes(&myMem, numTypes);
     while (numTypes > 0) {
         TypeID startNumTypes = numTypes;
         for (auto it = dict->typesIterator(); it.hasItem(); it++) {
@@ -209,7 +216,8 @@ JB1MethodBuilder::createBytecodeBuilder(const Builder * bcb, int32_t bcIndex, St
         return;
 
     TR::BytecodeBuilder *omr_bcb = _mb->OrphanBytecodeBuilder(bcIndex, findOrCreateString(name));
-    TR::VirtualMachineState *vmState = new TR::VirtualMachineState(); // just need an empty state so OMR can propagate it
+    TR::VirtualMachineState prototype;
+    TR::VirtualMachineState *vmState = prototype.MakeCopy();
     omr_bcb->setVMState(vmState);
     _bytecodeBuilders[bcb->id()] = omr_bcb;
     _builders[bcb->id()] = static_cast<TR::IlBuilder *>(omr_bcb);
@@ -287,6 +295,7 @@ JB1MethodBuilder::DefineFunction(String name,
                         entryPoint,
                         map(returnType),
                         numParms, omr_parmTypes);
+    delete[] omr_parmTypes;
 }
 
 void
@@ -381,6 +390,7 @@ JB1MethodBuilder::Call(Location *loc, Builder *b, Value *result, String targetNa
     for (auto a=0;a < numArgs;a++)
         omr_args[a] = map(arguments[a]);
     registerValue(result, omr_b->Call(function, numArgs, omr_args));
+    delete[] omr_args;
 }
 
 void
@@ -393,6 +403,7 @@ JB1MethodBuilder::Call(Location *loc, Builder *b, String targetName, size_t numA
         omr_args[a] = map(arguments[a]);
     TR::IlValue *omr_rv = omr_b->Call(function, numArgs, omr_args);
     assert(omr_rv == NULL);
+    delete[] omr_args;
 }
 
 void
@@ -712,39 +723,39 @@ JBCodeGenerator::mapCase(TR::IlBuilder *omr_b, Case *c) {
 
 void
 JB1MethodBuilder::printAllMaps() {
-    TextWriter *pLog = _comp->logger(traceEnabled());
-    if (pLog) {
-        TextWriter & log = *pLog;
+    TextLogger *pLgr = _comp->logger(traceEnabled());
+    if (pLgr) {
+        TextLogger & lgr = *pLgr;
 
-        log << "[ printAllMaps" << log.endl();
-        log.indentIn();
+        lgr << "[ printAllMaps" << lgr.endl();
+        lgr.indentIn();
 
-        log.indent() << "[ Builders" << log.endl();
-        log.indentIn();
+        lgr.indent() << "[ Builders" << lgr.endl();
+        lgr.indentIn();
         for (auto builderIt = _builders.cbegin(); builderIt != _builders.cend(); builderIt++) {
-            log.indent() << "[ builder " << builderIt->first << " -> TR::IlBuilder " << (int64_t *)(void *) builderIt->second << " ]" << log.endl();
+            lgr.indent() << "[ builder " << builderIt->first << " -> TR::IlBuilder " << (int64_t *)(void *) builderIt->second << " ]" << lgr.endl();
         }
-        log.indentOut();
-        log.indent() << "]" << log.endl();
+        lgr.indentOut();
+        lgr.indent() << "]" << lgr.endl();
 
-        log.indent() << "[ Values" << log.endl();
-        log.indentIn();
+        lgr.indent() << "[ Values" << lgr.endl();
+        lgr.indentIn();
         for (auto valueIt = _values.cbegin(); valueIt != _values.cend(); valueIt++) {
-            log.indent() << "[ value " << valueIt->first << " -> TR::IlValue " << (int64_t *)(void *) valueIt->second << " ]" << log.endl();
+            lgr.indent() << "[ value " << valueIt->first << " -> TR::IlValue " << (int64_t *)(void *) valueIt->second << " ]" << lgr.endl();
         }
-        log.indentOut();
-        log.indent() << "]" << log.endl();
+        lgr.indentOut();
+        lgr.indent() << "]" << lgr.endl();
 
-        log.indent() << "[ Types" << log.endl();
-        log.indentIn();
+        lgr.indent() << "[ Types" << lgr.endl();
+        lgr.indentIn();
         for (auto typeIt = _types.cbegin(); typeIt != _types.cend(); typeIt++) {
-            log.indent() << "[ type " << typeIt->first << " -> TR::IlType " << (int64_t *)(void *) typeIt->second << " ]" << log.endl();
+            lgr.indent() << "[ type " << typeIt->first << " -> TR::IlType " << (int64_t *)(void *) typeIt->second << " ]" << lgr.endl();
         }
-        log.indentOut();
-        log.indent() << "]" << log.endl();
+        lgr.indentOut();
+        lgr.indent() << "]" << lgr.endl();
 
-        log.indentOut();
-        log.indent() << "]" << log.endl();
+        lgr.indentOut();
+        lgr.indent() << "]" << lgr.endl();
     }
 }
 
@@ -753,8 +764,8 @@ JB1MethodBuilder::printAllMaps() {
 
 void
 JBCodeGenerator::generateFunctionAPI(FunctionBuilder *fb) {
-    TextWriter *log = fb->logger(traceEnabled());
-    if (log) log->indent() << "JBCodeGenerator::generateFunctionAPI F" << fb->id() << log->endl();
+    TextLogger *lgr = fb->logger(traceEnabled());
+    if (lgr) lgr->indent() << "JBCodeGenerator::generateFunctionAPI F" << fb->id() << lgr->endl();
 
     TR::TypeDictionary * typesJB1 = _mb->typeDictionary();
     _typeDictionaries[types->id()] = typesJB1;
@@ -777,13 +788,13 @@ JBCodeGenerator::generateFunctionAPI(FunctionBuilder *fb) {
     }
 
 #if 0
-    if (log) log->indent() << "First pass:" << log->endl();
+    if (lgr) lgr->indent() << "First pass:" << lgr->endl();
     for (TypeIterator typeIt = types->typesIterator(); typeIt.hasItem(); typeIt++) {
         Type * type = typeIt.item();
-        if (log) {
-            log->indent();
-            log->writeType(type, true);
-            log << log->endl();
+        if (lgr) {
+            lgr->indent();
+            lgr->logType(type, true);
+            lgr << lgr->endl();
         }
         if (type->isStruct() || type->isUnion()) {
             char *name = findOrCreateString(type->name());
@@ -848,9 +859,9 @@ JBCodeGenerator::generateFunctionAPI(FunctionBuilder *fb) {
 
 FunctionBuilder *
 JBCodeGenerator::transformFunctionBuilder(FunctionBuilder *fb) {
-    TextWriter *log = _fb->logger(traceEnabled());
-    if (log) log->indent() << "JBCodeGenerator transformFunctionBuilder F" << fb->id() << log->endl();
-    if (log) log->indentIn();
+    TextLogger *lgr = _fb->logger(traceEnabled());
+    if (lgr) lgr->indent() << "JBCodeGenerator transformFunctionBuilder F" << fb->id() << lgr->endl();
+    if (lgr) lgr->indentIn();
     return NULL;
 }
 
@@ -1093,8 +1104,8 @@ JBCodeGenerator::Return(Location *loc, Builder *b, Value *value) {
 FunctionBuilder *
 JBCodeGenerator::transformFunctionBuilderAtEnd(FunctionBuilder * fb)
    {
-   TextWriter *log = fb->logger(traceEnabled());
-   if (log) log->indentOut();
+   TextLogger *lgr = fb->logger(traceEnabled());
+   if (lgr) lgr->indentOut();
    printAllMaps();
    return NULL;
    }

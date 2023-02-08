@@ -58,11 +58,12 @@ main(int argc, char *argv[]) {
     VMRegisterFunction vmrFunc(LOC, &c);
 
     cout << "Step 4: Set up logging configuration\n";
-    TextWriter logger(&c, std::cout, String("    "));
-    TextWriter *log = (DO_LOGGING) ? &logger : NULL;
+    TextLogger logger(std::cout, String("    "));
+    TextWriter *writer = c.textWriter(logger);
+    TextWriter *wrt = (DO_LOGGING) ? writer : NULL;
     
     cout << "Step 5: compile vmregister function\n";
-    CompilerReturnCode result = bx->compile(LOC, &vmrFunc, c.jb1cgStrategyID, log);
+    CompilerReturnCode result = bx->compile(LOC, &vmrFunc, c.jb1cgStrategyID, wrt);
 
     if (result != c.CompileSuccessful) {
         cout << "Compile failed: " << result << "\n";
@@ -80,7 +81,7 @@ main(int argc, char *argv[]) {
 
     cout << "Step 7: compile vmregisterInStruct function\n";
     VMRegisterInStructFunction vmrisFunc(LOC, &c);
-    result = bx->compile(LOC, &vmrisFunc, c.jb1cgStrategyID, log); 
+    result = bx->compile(LOC, &vmrisFunc, c.jb1cgStrategyID, wrt); 
 
     if (result != c.CompileSuccessful) {
         cout << "Compile failed: " << result << "\n";
@@ -131,18 +132,19 @@ VMRegisterFunction::buildIL(LOCATION, Func::FunctionCompilation *fcomp, Func::Fu
     Base::BaseCompilation *comp = static_cast<Base::BaseCompilation *>(fcomp);
 
     Builder *entry = fc->builderEntryPoint();
-    VM::VirtualMachineRegister *vmreg = new VM::VirtualMachineRegister(LOC, _vmx, "MYBYTES", comp, _fx->Load(LOC, entry, _values));
+    Allocator *mem = fcomp->mem();
+    VM::VirtualMachineRegister *vmreg = new (mem) VM::VirtualMachineRegister(MEM_LOC(mem), _vmx, "MYBYTES", comp, _fx->Load(LOC, entry, _values));
 
     Func::LocalSymbol *result = fc->DefineLocal("result", _bx->Int32);
     _fx->Store(LOC, entry, result, _bx->ConstInt32(LOC, entry, 0));
 
     Func::LocalSymbol *iterVar = fc->DefineLocal("i", _bx->Int32);
-    Base::ForLoopBuilder *loop = _bx->ForLoopUp(LOC, entry, iterVar, 
-                                                _bx->ConstInt32(LOC, entry, 0),
-                                                _fx->Load(LOC, entry, _count),
-                                                _bx->ConstInt32(LOC, entry, 1)); {
+    Base::ForLoopBuilder loop = _bx->ForLoopUp(LOC, entry, iterVar, 
+                                               _bx->ConstInt32(LOC, entry, 0),
+                                               _fx->Load(LOC, entry, _count),
+                                               _bx->ConstInt32(LOC, entry, 1)); {
 
-        Builder *body = loop->loopBody();
+        Builder *body = loop.loopBody();
 
         Value *val = _bx->LoadAt(LOC, body, vmreg->Load(LOC, body));
 
@@ -190,18 +192,19 @@ VMRegisterInStructFunction::buildIL(LOCATION, Func::FunctionCompilation *fcomp, 
     Base::BaseCompilation *comp = static_cast<Base::BaseCompilation *>(fcomp);
 
     Builder *entry = fc->builderEntryPoint();
-    VM::VirtualMachineRegisterInStruct *vmreg = new VM::VirtualMachineRegisterInStruct(LOC, _vmx, "VALUES", comp, _valuesField, _param);
+    Allocator *mem = fcomp->mem();
+    VM::VirtualMachineRegisterInStruct *vmreg = new (mem) VM::VirtualMachineRegisterInStruct(MEM_LOC(mem), _vmx, "VALUES", comp, _valuesField, _param);
 
     Func::LocalSymbol *result = fc->DefineLocal("result", _bx->Int32);
     _fx->Store(LOC, entry, result, _bx->ConstInt32(LOC, entry, 0));
 
     Func::LocalSymbol *iterVar = fc->DefineLocal("i", _bx->Int32);
-    Base::ForLoopBuilder *loop = _bx->ForLoopUp(LOC, entry, iterVar, 
-                                                _bx->ConstInt32(LOC, entry, 0),
-                                                _bx->LoadFieldAt(LOC, entry, _countField, _fx->Load(LOC, entry, _param)),
-                                                _bx->ConstInt32(LOC, entry, 1)); {
+    Base::ForLoopBuilder loop = _bx->ForLoopUp(LOC, entry, iterVar, 
+                                               _bx->ConstInt32(LOC, entry, 0),
+                                               _bx->LoadFieldAt(LOC, entry, _countField, _fx->Load(LOC, entry, _param)),
+                                               _bx->ConstInt32(LOC, entry, 1)); {
 
-        Builder *body = loop->loopBody();
+        Builder *body = loop.loopBody();
 
         Value *val = _bx->LoadAt(LOC, body, vmreg->Load(LOC, body));
 

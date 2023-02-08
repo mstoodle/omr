@@ -29,6 +29,7 @@
 namespace OMR {
 namespace JitBuilder {
 
+class Allocator;
 class Builder;
 class Compiler;
 class CompileUnit;
@@ -41,27 +42,31 @@ class LiteralDictionary;
 class Location;
 class Symbol;
 class SymbolDictionary;
+class TextLogger;
 class TextWriter;
 class TypeDictionary;
 class TypeReplacer;
 class Visitor;
 
-class Compilation {
+class Compilation : public Allocatable {
+    JBALLOC_(Compilation)
+
     friend class Builder;
     friend class CompileUnit;
     friend class Context;
+    friend class Extension;
     friend class Literal;
     friend class LiteralDictionary;
     friend class Location;
     friend class Operation;
+    friend class Strategy;
     friend class SymbolDictionary;
     friend class Type;
     friend class Value;
     friend class Visitor;
 
     public:
-    Compilation(Compiler *compiler, CompileUnit *unit, StrategyID strategy=NoStrategy, TypeDictionary *typeDict=NULL, Config *config=NULL);
-    virtual ~Compilation();
+    Compilation(Compiler *compiler, CompileUnit *unit, StrategyID strategy=NoStrategy, LiteralDictionary *litDict=NULL, SymbolDictionary *symDict=NULL, TypeDictionary *typeDict=NULL, Config *config=NULL);
 
     CompilationID id() const { return _id; }
     Compiler *compiler() const { return _compiler; }
@@ -69,29 +74,32 @@ class Compilation {
     Config *config() const { return _config; }
     Context *context() const { return _context; }
 
+    Allocator *mem() const { return _mem; }
+    Allocator *passMem() const { return _passMem; }
+
     TypeDictionary *typedict() const { return _typeDict; }
     LiteralDictionary *litdict() const { return _literalDict; }
     SymbolDictionary *symdict() const { return _symbolDict; }
 
-    void registerBuilder(Builder *b);
-
     BuilderID maxBuilderID() const { return _nextBuilderID-1; }
     LiteralID maxLiteralID() { return _nextLiteralID-1; }
-    LiteralDictionaryID maxLiteralDictionaryID() const { return _nextLiteralDictionaryID-1; }
     LocationID maxLocationID() const { return _nextLocationID-1; }
     OperationID maxOperationID() const { return _nextOperationID-1; }
-    SymbolDictionaryID maxSymbolDictionaryID() const { return _nextSymbolDictionaryID-1; }
     ValueID maxValueID() const { return _nextValueID-1; }
 
     TransformationID getTransformationID() { return _nextTransformationID++; }
 
-    BuilderIterator buildersIterator() { return _builders.fwdIterator(); }
+    BuilderListIterator buildersIterator() { return _builders.fwdIterator(); }
 
-    void setLogger(TextWriter * logger) { _logger = logger; }
-    TextWriter * logger(bool enabled=true) const { return enabled ? _logger : NULL; }
-    virtual void write(TextWriter &w) const;
+    void setLogger(TextLogger * lgr) { _logger = lgr; }
+    TextLogger * logger(bool enabled=true) const { return enabled ? _logger : NULL; }
+    virtual void log(TextLogger &lgr) const;
+
+    void setWriter(TextWriter * w) { _writer = w; }
+    TextWriter * writer(bool enabled=true) const { return enabled ? _writer : NULL; }
 
     virtual bool prepareIL(LOCATION);
+    virtual void freeIL(LOCATION);
 
     virtual void constructJB1Function(JB1MethodBuilder *j1mb) { }
     virtual void jbgenProlog(JB1MethodBuilder *j1mb) { }
@@ -99,8 +107,12 @@ class Compilation {
 
     virtual void replaceTypes(TypeReplacer *repl) { }
 
+    void rememberNewValue(Value *v) { _lastNewValue = v; }
+    void forgetNewValue(Value *v) { if (_lastNewValue == v) _lastNewValue = NULL; }
+
 protected:
     void setContext(Context *context) { _context = context; }
+    Builder *registerBuilder(Builder *b);
 
     virtual void addInitialBuildersToWorklist(BuilderList & worklist);
     Literal *registerLiteral(LOCATION, const Type *type, const LiteralBytes *value);
@@ -108,11 +120,11 @@ protected:
     BuilderID getBuilderID() { return _nextBuilderID++; }
     ContextID getContextID() { return _nextContextID++; }
     LiteralID getLiteralID() { return _nextLiteralID++; }
-    LiteralDictionaryID getLiteralDictionaryID() { return _nextLiteralDictionaryID++; }
     LocationID getLocationID() { return _nextLocationID++; }
     OperationID getOperationID() { return _nextOperationID++; }
-    SymbolDictionaryID getSymbolDictionaryID() { return _nextSymbolDictionaryID++; }
     ValueID getValueID() { return _nextValueID++; }
+
+    void setPassAllocator(Allocator *a) { _passMem = a; }
 
     CompilationID _id;
 
@@ -120,10 +132,8 @@ protected:
     ContextID _nextContextID;
     //CaseID _nextCaseID;
     LiteralID _nextLiteralID;
-    LiteralDictionaryID _nextLiteralDictionaryID;
     LocationID _nextLocationID;
     OperationID _nextOperationID;
-    SymbolDictionaryID _nextSymbolDictionaryID;
     TransformationID _nextTransformationID;
     ValueID _nextValueID;
 
@@ -133,18 +143,22 @@ protected:
     bool _myConfig;
     Config *_config;
     Context *_context;
+    Allocator *_mem;     // Compilation allocator
+    Allocator *_passMem; // current Pass allocator
 
+    bool _myLiteralDict;
+    bool _mySymbolDict;
+    bool _myTypeDict;
     LiteralDictionary *_literalDict;
     SymbolDictionary *_symbolDict;
-    bool _myTypeDict;
     TypeDictionary *_typeDict;
 
-    TextWriter * _logger;
+    TextLogger * _logger;
+    TextWriter * _writer;
 
-    Array<Builder *> _builders;
+    List<Builder *> _builders;
 
-    static BuilderIterator endBuilderIterator;
-    static LiteralIterator endLiteralIterator;
+    Value * _lastNewValue;
 };
 
 } // namespace JitBuilder

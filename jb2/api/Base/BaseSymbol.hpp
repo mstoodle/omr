@@ -33,10 +33,11 @@ class FieldType;
 class StructType;
 
 class FieldSymbol : public Symbol {
-    friend class BaseExtension;
+    JBALLOC_(FieldSymbol)
 
+    friend class BaseExtension;
 public:
-    FieldSymbol(String name, const StructType *structType, const FieldType *fieldType);
+    FieldSymbol(Allocator *a, String name, const StructType *structType, const FieldType *fieldType);
 
     const StructType *structType() const { return _structType; }
     const FieldType *fieldType() const { return _fieldType; }
@@ -56,4 +57,3 @@ protected:
 } // namespace OMR
 
 #endif // !defined(BASESYMBOLS_INCL)
-

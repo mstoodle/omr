@@ -28,7 +28,7 @@
 #include "Operation.hpp"
 #include "OperationReplacer.hpp"
 #include "Symbol.hpp"
-#include "TextWriter.hpp"
+#include "TextLogger.hpp"
 #include "Type.hpp"
 #include "TypeDictionary.hpp"
 #include "TypeReplacer.hpp"
@@ -106,9 +106,13 @@ using namespace OMR::JitBuilder;
 //
 
 
-TypeReplacer::TypeReplacer(Compiler * compiler)
-    : Transformer(compiler, String("TypeReplacer"))
+TypeReplacer::TypeReplacer(Allocator *a, Compiler * compiler)
+    : Transformer(a, compiler, String("TypeReplacer"))
     , _typesTransformed(false) {
+
+}
+
+TypeReplacer::~TypeReplacer() {
 
 }
 
@@ -131,14 +135,14 @@ void
 TypeReplacer::recordMapper(const Type *type, TypeMapper *mapper) {
     _examinedType.insert(type);
     _typeMappers[type] = mapper;
-    TextWriter *log = _comp->logger(traceEnabled());
-    if (log) {
-        log->indent() << "type t" << type->id() << " mapper registered:" << log->endl();
-        LOG_INDENT_REGION(log) {
+    TextLogger *lgr = _comp->logger(traceEnabled());
+    if (lgr) {
+        lgr->indent() << "type t" << type->id() << " mapper registered:" << lgr->endl();
+        LOG_INDENT_REGION(lgr) {
             for (int i=0;i < mapper->size();i++) {
                 const Type *newType = mapper->current();
-                if (log) log->indent() << i << " : " << "\"" << mapper->name() << "\"" << " offset " << mapper->offset() << " : ";
-                if (log) log->writeType(newType, false);
+                if (lgr) lgr->indent() << i << " : " << "\"" << mapper->name() << "\"" << " offset " << mapper->offset() << " : ";
+                if (lgr) lgr->logType(newType, false);
                 mapper->next();
             }
         }
@@ -156,11 +160,12 @@ TypeReplacer::mapperForType(const Type *type) const {
 void
 TypeReplacer::recordOriginalType(const Type *type) {
     _examinedType.insert(type);
-    TextWriter *log = _comp->logger(traceEnabled());
-    LOG_INDENT_REGION(log) {
-        if (log) log->indent() << "type t" << type->id() << " unchanged" << log->endl();
+    TextLogger *lgr = _comp->logger(traceEnabled());
+    LOG_INDENT_REGION(lgr) {
+        if (lgr) lgr->indent() << "type t" << type->id() << " unchanged" << lgr->endl();
         if (_typeMappers.find(type) == _typeMappers.end()) {
-            TypeMapper *m = new TypeMapper(type);
+            Allocator *mem = _comp->mem();
+            TypeMapper *m = new (mem) TypeMapper(mem, type);
             recordMapper(type, m);
         }
         assert(_modifiedType.find(type) == _modifiedType.end());
@@ -224,7 +229,8 @@ TypeReplacer::transformExplodedType(const Type *type) {
     const Type *layout = type->layout();
     assert(layout);
 
-    TypeMapper *m = new TypeMapper();
+    Allocator *mem = _comp->mem();
+    TypeMapper *m = new (mem) TypeMapper(mem);
     layout->explodeAsLayout(this, 0, m);
 
     _explodedType.insert(type);
@@ -274,8 +280,8 @@ TypeReplacer::transformType(const Type *type) {
 
 void
 TypeReplacer::transformTypeIfNeeded(const Type *type) {
-    TextWriter *log = _comp->logger(traceEnabled());
-    if (log) log->writeType(type);
+    TextLogger *lgr = _comp->logger(traceEnabled());
+    if (lgr) lgr->logType(type);
 
     if (_examinedType.find(type) != _examinedType.end())
         return;
@@ -295,22 +301,23 @@ TypeReplacer::transformTypeIfNeeded(const Type *type) {
         _examinedType.insert(newType);
         _modifiedType.insert(type);
 
-        TypeMapper *mapper = new TypeMapper(newType);
+        Allocator *mem = _comp->mem();
+        TypeMapper *mapper = new (mem) TypeMapper(mem, newType);
         recordMapper(type, mapper);
         recordOriginalType(newType);
     }
 }
 
     #if 0
-   LOG_INDENT_REGION(log)
+   LOG_INDENT_REGION(lgr)
       {
       else if (type->isField())
          {
          FieldType *fType = static_cast<FieldType *>(type);
          Type *fieldType = fType->type();
-         LOG_INDENT_REGION(log)
+         LOG_INDENT_REGION(lgr)
             {
-            if (log) log->indent() << "FieldType " << fType->name() << " type t" << fieldType->id() << log->endl();
+            if (lgr) lgr->indent() << "FieldType " << fType->name() << " type t" << fieldType->id() << lgr->endl();
 
             transformTypeIfNeeded(fieldType);
             if (_modifiedType.find(fieldType) == _modifiedType.end())
@@ -318,7 +325,7 @@ TypeReplacer::transformTypeIfNeeded(const Type *type) {
             else
                {
                // modified types are handled via struct/union types so just ignore here
-               if (log) log->indent() << "modified field to be handled when struct is transformed" << log->endl();
+               if (lgr) lgr->indent() << "modified field to be handled when struct is transformed" << lgr->endl();
                }
             }
          LOG_OUTDENT
@@ -329,14 +336,14 @@ TypeReplacer::transformTypeIfNeeded(const Type *type) {
          StructType *sType = static_cast<StructType *>(type);
          bool transform = false;
 
-         LOG_INDENT_REGION(log)
+         LOG_INDENT_REGION(lgr)
             {
-            if (log) log->indent() << "Struct/UnionType" << log->endl();
+            if (lgr) lgr->indent() << "Struct/UnionType" << lgr->endl();
 
             for (auto fIt = sType->FieldsBegin(); fIt != sType->FieldsEnd(); fIt++)
                {
                FieldType *fType = fIt->second;
-               if (log) log->indent() << "Examining field " << fType << " ( " << fType->name() << " )" << log->endl();
+               if (lgr) lgr->indent() << "Examining field " << fType << " ( " << fType->name() << " )" << lgr->endl();
 
                transformTypeIfNeeded(fType);
                if (_modifiedType.find(fType->type()) != _modifiedType.end())
@@ -358,9 +365,9 @@ TypeReplacer::transformTypeIfNeeded(const Type *type) {
          FunctionType *fnType = static_cast<FunctionType *>(type);
          bool transform = false;
 
-         LOG_INDENT_REGION(log)
+         LOG_INDENT_REGION(lgr)
             {
-            if (log) log->indent() << "FunctionType" << log->endl();
+            if (lgr) lgr->indent() << "FunctionType" << lgr->endl();
 
             Type *returnType = fnType->returnType();
             transformTypeIfNeeded(returnType);
@@ -405,7 +412,8 @@ TypeReplacer::transformTypeIfNeeded(const Type *type) {
          if (it != _typesToReplace.end())
             {
             Type *typeToReplace = dict->LookupType(it->second);
-            TypeMapper *m = new TypeMapper(typeToReplace);
+            Allocator *mem = _comp->mem();
+            TypeMapper *m = new (mem) TypeMapper(mem, typeToReplace);
             recordMapper(type, m);
             _modifiedType.insert(type);
             }
@@ -419,38 +427,38 @@ TypeReplacer::transformTypeIfNeeded(const Type *type) {
 void
 TypeReplacer::transformTypes(TypeDictionary *dict)
    {
-   TextWriter *log = _comp->logger(traceEnabled());
-   if (log)
+   TextLogger *lgr = _comp->logger(traceEnabled());
+   if (lgr)
       {
-      log->indent() << "TypeReplacer::transformTypes " << dict << log->endl();
-      dict->write(*log);
-      (*log) << log->endl();
-      log->indent() << "Types to explode:" << log->endl();
-      LOG_INDENT_REGION(log)
+      lgr->indent() << "TypeReplacer::transformTypes " << dict << lgr->endl();
+      dict->log(*lgr);
+      (*lgr) << lgr->endl();
+      lgr->indent() << "Types to explode:" << lgr->endl();
+      LOG_INDENT_REGION(lgr)
          {
          for (auto it = dict->typesIterator();it.hasItem();it++)
             {
             const Type *type = it.item();
             if (_typesToExplode.find(type->id()) != _typesToExplode.end())
-               log->indent() << type << log->endl();
+               lgr->indent() << type << lgr->endl();
             }
          }
       LOG_OUTDENT
 
-      (*log) << log->endl();
-      log->indent() << "Types to replace:" << log->endl();
-      LOG_INDENT_REGION(log)
+      (*lgr) << lgr->endl();
+      lgr->indent() << "Types to replace:" << lgr->endl();
+      LOG_INDENT_REGION(lgr)
          {
          for (auto it = dict->typesIterator();it.hasItem();it++)
             {
             const Type *type = it.item();
             auto it2 = _typesToReplace.find(type->id());
             if (it2 != _typesToReplace.end())
-               log->indent() << "Replace " << type << " with " << dict->LookupType(it2->second) << log->endl();
+               lgr->indent() << "Replace " << type << " with " << dict->LookupType(it2->second) << lgr->endl();
             }
          }
       LOG_OUTDENT
-      log->indent() << "Transforming now:" << log->endl();
+      lgr->indent() << "Transforming now:" << lgr->endl();
       }
 
    // just to make sure and in case someone calls it twice?
@@ -458,7 +466,7 @@ TypeReplacer::transformTypes(TypeDictionary *dict)
    _modifiedType.clear();
    _explodedType.clear();
 
-   LOG_INDENT_REGION(log)
+   LOG_INDENT_REGION(lgr)
       {
       for (auto it = dict->typesIterator(); it.hasItem(); it++)
          {
@@ -468,20 +476,20 @@ TypeReplacer::transformTypes(TypeDictionary *dict)
       }
    LOG_OUTDENT
 
-   if (log) log->indent() << log->endl() << "Transformed dictionary:" << log->endl();
-   if (log) dict->write(*log);
+   if (lgr) lgr->indent() << lgr->endl() << "Transformed dictionary:" << lgr->endl();
+   if (lgr) dict->log(*lgr);
 
    _typesTransformed = true;
-   if (log)
+   if (lgr)
       {
-      log->indent() << "Types to remove in final step:" << log->endl();
-      LOG_INDENT_REGION(log)
+      lgr->indent() << "Types to remove in final step:" << lgr->endl();
+      LOG_INDENT_REGION(lgr)
          {
          for (auto it = dict->typesIterator();it.hasItem();it++)
             {
             const Type *type = it.item();
             if (_typesToRemove.find(type) != _typesToRemove.end())
-               log->indent() << type << log->endl();
+               lgr->indent() << type << lgr->endl();
             }
          }
       LOG_OUTDENT
@@ -495,11 +503,11 @@ TypeReplacer::visitBegin() {
 
 void
 TypeReplacer::visitPreCompilation(Compilation * comp) {
-    TextWriter *log = comp->logger(traceEnabled());
-    if (log) log->indent() << "TypeReplacer::visitPreCompilation F" << comp->id() << log->endl();
+    TextLogger *lgr = comp->logger(traceEnabled());
+    if (lgr) lgr->indent() << "TypeReplacer::visitPreCompilation F" << comp->id() << lgr->endl();
  
-    if (log) log->indent() << "TypeReplacer::look for new Types:" << log->endl();
-    LOG_INDENT_REGION(log) {
+    if (lgr) lgr->indent() << "TypeReplacer::look for new Types:" << lgr->endl();
+    LOG_INDENT_REGION(lgr) {
         TypeDictionary *dict = comp->typedict();
         for (auto it = dict->typesIterator(); it.hasItem(); it++) {
             const Type *type = it.item();
@@ -510,30 +518,31 @@ TypeReplacer::visitPreCompilation(Compilation * comp) {
 
     comp->replaceTypes(this);
 
-   // values in operations will be replaced last, handled by transformOperation
-   // first, set up a set of Mappers for those operations to use
-   _mappedResultsSize = 1;
-   _mappedResults = new ValueMapper *[1];
-   _mappedResults[0] = NULL;
+    Allocator *mem = comp->mem();
+    // values in operations will be replaced last, handled by transformOperation
+    // first, set up a set of Mappers for those operations to use
+    _mappedResultsSize = 1;
+    _mappedResults = mem->allocate<ValueMapper *>(1);
+    _mappedResults[0] = NULL;
 
-   _mappedOperandsSize = 2;
-   _mappedOperands = new ValueMapper *[2];
-   _mappedOperands[0] = NULL;
-   _mappedOperands[1] = NULL;
+    _mappedOperandsSize = 2;
+    _mappedOperands = mem->allocate<ValueMapper *>(2);
+    _mappedOperands[0] = NULL;
+    _mappedOperands[1] = NULL;
 
-   _mappedTypesSize = 1;
-   _mappedTypes = new TypeMapper *[1];
-   _mappedTypes[0] = new TypeMapper();
+    _mappedTypesSize = 1;
+    _mappedTypes = mem->allocate<TypeMapper *>(1);
+    _mappedTypes[0] = new (mem) TypeMapper(mem);
 
-   _mappedSymbolsSize = 1;
-   _mappedSymbols = new SymbolMapper *[1];
-   _mappedSymbols[0] = new SymbolMapper();
+    _mappedSymbolsSize = 1;
+    _mappedSymbols = mem->allocate<SymbolMapper *>(1);
+    _mappedSymbols[0] = new (mem) SymbolMapper(mem);
 
-   _mappedLiteralsSize = 1;
-   _mappedLiterals = new LiteralMapper *[1];
-   _mappedLiterals[0] = new LiteralMapper();
+    _mappedLiteralsSize = 1;
+    _mappedLiterals = mem->allocate<LiteralMapper *>(1);
+    _mappedLiterals[0] = new (mem) LiteralMapper(mem);
 
-   if (log) log->indent() << log->endl() << "About to transform operations" << log->endl() << log->endl();
+    if (lgr) lgr->indent() << lgr->endl() << "About to transform operations" << lgr->endl() << lgr->endl();
 }
 
 void
@@ -548,8 +557,10 @@ TypeReplacer::transformLiteral(Literal *lv) {
         // TODO: m = t->convert(lv, _typeMappers.find(t));
         assert(0);
     }
-    else
-        m = new LiteralMapper(lv);
+    else {
+        Allocator *mem = _comp->mem();
+        m = new (mem) LiteralMapper(mem, lv);
+    }
 
     assert(m);
     _literalMappers[lv] = m;
@@ -557,15 +568,16 @@ TypeReplacer::transformLiteral(Literal *lv) {
 
 Builder *
 TypeReplacer::transformOperation(Operation * op) {
-    TextWriter *log = comp()->logger(traceEnabled());
+    TextLogger *lgr = comp()->logger(traceEnabled());
     TypeDictionary *dict = comp()->typedict();
     Builder *b = NULL;
 
-    LOG_INDENT_REGION(log) {
+    LOG_INDENT_REGION(lgr) {
         int numMaps = 0;
         bool cloneNeeded = false;
 
-        OperationReplacer r(op);
+        Allocator *mem = comp()->passMem();
+        OperationReplacer r(mem, op);
 
         // fill in appropriate mappers based on this operation's operand Values
         for (int o=0;o < op->numOperands();o++) {
@@ -643,24 +655,24 @@ TypeReplacer::transformOperation(Operation * op) {
         // no Builder mappings are done at this time, so just create a mapper for each Builder
         //   initialized with the operation's original Builder
         for (int b=0;b < op->numBuilders();b++) {
-            r.setBuilderMapper(new BuilderMapper(op->builder(b)), b);
+            r.setBuilderMapper(new (mem) BuilderMapper(mem, op->builder(b)), b);
             if (numMaps < 1)
                 numMaps = 1;
         }
 
         if (!cloneNeeded) {
-            if (log) log->indent() << "No clone needed, using original operation result(s) if any" << log->endl();
+            if (lgr) lgr->indent() << "No clone needed, using original operation result(s) if any" << lgr->endl();
 
             // just map results to themselves and we're done
             for (int i=0;i < op->numResults();i++) {
                 Value *result = op->result(i);
-                r.setResultMapper(new ValueMapper(result), i);
+                r.setResultMapper(new (mem) ValueMapper(mem, result), i);
             }
             return NULL;
         }
 
         // otherwise this operation needs to be cloned
-        if (log) log->indent() << "Cloning operation" << log->endl();
+        if (lgr) lgr->indent() << "Cloning operation" << lgr->endl();
         b = op->ext()->OrphanBuilder(LOC, op->parent());
         cloneOperation(b, &r, numMaps);
 
@@ -677,7 +689,7 @@ TypeReplacer::transformOperation(Operation * op) {
 
 void
 TypeReplacer::cloneOperation(Builder *b, OperationReplacer *r, int numMaps) {
-    TextWriter *log = _comp->logger(traceEnabled());
+    TextLogger *lgr = _comp->logger(traceEnabled());
 
     Operation *origOp = r->operation();
     if (origOp->hasExpander() && origOp->expand(r))
@@ -709,10 +721,10 @@ TypeReplacer::visitPostCompilation(Compilation * comp)
 
 void
 TypeReplacer::finalCleanup() {
-    TextWriter *log = _comp->logger(traceEnabled());
-    if (log) log->indent() << "Final stage: removing types (" << _typesToRemove.size() << " types registered for removal):" << log->endl();
+    TextLogger *lgr = _comp->logger(traceEnabled());
+    if (lgr) lgr->indent() << "Final stage: removing types (" << _typesToRemove.size() << " types registered for removal):" << lgr->endl();
 
-    LOG_INDENT_REGION(log) {
+    LOG_INDENT_REGION(lgr) {
         TypeDictionary *dict = _comp->typedict();
         for (auto typeIt = _typesToRemove.begin(); typeIt != _typesToRemove.end(); typeIt++) {
             const Type *typeToRemove = *typeIt;
@@ -724,19 +736,19 @@ TypeReplacer::finalCleanup() {
                 if (fType->owningStruct()->owningDictionary() == dict
                     && _typesToRemove.find(fType->owningStruct()) != _typesToRemove.end()) {
 
-                    if (log) log->indent() << "Ignoring field type inside to-be-removed struct: ";
-                    if (log) log->writeType(typeToRemove);
+                    if (lgr) lgr->indent() << "Ignoring field type inside to-be-removed struct: ";
+                    if (lgr) lgr->writeType(typeToRemove);
                     continue;
                 }
             }
             #endif
-            if (log) log->indent() << "Removing ";
-            if (log) log->writeType(typeToRemove);
+            if (lgr) lgr->indent() << "Removing ";
+            if (lgr) lgr->logType(typeToRemove);
             dict->RemoveType(typeToRemove);
         }
     }
     LOG_OUTDENT
 
-    if (log) log->indent() << "Final dictionary:" << log->endl();
-    if (log) _comp->typedict()->write(*log);
+    if (lgr) lgr->indent() << "Final dictionary:" << lgr->endl();
+    if (lgr) _comp->typedict()->log(*lgr);
 }

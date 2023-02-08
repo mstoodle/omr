@@ -26,6 +26,8 @@ namespace OMR {
 namespace JitBuilder {
 namespace VM {
 
+INIT_JBALLOC_REUSECAT(VirtualMachineRegister, VirtualMachineState)
+
 StateKind VirtualMachineRegister::STATEKIND = KindService::NoKind;
 bool VirtualMachineRegister::kindRegistered = false;
 
@@ -38,13 +40,13 @@ VirtualMachineRegister::getStateClassKind() {
     return STATEKIND;
 }
 
-VirtualMachineRegister::VirtualMachineRegister(LOCATION,
+VirtualMachineRegister::VirtualMachineRegister(MEM_LOCATION(a),
                                                VMExtension *vme,
                                                String name,
                                                Base::BaseCompilation *comp,
                                                Value * addressOfRegister,
                                                bool doReload)
-    : VirtualMachineState(PASSLOC, vme, getStateClassKind())
+    : VirtualMachineState(MEM_PASSLOC(a), vme, getStateClassKind())
     , _name(name)
     , _comp(comp)
     , _addressOfRegister(addressOfRegister)
@@ -70,12 +72,12 @@ VirtualMachineRegister::VirtualMachineRegister(LOCATION,
     }
 }
 
-VirtualMachineRegister::VirtualMachineRegister(LOCATION,
+VirtualMachineRegister::VirtualMachineRegister(MEM_LOCATION(a),
                                                VMExtension *vme,
                                                String name,
                                                Base::BaseCompilation * comp,
                                                StateKind kind)
-        : VirtualMachineState(PASSLOC, vme, kind)
+        : VirtualMachineState(MEM_PASSLOC(a), vme, kind)
         , _name(name)
         , _comp(comp)
         , _addressOfRegister(0)
@@ -97,7 +99,8 @@ VirtualMachineRegister::Commit(LOCATION, Builder *b) {
 
 VirtualMachineState *
 VirtualMachineRegister::MakeCopy(LOCATION, Builder *b) {
-    return new VirtualMachineRegister(PASSLOC, _vme, _name, _comp, _addressOfRegister, false);
+    Allocator *mem = allocator();
+    return new (mem) VirtualMachineRegister(MEM_PASSLOC(mem), _vme, _name, _comp, _addressOfRegister, false);
 }
 
 void

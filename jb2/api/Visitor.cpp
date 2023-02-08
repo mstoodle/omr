@@ -23,17 +23,23 @@
 #include "Compilation.hpp"
 #include "Compiler.hpp"
 #include "Operation.hpp"
-#include "TextWriter.hpp"
+#include "TextLogger.hpp"
 #include "Visitor.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 
-Visitor::Visitor(Compiler *compiler, String name, bool visitAppendedBuilders)
-    : Pass(compiler, name)
+INIT_JBALLOC_REUSECAT(Visitor, Passes)
+
+Visitor::Visitor(Allocator *a, Compiler *compiler, String name, bool visitAppendedBuilders)
+    : Pass(a, compiler, name)
     , _comp(NULL)
     , _aborted(false)
     , _visitAppendedBuilders(visitAppendedBuilders) {
+}
+
+Visitor::~Visitor() {
+
 }
 
 CompilerReturnCode
@@ -52,8 +58,8 @@ Visitor::start(Compilation *comp) {
     visitBegin();
 
     {
-        BuilderList worklist;
-        BitVector visited(_comp->maxBuilderID());
+        BuilderList worklist(NULL, comp->mem());
+        BitVector visited(_comp->mem(), _comp->maxBuilderID());
         _comp->addInitialBuildersToWorklist(worklist);
 
         visitPreCompilation(_comp);
@@ -82,8 +88,8 @@ Visitor::abort() {
 
 void
 Visitor::start(Builder * b) {
-    BuilderList worklist;
-    BitVector visited(_comp->maxBuilderID());
+    BuilderList worklist(NULL, _comp->mem());
+    BitVector visited(_comp->mem(), _comp->maxBuilderID());
     visitBuilder(b, visited, worklist);
 }
 
@@ -120,9 +126,9 @@ Visitor::visitOperations(Builder *b, BitVector & visited, BuilderList & worklist
 
 void
 Visitor::trace(String msg) {
-    TextWriter *log = _comp->logger();
-    if (log) {
-        log->indent() << msg << log->endl();
+    TextLogger *lgr = _comp->logger();
+    if (lgr) {
+        lgr->indent() << msg << lgr->endl();
     }
 }
 

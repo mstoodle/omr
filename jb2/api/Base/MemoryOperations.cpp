@@ -33,13 +33,20 @@ namespace Base {
 //
 // LoadAt
 //
-Op_LoadAt::Op_LoadAt(LOCATION, Extension *ext, Builder * parent, ActionID aLoadAt, Value *result, Value *ptrValue)
-    : OperationR1V1(PASSLOC, aLoadAt, ext, parent, result, ptrValue) {
+INIT_JBALLOC_REUSECAT(Op_LoadAt, Operation)
+
+Op_LoadAt::Op_LoadAt(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aLoadAt, Value *result, Value *ptrValue)
+    : OperationR1V1(MEM_PASSLOC(a), aLoadAt, ext, parent, result, ptrValue) {
+}
+
+Op_LoadAt::~Op_LoadAt() {
+
 }
 
 Operation *
 Op_LoadAt::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    return new Op_LoadAt(PASSLOC, this->_ext, b, this->action(), this->result(), this->operand());
+    Allocator *mem = b->comp()->mem();
+    return new (mem) Op_LoadAt(MEM_PASSLOC(mem), this->_ext, b, this->action(), this->result(), this->operand());
 }
 
 void
@@ -51,13 +58,20 @@ Op_LoadAt::jbgen(JB1MethodBuilder *j1mb) const {
 //
 // StoreAt
 //
-Op_StoreAt::Op_StoreAt(LOCATION, Extension *ext, Builder * parent, ActionID aStoreAt, Value *ptrValue, Value *value)
-    : OperationR0V2(PASSLOC, aStoreAt, ext, parent, ptrValue, value) {
+INIT_JBALLOC_REUSECAT(Op_StoreAt, Operation)
+
+Op_StoreAt::Op_StoreAt(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aStoreAt, Value *ptrValue, Value *value)
+    : OperationR0V2(MEM_PASSLOC(a), aStoreAt, ext, parent, ptrValue, value) {
+}
+
+Op_StoreAt::~Op_StoreAt() {
+
 }
 
 Operation *
 Op_StoreAt::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    return new Op_StoreAt(PASSLOC, this->_ext, b, this->action(), cloner->operand(0), this->operand(1));
+    Allocator *mem = b->comp()->mem();
+    return new (mem) Op_StoreAt(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->operand(0), this->operand(1));
 }
 
 void
@@ -69,13 +83,20 @@ Op_StoreAt::jbgen(JB1MethodBuilder *j1mb) const {
 //
 // LoadField
 //
-Op_LoadField::Op_LoadField(LOCATION, Extension *ext, Builder * parent, ActionID aLoadField, Value *result, const FieldType *fieldType, Value *structValue)
-    : OperationR1V1T1(PASSLOC, aLoadField, ext, parent, result, fieldType, structValue) {
+INIT_JBALLOC_REUSECAT(Op_LoadField, Operation)
+
+Op_LoadField::Op_LoadField(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aLoadField, Value *result, const FieldType *fieldType, Value *structValue)
+    : OperationR1V1T1(MEM_PASSLOC(a), aLoadField, ext, parent, result, fieldType, structValue) {
+}
+
+Op_LoadField::~Op_LoadField() {
+
 }
 
 Operation *
 Op_LoadField::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    return new Op_LoadField(PASSLOC, this->_ext, b, this->action(), cloner->result(), cloner->type()->refine<FieldType>(), cloner->operand());
+    Allocator *mem = b->comp()->mem();
+    return new (mem) Op_LoadField(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->result(), cloner->type()->refine<FieldType>(), cloner->operand());
 }
 
 void
@@ -87,13 +108,20 @@ Op_LoadField::jbgen(JB1MethodBuilder *j1mb) const {
 //
 // StoreField
 //
-Op_StoreField::Op_StoreField(LOCATION, Extension *ext, Builder * parent, ActionID aStoreField, const FieldType *fieldType, Value *structValue, Value *value)
-    : OperationR0T1V2(PASSLOC, aStoreField, ext, parent, fieldType, structValue, value) {
+INIT_JBALLOC_REUSECAT(Op_StoreField, Operation)
+
+Op_StoreField::Op_StoreField(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aStoreField, const FieldType *fieldType, Value *structValue, Value *value)
+    : OperationR0T1V2(MEM_PASSLOC(a), aStoreField, ext, parent, fieldType, structValue, value) {
+}
+
+Op_StoreField::~Op_StoreField() {
+
 }
 
 Operation *
 Op_StoreField::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    return new Op_StoreField(PASSLOC, this->_ext, b, this->action(), cloner->type()->refine<FieldType>(), cloner->operand(0), cloner->operand(1));
+    Allocator *mem = b->comp()->mem();
+    return new (mem) Op_StoreField(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->type()->refine<FieldType>(), cloner->operand(0), cloner->operand(1));
 }
 
 void
@@ -105,13 +133,20 @@ Op_StoreField::jbgen(JB1MethodBuilder *j1mb) const {
 //
 // LoadFieldAt
 //
-Op_LoadFieldAt::Op_LoadFieldAt(LOCATION, Extension *ext, Builder * parent, ActionID aLoadFieldAt, Value *result, const FieldType *fieldType, Value *pStruct)
-    : OperationR1V1T1(PASSLOC, aLoadFieldAt, ext, parent, result, fieldType, pStruct) {
+INIT_JBALLOC_REUSECAT(Op_LoadFieldAt, Operation)
+
+Op_LoadFieldAt::Op_LoadFieldAt(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aLoadFieldAt, Value *result, const FieldType *fieldType, Value *pStruct)
+    : OperationR1V1T1(MEM_PASSLOC(a), aLoadFieldAt, ext, parent, result, fieldType, pStruct) {
+}
+
+Op_LoadFieldAt::~Op_LoadFieldAt() {
+
 }
 
 Operation *
 Op_LoadFieldAt::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    return new Op_LoadFieldAt(PASSLOC, this->_ext, b, this->action(), cloner->result(), cloner->type()->refine<FieldType>(), cloner->operand());
+    Allocator *mem = b->comp()->mem();
+    return new (mem) Op_LoadFieldAt(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->result(), cloner->type()->refine<FieldType>(), cloner->operand());
 }
 
 void
@@ -125,13 +160,20 @@ Op_LoadFieldAt::jbgen(JB1MethodBuilder *j1mb) const {
 //
 // StoreFieldAt
 //
-Op_StoreFieldAt::Op_StoreFieldAt(LOCATION, Extension *ext, Builder * parent, ActionID aStoreFieldAt, const FieldType *fieldType, Value *pStruct, Value *value)
-    : OperationR0T1V2(PASSLOC, aStoreFieldAt, ext, parent, fieldType, pStruct, value) {
+INIT_JBALLOC_REUSECAT(Op_StoreFieldAt, Operation)
+
+Op_StoreFieldAt::Op_StoreFieldAt(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aStoreFieldAt, const FieldType *fieldType, Value *pStruct, Value *value)
+    : OperationR0T1V2(MEM_PASSLOC(a), aStoreFieldAt, ext, parent, fieldType, pStruct, value) {
+}
+
+Op_StoreFieldAt::~Op_StoreFieldAt() {
+
 }
 
 Operation *
 Op_StoreFieldAt::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    return new Op_StoreFieldAt(PASSLOC, this->_ext, b, this->action(), cloner->type()->refine<FieldType>(), cloner->operand(0), cloner->operand(1));
+    Allocator *mem = b->comp()->mem();
+    return new (mem) Op_StoreFieldAt(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->type()->refine<FieldType>(), cloner->operand(0), cloner->operand(1));
 }
 
 void
@@ -145,11 +187,18 @@ Op_StoreFieldAt::jbgen(JB1MethodBuilder *j1mb) const {
 //
 // CreateLocalArray
 //
+INIT_JBALLOC_REUSECAT(Op_CreateLocalArray, Operation)
+
+Op_CreateLocalArray::~Op_CreateLocalArray() {
+
+}
+
 Operation *
 Op_CreateLocalArray::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
+    Allocator *mem = b->comp()->mem();
     const Type *cloneType = cloner->type();
     assert(cloneType->isKind<PointerType>());
-    return new Op_CreateLocalArray(PASSLOC, this->_ext, b, this->action(), cloner->result(), cloner->literal(), cloneType->refine<PointerType>());
+    return new (mem) Op_CreateLocalArray(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->result(), cloner->literal(), cloneType->refine<PointerType>());
 }
 
 void
@@ -161,11 +210,18 @@ Op_CreateLocalArray::jbgen(JB1MethodBuilder *j1mb) const {
 //
 // CreateLocalStruct
 //
+INIT_JBALLOC_REUSECAT(Op_CreateLocalStruct, Operation)
+
+Op_CreateLocalStruct::~Op_CreateLocalStruct() {
+
+}
+
 Operation *
 Op_CreateLocalStruct::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
+    Allocator *mem = b->comp()->mem();
     const Type *cloneType = cloner->type();
     assert(cloneType->isKind<StructType>());
-    return new Op_CreateLocalStruct(PASSLOC, this->_ext, b, this->action(), cloner->result(), cloneType->refine<StructType>());
+    return new (mem) Op_CreateLocalStruct(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->result(), cloneType->refine<StructType>());
 }
 
 void
@@ -177,13 +233,20 @@ Op_CreateLocalStruct::jbgen(JB1MethodBuilder *j1mb) const {
 //
 // IndexAt
 //
-Op_IndexAt::Op_IndexAt(LOCATION, Extension *ext, Builder * parent, ActionID aIndexAt, Value *result, Value *base, Value *index)
-    : OperationR1V2(PASSLOC, aIndexAt, ext, parent, result, base, index) {
+INIT_JBALLOC_REUSECAT(Op_IndexAt, Operation)
+
+Op_IndexAt::Op_IndexAt(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aIndexAt, Value *result, Value *base, Value *index)
+    : OperationR1V2(MEM_PASSLOC(a), aIndexAt, ext, parent, result, base, index) {
+}
+
+Op_IndexAt::~Op_IndexAt() {
+
 }
 
 Operation *
 Op_IndexAt::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    return new Op_IndexAt(PASSLOC, this->_ext, b, this->action(), cloner->result(), cloner->operand(0), cloner->operand(1));
+    Allocator *mem = b->comp()->mem();
+    return new (mem) Op_IndexAt(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->result(), cloner->operand(0), cloner->operand(1));
 }
 
 void

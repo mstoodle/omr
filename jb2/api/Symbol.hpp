@@ -25,23 +25,23 @@
 #include <cassert>
 #include "IDs.hpp"
 #include "KindService.hpp"
-#include "util/String.hpp"
+#include "String.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 
 class SymbolDictionary;
-class TextWriter;
+class TextLogger;
 class Type;
 
 typedef KindService::Kind SymbolKind;
 
-class Symbol {
+class Symbol : public Allocatable {
+    JBALLOC_(Symbol)
+
     friend class SymbolDictionary;
 
 public:
-    static Symbol *create(String name, const Type * type) { return new Symbol(name, type); }
-
     String name() const { return _name; }
     const Type * type() const { return _type; }
     SymbolID id() const { return _id; }
@@ -63,20 +63,22 @@ public:
         return static_cast<T *>(this);
     }
 
-    virtual void write(TextWriter & w) const;
+    virtual void log(TextLogger & lgr) const;
 
     static const SymbolKind getSymbolClassKind();
 
 protected:
-    Symbol(String name, const Type * type)
-        : _id(NoSymbol)
+    Symbol(Allocator *mem, String name, const Type * type)
+        : Allocatable(mem)
+        , _id(NoSymbol)
         , _kind(getSymbolClassKind())
         , _name(name)
         , _type(type) {
 
     }
-    Symbol(SymbolKind kind, String name, const Type * type)
-        : _id(NoSymbol)
+    Symbol(Allocator *mem, SymbolKind kind, String name, const Type * type)
+        : Allocatable(mem)
+        , _id(NoSymbol)
         , _kind(kind)
         , _name(name)
         , _type(type) {

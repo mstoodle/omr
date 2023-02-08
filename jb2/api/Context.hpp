@@ -22,9 +22,8 @@
 #ifndef CONTEXT_INCL
 #define CONTEXT_INCL
 
-#include <assert.h>
-#include "IDs.hpp"
-#include "util/List.hpp"
+#include "common.hpp"
+#include "String.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -35,7 +34,8 @@ class Symbol;
 class SymbolDictionary;
 class TypeDictionary;
 
-class Context {
+class Context : public Allocatable {
+    JBALLOC_(Context)
 
 public:
     Context(LOCATION, Compilation *comp, LiteralDictionary *useLitDict=NULL, SymbolDictionary *useSymDict=NULL, TypeDictionary *useTypeDict=NULL, uint32_t numEntryPoints=1, uint32_t numExitPoints=1, String name="");

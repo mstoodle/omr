@@ -24,8 +24,9 @@
 
 #include "common.hpp"
 #include <iomanip>
+#include "TextLogger.hpp"
 #include "Visitor.hpp"
-#include "util/String.hpp"
+#include "String.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -43,131 +44,27 @@ class TypeDictionary;
 class Value;
 
 class TextWriter : public Visitor {
+    JBALLOC_(TextWriter)
+
 public:
-    TextWriter(Compiler * compiler, std::ostream & os, String perIndent);
+    DYNAMIC_ALLOC_ONLY(TextWriter, Compiler * compiler, std::ostream & os, String perIndent);
+    DYNAMIC_ALLOC_ONLY(TextWriter, Compiler * compiler, TextLogger & logger);
+
+    TextLogger & logger() { return _logger; }
 
     void print(Compilation *comp) { start(comp); }
     void print(Builder * b) { start(b); }
     void print(Operation * op) { start(op); }
 
-    friend TextWriter &operator<<(TextWriter &w, const bool v) {
-        w._os << v;
-        return w;
-    }
-    friend TextWriter &operator<<(TextWriter &w, const int8_t v) {
-        w._os << v;
-        return w;
-    }
-    friend TextWriter &operator<<(TextWriter &w, const int16_t v) {
-        w._os << v;
-        return w;
-    }
-    friend TextWriter &operator<<(TextWriter &w, const int32_t v) {
-        w._os << v;
-        return w;
-    }
-    friend TextWriter &operator<<(TextWriter &w, const int64_t v) {
-        w._os << v;
-        return w;
-    }
-    friend TextWriter &operator<<(TextWriter &w, const uint64_t v) {
-        w._os << v;
-        return w;
-    }
-    #if 0
-    friend TextWriter &operator<<(TextWriter &w, const size_t v) {
-        w._os << v;
-        return w;
-    }
-    #endif
-    friend TextWriter &operator<<(TextWriter &w, const void * v) {
-        w._os << v;
-        return w;
-    }
-    friend TextWriter &operator<<(TextWriter &w, const float v) {
-        w._os << v;
-        return w;
-    }
-    friend TextWriter &operator<<(TextWriter &w, const double v) {
-        w._os << v;
-        return w;
-    }
-    friend TextWriter &operator<<(TextWriter &w, const String & s) {
-        s.write(w);
-        return w;
-    }
-    friend TextWriter &operator<<(TextWriter &w, const char *s) {
-        w._os << s;
-        return w;
-    }
-    friend TextWriter & operator<<(TextWriter &w, const Builder *b);
-   //friend TextWriter &operator<<(TextWriter &w, const Case *c);
-    friend TextWriter & operator<<(TextWriter &w, const Literal *lv);
-    friend TextWriter & operator<<(TextWriter &w, const LiteralDictionary *ld);
-    friend TextWriter & operator<<(TextWriter &w, const Operation *op);
-    friend TextWriter & operator<<(TextWriter &w, const Symbol *s);
-    friend TextWriter & operator<<(TextWriter &w, const SymbolDictionary *sd);
-    friend TextWriter & operator<<(TextWriter &w, const Type *t);
-    friend TextWriter & operator<<(TextWriter &w, const TypeDictionary *dict);
-    friend TextWriter & operator<<(TextWriter &w, const Value *v);
-
-    void writeType(const Type *type, bool indent=true);
-    void writeOperation(Operation *op);
-
-    String endl() {
-        return String("\n");
-    }
-
-    TextWriter & indent() {
-        for (int32_t in=0;in < _indent;in++)
-            _perIndent.write(*this);
-        return *this;
-    }
-    void indentIn() {
-        _indent++;
-    }
-    void indentOut() {
-        _indent--;
-    }
-
 protected:
+    TextLogger & _logger;
 
     virtual void visitPreCompilation(Compilation * comp);
     virtual void visitPostCompilation(Compilation * comp);
     virtual void visitBuilderPreOps(Builder * b);
     virtual void visitBuilderPostOps(Builder * b);
     virtual void visitOperation(Operation * op);
-
-    void printTypePrefix(const Type * type, bool indent=true);
-    void printOperationPrefix(Operation * op);
-
-    std::ostream & _os;
-    String _perIndent;
-    int32_t _indent;
 };
-
-// RAII class for indenting log output
-class LogIndent {
-    public:
-    LogIndent(TextWriter *log)
-        : _log(log) {
-
-        if (log)
-            log->indentIn();
-    }
-
-    ~LogIndent() {
-        if (_log)
-            _log->indentOut();
-    }
-
-private:
-    TextWriter *_log;
-};
-
-// This macro can be used to bracket a code region where log output should be indented
-#define LOG_INDENT_REGION(log) if (true) { LogIndent __log__indent__var(log);
-#define LOG_OUTDENT            }
 
 } // namespace JitBuilder
 } // namespace OMR

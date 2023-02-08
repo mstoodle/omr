@@ -33,14 +33,21 @@ namespace Base {
 //
 // Add
 //
-Op_Add::Op_Add(LOCATION, Extension *ext, Builder * parent, ActionID aAdd, Value *result, Value *left, Value *right)
-    : OperationR1V2(PASSLOC, aAdd, ext, parent, result, left, right) {
+INIT_JBALLOC_REUSECAT(Op_Add, Operation)
+
+Op_Add::Op_Add(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aAdd, Value *result, Value *left, Value *right)
+    : OperationR1V2(MEM_PASSLOC(a), aAdd, ext, parent, result, left, right) {
+
+}
+
+Op_Add::~Op_Add() {
 
 }
 
 Operation *
 Op_Add::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    return new Op_Add(PASSLOC, this->_ext, b, this->action(), cloner->result(), cloner->operand(0), cloner->operand(1));
+    Allocator *mem = b->comp()->mem();
+    return new (mem) Op_Add(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->result(), cloner->operand(0), cloner->operand(1));
 }
 
 void
@@ -52,14 +59,21 @@ Op_Add::jbgen(JB1MethodBuilder *j1mb) const {
 //
 // ConvertTo
 //
-Op_ConvertTo::Op_ConvertTo(LOCATION, Extension *ext, Builder * parent, ActionID aConvertTo, Value *result, const Type *type, Value *value)
-    : OperationR1V1T1(PASSLOC, aConvertTo, ext, parent, result, type, value) {
+INIT_JBALLOC_REUSECAT(Op_ConvertTo, Operation)
+
+Op_ConvertTo::Op_ConvertTo(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aConvertTo, Value *result, const Type *type, Value *value)
+    : OperationR1V1T1(MEM_PASSLOC(a), aConvertTo, ext, parent, result, type, value) {
+
+}
+
+Op_ConvertTo::~Op_ConvertTo() {
 
 }
 
 Operation *
 Op_ConvertTo::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    return new Op_ConvertTo(PASSLOC, this->_ext, b, this->action(), cloner->result(), cloner->type(), cloner->operand());
+    Allocator *mem = b->comp()->mem();
+    return new (mem) Op_ConvertTo(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->result(), cloner->type(), cloner->operand());
 }
 
 void
@@ -71,14 +85,21 @@ Op_ConvertTo::jbgen(JB1MethodBuilder *j1mb) const {
 //
 // Mul
 //
-Op_Mul::Op_Mul(LOCATION, Extension *ext, Builder * parent, ActionID aMul, Value *result, Value *left, Value *right)
-    : OperationR1V2(PASSLOC, aMul, ext, parent, result, left, right) {
+INIT_JBALLOC_REUSECAT(Op_Mul, Operation)
+
+Op_Mul::Op_Mul(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aMul, Value *result, Value *left, Value *right)
+    : OperationR1V2(MEM_PASSLOC(a), aMul, ext, parent, result, left, right) {
+
+}
+
+Op_Mul::~Op_Mul() {
 
 }
 
 Operation *
 Op_Mul::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    return new Op_Mul(PASSLOC, this->_ext, b, this->action(), cloner->result(), cloner->operand(0), cloner->operand(1));
+    Allocator *mem = b->comp()->mem();
+    return new (mem) Op_Mul(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->result(), cloner->operand(0), cloner->operand(1));
 }
 
 void
@@ -90,14 +111,21 @@ Op_Mul::jbgen(JB1MethodBuilder *j1mb) const {
 //
 // Sub
 //
-Op_Sub::Op_Sub(LOCATION, Extension *ext, Builder * parent, ActionID aSub, Value *result, Value *left, Value *right)
-    : OperationR1V2(PASSLOC, aSub, ext, parent, result, left, right) {
+INIT_JBALLOC_REUSECAT(Op_Sub, Operation)
+
+Op_Sub::Op_Sub(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aSub, Value *result, Value *left, Value *right)
+    : OperationR1V2(MEM_PASSLOC(a), aSub, ext, parent, result, left, right) {
+
+}
+
+Op_Sub::~Op_Sub() {
 
 }
 
 Operation *
 Op_Sub::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    return new Op_Sub(PASSLOC, this->_ext, b, this->action(), cloner->result(), cloner->operand(0), cloner->operand(1));
+    Allocator *mem = b->comp()->mem();
+    return new (mem) Op_Sub(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->result(), cloner->operand(0), cloner->operand(1));
 }
 
 void

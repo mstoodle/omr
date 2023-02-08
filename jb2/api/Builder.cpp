@@ -19,45 +19,56 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#include "AllocationCategoryClasses.hpp"
 #include "Builder.hpp"
 #include "Compilation.hpp"
 #include "Context.hpp"
 #include "JB1MethodBuilder.hpp"
 #include "Location.hpp"
 #include "Operation.hpp"
-#include "TextWriter.hpp"
+#include "TextLogger.hpp"
 #include "Value.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 
-Builder::Builder(Compilation * comp, Context *context, String name)
-    : _id(comp->getBuilderID())
+INIT_JBALLOC_ON(Builder, IL)
+
+Builder::Builder(Allocator *a, Compilation * comp, Context *context, String name)
+    : Allocatable(a)
+    , _id(comp->getBuilderID())
     , _comp(comp)
     , _name(name)
     , _parent(NULL)
+    , _children(NULL, comp->mem())
     , _context(context)
     , _successor(NULL)
+    , _operations(NULL, comp->mem())
     , _operationCount(0)
     , _firstOperation(NULL)
     , _lastOperation(NULL)
-    , _currentLocation(new Location(comp, "", "", 0))
+    , _myLocation(true)
+    , _currentLocation(new (comp->mem()) Location(comp->mem(), comp, "", "", 0) )
     , _boundToOperation(NULL)
     , _isTarget(false)
     , _isBound(false)
     , _controlReachesEnd(true) {
 }
 
-Builder::Builder(Builder *parent, Context *context, String name)
-    : _id(parent->_comp->getBuilderID())
+Builder::Builder(Allocator *a, Builder *parent, Context *context, String name)
+    : Allocatable(a)
+    , _id(parent->_comp->getBuilderID())
     , _comp(parent->_comp)
     , _name(name)
     , _parent(parent)
+    , _children(NULL, parent->comp()->mem())
     , _context(context)
     , _successor(NULL)
+    , _operations(NULL, parent->comp()->mem())
     , _operationCount(0)
     , _firstOperation(NULL)
     , _lastOperation(NULL)
+    , _myLocation(false)
     , _currentLocation(parent->location())
     , _boundToOperation(NULL)
     , _isTarget(false)
@@ -66,16 +77,20 @@ Builder::Builder(Builder *parent, Context *context, String name)
     parent->addChild(this);
 }
 
-Builder::Builder(Builder *parent, Operation *boundToOp, String name)
-    : _id(parent->_comp->getBuilderID())
+Builder::Builder(Allocator *a, Builder *parent, Operation *boundToOp, String name)
+    : Allocatable(a)
+    , _id(parent->_comp->getBuilderID())
     , _comp(parent->_comp)
     , _name(name)
     , _parent(parent)
+    , _children(NULL, parent->comp()->mem())
     , _context(parent->context())
     , _successor(NULL)
+    , _operations(NULL, parent->comp()->mem())
     , _operationCount(0)
     , _firstOperation(NULL)
     , _lastOperation(NULL)
+    , _myLocation(false)
     , _currentLocation(parent->location())
     , _boundToOperation(boundToOp)
     , _isTarget(false)
@@ -85,19 +100,25 @@ Builder::Builder(Builder *parent, Operation *boundToOp, String name)
 }
 
 Builder::~Builder() {
-    for (auto op = firstOperation(); op != NULL; op = op->next()) {
+    for (Operation *op = firstOperation(); op != NULL; ) {
+        Operation *next = op->next();
         delete op;
+        op = next;
     }
+    if (_myLocation)
+        delete _currentLocation;
 }
 
 Builder *
 Builder::create(Builder *parent, Context *context, String name) {
-    return new Builder(parent, context, name);
+    Allocator *mem = parent->allocator();
+    return new (mem) Builder(mem, parent, context, name);
 }
 
 Builder *
 Builder::create(Compilation *comp, Context *context, String name) {
-    return new Builder(comp, context, name);
+    Allocator *mem = comp->mem();
+    return new (mem) Builder(mem, comp, context, name);
 }
 
 void
@@ -132,60 +153,60 @@ Builder::jbgenSuccessors(JB1MethodBuilder *j1mb) const {
 }
 
 void
-Builder::writeProperties(TextWriter & w) const {
+Builder::logProperties(TextLogger & lgr) const {
     if (parent())
-        w.indent() << "[ parent " << parent() << " ]" << w.endl();
+        lgr.indent() << "[ parent " << parent() << " ]" << lgr.endl();
     else
-        w.indent() << "[ parent NULL ]" << w.endl();
+        lgr.indent() << "[ parent NULL ]" << lgr.endl();
 
     if (numChildren() > 0) {
-        w.indent() << "[ children" << w.endl();
-        w.indentIn();
+        lgr.indent() << "[ children" << lgr.endl();
+        lgr.indentIn();
         for (BuilderListIterator it = childrenIterator(); it.hasItem(); it++) {
              Builder *child = it.item();
-             w.indent() << "[ " << child << " ]" << w.endl();
+             lgr.indent() << "[ " << child << " ]" << lgr.endl();
          }
-         w.indentOut();
-         w.indent() << "]" << w.endl();
+         lgr.indentOut();
+         lgr.indent() << "]" << lgr.endl();
     }
 
     if (isBound())
-        w.indent() << "[ bound " << boundToOperation() << " ]" << w.endl();
+        lgr.indent() << "[ bound " << boundToOperation() << " ]" << lgr.endl();
     else
-        w.indent() << "[ notBound ]" << w.endl();
+        lgr.indent() << "[ notBound ]" << lgr.endl();
 
     if (isTarget())
-        w.indent() << "[ isTarget ]" << w.endl();
+        lgr.indent() << "[ isTarget ]" << lgr.endl();
     else
-        w.indent() << "[ notTarget ]" << w.endl();
+        lgr.indent() << "[ notTarget ]" << lgr.endl();
 
     // deprecate
     if (controlReachesEnd())
-        w.indent() << "[ controlReachesEnd ]" << w.endl();
+        lgr.indent() << "[ controlReachesEnd ]" << lgr.endl();
     else
-        w.indent() << "[ notControlReachesEnd ]" << w.endl();
+        lgr.indent() << "[ notControlReachesEnd ]" << lgr.endl();
 }
 
 void
-Builder::writePrefix(TextWriter & w) const {
-    w.indent() << "[ " << logName() << " " << this;
+Builder::logPrefix(TextLogger & lgr) const {
+    lgr.indent() << "[ " << logName() << " " << this;
     if (name().length() > 0)
-        w << " \"" << name() << "\"";
-    w << w.endl();
-    w.indentIn();
+        lgr << " \"" << name() << "\"";
+    lgr << lgr.endl();
+    lgr.indentIn();
 
-    writeProperties(w);
+    logProperties(lgr);
 
-    w.indent() << "[ operations" << w.endl();
-    w.indentIn();
+    lgr.indent() << "[ operations" << lgr.endl();
+    lgr.indentIn();
 }
 
 void
-Builder::writeSuffix(TextWriter & w) const {
-    w.indentOut();
-    w.indent() << "]" << w.endl(); // operations
-    w.indentOut();
-    w.indent() << "]" << w.endl(); // builder
+Builder::logSuffix(TextLogger & lgr) const {
+    lgr.indentOut();
+    lgr.indent() << "]" << lgr.endl(); // operations
+    lgr.indentOut();
+    lgr.indent() << "]" << lgr.endl(); // builder
 }
 
 } // namespace JitBuilder

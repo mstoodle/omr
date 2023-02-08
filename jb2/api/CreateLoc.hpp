@@ -23,7 +23,8 @@
 #define CREATELOC_INCL
 
 #include <stdint.h>
-#include "util/String.hpp"
+#include "Allocatable.hpp"
+#include "String.hpp"
 
 #define LOCATION const char *loc_fileName, uint32_t loc_lineNumber, const char *loc_function
 #define LOC_FILE loc_fileName
@@ -32,16 +33,32 @@
 #define LOC __FILE__, __LINE__, __func__
 #define PASSLOC loc_fileName, loc_lineNumber, loc_function
 
+#define MEM_LOCATION(m) Allocator *m, LOCATION
+#define MEM_LOC(m) m, LOC
+#define MEM_PASSLOC(m) m, PASSLOC
+
 namespace OMR {
 namespace JitBuilder {
 
-class CreateLocation {
+class CreateLocation : public Allocatable {
+    JBALLOC_NO_DESTRUCTOR_(CreateLocation)
+
 public:
-    CreateLocation(LOCATION)
-        : _fileName(LOC_FILE)
+    CreateLocation(MEM_LOCATION(a))
+        : Allocatable(a)
+        , _fileName(LOC_FILE)
         , _lineNumber(LOC_LINE)
-        , _functionName(LOC_FUNC)
-    { }
+        , _functionName(LOC_FUNC) {
+
+    }
+    CreateLocation(LOCATION)
+        : Allocatable()
+        , _fileName(LOC_FILE)
+        , _lineNumber(LOC_LINE)
+        , _functionName(LOC_FUNC) {
+
+    }
+    virtual ~CreateLocation() { }
 
     String fileName() const { return String(_fileName); }
     String lineNumber() const { return String::to_string(_lineNumber); }

@@ -27,7 +27,7 @@
 #include "Context.hpp"
 #include "Extension.hpp"
 #include "Operation.hpp"
-#include "TextWriter.hpp"
+#include "TextLogger.hpp"
 #include "TypeDictionary.hpp"
 #include "TypeReplacer.hpp"
 #include "Value.hpp"
@@ -36,87 +36,79 @@
 namespace OMR {
 namespace JitBuilder {
 
-CompileUnit::CompileUnit(LOCATION, Compiler *compiler, String name)
-    : _id(compiler->getCompileUnitID())
+INIT_JBALLOC_ON(CompileUnit, Compiler)
+
+CompileUnit::CompileUnit(MEM_LOCATION(a), Compiler *compiler, String name)
+    : Allocatable(a)
+    , _id(compiler->getCompileUnitID())
     , _createLocation(PASSLOC)
     , _name(name)
     , _compiler(compiler)
     , _outerUnit(NULL) {
-    //, _myContext(context == NULL)
-    //, _context(_myContext ? new Context(compiler) : context)
-    //, _numEntryPoints(context->numEntryPoints())
-    //, _nativeEntryPoints(new void *[_numEntryPoints])
-    //, _debugEntryPoints(new void *[_numEntryPoints]) {
-
-    //Move to Compilation
-    //for (uint32_t e=0;e < _numEntryPoints;e++)
-    //    _builderEntryPoints[e] = Builder::create(_comp, _context);
-    //for (uint32_t x=0;x < _numExitPoints;x++)
-    //    _builderExitPoints[x] = Builder::create(_comp, _context);
-    //ext->SourceLocation(PASSLOC, _builderEntryPoints[0], ""); // make sure everything has a location; by default BCIndex is 0
+}
+CompileUnit::CompileUnit(LOCATION, Compiler *compiler, String name)
+    : Allocatable()
+    , _id(compiler->getCompileUnitID())
+    , _createLocation(PASSLOC)
+    , _name(name)
+    , _compiler(compiler)
+    , _outerUnit(NULL) {
 }
 
-CompileUnit::CompileUnit(LOCATION, CompileUnit *outerUnit, String name)
-    : _id(_compiler->getCompileUnitID())
+CompileUnit::CompileUnit(MEM_LOCATION(a), CompileUnit *outerUnit, String name)
+    : Allocatable(a)
+    , _id(_compiler->getCompileUnitID())
     , _createLocation(PASSLOC)
     , _name(name)
     , _compiler(outerUnit->_compiler)
     , _outerUnit(outerUnit) {
-    //, _myContext(false)
-    //, _context(outerUnit->_context)
-    //, _numEntryPoints(_context->numEntryPoints())
-    //, _nativeEntryPoints(new void *[_numEntryPoints])
-    //, _debugEntryPoints(new void *[_numEntryPoints]) {
-
-    //for (uint32_t e=0;e < _numEntryPoints;e++)
-    //    _builderEntryPoints[e] = Builder::create(_comp, _context);
-    //for (uint32_t x=0;x < _numExitPoints;x++)
-    //    _builderExitPoints[x] = Builder::create(_comp, _context);
-    //ext->SourceLocation(PASSLOC, _builderEntryPoints[0], ""); // make sure everything has a location; by default BCIndex is 0
+}
+CompileUnit::CompileUnit(LOCATION, CompileUnit *outerUnit, String name)
+    : Allocatable()
+    , _id(_compiler->getCompileUnitID())
+    , _createLocation(PASSLOC)
+    , _name(name)
+    , _compiler(outerUnit->_compiler)
+    , _outerUnit(outerUnit) {
 }
 
 CompileUnit::~CompileUnit() {
-    //for (auto e=0;e < _numExitPoints;e++)
-    //    delete _builderExitPoints[e];
-    //for (auto e=0;e < _numEntryPoints;e++)
-    //    delete _builderEntryPoints[e];
-    //delete[] _builderExitPoints;
-    //delete[] _debugEntryPoints;
-    //delete[] _nativeEntryPoints;
-    //delete[] _builderEntryPoints;
-    //if (_myContext)
-    //    delete _context;
+    for (auto it=_bodies.begin(); it != _bodies.end(); it++) {
+        CompiledBody *body = it->second;
+        delete body;
+    }
 }
 
 void
-CompileUnit::write(TextWriter &w) const {
-    w.indent() << "[ " << kindName() << " " << _id << w.endl();
-    w.indentIn();
+CompileUnit::log(TextLogger &lgr) const {
+    lgr.indent() << "[ " << kindName() << " " << _id << lgr.endl();
+    lgr.indentIn();
 
-    w.indent() << "[ name " << name() << " ]" << w.endl();
-    w.indent() << "[ origin " << _createLocation.to_string() << " ]" << w.endl();
+    lgr.indent() << "[ name " << name() << " ]" << lgr.endl();
+    lgr.indent() << "[ origin " << _createLocation.to_string() << " ]" << lgr.endl();
 
-    writeSpecific(w);
+    logSpecific(lgr);
 
-    w << "]" << w.endl();
+    lgr << "]" << lgr.endl();
 
-    w.indentOut();
-    w.indent() << "]" << w.endl();
+    lgr.indentOut();
+    lgr.indent() << "]" << lgr.endl();
 }
 
 CompilerReturnCode
-CompileUnit::compile(LOCATION, StrategyID strategy, TextWriter *logger) {
+CompileUnit::compile(LOCATION, StrategyID strategy, TextLogger *lgr) {
     Compilation comp(_compiler, this);
     Context context(LOC, &comp);
     comp.setContext(&context);
-    comp.setLogger(logger);
+    comp.setLogger(lgr);
 
     CompilerReturnCode rc = _compiler->compile(PASSLOC, &comp, strategy);
     if (rc != _compiler->CompileSuccessful) {
         return rc;
     }
 
-    CompiledBody *body = new CompiledBody(this, &context, strategy);
+    Allocator *mem = _compiler->mem();
+    CompiledBody *body = new (mem) CompiledBody(mem, this, &context, strategy);
     auto it = _bodies.find(strategy);
     if (it != _bodies.end()) {
         notifyRecompile(it->second, body);
@@ -148,4 +140,3 @@ CompileUnit::saveCompiledBody(CompiledBody *body, StrategyID strategy) {
 
 } // namespace JitBuilder
 } // namespace OMR
-

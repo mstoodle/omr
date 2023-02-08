@@ -48,11 +48,11 @@ class Value;
 typedef void *TRType;
 
 class JB1MethodBuilder : public Loggable {
-    friend class JB1CodeGenerator;
+    JBALLOC_(JB1MethodBuilder)
 
+    friend class JB1CodeGenerator;
 public:
     JB1MethodBuilder(Compilation *comp);
-    virtual ~JB1MethodBuilder();
 
     void setMethodBuilder(void *mb) { _mb = reinterpret_cast<TR::MethodBuilder *>(mb); }
 

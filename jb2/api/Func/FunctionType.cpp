@@ -30,9 +30,22 @@ namespace OMR {
 namespace JitBuilder {
 namespace Func {
 
+INIT_JBALLOC_REUSECAT(FunctionType, Type)
 
 TypeKind FunctionType::TYPEKIND = KindService::NoKind;
 bool FunctionType::kindRegistered = false;
+
+FunctionType::FunctionType(MEM_LOCATION(a), Extension *ext, TypeDictionary *dict, const Type *returnType, int32_t numParms, const Type ** parmTypes)
+    : Type(MEM_PASSLOC(a), getTypeClassKind(), ext, dict, typeName(returnType, numParms, parmTypes), 0)
+    , _returnType(returnType)
+    , _numParms(numParms)
+    , _parmTypes(parmTypes) {
+
+}
+
+FunctionType::~FunctionType() {
+    delete[] _parmTypes;
+}
 
 FunctionExtension *
 FunctionType::funcExt() {
@@ -53,13 +66,6 @@ FunctionType::getTypeClassKind() {
     return TYPEKIND;
 }
 
-
-FunctionType::FunctionType(LOCATION, Extension *ext, TypeDictionary *dict, const Type *returnType, int32_t numParms, const Type ** parmTypes)
-    : Type(PASSLOC, getTypeClassKind(), ext, dict, typeName(returnType, numParms, parmTypes), 0)
-    , _returnType(returnType)
-    , _numParms(numParms)
-    , _parmTypes(parmTypes) {
-}
 
 String
 FunctionType::typeName(const Type * returnType, int32_t numParms, const Type **parmTypes) {
@@ -82,7 +88,7 @@ FunctionType::to_string(bool useHeader) const {
 }
 
 void
-FunctionType::printValue(TextWriter &w, const void *p) const {
+FunctionType::logValue(TextLogger &lgr, const void *p) const {
     // TODO
 }
 
@@ -115,7 +121,8 @@ FunctionType::replace(TypeReplacer *repl) {
 
     assert(parmNum == numNewParms);
 
-    const FunctionType *newType = new FunctionType(LOC, _ext, repl->comp()->typedict(), newReturnType, numNewParms, newParmTypes);
+    Allocator *mem = repl->comp()->compiler()->mem();
+    const FunctionType *newType = new (mem) FunctionType(MEM_LOC(mem) , _ext, repl->comp()->typedict(), newReturnType, numNewParms, newParmTypes);
     return newType;
 }
 

@@ -19,6 +19,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#include "Compilation.hpp"
 #include "Operation.hpp"
 #include "OperationCloner.hpp"
 #include "OperationReplacer.hpp"
@@ -26,8 +27,10 @@
 namespace OMR {
 namespace JitBuilder {
 
-OperationReplacer::OperationReplacer(Operation *op)
-    : OperationCloner(op)
+INIT_JBALLOC_REUSECAT(OperationReplacer, Compilation)
+
+OperationReplacer::OperationReplacer(Allocator *a, Operation *op)
+    : OperationCloner(a, op)
     , _resultMappers(NULL)
     , _operandMappers(NULL)
     , _builderMappers(NULL)
@@ -36,55 +39,56 @@ OperationReplacer::OperationReplacer(Operation *op)
     , _typeMappers(NULL) {
 
     if (_numResults > 0) {
-        _resultMappers = new ValueMapper *[_numResults];
+        _resultMappers = a->allocate<ValueMapper *>(_numResults);
         for (auto i=0;i < _numResults;i++)
             _resultMappers[i] = NULL;
     }
 
     if (_numOperands > 0) {
-        _operandMappers = new ValueMapper *[_numOperands];
+        _operandMappers = a->allocate<ValueMapper *>(_numOperands);
         for (auto i=0;i < _numOperands;i++)
             _operandMappers[i] = NULL;
     }
 
     if (_numBuilders > 0) {
-        _builderMappers = new BuilderMapper *[_numBuilders];
+        _builderMappers = a->allocate<BuilderMapper *>(_numBuilders);
         for (auto i=0;i < _numBuilders;i++)
             _builderMappers[i] = NULL;
     }
 
     if (_numLiterals > 0) {
-        _literalMappers = new LiteralMapper *[_numLiterals];
+        _literalMappers = a->allocate<LiteralMapper *>(_numLiterals);
         for (auto i=0;i < _numLiterals;i++)
             _literalMappers[i] = NULL;
     }
 
     if (_numSymbols > 0) {
-        _symbolMappers = new SymbolMapper *[_numSymbols];
+        _symbolMappers = a->allocate<SymbolMapper *>(_numSymbols);
         for (auto i=0;i < _numSymbols;i++)
             _symbolMappers[i] = NULL;
     }
 
     if (_numTypes > 0) {
-        _typeMappers = new TypeMapper *[_numTypes];
+        _typeMappers = a->allocate<TypeMapper *>(_numTypes);
         for (auto i=0;i < _numTypes;i++)
             _typeMappers[i] = NULL;
     }
 }
 
 OperationReplacer::~OperationReplacer() {
+    Allocator *mem = allocator();
     if (_resultMappers)
-        delete[] _resultMappers;
+        mem->deallocate(_resultMappers);
     if (_operandMappers)
-        delete[] _operandMappers;
+        mem->deallocate(_operandMappers);
     if (_builderMappers)
-        delete[] _builderMappers;
+        mem->deallocate(_builderMappers);
     if (_literalMappers)
-        delete[] _literalMappers;
+        mem->deallocate(_literalMappers);
     if (_symbolMappers)
-        delete[] _symbolMappers;
+        mem->deallocate(_symbolMappers);
     if (_typeMappers)
-        delete[] _typeMappers;
+        mem->deallocate(_typeMappers);
 }
 
 Operation *

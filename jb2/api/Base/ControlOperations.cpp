@@ -31,82 +31,14 @@ namespace Base {
 
 #define A_UNLESS_B(A,B) (((B) != NULL) ? (B) : (A))
 
-//
-// Call
-//
 
-Op_Call::Op_Call(LOCATION, Extension *ext, Builder * parent, ActionID aCall, Value *result, Func::FunctionSymbol *target, std::va_list & args)
-    : OperationR1S1VN(PASSLOC, aCall, ext, parent, result, target, target->functionType()->numParms(), args) {
-
-}
-
-Op_Call::Op_Call(LOCATION, Extension *ext, Builder * parent, ActionID aCall, Func::FunctionSymbol *target, std::va_list & args)
-    : OperationR1S1VN(PASSLOC, aCall, ext, parent, NULL, target, target->functionType()->numParms(), args) {
-
-}
-
-Operation *
-Op_Call::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    return new Op_Call(PASSLOC, this->_ext, b, this->action(), cloner);
-}
-
-void
-Op_Call::write(TextWriter & w) const {
-    if (_result)
-        w << this->_result << " = ";
-    w << name() << " " << this->_symbol;
-    for (auto a=0;a < this->_numValues; a++) {
-        w << " " << this->_values[a];
-    }
-    w << w.endl();
-}
-
-void
-Op_Call::jbgen(JB1MethodBuilder *j1mb) const {
-    Func::FunctionSymbol *funcSym = symbol()->refine<Func::FunctionSymbol>();
-    const Func::FunctionType *funcType = funcSym->functionType();
-    //j1mb->DefineFunction(funcSym->name(), funcSym->fileName(), funcSym->lineNumber(), funcSym->entryPoint(), funcType->returnType(), funcType->numParms(), funcType->parmTypes());
-    j1mb->Call(location(), parent(), result(), funcSym->name(), _numValues, _values);
-}
-
-
-//
-// CallVoid
-//
-
-Op_CallVoid::Op_CallVoid(LOCATION, Extension *ext, Builder * parent, ActionID aCall, Func::FunctionSymbol *target, std::va_list & args)
-    : OperationR0S1VN(PASSLOC, aCall, ext, parent, target, target->functionType()->numParms(), args) {
-
-}
-
-Operation *
-Op_CallVoid::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    return new Op_CallVoid(PASSLOC, this->_ext, b, this->action(), cloner);
-}
-
-void
-Op_CallVoid::write(TextWriter & w) const {
-    w << name() << " " << this->_symbol;
-    for (auto a=0;a < this->_numValues; a++) {
-        w << " " << this->_values[a];
-    }
-    w << w.endl();
-}
-
-void
-Op_CallVoid::jbgen(JB1MethodBuilder *j1mb) const {
-    Func::FunctionSymbol *funcSym = symbol()->refine<Func::FunctionSymbol>();
-    const Func::FunctionType *funcType = funcSym->functionType();
-    //j1mb->DefineFunction(funcSym->name(), funcSym->fileName(), funcSym->lineNumber(), funcSym->entryPoint(), funcType->returnType(), funcType->numParms(), funcType->parmTypes());
-    j1mb->Call(location(), parent(), funcSym->name(), _numValues, _values);
-}
-
+INIT_JBALLOC_REUSECAT(Op_ForLoopUp, Operation)
 
 //
 // ForLoopUp
 //
-Op_ForLoopUp::Op_ForLoopUp(LOCATION, Extension *ext, Builder * parent, ActionID aForLoopUp, ForLoopBuilder *loopBuilder)
-    : Operation(PASSLOC, aForLoopUp, ext, parent)
+Op_ForLoopUp::Op_ForLoopUp(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aForLoopUp, ForLoopBuilder *loopBuilder)
+    : Operation(MEM_PASSLOC(a), aForLoopUp, ext, parent)
     , _loopVariable(loopBuilder->loopVariable())
     , _initial(loopBuilder->initialValue())
     , _final(loopBuilder->finalValue())
@@ -128,27 +60,32 @@ Op_ForLoopUp::Op_ForLoopUp(LOCATION, Extension *ext, Builder * parent, ActionID 
     _loopContinue->setBound(this);
 }
 
+Op_ForLoopUp::~Op_ForLoopUp() {
+
+}
+
 Operation *
 Op_ForLoopUp::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
     ForLoopBuilder loopBuilder;
     loopBuilder.setLoopVariable(static_cast<Func::LocalSymbol *>(cloner->symbol()))
-               ->setInitialValue(cloner->operand(0))
-               ->setFinalValue(cloner->operand(1))
-               ->setBumpValue(cloner->operand(2))
-               ->setLoopBody(cloner->builder(0))
-               ->setLoopBreak(cloner->builder(1))
-               ->setLoopContinue(cloner->builder(2));
-    return new Op_ForLoopUp(PASSLOC, this->_ext, b, this->action(), &loopBuilder);
+               .setInitialValue(cloner->operand(0))
+               .setFinalValue(cloner->operand(1))
+               .setBumpValue(cloner->operand(2))
+               .setLoopBody(cloner->builder(0))
+               .setLoopBreak(cloner->builder(1))
+               .setLoopContinue(cloner->builder(2));
+    Allocator *mem = b->comp()->mem();
+    return new (mem) Op_ForLoopUp(MEM_PASSLOC(mem), this->_ext, b, this->action(), &loopBuilder);
    }
 
 void
-Op_ForLoopUp::write(TextWriter & w) const {
-    w << name() << " " << this->_loopVariable << " : " << this->_initial << " to " << this->_final << " by " << this->_bump << " body " << this->_loopBody;
+Op_ForLoopUp::log(TextLogger & lgr) const {
+    lgr << name() << " " << this->_loopVariable << " : " << this->_initial << " to " << this->_final << " by " << this->_bump << " body " << this->_loopBody;
     if (this->_loopBreak)
-        w << " loopBreak " << this->_loopBreak;
+        lgr << " loopBreak " << this->_loopBreak;
     if (this->_loopContinue)
-        w << " loopContinue " << this->_loopContinue;
-    w << w.endl();
+        lgr << " loopContinue " << this->_loopContinue;
+    lgr << lgr.endl();
 }
 
 void
@@ -160,14 +97,21 @@ Op_ForLoopUp::jbgen(JB1MethodBuilder *j1mb) const {
 //
 // Goto
 //
+INIT_JBALLOC_REUSECAT(Op_Goto, Operation)
+
+Op_Goto::~Op_Goto() {
+
+}
+
 Operation *
 Op_Goto::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    return new Op_Goto(PASSLOC, this->_ext, b, this->action(), cloner->builder());
+    Allocator *mem = b->comp()->mem();
+    return new (mem) Op_Goto(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->builder());
 }
 
 void
-Op_Goto::write(TextWriter & w) const {
-    w << name() << " " << builder() << w.endl();
+Op_Goto::log(TextLogger & lgr) const {
+    lgr << name() << " " << builder() << lgr.endl();
 }
 
 void
@@ -178,14 +122,21 @@ Op_Goto::jbgen(JB1MethodBuilder *j1mb) const {
 //
 // IfCmpEqual
 //
+INIT_JBALLOC_REUSECAT(Op_IfCmpEqual, Operation)
+
+Op_IfCmpEqual::~Op_IfCmpEqual() {
+
+}
+
 Operation *
 Op_IfCmpEqual::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    return new Op_IfCmpEqual(PASSLOC, this->_ext, b, this->action(), cloner->builder(), cloner->operand(0), cloner->operand(1));
+    Allocator *mem = b->comp()->mem();
+    return new (mem) Op_IfCmpEqual(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->builder(), cloner->operand(0), cloner->operand(1));
 }
 
 void
-Op_IfCmpEqual::write(TextWriter & w) const {
-    w << name() << " " << builder() << " " << operand(0) << " " << operand(1) << w.endl();
+Op_IfCmpEqual::log(TextLogger & lgr) const {
+    lgr << name() << " " << builder() << " " << operand(0) << " " << operand(1) << lgr.endl();
 }
 
 void
@@ -196,14 +147,21 @@ Op_IfCmpEqual::jbgen(JB1MethodBuilder *j1mb) const {
 //
 // IfCmpEqualZero
 //
+INIT_JBALLOC_REUSECAT(Op_IfCmpEqualZero, Operation)
+
+Op_IfCmpEqualZero::~Op_IfCmpEqualZero() {
+
+}
+
 Operation *
 Op_IfCmpEqualZero::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    return new Op_IfCmpEqualZero(PASSLOC, this->_ext, b, this->action(), cloner->builder(), cloner->operand());
+    Allocator *mem = b->comp()->mem();
+    return new (mem) Op_IfCmpEqualZero(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->builder(), cloner->operand());
 }
 
 void
-Op_IfCmpEqualZero::write(TextWriter & w) const {
-    w << name() << " " << builder() << " " << operand(0) << w.endl();
+Op_IfCmpEqualZero::log(TextLogger & lgr) const {
+    lgr << name() << " " << builder() << " " << operand(0) << lgr.endl();
 }
 
 void
@@ -214,14 +172,21 @@ Op_IfCmpEqualZero::jbgen(JB1MethodBuilder *j1mb) const {
 //
 // IfCmpGreaterThan
 //
+INIT_JBALLOC_REUSECAT(Op_IfCmpGreaterThan, Operation)
+
+Op_IfCmpGreaterThan::~Op_IfCmpGreaterThan() {
+
+}
+
 Operation *
 Op_IfCmpGreaterThan::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    return new Op_IfCmpGreaterThan(PASSLOC, this->_ext, b, this->action(), cloner->builder(), cloner->operand(0), cloner->operand(1));
+    Allocator *mem = b->comp()->mem();
+    return new (mem) Op_IfCmpGreaterThan(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->builder(), cloner->operand(0), cloner->operand(1));
 }
 
 void
-Op_IfCmpGreaterThan::write(TextWriter & w) const {
-    w << name() << " " << builder() << " " << operand(0) << " " << operand(1) << w.endl();
+Op_IfCmpGreaterThan::log(TextLogger & lgr) const {
+    lgr << name() << " " << builder() << " " << operand(0) << " " << operand(1) << lgr.endl();
 }
 
 void
@@ -232,14 +197,21 @@ Op_IfCmpGreaterThan::jbgen(JB1MethodBuilder *j1mb) const {
 //
 // IfCmpGreaterOrEqual
 //
+INIT_JBALLOC_REUSECAT(Op_IfCmpGreaterOrEqual, Operation)
+
+Op_IfCmpGreaterOrEqual::~Op_IfCmpGreaterOrEqual() {
+
+}
+
 Operation *
 Op_IfCmpGreaterOrEqual::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    return new Op_IfCmpGreaterOrEqual(PASSLOC, this->_ext, b, this->action(), cloner->builder(), cloner->operand(0), cloner->operand(1));
+    Allocator *mem = b->comp()->mem();
+    return new (mem) Op_IfCmpGreaterOrEqual(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->builder(), cloner->operand(0), cloner->operand(1));
 }
 
 void
-Op_IfCmpGreaterOrEqual::write(TextWriter & w) const {
-    w << name() << " " << builder() << " " << operand(0) << " " << operand(1) << w.endl();
+Op_IfCmpGreaterOrEqual::log(TextLogger & lgr) const {
+    lgr << name() << " " << builder() << " " << operand(0) << " " << operand(1) << lgr.endl();
 }
 
 void
@@ -250,14 +222,21 @@ Op_IfCmpGreaterOrEqual::jbgen(JB1MethodBuilder *j1mb) const {
 //
 // IfCmpLessThan
 //
+INIT_JBALLOC_REUSECAT(Op_IfCmpLessThan, Operation)
+
+Op_IfCmpLessThan::~Op_IfCmpLessThan() {
+
+}
+
 Operation *
 Op_IfCmpLessThan::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    return new Op_IfCmpLessThan(PASSLOC, this->_ext, b, this->action(), cloner->builder(), cloner->operand(0), cloner->operand(1));
+    Allocator *mem = b->comp()->mem();
+    return new (mem) Op_IfCmpLessThan(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->builder(), cloner->operand(0), cloner->operand(1));
 }
 
 void
-Op_IfCmpLessThan::write(TextWriter & w) const {
-    w << name() << " " << builder() << " " << operand(0) << " " << operand(1) << w.endl();
+Op_IfCmpLessThan::log(TextLogger & lgr) const {
+    lgr << name() << " " << builder() << " " << operand(0) << " " << operand(1) << lgr.endl();
 }
 
 void
@@ -268,14 +247,21 @@ Op_IfCmpLessThan::jbgen(JB1MethodBuilder *j1mb) const {
 //
 // IfCmpLessOrEqual
 //
+INIT_JBALLOC_REUSECAT(Op_IfCmpLessOrEqual, Operation)
+
+Op_IfCmpLessOrEqual::~Op_IfCmpLessOrEqual() {
+
+}
+
 Operation *
 Op_IfCmpLessOrEqual::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    return new Op_IfCmpLessOrEqual(PASSLOC, this->_ext, b, this->action(), cloner->builder(), cloner->operand(0), cloner->operand(1));
+    Allocator *mem = b->comp()->mem();
+    return new (mem) Op_IfCmpLessOrEqual(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->builder(), cloner->operand(0), cloner->operand(1));
 }
 
 void
-Op_IfCmpLessOrEqual::write(TextWriter & w) const {
-    w << name() << " " << builder() << " " << operand(0) << " " << operand(1) << w.endl();
+Op_IfCmpLessOrEqual::log(TextLogger & lgr) const {
+    lgr << name() << " " << builder() << " " << operand(0) << " " << operand(1) << lgr.endl();
 }
 
 void
@@ -286,14 +272,21 @@ Op_IfCmpLessOrEqual::jbgen(JB1MethodBuilder *j1mb) const {
 //
 // IfCmpNotEqual
 //
+INIT_JBALLOC_REUSECAT(Op_IfCmpNotEqual, Operation)
+
+Op_IfCmpNotEqual::~Op_IfCmpNotEqual() {
+
+}
+
 Operation *
 Op_IfCmpNotEqual::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    return new Op_IfCmpNotEqual(PASSLOC, this->_ext, b, this->action(), cloner->builder(), cloner->operand(0), cloner->operand(1));
+    Allocator *mem = b->comp()->mem();
+    return new (mem) Op_IfCmpNotEqual(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->builder(), cloner->operand(0), cloner->operand(1));
 }
 
 void
-Op_IfCmpNotEqual::write(TextWriter & w) const {
-    w << name() << " " << builder() << " " << operand(0) << " " << operand(1) << w.endl();
+Op_IfCmpNotEqual::log(TextLogger & lgr) const {
+    lgr << name() << " " << builder() << " " << operand(0) << " " << operand(1) << lgr.endl();
 }
 
 void
@@ -304,14 +297,21 @@ Op_IfCmpNotEqual::jbgen(JB1MethodBuilder *j1mb) const {
 //
 // IfCmpNotEqualZero
 //
+INIT_JBALLOC_REUSECAT(Op_IfCmpNotEqualZero, Operation)
+
+Op_IfCmpNotEqualZero::~Op_IfCmpNotEqualZero() {
+
+}
+
 Operation *
 Op_IfCmpNotEqualZero::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    return new Op_IfCmpNotEqualZero(PASSLOC, this->_ext, b, this->action(), cloner->builder(), cloner->operand());
+    Allocator *mem = b->comp()->mem();
+    return new (mem) Op_IfCmpNotEqualZero(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->builder(), cloner->operand());
 }
 
 void
-Op_IfCmpNotEqualZero::write(TextWriter & w) const {
-    w << name() << " " << builder() << " " << operand(0) << w.endl();
+Op_IfCmpNotEqualZero::log(TextLogger & lgr) const {
+    lgr << name() << " " << builder() << " " << operand(0) << lgr.endl();
 }
 
 void
@@ -322,14 +322,21 @@ Op_IfCmpNotEqualZero::jbgen(JB1MethodBuilder *j1mb) const {
 //
 // IfCmpUnsignedGreaterThan
 //
+INIT_JBALLOC_REUSECAT(Op_IfCmpUnsignedGreaterThan, Operation)
+
+Op_IfCmpUnsignedGreaterThan::~Op_IfCmpUnsignedGreaterThan() {
+
+}
+
 Operation *
 Op_IfCmpUnsignedGreaterThan::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    return new Op_IfCmpUnsignedGreaterThan(PASSLOC, this->_ext, b, this->action(), cloner->builder(), cloner->operand(0), cloner->operand(1));
+    Allocator *mem = b->comp()->mem();
+    return new (mem) Op_IfCmpUnsignedGreaterThan(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->builder(), cloner->operand(0), cloner->operand(1));
 }
 
 void
-Op_IfCmpUnsignedGreaterThan::write(TextWriter & w) const {
-    w << name() << " " << builder() << " " << operand(0) << " " << operand(1) << w.endl();
+Op_IfCmpUnsignedGreaterThan::log(TextLogger & lgr) const {
+    lgr << name() << " " << builder() << " " << operand(0) << " " << operand(1) << lgr.endl();
 }
 
 void
@@ -340,14 +347,21 @@ Op_IfCmpUnsignedGreaterThan::jbgen(JB1MethodBuilder *j1mb) const {
 //
 // IfCmpUnsignedGreaterOrEqual
 //
+INIT_JBALLOC_REUSECAT(Op_IfCmpUnsignedGreaterOrEqual, Operation)
+
+Op_IfCmpUnsignedGreaterOrEqual::~Op_IfCmpUnsignedGreaterOrEqual() {
+
+}
+
 Operation *
 Op_IfCmpUnsignedGreaterOrEqual::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    return new Op_IfCmpUnsignedGreaterOrEqual(PASSLOC, this->_ext, b, this->action(), cloner->builder(), cloner->operand(0), cloner->operand(1));
+    Allocator *mem = b->comp()->mem();
+    return new (mem) Op_IfCmpUnsignedGreaterOrEqual(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->builder(), cloner->operand(0), cloner->operand(1));
 }
 
 void
-Op_IfCmpUnsignedGreaterOrEqual::write(TextWriter & w) const {
-    w << name() << " " << builder() << " " << operand(0) << " " << operand(1) << w.endl();
+Op_IfCmpUnsignedGreaterOrEqual::log(TextLogger & lgr) const {
+    lgr << name() << " " << builder() << " " << operand(0) << " " << operand(1) << lgr.endl();
 }
 
 void
@@ -358,14 +372,21 @@ Op_IfCmpUnsignedGreaterOrEqual::jbgen(JB1MethodBuilder *j1mb) const {
 //
 // IfCmpUnsignedLessThan
 //
+INIT_JBALLOC_REUSECAT(Op_IfCmpUnsignedLessThan, Operation)
+
+Op_IfCmpUnsignedLessThan::~Op_IfCmpUnsignedLessThan() {
+
+}
+
 Operation *
 Op_IfCmpUnsignedLessThan::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    return new Op_IfCmpUnsignedLessThan(PASSLOC, this->_ext, b, this->action(), cloner->builder(), cloner->operand(0), cloner->operand(1));
+    Allocator *mem = b->comp()->mem();
+    return new (mem) Op_IfCmpUnsignedLessThan(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->builder(), cloner->operand(0), cloner->operand(1));
 }
 
 void
-Op_IfCmpUnsignedLessThan::write(TextWriter & w) const {
-    w << name() << " " << builder() << " " << operand(0) << " " << operand(1) << w.endl();
+Op_IfCmpUnsignedLessThan::log(TextLogger & lgr) const {
+    lgr << name() << " " << builder() << " " << operand(0) << " " << operand(1) << lgr.endl();
 }
 
 void
@@ -376,14 +397,21 @@ Op_IfCmpUnsignedLessThan::jbgen(JB1MethodBuilder *j1mb) const {
 //
 // IfCmpUnsignedLessOrEqual
 //
+INIT_JBALLOC_REUSECAT(Op_IfCmpUnsignedLessOrEqual, Operation)
+
+Op_IfCmpUnsignedLessOrEqual::~Op_IfCmpUnsignedLessOrEqual() {
+
+}
+
 Operation *
 Op_IfCmpUnsignedLessOrEqual::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    return new Op_IfCmpUnsignedLessOrEqual(PASSLOC, this->_ext, b, this->action(), cloner->builder(), cloner->operand(0), cloner->operand(1));
+    Allocator *mem = b->comp()->mem();
+    return new (mem) Op_IfCmpUnsignedLessOrEqual(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->builder(), cloner->operand(0), cloner->operand(1));
 }
 
 void
-Op_IfCmpUnsignedLessOrEqual::write(TextWriter & w) const {
-    w << name() << " " << builder() << " " << operand(0) << " " << operand(1) << w.endl();
+Op_IfCmpUnsignedLessOrEqual::log(TextLogger & lgr) const {
+    lgr << name() << " " << builder() << " " << operand(0) << " " << operand(1) << lgr.endl();
 }
 
 void

@@ -26,6 +26,8 @@
 namespace OMR {
 namespace JitBuilder {
 
+INIT_JBALLOC(SemanticVersion)
+
 const String SemanticVersion::invalidString("INVALID");
 
 void

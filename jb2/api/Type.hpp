@@ -30,20 +30,23 @@
 namespace OMR {
 namespace JitBuilder {
 
+class Allocator;
 class Builder;
 class Compilation;
 class Compiler;
 class Extension;
 class JB1MethodBuilder;
 class Location;
-class TextWriter;
+class TextLogger;
 class Type;
 class TypeDictionary;
 class TypeReplacer;
 
 typedef KindService::Kind TypeKind;
 
-class Type {
+class Type : public Allocatable {
+    JBALLOC_(Type)
+
     friend class Compiler;
     friend class Extension;
     friend class TypeDictionary;
@@ -76,9 +79,9 @@ public:
 
     String base_string(bool useHeader=false) const;
     virtual String to_string(bool useHeader=false) const;
-    void writeType(TextWriter & w, bool useHeader=false) const;
-    virtual void printValue(TextWriter & w, const void *p) const { }
-    virtual void printLiteral(TextWriter & w, const Literal *lv) const { }
+    void logType(TextLogger & lgr, bool useHeader=false) const;
+    virtual void logValue(TextLogger & lgr, const void *p) const { }
+    virtual void logLiteral(TextLogger & lgr, const Literal *lv) const { }
     virtual bool literalsAreEqual(const LiteralBytes *lv1, const LiteralBytes *lv2) const { return false; }
 
     virtual const int64_t getInteger(const Literal *lv) const { return 0; }
@@ -119,8 +122,8 @@ public:
     static const TypeKind getTypeClassKind();
 
 protected:
-    Type(LOCATION, TypeKind kind, Extension *ext, String name, size_t size, const Type *layout=NULL);
-    Type(LOCATION, TypeKind kind, Extension *ext, TypeDictionary *dict, String name, size_t size, const Type *layout=NULL);
+    DYNAMIC_ALLOC_ONLY(Type, LOCATION, TypeKind kind, Extension *ext, String name, size_t size, const Type *layout=NULL);
+    DYNAMIC_ALLOC_ONLY(Type, LOCATION, TypeKind kind, Extension *ext, TypeDictionary *dict, String name, size_t size, const Type *layout=NULL);
 
     void transformTypeIfNeeded(TypeReplacer *repl, const Type *type) const;
 
@@ -139,20 +142,19 @@ protected:
 };
 
 class NoTypeType : public Type {
+    JBALLOC(NoTypeType, NoAllocationCategory);
+
     friend class Extension;
 
     public:
-    static NoTypeType * create(LOCATION, Extension *ext) { return new NoTypeType(PASSLOC, ext); }
-    virtual void printValue(TextWriter &w, const void *p) const;
+    //static NoTypeType * create(MEM_LOCATION(a), Extension *ext) { return new (a) NoTypeType(MEM_PASSLOC(a), ext); }
+    virtual void logValue(TextLogger &lgr, const void *p) const;
     virtual bool registerJB1Type(JB1MethodBuilder *j1mb) const;
 
     static const TypeKind getTypeClassKind();
 
     protected:
-    NoTypeType(LOCATION, Extension *ext)
-        : Type(PASSLOC, TYPEKIND, ext, "NoType", 0) {
-
-    }
+    DYNAMIC_ALLOC_ONLY(NoTypeType, LOCATION, Extension *ext);
 
     static TypeKind TYPEKIND;
     static bool kindRegistered;

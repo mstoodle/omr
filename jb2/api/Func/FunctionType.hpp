@@ -26,19 +26,13 @@
 
 namespace OMR {
 namespace JitBuilder {
-
-class Compilation;
-class Extension;
-class Literal;
-class TypeDictionary;
-class TextWriter;
-class TypeReplacer;
-
 namespace Func {
 
 class FunctionExtension;
 
 class FunctionType : public Type {
+    JBALLOC_(FunctionType)
+
     friend class FunctionExtension;
     friend class TypeDictionary;
 
@@ -95,8 +89,6 @@ public:
     };
     #endif
     
-    ~FunctionType() { delete[] _parmTypes; }
-
     Literal *literal(LOCATION, Compilation *comp, void * functionValue);
     virtual String to_string(bool useHeader=false) const;
 
@@ -105,7 +97,7 @@ public:
     const Type *parmType(int p) const { return _parmTypes[p]; }
     const Type **parmTypes() const { return _parmTypes; }
 
-    virtual void printValue(TextWriter &w, const void *p) const;
+    virtual void logValue(TextLogger &lgr, const void *p) const;
 
     virtual const Type * replace(TypeReplacer *repl);
 
@@ -114,7 +106,7 @@ public:
     static const TypeKind getTypeClassKind();
 
 protected:
-    FunctionType(LOCATION, Extension *ext, TypeDictionary *dict, const Type *returnType, int32_t numParms, const Type ** parmTypes);
+    DYNAMIC_ALLOC_ONLY(FunctionType, LOCATION, Extension *ext, TypeDictionary *dict, const Type *returnType, int32_t numParms, const Type ** parmTypes);
 
     const Type *_returnType;
     int32_t _numParms;

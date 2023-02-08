@@ -36,9 +36,11 @@ namespace VM {
 class VirtualMachineRegister;
 
 class VirtualMachineOperandStack: public VirtualMachineState {
+    JBALLOC_(VirtualMachineOperandStack)
+
 public:
-    VirtualMachineOperandStack(LOCATION, VMExtension *vme, Base::BaseCompilation * comp, int32_t sizeHint, VirtualMachineRegister * stackTopRegister, const Type *elementType, bool growsUp=true, int32_t stackInitialOffset=-1);
-    VirtualMachineOperandStack(LOCATION, VirtualMachineOperandStack * other);
+    VirtualMachineOperandStack(MEM_LOCATION(a), VMExtension *vme, Base::BaseCompilation * comp, int32_t sizeHint, VirtualMachineRegister * stackTopRegister, const Type *elementType, bool growsUp=true, int32_t stackInitialOffset=-1);
+    VirtualMachineOperandStack(MEM_LOCATION(a), VirtualMachineOperandStack * other);
 
     virtual void Commit(LOCATION, Builder * b);
     virtual void Reload(LOCATION, Builder * b);

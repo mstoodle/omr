@@ -19,44 +19,36 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include <iostream>
-#include "JB2.hpp"
-
-using namespace std;
+#include <cassert>
+#include "AllocatorTracer.hpp"
+#include "Compiler.hpp"
+#include "Config.hpp"
+#include "TextLogger.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 
-#if 0
-JB2::JB2()
-    : _totalAllocated(0)
-    , _totalDeallocated(0)
-    , _totalAllocations(0)
-    , _totalDeallocations(0) {
-#endif
+INIT_JBALLOC_ON(AllocatorTracer, Allocator)
 
-size_t JB2::_totalAllocated = 0;
-size_t JB2::_totalDeallocated = 0;
+AllocatorTracer::~AllocatorTracer() {
 
-size_t JB2::_totalAllocations = 0;
-size_t JB2::_totalDeallocations = 0;
+}
+
+void *
+AllocatorTracer::allocate(size_t size, AllocationCategoryID cat) {
+    void *ptr = _parent->allocate(size, cat);
+
+    TextLogger & lgr = _logger;
+    lgr << "## AT: A " << ptr << " cat " << cat << lgr.endl();
+    return ptr;
+}
 
 void
-JB2::report() {
-    cerr << _totalAllocated << "\ttotal bytes allocated\n";
-    cerr << _totalDeallocated << "\ttotal bytes deallocated\n\n";
-    cerr << _totalAllocations << "\ttotal allocations\n";
-    cerr << _totalDeallocations << "\ttotal deallocations\n";
+AllocatorTracer::deallocate(void *ptr) {
+    TextLogger & lgr = _logger;
+    lgr << "## AT: D " << ptr << lgr.endl();
 
-    assert(_totalDeallocated <= _totalAllocated);
-    assert(_totalDeallocations <= _totalAllocations);
-    size_t unfreedMemory = _totalAllocated - _totalDeallocated;
-    if (unfreedMemory > 0)
-        cerr << unfreedMemory << "\tmemory not freed\n";
-    else {
-        if (_totalDeallocations < _totalAllocations)
-            cerr << "All memory freed, but unexpected mismatch in deallocations (" << _totalDeallocations << ") versus allocations (" << _totalAllocations << ")\n";
-    }
+    _parent->deallocate(ptr);
 }
 
 } // namespace JitBuilder

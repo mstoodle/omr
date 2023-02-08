@@ -29,8 +29,9 @@ namespace OMR {
 namespace JitBuilder {
 
 
-CompiledBody::CompiledBody(CompileUnit *unit, Context *context, StrategyID strategy)
-    : _id(unit->compiler()->getCompiledBodyID())
+CompiledBody::CompiledBody(Allocator *a, CompileUnit *unit, Context *context, StrategyID strategy)
+    : Allocatable(a)
+    , _id(unit->compiler()->getCompiledBodyID())
     , _unit(unit)
     , _strategy(strategy)
     , _numEntryPoints(context->numEntryPoints())
@@ -41,6 +42,11 @@ CompiledBody::CompiledBody(CompileUnit *unit, Context *context, StrategyID strat
         _nativeEntryPoints[e] = context->nativeEntryPoint(e);
         _debugEntryPoints[e] = context->debugEntryPoint(e);
     }
+}
+
+CompiledBody::~CompiledBody() {
+    delete[] _debugEntryPoints;
+    delete[] _nativeEntryPoints;
 }
 
 } // namespace JitBuilder

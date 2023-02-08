@@ -37,15 +37,15 @@ class Compiler;
 class Config;
 class Debugger;
 class Symbol;
-class TextWriter;
+class TextLogger;
 class TypeDictionary;
 
-class CompileUnit {
+class CompileUnit : public Allocatable {
+    JBALLOC_(CompileUnit)
+
     friend class Compilation;
 
 public:
-    virtual ~CompileUnit();
-
     CompileUnitID id() const { return _id; }
     virtual String kindName() const { return "CompileUnit"; }
 
@@ -67,19 +67,19 @@ public:
     //template<typename T>
     //T *debugEntry(uint32_t e=0) const { assert(e < _numEntryPoints && _debugEntryPoints[e] != NULL); return reinterpret_cast<T *>(_debugEntryPoints[e]); }
 
-    virtual CompilerReturnCode compile(LOCATION, StrategyID strategy=NoStrategy, TextWriter *logger=NULL);
+    virtual CompilerReturnCode compile(LOCATION, StrategyID strategy=NoStrategy, TextLogger *lgr=NULL);
 
-    void write(TextWriter & w) const;
+    void log(TextLogger & lgr) const;
 
     virtual void notifyRecompile(CompiledBody *oldBody, CompiledBody *newBody) { }
 
     //void addLocation(Location *loc ) { _locations.push_back(loc); }
 
 protected:
-    CompileUnit(LOCATION, Compiler *compiler, String name=""); // meant to be subclassed
-    CompileUnit(LOCATION, CompileUnit *outerUnit, String name="");
+    ALL_ALLOC_ALLOWED(CompileUnit, LOCATION, Compiler *compiler, String name=""); // meant to be subclassed
+    ALL_ALLOC_ALLOWED(CompileUnit, LOCATION, CompileUnit *outerUnit, String name="");
 
-    virtual void writeSpecific(TextWriter & w) const { }
+    virtual void logSpecific(TextLogger & lgr) const { }
 
     // Next two are the public API for user sub classes
     virtual bool initContext(LOCATION, Compilation *comp, Context *context) { return true; }

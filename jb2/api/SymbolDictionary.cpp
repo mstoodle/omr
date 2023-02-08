@@ -19,39 +19,73 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "Compilation.hpp"
+#include "AllocationCategoryClasses.hpp"
+#include "Compiler.hpp"
 #include "Symbol.hpp"
 #include "SymbolDictionary.hpp"
-#include "TextWriter.hpp"
+#include "TextLogger.hpp"
 #include "Type.hpp"
 #include "Value.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 
-SymbolDictionary::SymbolDictionary(Compilation *comp)
-    : _id(comp->getSymbolDictionaryID())
-    , _comp(comp)
+INIT_JBALLOC_ON(SymbolDictionary, Dictionaries)
+
+SymbolDictionary::SymbolDictionary(Allocator *a, Compiler *compiler)
+    : Allocatable(a)
+    , _id(compiler->getSymbolDictionaryID())
+    , _compiler(compiler)
+    , _mem(a)
     , _name("")
+    , _symbols(NULL, _mem)
+    , _ownedSymbols(NULL, _mem)
     , _nextSymbolID(NoSymbol+1)
     , _linkedDictionary(NULL) {
-
 }
-
-SymbolDictionary::SymbolDictionary(Compilation *comp, String name)
-    : _id(comp->getSymbolDictionaryID())
-    , _comp(comp)
-    , _name(name)
+SymbolDictionary::SymbolDictionary(Compiler *compiler)
+    : Allocatable()
+    , _id(compiler->getSymbolDictionaryID())
+    , _compiler(compiler)
+    , _mem(compiler->mem())
+    , _name("")
+    , _symbols(NULL, _mem)
+    , _ownedSymbols(NULL, _mem)
     , _nextSymbolID(NoSymbol+1)
     , _linkedDictionary(NULL) {
-
 }
 
-// Only accessible to subclasses
-SymbolDictionary::SymbolDictionary(Compilation *comp, String name, SymbolDictionary * linkedDictionary)
-    : _id(comp->getSymbolDictionaryID())
-    , _comp(comp)
+SymbolDictionary::SymbolDictionary(Allocator *a, Compiler *compiler, String name)
+    : Allocatable(a)
+    , _id(compiler->getSymbolDictionaryID())
+    , _compiler(compiler)
+    , _mem(a)
     , _name(name)
+    , _symbols(NULL, _mem)
+    , _ownedSymbols(NULL, _mem)
+    , _nextSymbolID(NoSymbol+1)
+    , _linkedDictionary(NULL) {
+}
+SymbolDictionary::SymbolDictionary(Compiler *compiler, String name)
+    : Allocatable()
+    , _id(compiler->getSymbolDictionaryID())
+    , _compiler(compiler)
+    , _mem(compiler->mem())
+    , _name(name)
+    , _symbols(NULL, _mem)
+    , _ownedSymbols(NULL, _mem)
+    , _nextSymbolID(NoSymbol+1)
+    , _linkedDictionary(NULL) {
+}
+
+SymbolDictionary::SymbolDictionary(Allocator *a, Compiler *compiler, String name, SymbolDictionary * linkedDictionary)
+    : Allocatable(a)
+    , _id(compiler->getSymbolDictionaryID())
+    , _compiler(compiler)
+    , _mem(a)
+    , _name(name)
+    , _symbols(NULL, _mem)
+    , _ownedSymbols(NULL, _mem)
     , _nextSymbolID(linkedDictionary->_nextSymbolID)
     , _linkedDictionary(linkedDictionary) {
 
@@ -61,11 +95,34 @@ SymbolDictionary::SymbolDictionary(Compilation *comp, String name, SymbolDiction
     }
     _nextSymbolID = linkedDictionary->_nextSymbolID;
 }
+SymbolDictionary::SymbolDictionary(Compiler *compiler, String name, SymbolDictionary * linkedDictionary)
+    : Allocatable()
+    , _id(compiler->getSymbolDictionaryID())
+    , _compiler(compiler)
+    , _mem(compiler->mem())
+    , _name(name)
+    , _symbols(NULL, _mem)
+    , _ownedSymbols(NULL, _mem)
+    , _nextSymbolID(linkedDictionary->_nextSymbolID)
+    , _linkedDictionary(linkedDictionary) {
+
+    for (auto it = linkedDictionary->symbolIterator(); it.hasItem(); it++) {
+         Symbol *sym = it.item();
+         internalRegisterSymbol(sym); // for symbols not owned by this SymbolDictionary
+    }
+    _nextSymbolID = linkedDictionary->_nextSymbolID;
+}
 
 SymbolDictionary::~SymbolDictionary() {
     for (auto it = _ownedSymbols.iterator(); it.hasItem(); it++) {
         Symbol *sym = it.item();
         delete sym;
+    }
+    _ownedSymbols.erase();
+
+    for (auto it = _symbolsByType.begin(); it != _symbolsByType.end(); it++) {
+        SymbolList *tl = it->second;
+        delete tl;
     }
 }
 
@@ -98,21 +155,22 @@ SymbolDictionary::RemoveSymbol(Symbol *sym) {
 
 void
 SymbolDictionary::internalRegisterSymbol(Symbol *symbol) {
-    SymbolList *typeList = NULL;
+    SymbolList *symList = NULL;
     const Type *type = symbol->type();
     auto it = _symbolsByType.find(type);
     if (it != _symbolsByType.end()) {
-        typeList = it->second;
+        symList = it->second;
     }
     else {
-        typeList = new SymbolList;
-        _symbolsByType.insert({type, typeList});
+        symList = new (_mem) SymbolList(_mem);
+        _symbolsByType.insert({type, symList});
     }
-    typeList->push_back(symbol);
+    symList->push_back(symbol);
     _symbolsByName.insert({symbol->name(), symbol});
     _symbols.push_back(symbol);
 }
 
+// for symbols that should be owned by this SymbolDictionary
 void
 SymbolDictionary::registerSymbol(Symbol *symbol) {
     symbol->assignID(_nextSymbolID++);
@@ -121,20 +179,20 @@ SymbolDictionary::registerSymbol(Symbol *symbol) {
 }
 
 void
-SymbolDictionary::write(TextWriter &w) {
-    w.indent() << "[ SymbolDictionary " << this << " \"" << this->name() << "\"" << w.endl();
-    w.indentIn();
+SymbolDictionary::log(TextLogger &lgr) {
+    lgr.indent() << "[ SymbolDictionary " << this << " \"" << this->name() << "\"" << lgr.endl();
+    lgr.indentIn();
     if (this->hasLinkedDictionary())
-        w.indent() << "[ linkedDictionary " << this->linkedDictionary() << " ]" << w.endl();
+        lgr.indent() << "[ linkedDictionary " << this->linkedDictionary() << " ]" << lgr.endl();
 
     for (auto it = this->symbolIterator();it.hasItem();it++) {
         Symbol *symbol = it.item();
-        w.indent();
-        symbol->write(w);
+        lgr.indent();
+        symbol->log(lgr);
     }
 
-    w.indentOut();
-    w.indent() << "]" << w.endl();
+    lgr.indentOut();
+    lgr.indent() << "]" << lgr.endl();
 }
 
 } // namespace JitBuilder

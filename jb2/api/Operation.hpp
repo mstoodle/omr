@@ -26,7 +26,7 @@
 #include "common.hpp"
 #include "CreateLoc.hpp"
 #include "Mapper.hpp"
-#include "util/String.hpp"
+#include "String.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -39,7 +39,7 @@ class Location;
 class Operation;
 class OperationCloner;
 class OperationReplacer;
-class TextWriter;
+class TextLogger;
 class Type;
 class TypeDictionary;
 class Value;
@@ -47,14 +47,14 @@ class Value;
 // Operation defines an interface to all kinds of operations, it cannot itself be instantiated
 // Operation classes defined for specific templates (which can be instantiated) follow
 
-class Operation {
+class Operation : public Allocatable {
+    JBALLOC_(Operation)
+
     friend class Builder;
     friend class Extension;
     friend class Transformer;
 
 public:
-    virtual ~Operation() { }
-
     OperationID id() const                              { return _id; }
     ActionID action() const                             { return _action; }
     Extension *ext() const                              { return _ext; }
@@ -115,13 +115,13 @@ public:
     virtual bool hasExpander() const                       { return false; }
     virtual bool expand(OperationReplacer *replacer) const { return false; }
 
-    void writeFull(TextWriter & w) const;
+    void logFull(TextLogger & log) const;
     const String & name() const { return _name; }
-    virtual void write(TextWriter & w) const;
+    virtual void log(TextLogger & log) const;
     virtual void jbgen(JB1MethodBuilder *j1mb) const { }
 
 protected:
-    Operation(LOCATION, ActionID a, Extension *ext, Builder * parent, Operation *next=NULL, Operation *prev=NULL);
+    Operation(MEM_LOCATION(a), ActionID action, Extension *ext, Builder * parent, Operation *next=NULL, Operation *prev=NULL);
 
     Operation * setParent(Builder * newParent);
     Operation * setLocation(Location *location);
@@ -151,6 +151,8 @@ protected:
 // values is called OperationR1V2. Operation sub classes then derive from these
 // structural classes and can add some semantically relevant services.
 class OperationR0S1 : public Operation {
+    JBALLOC_(OperationR0S1)
+
 public:
     virtual size_t size() const { return sizeof(OperationR0S1); }
 
@@ -159,13 +161,13 @@ public:
         if (i == 0) return _symbol;
         return NULL;
     }
-    virtual SymbolIterator symbols() { return SymbolIterator(_symbol); }
+    virtual SymbolIterator symbols() { return SymbolIterator(allocator(), _symbol); }
 
-    virtual void write(TextWriter & w) const;
+    virtual void log(TextLogger & log) const;
 
 protected:
-    OperationR0S1(LOCATION, ActionID a, Extension *ext, Builder * parent, Symbol *symbol)
-        : Operation(PASSLOC, a, ext, parent)
+    OperationR0S1(MEM_LOCATION(a), ActionID action, Extension *ext, Builder * parent, Symbol *symbol)
+        : Operation(MEM_PASSLOC(a), action, ext, parent)
         , _symbol(symbol) {
 
     }
@@ -174,6 +176,8 @@ protected:
 };
 
 class OperationR0S1V1 : public OperationR0S1 {
+    JBALLOC_(OperationR0S1V1)
+
 public:
     virtual size_t size() const { return sizeof(OperationR0S1V1); }
 
@@ -182,13 +186,13 @@ public:
         if (i == 0) return _value;
         return NULL;
     }
-    virtual ValueIterator operands() { return ValueIterator(_value); }
+    virtual ValueIterator operands() { return ValueIterator(allocator(), _value); }
 
-    virtual void write(TextWriter & w) const;
+    virtual void log(TextLogger & log) const;
 
 protected:
-    OperationR0S1V1(LOCATION, ActionID a, Extension *ext, Builder * parent, Symbol *symbol, Value * value)
-        : OperationR0S1(PASSLOC, a, ext, parent, symbol)
+    OperationR0S1V1(MEM_LOCATION(a), ActionID action, Extension *ext, Builder * parent, Symbol *symbol, Value * value)
+        : OperationR0S1(MEM_PASSLOC(a), action, ext, parent, symbol)
         , _value(value) {
 
     }
@@ -196,68 +200,72 @@ protected:
     Value * _value;
 };
 
-class OperationR0T1 : public Operation
-   {
-   public:
-   virtual size_t size() const { return sizeof(OperationR0T1); }
+class OperationR0T1 : public Operation {
+    JBALLOC_(OperationR0T1)
 
-   virtual int32_t numTypes() const { return 1; }
-   virtual const Type *type(int i=0) const
-      {
-      if (i == 0) return _type;
-      return NULL;
-      }
-   virtual TypeIterator types()       { return TypeIterator(_type); }
+    public:
+    virtual size_t size() const { return sizeof(OperationR0T1); }
 
-   protected:
-   OperationR0T1(LOCATION, ActionID a, Extension *ext, Builder *parent, const Type *type)
-      : Operation(PASSLOC, a, ext, parent)
-      , _type(type)
-      { }
+    virtual int32_t numTypes() const { return 1; }
+    virtual const Type *type(int i=0) const {
+        if (i == 0) return _type;
+        return NULL;
+    }
+    virtual TypeIterator types()       { return TypeIterator(allocator(), _type); }
 
-   const Type *_type;
-   };
+    protected:
+    OperationR0T1(MEM_LOCATION(a), ActionID action, Extension *ext, Builder *parent, const Type *type)
+        : Operation(MEM_PASSLOC(a), action, ext, parent)
+        , _type(type) {
+    }
+
+    const Type *_type;
+};
 
 class OperationR0T1V2 : public OperationR0T1 {
+    JBALLOC_(OperationR0T1V2)
+
 public:
-    virtual size_t size() const { return sizeof(OperationR0T1V2); }
-    virtual int32_t numOperands() const   { return 2; }
+    virtual size_t size() const            { return sizeof(OperationR0T1V2); }
+    virtual int32_t numOperands() const    { return 2; }
     virtual Value * operand(int i=0) const {
         if (i == 0) return _base;
         if (i == 1) return _value;
         return NULL;
     }
-    virtual ValueIterator operands()       { return ValueIterator(_base, _value); }
+    virtual ValueIterator operands()       { return ValueIterator(allocator(), _base, _value); }
 
-    virtual void write(TextWriter & w) const;
+    virtual void log(TextLogger & log) const;
 
 protected:
-    OperationR0T1V2(LOCATION, ActionID a, Extension *ext, Builder *parent, const Type *type, Value * base, Value * value)
-        : OperationR0T1(PASSLOC, a, ext, parent, type)
+    OperationR0T1V2(MEM_LOCATION(a), ActionID action, Extension *ext, Builder *parent, const Type *type, Value * base, Value * value)
+        : OperationR0T1(MEM_PASSLOC(a), action, ext, parent, type)
         , _base(base)
-        , _value(value)
-        { }
+        , _value(value) {
+    }
 
     Value *_base;
     Value *_value;
 };
 
 class OperationR0V1 : public Operation {
+    JBALLOC_(OperationR0V1)
+
 public:
-    virtual size_t size() const         { return sizeof(OperationR0V1); }
-    virtual int32_t numOperands() const { return 1; }
+    virtual size_t size() const            { return sizeof(OperationR0V1); }
+    virtual int32_t numOperands() const    { return 1; }
     virtual Value * operand(int i=0) const {
         if (i == 0) return _value;
         return NULL;
     }
 
-    virtual ValueIterator operands()       { return ValueIterator(_value); }
+    virtual ValueIterator operands()       { return ValueIterator(allocator(), _value); }
 
-    virtual void write(TextWriter & w) const;
+    virtual void log(TextLogger & log) const;
 
 protected:
-    OperationR0V1(LOCATION, ActionID a, Extension *ext, Builder * parent, Value * value)
-        : Operation(PASSLOC, a, ext, parent)
+    OperationR0V1(MEM_LOCATION(a), ActionID action, Extension *ext, Builder * parent, Value * value)
+        : Operation(MEM_PASSLOC(a), action, ext, parent)
         , _value(value)
         { }
 
@@ -265,24 +273,26 @@ protected:
 };
 
 class OperationR0V2 : public Operation {
+    JBALLOC_(OperationR0V2)
+
 public:
-    virtual size_t size() const         { return sizeof(OperationR0V2); }
-    virtual int32_t numOperands() const { return 2; }
+    virtual size_t size() const            { return sizeof(OperationR0V2); }
+    virtual int32_t numOperands() const    { return 2; }
     virtual Value * operand(int i=0) const {
         if (i == 0) return _left;
         if (i == 1) return _right;
         return NULL;
     }
-    virtual Value * getLeft() const  { return _left; }
-    virtual Value * getRight() const { return _right; }
+    virtual Value * getLeft() const        { return _left; }
+    virtual Value * getRight() const       { return _right; }
 
-    virtual ValueIterator operands()       { return ValueIterator(_left, _right); }
+    virtual ValueIterator operands()       { return ValueIterator(allocator(), _left, _right); }
 
-    virtual void write(TextWriter & w) const;
+    virtual void log(TextLogger & log) const;
 
 protected:
-    OperationR0V2(LOCATION, ActionID a, Extension *ext, Builder * parent, Value * left, Value * right)
-        : Operation(PASSLOC, a, ext, parent)
+    OperationR0V2(MEM_LOCATION(a), ActionID action, Extension *ext, Builder * parent, Value * left, Value * right)
+        : Operation(MEM_PASSLOC(a), action, ext, parent)
         , _left(left)
         , _right(right) {
     }
@@ -292,22 +302,24 @@ protected:
 };
 
 class OperationR0S1VN : public OperationR0S1 {
-public:
-    virtual size_t size() const { return sizeof(OperationR0S1VN); }
+    JBALLOC_(OperationR0S1VN)
 
-    virtual int32_t numOperands() const { return _numValues; }
+public:
+    virtual size_t size() const            { return sizeof(OperationR0S1VN); }
+
+    virtual int32_t numOperands() const    { return _numValues; }
     virtual Value * operand(int i=0) const {
         if (i < _numValues) return _values[i];
         return NULL;
     }
 
-    virtual ValueIterator operands() { return ValueIterator(_numValues, _values); }
+    virtual ValueIterator operands()       { return ValueIterator(allocator(), _numValues, _values); }
 
-    virtual void write(TextWriter & w) const;
+    virtual void log(TextLogger & log) const;
 
 protected:
-    OperationR0S1VN(LOCATION, ActionID a, Extension *ext, Builder * parent, Symbol *symbol, int32_t numArgs, std::va_list & args)
-        : OperationR0S1(PASSLOC, a, ext, parent, symbol) {
+    OperationR0S1VN(MEM_LOCATION(a), ActionID action, Extension *ext, Builder * parent, Symbol *symbol, int32_t numArgs, std::va_list & args)
+        : OperationR0S1(MEM_PASSLOC(a), action, ext, parent, symbol) {
 
         _numValues = numArgs;
         _values = new Value *[numArgs];
@@ -315,47 +327,45 @@ protected:
             _values[a] = (va_arg(args, Value *));
         }
     }
-
-    OperationR0S1VN(LOCATION, ActionID a, Extension *ext, Builder * parent, OperationCloner * cloner);
+    OperationR0S1VN(MEM_LOCATION(a), ActionID action, Extension *ext, Builder * parent, OperationCloner * cloner);
 
     size_t _numValues;
     Value ** _values;
 };
 
 class OperationR1 : public Operation {
+    JBALLOC_(OperationR1)
+
 public:
-    virtual size_t size() const                { return sizeof(OperationR1); }
-    virtual int32_t numResults() const         { return 1; }
+    virtual size_t size() const           { return sizeof(OperationR1); }
+    virtual int32_t numResults() const    { return 1; }
     virtual Value * result(int i=0) const {
         if (i == 0) return _result;
         return NULL;
     }
-    virtual ValueIterator results()       { return ValueIterator(_result); }
+    virtual ValueIterator results()       { return ValueIterator(allocator(), _result); }
 
 protected:
-     OperationR1(LOCATION, ActionID a, Extension *ext, Builder * parent, Value * result)
-         : Operation(PASSLOC, a, ext, parent)
-         , _result(result) {
-
-         registerDefinition(result);
-     }
+     OperationR1(MEM_LOCATION(a), ActionID action, Extension *ext, Builder * parent, Value * result);
 
      Value * _result;
 };
 
 class OperationR1L1 : public OperationR1 {
+    JBALLOC_(OperationR1L1)
+
 public:
     virtual int32_t numLiterals() const { return 1; }
     virtual Literal *literal(int i=0) const {
         if (i == 0) return _v;
         return NULL;
     }
-    virtual LiteralIterator literals() { return LiteralIterator(_v); }
-    virtual void write(TextWriter & w) const;
+    virtual LiteralIterator literals() { return LiteralIterator(allocator(), _v); }
+    virtual void log(TextLogger & log) const;
 
 protected:
-    OperationR1L1(LOCATION, ActionID a, Extension *ext, Builder * parent, Value * result, Literal *value)
-         : OperationR1(PASSLOC, a, ext, parent, result)
+    OperationR1L1(MEM_LOCATION(a), ActionID action, Extension *ext, Builder * parent, Value * result, Literal *value)
+         : OperationR1(MEM_PASSLOC(a), action, ext, parent, result)
          , _v(value)
          { }
 
@@ -363,6 +373,8 @@ protected:
 };
 
 class OperationR1L1T1 : public OperationR1L1 {
+    JBALLOC_(OperationR1L1T1)
+
 public:
     virtual size_t size() const      { return sizeof(OperationR1L1T1); }
     virtual int32_t numTypes() const { return 1; }
@@ -370,40 +382,43 @@ public:
         if (i == 0) return _elementType;
         return NULL;
     }
-    virtual TypeIterator types() { return TypeIterator(_elementType); }
-    virtual void write(TextWriter & w) const;
+    virtual TypeIterator types() { return TypeIterator(allocator(), _elementType); }
+    virtual void log(TextLogger & log) const;
 
 protected:
-    OperationR1L1T1(LOCATION, ActionID a, Extension *ext, Builder * parent, Value * result, Literal *numElements, const Type *elementType)
-        : OperationR1L1(PASSLOC, a, ext, parent, result, numElements)
+    OperationR1L1T1(MEM_LOCATION(a), ActionID action, Extension *ext, Builder * parent, Value * result, Literal *numElements, const Type *elementType)
+        : OperationR1L1(MEM_PASSLOC(a), action, ext, parent, result, numElements)
         , _elementType(elementType) {
 
     }
 
-     const Type *_elementType;
+    const Type *_elementType;
 };
 
 class OperationR1S1 : public OperationR1 {
+    JBALLOC_(OperationR1S1)
+
 public:
     virtual int32_t numSymbols() const { return 1; }
     virtual Symbol *symbol(int i=0) const {
         if (i == 0) return _symbol;
         return NULL;
     }
-    virtual SymbolIterator symbols() { return SymbolIterator(_symbol); }
-    virtual void write(TextWriter & w) const;
+    virtual SymbolIterator symbols() { return SymbolIterator(allocator(), _symbol); }
+    virtual void log(TextLogger & log) const;
 
 protected:
-    OperationR1S1(LOCATION, ActionID a, Extension *ext, Builder * parent, Value * result, Symbol *symbol)
-        : OperationR1(PASSLOC, a, ext, parent, result)
+    OperationR1S1(MEM_LOCATION(a), ActionID action, Extension *ext, Builder * parent, Value * result, Symbol *symbol)
+        : OperationR1(MEM_PASSLOC(a), action, ext, parent, result)
         , _symbol(symbol) {
     }
-
 
     Symbol *_symbol;
 };
 
 class OperationR1T1 : public OperationR1 {
+    JBALLOC_(OperationR1T1)
+
 public:
     virtual size_t size() const         { return sizeof(OperationR1T1); }
     virtual int32_t numTypes() const { return 1; }
@@ -411,13 +426,13 @@ public:
         if (i == 0) return _type;
         return NULL;
     }
-    virtual TypeIterator types() { return TypeIterator(_type); }
+    virtual TypeIterator types() { return TypeIterator(allocator(), _type); }
 
-    virtual void write(TextWriter & w) const;
+    virtual void log(TextLogger & log) const;
 
 protected:
-    OperationR1T1(LOCATION, ActionID a, Extension *ext, Builder * parent, Value * result, const Type * t)
-        : OperationR1(PASSLOC, a, ext, parent, result)
+    OperationR1T1(MEM_LOCATION(a), ActionID action, Extension *ext, Builder * parent, Value * result, const Type * t)
+        : OperationR1(MEM_PASSLOC(a), action, ext, parent, result)
         , _type(t) {
 
     }
@@ -426,6 +441,8 @@ protected:
 };
 
 class OperationR1V1 : public OperationR1 {
+    JBALLOC_(OperationR1V1)
+
 public:
     virtual size_t size() const         { return sizeof(OperationR1V1); }
     virtual int32_t numOperands() const { return 1; }
@@ -434,13 +451,13 @@ public:
         return NULL;
     }
 
-    virtual ValueIterator operands()       { return ValueIterator(_value); }
+    virtual ValueIterator operands()       { return ValueIterator(allocator(), _value); }
 
-    virtual void write(TextWriter & w) const;
+    virtual void log(TextLogger & log) const;
 
 protected:
-    OperationR1V1(LOCATION, ActionID a, Extension *ext, Builder * parent, Value * result, Value * value)
-        : OperationR1(PASSLOC, a, ext, parent, result)
+    OperationR1V1(MEM_LOCATION(a), ActionID action, Extension *ext, Builder * parent, Value * result, Value * value)
+        : OperationR1(MEM_PASSLOC(a), action, ext, parent, result)
         , _value(value) {
     }
 
@@ -448,6 +465,8 @@ protected:
 };
 
 class OperationR1V1T1 : public OperationR1V1 {
+    JBALLOC_(OperationR1V1T1)
+
 public:
     virtual size_t size() const         { return sizeof(OperationR1V1T1); }
     virtual int32_t numTypes() const { return 1; }
@@ -456,13 +475,13 @@ public:
         return NULL;
     }
 
-    virtual TypeIterator types()       { return TypeIterator(_type); }
+    virtual TypeIterator types()       { return TypeIterator(allocator(), _type); }
 
-    virtual void write(TextWriter & w) const;
+    virtual void log(TextLogger & log) const;
 
 protected:
-    OperationR1V1T1(LOCATION, ActionID a, Extension *ext, Builder * parent, Value * result, const Type * t, Value * v)
-        : OperationR1V1(PASSLOC, a, ext, parent, result, v)
+    OperationR1V1T1(MEM_LOCATION(a), ActionID action, Extension *ext, Builder * parent, Value * result, const Type * t, Value * v)
+        : OperationR1V1(MEM_PASSLOC(a), action, ext, parent, result, v)
         , _type(t) {
 
     }
@@ -471,6 +490,8 @@ protected:
 };
 
 class OperationR1V2 : public OperationR1 {
+    JBALLOC_(OperationR1V2)
+
 public:
     virtual size_t size() const         { return sizeof(OperationR1V2); }
     virtual int32_t numOperands() const { return 2; }
@@ -482,13 +503,13 @@ public:
     virtual Value * getLeft() const  { return _left; }
     virtual Value * getRight() const { return _right; }
 
-    virtual ValueIterator operands()       { return ValueIterator(_left, _right); }
+    virtual ValueIterator operands()       { return ValueIterator(allocator(), _left, _right); }
 
-    virtual void write(TextWriter & w) const;
+    virtual void log(TextLogger & log) const;
 
 protected:
-    OperationR1V2(LOCATION, ActionID a, Extension *ext, Builder * parent, Value * result, Value * left, Value * right)
-        : OperationR1(PASSLOC, a, ext, parent, result)
+    OperationR1V2(MEM_LOCATION(a), ActionID action, Extension *ext, Builder * parent, Value * result, Value * left, Value * right)
+        : OperationR1(MEM_PASSLOC(a), action, ext, parent, result)
         , _left(left)
         , _right(right) {
 
@@ -499,31 +520,35 @@ protected:
 };
 
 class OperationR1V2T1 : public OperationR1V2 {
+    JBALLOC_(OperationR1V2T1)
+
 public:
     virtual size_t size() const         { return sizeof(OperationR1V2T1); }
     virtual int32_t numTypes() const { return 1; }
-    virtual const Type * type(int i=0) const
-        {
+    virtual const Type * type(int i=0) const {
         if (i == 0) return _type;
         return NULL;
     }
-    virtual TypeIterator types() { return TypeIterator(_type); }
+    virtual TypeIterator types() { return TypeIterator(allocator(), _type); }
 
     virtual Value * getAddress() const { return _left; }
     virtual Value * getValue() const { return _right; }
 
-    virtual void write(TextWriter & w) const;
+    virtual void log(TextLogger & log) const;
 
 protected:
-    OperationR1V2T1(LOCATION, ActionID a, Extension *ext, Builder * parent, Value * result, const Type * t, Value * addr, Value * v)
-        : OperationR1V2(PASSLOC, a, ext, parent, result, addr, v)
-        , _type(t)
-        { }
+    OperationR1V2T1(MEM_LOCATION(a), ActionID action, Extension *ext, Builder * parent, Value * result, const Type * t, Value * addr, Value * v)
+        : OperationR1V2(MEM_PASSLOC(a), action, ext, parent, result, addr, v)
+        , _type(t) {
+
+    }
 
     const Type * _type;
 };
 
 class OperationR1S1VN : public OperationR1S1 {
+    JBALLOC_(OperationR1S1VN)
+
 public:
     virtual size_t size() const { return sizeof(OperationR1S1VN); }
 
@@ -533,13 +558,13 @@ public:
         return NULL;
     }
 
-    virtual ValueIterator operands() { return ValueIterator(_numValues, _values); }
+    virtual ValueIterator operands() { return ValueIterator(allocator(), _numValues, _values); }
 
-    virtual void write(TextWriter & w) const;
+    virtual void log(TextLogger & log) const;
 
 protected:
-    OperationR1S1VN(LOCATION, ActionID a, Extension *ext, Builder * parent, Value *result, Symbol *symbol, int32_t numArgs, std::va_list & args)
-        : OperationR1S1(PASSLOC, a, ext, parent, result, symbol) {
+    OperationR1S1VN(MEM_LOCATION(a), ActionID action, Extension *ext, Builder * parent, Value *result, Symbol *symbol, int32_t numArgs, std::va_list & args)
+        : OperationR1S1(MEM_PASSLOC(a), action, ext, parent, result, symbol) {
 
         _numValues = numArgs;
         _values = new Value *[numArgs];
@@ -547,76 +572,78 @@ protected:
             _values[a] = (va_arg(args, Value *));
         }
     }
-
-    OperationR1S1VN(LOCATION, ActionID a, Extension *ext, Builder * parent, OperationCloner * cloner);
+    OperationR1S1VN(MEM_LOCATION(a), ActionID action, Extension *ext, Builder * parent, OperationCloner * cloner);
 
     size_t _numValues;
     Value **_values;
 };
 
-class OperationB1 : public Operation
-   {
-   public:
-   virtual size_t size() const { return sizeof(OperationB1); }
-   virtual int32_t numBuilders() const { return 1; }
-   virtual Builder * builder(int i=0) const
-      {
-      if (i == 0) return _builder;
-      return NULL;
-      }
+class OperationB1 : public Operation {
+    JBALLOC_(OperationB1)
 
-   virtual BuilderIterator builders()       { return BuilderIterator(_builder); }
+    public:
+    virtual size_t size() const              { return sizeof(OperationB1); }
+    virtual int32_t numBuilders() const      { return 1; }
+    virtual Builder * builder(int i=0) const {
+        if (i == 0) return _builder;
+        return NULL;
+    }
 
-   protected:
-   OperationB1(LOCATION, ActionID a, Extension *ext, Builder * parent, Builder * b)
-      : Operation(PASSLOC, a, ext, parent)
-      , _builder(b)
-      { }
+    virtual BuilderIterator builders()       { return BuilderIterator(allocator(), _builder); }
 
-   Builder * _builder;
-   };
+    protected:
+    OperationB1(MEM_LOCATION(a), ActionID action, Extension *ext, Builder * parent, Builder * b)
+        : Operation(MEM_PASSLOC(a), action, ext, parent)
+        , _builder(b) {
 
-class OperationB1R0V1 : public OperationR0V1
-   {
-   public:
-   virtual size_t size() const { return sizeof(OperationB1R0V1); }
-   virtual int32_t numBuilders() const { return 1; }
-   virtual Builder * builder(int i=0) const
-      {
-      if (i == 0) return _builder;
-      return NULL;
-      }
-   virtual BuilderIterator builders()       { return BuilderIterator(_builder); }
+    }
 
-   protected:
-   OperationB1R0V1(LOCATION, ActionID a, Extension *ext, Builder * parent, Builder * b, Value * value)
-      : OperationR0V1(PASSLOC, a, ext, parent, value)
-      , _builder(b)
-      { }
+    Builder * _builder;
+};
 
-   Builder * _builder;
-   };
+class OperationB1R0V1 : public OperationR0V1 {
+    JBALLOC_(OperationB1R0V1)
 
-class OperationB1R0V2 : public OperationR0V2
-   {
-   public:
-   virtual size_t size() const { return sizeof(OperationB1R0V2); }
-   virtual int32_t numBuilders() const { return 1; }
-   virtual Builder * builder(int i=0) const
-      {
-      if (i == 0) return _builder;
-      return NULL;
-      }
-   virtual BuilderIterator builders()       { return BuilderIterator(_builder); }
+    public:
+    virtual size_t size() const { return sizeof(OperationB1R0V1); }
+    virtual int32_t numBuilders() const { return 1; }
+    virtual Builder * builder(int i=0) const {
+        if (i == 0) return _builder;
+        return NULL;
+    }
+    virtual BuilderIterator builders()       { return BuilderIterator(allocator(), _builder); }
 
-   protected:
-   OperationB1R0V2(LOCATION, ActionID a, Extension *ext, Builder * parent, Builder * b, Value * left, Value * right)
-      : OperationR0V2(PASSLOC, a, ext, parent, left, right)
-      , _builder(b)
-      { }
+    protected:
+    OperationB1R0V1(MEM_LOCATION(a), ActionID action, Extension *ext, Builder * parent, Builder * b, Value * value)
+        : OperationR0V1(MEM_PASSLOC(a), action, ext, parent, value)
+        , _builder(b) {
 
-   Builder * _builder;
-   };
+    }
+
+    Builder * _builder;
+};
+
+class OperationB1R0V2 : public OperationR0V2 {
+    JBALLOC_(OperationB1R0V2)
+
+    public:
+    virtual size_t size() const              { return sizeof(OperationB1R0V2); }
+    virtual int32_t numBuilders() const      { return 1; }
+    virtual Builder * builder(int i=0) const {
+        if (i == 0) return _builder;
+        return NULL;
+    }
+    virtual BuilderIterator builders()       { return BuilderIterator(allocator(), _builder); }
+
+    protected:
+    OperationB1R0V2(MEM_LOCATION(a), ActionID action, Extension *ext, Builder * parent, Builder * b, Value * left, Value * right)
+        : OperationR0V2(MEM_PASSLOC(a), action, ext, parent, left, right)
+        , _builder(b) {
+
+    }
+
+    Builder * _builder;
+};
 
 
 //
@@ -624,6 +651,8 @@ class OperationB1R0V2 : public OperationR0V2
 //
 
 class Op_MergeDef : public OperationR1V1 {
+    JBALLOC_(Op_MergeDef)
+
     friend class Extension;
 
 public:
@@ -631,7 +660,7 @@ public:
     virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
-    Op_MergeDef(LOCATION, Extension *ext, Builder * parent, ActionID aMergeDef, Value *existingDef, Value *newDef);
+    Op_MergeDef(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aMergeDef, Value *existingDef, Value *newDef);
 };
 
 #if 0

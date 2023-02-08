@@ -31,27 +31,31 @@ namespace OMR {
 namespace JitBuilder {
 namespace Func {
 
+INIT_JBALLOC_REUSECAT(FunctionExtension, Extension)
+
 const SemanticVersion FunctionExtension::version(FUNCTIONEXT_MAJOR,FUNCTIONEXT_MINOR,FUNCTIONEXT_PATCH);
 const String FunctionExtension::NAME("jb2func");
 
 extern "C" {
     Extension *create(LOCATION, Compiler *compiler) {
-        return new FunctionExtension(PASSLOC, compiler);
+        Allocator *mem = compiler->mem();
+        return new (mem) FunctionExtension(MEM_PASSLOC(mem), compiler);
     }
 }
 
-FunctionExtension::FunctionExtension(LOCATION, Compiler *compiler, bool extended, String extensionName)
-    : Extension(PASSLOC, compiler, (extended ? extensionName : NAME))
+FunctionExtension::FunctionExtension(MEM_LOCATION(a), Compiler *compiler, bool extended, String extensionName)
+    : Extension(MEM_PASSLOC(a), compiler, (extended ? extensionName : NAME))
     , aLoad(registerAction(String("Load")))
     , aStore(registerAction(String("Store")))
     , aCall(registerAction(String("Call")))
     , aCallVoid(registerAction(String("CallVoid")))
     , aReturn(registerAction(String("Return")))
     , aReturnVoid(registerAction(String("ReturnVoid")))
-    , CompileFail_MismatchedArgumentTypes_Call(registerReturnCode("CompileFail_MismatchedArgumentTypes_Call")) {
+    , CompileFail_MismatchedArgumentTypes_Call(registerReturnCode("CompileFail_MismatchedArgumentTypes_Call"))
+    , _checkers(NULL, a) {
 
     if (!extended) {
-        registerChecker(new FunctionExtensionChecker(this));
+        registerChecker(new (a) FunctionExtensionChecker(a, this));
     }
 }
 
@@ -61,12 +65,23 @@ FunctionExtension::~FunctionExtension() {
         FunctionExtensionChecker *checker = it.item();
         delete checker;
     }
-    _checkers.erase();
+    //_checkers.erase();
 }
 
 void
 FunctionExtension::registerChecker(FunctionExtensionChecker *checker) {
     _checkers.push_front(checker);
+}
+
+
+FunctionExtensionChecker::FunctionExtensionChecker(Allocator *a, FunctionExtension *func)
+    : Allocatable(a)
+    , _func(func) {
+
+}
+
+FunctionExtensionChecker::~FunctionExtensionChecker() {
+
 }
 
 
@@ -76,15 +91,18 @@ FunctionExtension::registerChecker(FunctionExtensionChecker *checker) {
 
 Value *
 FunctionExtension::Load(LOCATION, Builder *b, Symbol * sym) {
+    Allocator *mem = b->comp()->mem();
     Value * result = createValue(b, sym->type());
-    addOperation(b, new Op_Load(PASSLOC, this, b, this->aLoad, result, sym));
+    addOperation(b, new (mem) Op_Load(MEM_PASSLOC(mem), this, b, this->aLoad, result, sym));
     return result;
 }
 
 void
 FunctionExtension::Store(LOCATION, Builder *b, Symbol * sym, Value *value) {
-    addOperation(b, new Op_Store(PASSLOC, this, b, this->aStore, sym, value));
+    Allocator *mem = b->comp()->mem();
+    addOperation(b, new (mem) Op_Store(MEM_PASSLOC(mem), this, b, this->aStore, sym, value));
 }
+
 
 bool
 FunctionExtensionChecker::validateCall(LOCATION, Builder *b, FunctionSymbol *target, std::va_list & args) {
@@ -120,6 +138,8 @@ FunctionExtensionChecker::failValidateCall(LOCATION, Builder *b, FunctionSymbol 
 
 Value *
 FunctionExtension::Call(LOCATION, Builder *b, FunctionSymbol *target, ...) {
+    Allocator *mem = b->comp()->mem();
+
     const FunctionType *tgtType = target->functionType();
     for (auto it = _checkers.iterator(); it.hasItem(); it++) {
         FunctionExtensionChecker *checker = it.item();
@@ -135,52 +155,62 @@ FunctionExtension::Call(LOCATION, Builder *b, FunctionSymbol *target, ...) {
 
     Value *result = NULL;
     if (target->functionType()->returnType() == NoType) {
-        addOperation(b, new Op_CallVoid(PASSLOC, this, b, aCall, target, args));
+        addOperation(b, new (mem) Op_CallVoid(MEM_PASSLOC(mem), this, b, aCall, target, args));
     } else {
         result = createValue(b, target->functionType()->returnType());
-        addOperation(b, new Op_Call(PASSLOC, this, b, aCall, result, target, args));
+        addOperation(b, new (mem) Op_Call(MEM_PASSLOC(mem), this, b, aCall, result, target, args));
     }
     return result;
 }
 
 void
 FunctionExtension::Return(LOCATION, Builder *b) {
-    addOperation(b, new Op_ReturnVoid(PASSLOC, this, b, this->aReturnVoid));
+    Allocator *mem = b->comp()->mem();
+    addOperation(b, new (mem) Op_ReturnVoid(MEM_PASSLOC(mem), this, b, this->aReturnVoid));
 }
 
 void
 FunctionExtension::Return(LOCATION, Builder *b, Value *v) {
-    addOperation(b, new Op_Return(PASSLOC, this, b, this->aReturn, v));
+    Allocator *mem = b->comp()->mem();
+    addOperation(b, new (mem) Op_Return(MEM_PASSLOC(mem), this, b, this->aReturn, v));
 }
 
+// DefineFunctionType takes ownership of parmTypes array and must ensure it will always be freed
 const FunctionType *
 FunctionExtension::DefineFunctionType(LOCATION, FunctionCompilation *comp, const Type *returnType, int32_t numParms, const Type **parmTypes) {
     const FunctionType *fType = comp->lookupFunctionType(returnType, numParms, parmTypes);
-    if (fType)
+    if (fType) {
+        delete[] parmTypes;
         return fType;
+    }
 
-    const FunctionType *f = new FunctionType(PASSLOC, this, comp->typedict(), returnType, numParms, parmTypes);
+    Allocator *mem = compiler()->mem();
+    const FunctionType *f = new (mem) FunctionType(MEM_PASSLOC(mem), this, comp->typedict(), returnType, numParms, parmTypes);
     comp->registerFunctionType(f);
     return f;
 }
 
 CompilerReturnCode
-FunctionExtension::compile(LOCATION, Function *func, StrategyID strategy, TextWriter *logger) {
+FunctionExtension::compile(LOCATION, Function *func, StrategyID strategy, TextLogger *lgr) {
 
     if (strategy == NoStrategy)
         strategy = _compiler->jb1cgStrategyID;
 
-    FunctionCompilation comp(_compiler, func, strategy, _compiler->dict(), NULL);
+    LiteralDictionary compLitDict(_compiler, "Function Compilation LiteralDictionary", _compiler->litDict());
+    SymbolDictionary compSymDict(_compiler, "Function Compilation SymbolDictionary", _compiler->symDict());
+    TypeDictionary compTypeDict(_compiler, "Function Compilation TypeDictionary", _compiler->typeDict());
+    FunctionCompilation comp(_compiler, func, strategy, &compLitDict, &compSymDict, &compTypeDict, NULL);
     FunctionContext context(PASSLOC, &comp);
     comp.setContext(&context);
-    comp.setLogger(logger);
+    comp.setLogger(lgr);
 
     CompilerReturnCode rc = _compiler->compile(PASSLOC, &comp, strategy);
     if (rc != _compiler->CompileSuccessful) {
         return rc;
     }
 
-    CompiledBody *body = new CompiledBody(func, &context, strategy);
+    Allocator *mem = comp.mem();
+    CompiledBody *body = new (mem) CompiledBody(mem, func, &context, strategy);
     func->saveCompiledBody(body, strategy);
 
     return _compiler->CompileSuccessful;

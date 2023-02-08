@@ -40,7 +40,7 @@ typedef bool (OperationDebuggerFunc)(DebuggerFrame *, int64_t);
 
 // FunctionDebugInfo holds debugger information corresponding to a Function
 // (information that can be shared across multiple DebuggerFrames). Since there
-// are read/write fields in this class, synchronization will be required if
+// are read/log fields in this class, synchronization will be required if
 // multiple threads access one of these objects. Alternatively, debuggers for all
 // Operations in a Function could be generated ahead of time, at which point
 // this structure would become read-only.

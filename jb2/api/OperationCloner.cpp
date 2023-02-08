@@ -19,6 +19,8 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#include "Builder.hpp"
+#include "Compilation.hpp"
 #include "CreateLoc.hpp"
 #include "Operation.hpp"
 #include "OperationCloner.hpp"
@@ -28,8 +30,11 @@
 namespace OMR {
 namespace JitBuilder {
 
-OperationCloner::OperationCloner(Operation *op)
-    : _op(op)
+INIT_JBALLOC_REUSECAT(OperationCloner, Compilation)
+
+OperationCloner::OperationCloner(Allocator *a, Operation *op)
+    : Allocatable(a)
+    , _op(op)
     , _numResults(op->numResults())
     , _results(NULL)
     , _numOperands(op->numOperands())
@@ -47,44 +52,48 @@ OperationCloner::OperationCloner(Operation *op)
 }
 
 OperationCloner::~OperationCloner() {
+    Allocator *mem = allocator();
+
     if (_results)
-        delete[] _results;
+        mem->deallocate(_results);
 
     if (_operands)
-        delete[] _operands;
+        mem->deallocate(_operands);
 
     if (_types)
-        delete[] _types;
+        mem->deallocate(_types);
 
     if (_literals)
-        delete[] _literals;
+        mem->deallocate(_literals);
 
     if (_symbols)
-        delete[] _symbols;
+        mem->deallocate(_symbols);
 
     if (_builders)
-        delete[] _builders;
+        mem->deallocate(_builders);
 }
 
 void
 OperationCloner::init() {
+    Allocator *mem = allocator();
+
     if (_numResults > 0)
-        _results = new Value *[_numResults];
+        _results = mem->allocate<Value *>(_numResults);
 
     if (_numOperands > 0)
-        _operands = new Value *[_numOperands];
+        _operands = mem->allocate<Value *>(_numOperands);
 
     if (_numTypes > 0)
-        _types = new const Type *[_numTypes];
+        _types = mem->allocate<const Type *>(_numTypes);
 
     if (_numLiterals > 0)
-        _literals = new Literal *[_numLiterals];
+        _literals = mem->allocate<Literal *>(_numLiterals);
 
     if (_numSymbols > 0)
-        _symbols = new Symbol *[_numSymbols];
+        _symbols = mem->allocate<Symbol *>(_numSymbols);
 
     if (_numBuilders > 0)
-        _builders = new Builder *[_numBuilders];
+        _builders = mem->allocate<Builder *>(_numBuilders);
 }
 
 void
