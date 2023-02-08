@@ -47,21 +47,30 @@ typedef struct Thread {
 } Thread;
 
 class TestState : public VM::VirtualMachineState {
+    JBALLOC_NO_DESTRUCTOR(TestState, NoAllocationCategory)
+
 public:
     static VM::StateKind STATEKIND;
 
-    TestState(LOCATION, VM::VMExtension *vmx)
-        : VM::VirtualMachineState(PASSLOC, vmx, STATEKIND),
+    TestState(MEM_LOCATION(a), VM::VMExtension *vmx)
+        : VM::VirtualMachineState(MEM_PASSLOC(a), vmx, STATEKIND),
         _stack(NULL),
         _stackTop(NULL) {
 
     }
 
-    TestState(LOCATION, VM::VMExtension *vmx, VM::VirtualMachineOperandStack *stack, VM::VirtualMachineRegister *stackTop)
-        : VM::VirtualMachineState(PASSLOC, vmx, STATEKIND),
+    TestState(MEM_LOCATION(a), VM::VMExtension *vmx, VM::VirtualMachineOperandStack *stack, VM::VirtualMachineRegister *stackTop)
+        : VM::VirtualMachineState(MEM_PASSLOC(a), vmx, STATEKIND),
         _stack(stack),
         _stackTop(stackTop) {
 
+    }
+    virtual ~TestState() {
+        Allocator *mem = allocator();
+        if (_stackTop)
+            mem->deallocate(_stackTop);
+        if (_stack)
+            mem->deallocate(_stack);
     }
 
     virtual void Commit(LOCATION, Builder *b) {
@@ -75,9 +84,10 @@ public:
     }
 
     virtual VM::VirtualMachineState *MakeCopy(LOCATION, Builder *b) {
-        TestState *newState = new TestState(PASSLOC, _vme);
-        newState->_stack = _stack->MakeCopy(PASSLOC, b)->refine<VM::VirtualMachineOperandStack>();
-        newState->_stackTop = _stackTop->MakeCopy(PASSLOC, b)->refine<VM::VirtualMachineRegister>();
+        Allocator *mem = allocator();
+        TestState *newState = new (mem) TestState(MEM_PASSLOC(mem), _vme,
+                                                  _stack->MakeCopy(PASSLOC, b)->refine<VM::VirtualMachineOperandStack>(),
+                                                  _stackTop->MakeCopy(PASSLOC, b)->refine<VM::VirtualMachineRegister>());
         return newState;
     }
 
@@ -139,11 +149,12 @@ main(int argc, char *argv[]) {
     OperandStackTestFunction pointerFunction(LOC, vmx);
 
     if (verbose) cout << "Step 4: Set up logging configuration\n";
-    TextWriter logger(&compiler, std::cout, String("    "));
-    TextWriter *log = (verbose) ? &logger : NULL;
+    TextLogger logger(std::cout, String("    "));
+    TextWriter *writer = compiler.textWriter(logger);
+    TextWriter *wrt = (verbose) ? writer : NULL;
     
     if (verbose) cout << "Step 5: compile function\n";
-    CompilerReturnCode result = bx->compile(LOC, &pointerFunction, compiler.jb1cgStrategyID, log);
+    CompilerReturnCode result = bx->compile(LOC, &pointerFunction, compiler.jb1cgStrategyID, wrt);
     
     if (result != compiler.CompileSuccessful) {
         cout << "Compile failed: " << compiler.returnCodeName(result).c_str() << "\n";
@@ -160,11 +171,11 @@ main(int argc, char *argv[]) {
 
     if (verbose) cout << "Step 7: Set up operand stack tests using a Thread structure\n";
     OperandStackTestUsingStructFunction threadFunction(LOC, vmx);
-    TextWriter logger2(&compiler, std::cout, String("    "));
-    TextWriter *log2 = (verbose) ? &logger : NULL;
+    TextWriter *writer2 = compiler.textWriter(logger);
+    TextWriter *wrt2 = (verbose) ? writer2 : NULL;
 
     if (verbose) cout << "Step 8: compile function\n";
-    result = bx->compile(LOC, &threadFunction, compiler.jb1cgStrategyID, log2);
+    result = bx->compile(LOC, &threadFunction, compiler.jb1cgStrategyID, wrt2);
     if (result != compiler.CompileSuccessful) {
         cout << "Compile failed: " << compiler.returnCodeName(result).c_str() << "\n";
         cout << compiler.errorCondition()->message().c_str();
@@ -592,10 +603,11 @@ OperandStackTestFunction::buildIL(LOCATION, Func::FunctionCompilation *fcomp, Fu
     _fx->Call(LOC, entry, _createStack);
 
     Value *realStackTopAddress = _bx->ConstPointer(LOC, entry, pElementType, &_realStackTop);
-    VM::VirtualMachineRegister *stackTop = new VM::VirtualMachineRegister(LOC, _vmx, "SP", comp, realStackTopAddress);
-    VM::VirtualMachineOperandStack *stack = new VM::VirtualMachineOperandStack(LOC, _vmx, comp, 1, stackTop, _bx->STACKVALUETYPE);
+    Allocator *mem = fcomp->mem();
+    VM::VirtualMachineRegister *stackTop = new (mem) VM::VirtualMachineRegister(MEM_LOC(mem), _vmx, "SP", comp, realStackTopAddress);
+    VM::VirtualMachineOperandStack *stack = new (mem) VM::VirtualMachineOperandStack(MEM_LOC(mem), _vmx, comp, 1, stackTop, _bx->STACKVALUETYPE);
 
-    TestState *vmState = new TestState(LOC, _vmx, stack, stackTop);
+    TestState *vmState = new (mem) TestState(MEM_LOC(mem), _vmx, stack, stackTop);
 
     VM::BytecodeBuilder *bb = _vmx->OrphanBytecodeBuilder(comp, 0, 1, NULL, String("entry"));
     bb->setVMState(vmState);
@@ -638,10 +650,11 @@ OperandStackTestUsingStructFunction::buildIL(LOCATION, Func::FunctionCompilation
 
     _fx->Call(LOC, entry, _createStack);
 
-    VM::VirtualMachineRegisterInStruct *stackTop = new VM::VirtualMachineRegisterInStruct(LOC, _vmx, "SP", comp, _spField, _threadParam);
-    VM::VirtualMachineOperandStack *stack = new VM::VirtualMachineOperandStack(LOC, _vmx, comp, 1, stackTop, _bx->STACKVALUETYPE);
+    Allocator *mem = fcomp->mem();
+    VM::VirtualMachineRegisterInStruct *stackTop = new (mem) VM::VirtualMachineRegisterInStruct(MEM_LOC(mem), _vmx, "SP", comp, _spField, _threadParam);
+    VM::VirtualMachineOperandStack *stack = new (mem) VM::VirtualMachineOperandStack(MEM_LOC(mem), _vmx, comp, 1, stackTop, _bx->STACKVALUETYPE);
 
-    TestState *vmState = new TestState(LOC, _vmx, stack, stackTop);
+    TestState *vmState = new (mem) TestState(MEM_LOC(mem), _vmx, stack, stackTop);
     VM::BytecodeBuilder *bb = _vmx->OrphanBytecodeBuilder(comp, 0, 1, NULL, String("entry"));
     bb->setVMState(vmState);
     _bx->Goto(LOC, entry, bb);

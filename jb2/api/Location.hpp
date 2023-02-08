@@ -23,17 +23,18 @@
 #define LOCATION_INCL
 
 #include "common.hpp"
-#include "util/String.hpp"
+#include "String.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 
 class Compilation;
 
-class Location {
+class Location : public Allocatable {
+    JBALLOC_(Location)
 public:
-    Location(Compilation *comp, String fileName, String lineNumber);
-    Location(Compilation *comp, String fileName, String lineNumber, int32_t bcIndex);
+    DYNAMIC_ALLOC_ONLY(Location, Compilation *comp, String fileName, String lineNumber);
+    DYNAMIC_ALLOC_ONLY(Location, Compilation *comp, String fileName, String lineNumber, int32_t bcIndex);
 
     virtual size_t size()          { return sizeof(Location); }
     LocationID id() const          { return _id; }

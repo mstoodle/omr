@@ -42,10 +42,12 @@ class StructType;
 class Type;
 
 class TypeReplacer : public Transformer {
+    JBALLOC(TypeReplacer, NoAllocationCategory)
+
     friend class Type;
 
 public:
-    TypeReplacer(Compiler * compiler);
+    DYNAMIC_ALLOC_ONLY(TypeReplacer, Compiler * compiler);
 
     bool traceEnabled() const { return _traceEnabled; }
     Compilation *comp() const { return _comp; }

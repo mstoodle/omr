@@ -23,6 +23,8 @@
 #define OMR_JITBUILDER_JBCORE_INCL
 
 #include "common.hpp"
+#include "AllocatorTracer.hpp"
+#include "AllocatorTracker.hpp"
 #include "Builder.hpp"
 #include "Compilation.hpp"
 #include "CompiledBody.hpp"
@@ -44,11 +46,13 @@
 #include "Mapper.hpp"
 #include "Operation.hpp"
 #include "OperationCloner.hpp"
+#include "OperationReplacer.hpp"
 #include "Pass.hpp"
 #include "SemanticVersion.hpp"
 #include "Strategy.hpp"
 #include "Symbol.hpp"
 #include "SymbolDictionary.hpp"
+#include "TextLogger.hpp"
 #include "TextWriter.hpp"
 #include "Transformer.hpp"
 #include "Type.hpp"
@@ -56,7 +60,7 @@
 #include "TypeReplacer.hpp"
 #include "Value.hpp"
 #include "Visitor.hpp"
-#include "util/String.hpp"
+#include "String.hpp"
 
 #endif // defined(OMR_JITBUILDER_JBCORE_INCL)
 

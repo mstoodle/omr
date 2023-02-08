@@ -28,25 +28,27 @@
 namespace OMR {
 namespace JitBuilder {
 
-class Compilation;
 class Compiler;
 class DebugDictionary;
 class DynamicType;
 class Extension;
 class OperationBuilder;
+class TextLogger;
 class Type;
 
-class SymbolDictionary {
+class SymbolDictionary : public Allocatable {
+    JBALLOC_(SymbolDictionary)
+
+    friend class Compiler;
     friend class DebugDictionary;
     friend class DynamicType;
     friend class Extension;
     friend class OperationBuilder;
 
 public:
-    SymbolDictionary(Compilation *comp);
-    SymbolDictionary(Compilation *comp, String name);
-    SymbolDictionary(Compilation *comp, String name, SymbolDictionary *linkedTypes);
-    virtual ~SymbolDictionary();
+    ALL_ALLOC_ALLOWED(SymbolDictionary, Compiler *compiler);
+    ALL_ALLOC_ALLOWED(SymbolDictionary, Compiler *compiler, String name);
+    ALL_ALLOC_ALLOWED(SymbolDictionary, Compiler *compiler, String name, SymbolDictionary *linkedTypes);
 
     SymbolListIterator symbolIterator() const { return _symbols.iterator(); }
 
@@ -61,13 +63,14 @@ public:
 
     void registerSymbol(Symbol *symbol);
 
-    void write(TextWriter &w);
+    void log(TextLogger &w);
 
 protected:
     void internalRegisterSymbol(Symbol *symbol);
 
     SymbolDictionaryID _id;
-    Compilation * _comp;
+    Compiler * _compiler;
+    Allocator * _mem;
     String _name;
     SymbolList _symbols;
     SymbolList _ownedSymbols;

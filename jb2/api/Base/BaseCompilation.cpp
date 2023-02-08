@@ -28,8 +28,10 @@ namespace OMR {
 namespace JitBuilder {
 namespace Base {
 
-BaseCompilation::BaseCompilation(Compiler *compiler, Func::Function *func, StrategyID strategy, TypeDictionary *dict, Config *localConfig)
-    : Func::FunctionCompilation(compiler, func, strategy, dict, localConfig) {
+INIT_JBALLOC_REUSECAT(BaseCompilation, Compilation)
+
+BaseCompilation::BaseCompilation(Compiler *compiler, Func::Function *func, StrategyID strategy, LiteralDictionary *litDict, SymbolDictionary *symDict, TypeDictionary *typeDict, Config *localConfig)
+    : Func::FunctionCompilation(compiler, func, strategy, litDict, symDict, typeDict, localConfig) {
 
 }
 

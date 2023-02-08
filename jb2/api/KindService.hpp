@@ -25,20 +25,25 @@
 #include <cassert>
 #include <cstddef>
 #include <map>
+#include "Allocatable.hpp"
 #include "IDs.hpp"
-#include "util/String.hpp"
+#include "String.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 
 
-class KindService {
+class KindService : public Allocatable {
+    JBALLOC_NO_DESTRUCTOR_(KindService)
+
 public:
     typedef uint64_t Kind;
     KindService()
-        : _id(kindServiceID++)
+        : Allocatable()
+        , _id(kindServiceID++)
         , _nextKind(AnyKind+1) {
     }
+    virtual ~KindService() { }
 
     const static Kind NoKind=0;
     const static Kind AnyKind=1;
@@ -54,7 +59,6 @@ public:
     }
 
 protected:
-
     KindServiceID _id;
     Kind _nextKind;
     std::map<String,Kind> _kindFromNameMap;
@@ -67,4 +71,3 @@ protected:
 } // namespace OMR
 
 #endif // defined(KINDSERVICE_INCL)
-

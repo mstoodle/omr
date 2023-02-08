@@ -24,8 +24,10 @@
 
 #include "common.hpp"
 #include <map>
+#include "AllocationCategoryService.hpp"
+#include "AllocatorRaw.hpp"
 #include "CreateLoc.hpp"
-#include "util/String.hpp"
+#include "String.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -37,36 +39,49 @@ class CompileUnit;
 class Config;
 class Extension;
 class JB1;
+class LiteralDictionary;
 class Pass;
 class Platform;
 class SemanticVersion;
 class Strategy;
+class TextWriter;
 class Type;
+class SymbolDictionary;
 class TypeDictionary;
 
-class Compiler {
+
+class Compiler : public Allocatable {
+    JBALLOC_(Compiler)
+
+    friend class Allocator;
     friend class Compilation;
     friend class CompilationException;
     friend class CompiledBody;
     friend class CompileUnit;
     friend class Context;
     friend class Extension;
+    friend class LiteralDictionary;
     friend class Pass;
     friend class Strategy;
+    friend class SymbolDictionary;
     friend class TypeDictionary;
 
     typedef Array<Pass *> PassChain;
     typedef std::map<PassID, PassChain> PassRegistry;
 
 public:
-    Compiler(String name, Config *config=NULL, Compiler *parent=NULL);
-    virtual ~Compiler();
+    ALL_ALLOC_ALLOWED(Compiler, String name, Config *config=NULL);
+    ALL_ALLOC_ALLOWED(Compiler, Compiler *parent, String name, Config *config=NULL);
 
     CompilerID id() const { return _id; }
     String name() const { return _name; }
     Config *config() const { return _config; }
     Compiler *parent() const { return _parent; }
-    TypeDictionary *dict() const { return _dict; }
+    Allocator *mem() const { return _mem; }
+    LiteralDictionary *litDict() const { return _litDict; }
+    SymbolDictionary *symDict() const { return _symDict; }
+    TypeDictionary *typeDict() const { return _typeDict; }
+    TextWriter *textWriter(TextLogger & lgr);
 
     ExtensionID getExtensionID() { return _nextExtensionID++; }
     template<typename T>
@@ -100,14 +115,22 @@ public:
 
     bool hasErrorCondition() const { return _errorCondition != NULL; }
     CompilationException *errorCondition() const { return _errorCondition; } 
+    void clearErrorCondition();
 
 protected:
+    void init();
+
     void addExtension(Extension *ext);
     PassID addPass(Pass *pass);
     StrategyID addStrategy(Strategy *st);
-    TypeDictionaryID getTypeDictionaryID() {
-        return this->_nextTypeDictionaryID++;
-    }
+
+    LiteralDictionaryID maxLiteralDictionaryID() const { return _nextLiteralDictionaryID-1; }
+    SymbolDictionaryID maxSymbolDictionaryID() const { return _nextSymbolDictionaryID-1; }
+    SymbolDictionaryID maxTypeDictionaryID() const { return _nextTypeDictionaryID-1; }
+
+    LiteralDictionaryID getLiteralDictionaryID() { return _nextLiteralDictionaryID++; }
+    SymbolDictionaryID getSymbolDictionaryID() { return _nextSymbolDictionaryID++; }
+    TypeDictionaryID getTypeDictionaryID() { return this->_nextTypeDictionaryID++; }
 
     Extension *internalLoadExtension(LOCATION, const SemanticVersion * version, String name);
     Extension *internalLookupExtension(String name);
@@ -123,8 +146,11 @@ protected:
     uint64_t _eyeCatcher;
     CompilerID _id;
     String _name;
+    AllocatorRaw _mallocAllocator;
+    Allocator *_baseAllocator; // must come after _mallocAllocator
     bool _myConfig;
-    Config *_config;
+    Config *_config; // must come after _baseAllocator and before _mem
+    Allocator *_mem; // must come after _config;
     Compiler *_parent;
 
     JB1 *_jb1;
@@ -162,13 +188,19 @@ protected:
     TypeID _nextTypeID;
     std::map<TypeID, Type *> _types;
 
+    LiteralDictionaryID _nextLiteralDictionaryID;
+    SymbolDictionaryID _nextSymbolDictionaryID;
     TypeDictionaryID _nextTypeDictionaryID;
 
     Platform *_target;
     Platform *_compiler;
 
     // must come AFTER _nextTypeDictionaryID for proper initialization
-    TypeDictionary *_dict;
+    LiteralDictionary *_litDict;
+    SymbolDictionary *_symDict;
+    TypeDictionary *_typeDict;
+    
+    List<TextWriter *> _textWriters;
 
     CompilationException *_errorCondition;
 
@@ -191,15 +223,11 @@ public:
     StrategyID jb1cgStrategyID;
 };
 
-class CompilationException : public std::exception {
+class CompilationException : public Allocatable, public std::exception {
+    JBALLOC(CompilationException, NoAllocationCategory)
+
 public:
-    CompilationException(LOCATION, Compiler *compiler, CompilerReturnCode result)
-        : std::exception()
-        , _compiler(compiler)
-        , _result(result)
-        , _location(PASSLOC)
-        , _message(String("CompilationException")) {
-    }
+    ALL_ALLOC_ALLOWED(CompilationException, LOCATION, Compiler *compiler, CompilerReturnCode result);
 
     CompilerReturnCode result() const { return _result; }
     String resultString() const { return _compiler->returnCodeName(_result); }
@@ -215,12 +243,12 @@ public:
     CompilationException & appendMessage(String str)     { _message.append(           str ); return *this; }
     CompilationException & appendMessageLine(String str) { _message.append(addNewLine(str)); return *this; }
 
+protected:
     const Compiler *_compiler;
     CompilerReturnCode _result;
     CreateLocation _location;
     String _message;
 
-protected:
     String addNewLine(String s) const { return s + String("\n"); }
 };
 

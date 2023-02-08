@@ -19,21 +19,35 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#include "AllocatorRaw.hpp"
 #include "Compilation.hpp"
 #include "Compiler.hpp"
 #include "Pass.hpp"
 #include "Strategy.hpp"
+#include "TextLogger.hpp"
 #include "TextWriter.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 
-Strategy::Strategy(Compiler *compiler, String name)
-    : _id(NoStrategy)
+INIT_JBALLOC_REUSECAT(Strategy, Passes)
+
+Strategy::Strategy(Allocator *a, Compiler *compiler, String name)
+    : Allocatable(a)
+    , _id(NoStrategy)
     , _compiler(compiler)
-    , _name(name) {
+    , _name(name)
+    , _passes(NULL, a) {
 
     _id = compiler->addStrategy(this);
+}
+
+Strategy::~Strategy() {
+    for (auto it = _passes.iterator(); it.hasItem(); it++) {
+        Pass *pass = it.item();
+        delete pass;
+    }
+    _passes.erase();
 }
 
 Strategy *
@@ -50,28 +64,34 @@ Strategy::perform(Compilation *comp) {
     for (auto it = _passes.iterator(); it.hasItem(); it++) {
         Pass *pass = it.item();
 
-        if (comp->logger()) { // TODO should have its own specific trace enabler
-            TextWriter &log = *comp->logger();
-            log << "IL before pass " << pass->name() << log.endl();
-            log.print(comp);
+        if (comp->writer()) { // TODO should have its own specific trace enabler
+            TextWriter &w = *comp->writer();
+            w.logger() << "IL before pass " << pass->name() << w.logger().endl();
+            w.print(comp);
         }
 
-        rc = pass->perform(comp);
+        {
+            Allocator passMem("Pass allocator", comp->mem());
 
-        if (comp->logger()) { // TODO should have its own specific trace enabler
-            TextWriter &log = *comp->logger();
-            log << "IL after pass " << pass->name() << log.endl();
-            log.print(comp);
+            comp->setPassAllocator(&passMem);
+            rc = pass->perform(comp);
+            comp->setPassAllocator(NULL);
+        }
+
+        if (comp->writer()) { // TODO should have its own specific trace enabler
+            TextWriter & w = *comp->writer();
+            w.logger() << "IL after pass " << pass->name() << w.logger().endl();
+            w.print(comp);
         }
 
         if (rc != _compiler->CompileSuccessful)
             break;
     }
 
-    if (comp->logger()) { // TODO should have its own specific trace enabler
-        TextWriter &log = *comp->logger();
-        log << "Final IL" << log.endl();
-        log.print(comp);
+    if (comp->writer()) { // TODO should have its own specific trace enabler
+        TextWriter &w = *comp->writer();
+        w.logger() << "Final IL" << w.logger().endl();
+        w.print(comp);
     }
 
     return rc;

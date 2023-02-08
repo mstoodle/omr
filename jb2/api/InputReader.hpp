@@ -24,13 +24,16 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include "common.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 
-class InputReader {
+class InputReader : public Allocatable {
+    JBALLOC_(InputReader)
+
 public:
-    InputReader(FILE *inputFile);
+    DYNAMIC_ALLOC_ONLY(InputReader, FILE *inputFile);
 
     char * getLine();
     bool done() const { return _done; }

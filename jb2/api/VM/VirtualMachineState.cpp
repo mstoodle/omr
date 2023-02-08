@@ -26,6 +26,8 @@ namespace OMR {
 namespace JitBuilder {
 namespace VM {
 
+INIT_JBALLOC(VirtualMachineState)
+
 VirtualMachineStateID VirtualMachineState::nextVirtualMachineStateID = NoVirtualMachineStateID+1;
 
 KindService VirtualMachineState::kindService;
@@ -34,7 +36,8 @@ bool VirtualMachineState::kindRegistered = false;
 
 VirtualMachineState *
 VirtualMachineState::MakeCopy(LOCATION, Builder *b) {
-    return new VirtualMachineState(PASSLOC, _vme, STATEKIND);
+    Allocator *mem = allocator();
+    return new (mem) VirtualMachineState(MEM_PASSLOC(mem), _vme, STATEKIND);
 }
 
 const StateKind

@@ -19,20 +19,26 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include <assert.h>
 #include "InputReader.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 
+INIT_JBALLOC(InputReader)
+
 static const uint32_t LONGEST_LINE=1024;
 
-InputReader::InputReader(FILE *inputFile)
-    : _inputFile(inputFile)
+InputReader::InputReader(Allocator *a, FILE *inputFile)
+    : Allocatable(a)
+    , _inputFile(inputFile)
     , _bufferLength(LONGEST_LINE)
-    , _buffer(new char[_bufferLength])
+    , _buffer(a->allocate<char>(_bufferLength * sizeof(char)))
     , _done(false) {
     assert(inputFile != NULL);
+}
+
+InputReader::~InputReader() {
+    allocator()->deallocate(_buffer);
 }
 
 char *

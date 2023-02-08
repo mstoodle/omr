@@ -40,44 +40,57 @@ omr_assert(
 #		${OMR_PORT_LIB}
 #)
 
+add_compile_options(
+	-Wplacement-new=0
+)
+
 set(JB2_JBCORE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/)
 set(JB2_JBBASE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Base/)
 set(JB2_JBVM_DIR ${CMAKE_CURRENT_SOURCE_DIR}/VM/)
 set(JB2_JBCOMPLEX_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Complex/)
 
 add_library(jb2core SHARED
-	Builder.cpp
-	Compilation.cpp
-	CompiledBody.cpp
-	Compiler.cpp
-	CompileUnit.cpp
-	Context.cpp
-	Extension.cpp
-	InputReader.cpp
-	JB1.cpp
-	JB2.cpp
-	KindService.cpp
-	Literal.cpp
-	LiteralDictionary.cpp
-	Location.cpp
-	Loggable.cpp
-	Operation.cpp
-	OperationCloner.cpp
-	OperationReplacer.cpp
-	Pass.cpp
-	SemanticVersion.cpp
-	Strategy.cpp
-	Symbol.cpp
-	SymbolDictionary.cpp
-	TextWriter.cpp
-	Transformer.cpp
-	Type.cpp
-	TypeDictionary.cpp
-	TypeReplacer.cpp
-	Value.cpp
-	Visitor.cpp
-	util/String.cpp
+     AllocationCategoryClasses.cpp
+     AllocationCategoryService.cpp
+     Allocator.cpp
+     AllocatorRaw.cpp
+     AllocatorTracer.cpp
+     AllocatorTracker.cpp
+	 Builder.cpp
+	 Compilation.cpp
+	 CompiledBody.cpp
+	 Compiler.cpp
+	 CompileUnit.cpp
+	 Config.cpp
+	 Context.cpp
+	 CreateLoc.cpp
+	 Extension.cpp
+	 InputReader.cpp
+	 JB1.cpp
+	 KindService.cpp
+	 Literal.cpp
+	 LiteralDictionary.cpp
+	 Location.cpp
+	 Loggable.cpp
+	 Operation.cpp
+	 OperationCloner.cpp
+	 OperationReplacer.cpp
+	 Pass.cpp
+	 SemanticVersion.cpp
+	 Strategy.cpp
+	 String.cpp
+	 Symbol.cpp
+	 SymbolDictionary.cpp
+	 TextLogger.cpp
+	 TextWriter.cpp
+	 Transformer.cpp
+	 Type.cpp
+	 TypeDictionary.cpp
+	 TypeReplacer.cpp
+	 Value.cpp
+	 Visitor.cpp
 )
+
 target_link_libraries(jb2core jb2)
 add_subdirectory(test)
 

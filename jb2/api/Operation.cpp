@@ -29,28 +29,34 @@
 #include "Location.hpp"
 #include "Operation.hpp"
 #include "OperationCloner.hpp"
-//#include "OperationReplacer.hpp"
+#include "Symbol.hpp"
 #include "Type.hpp"
 #include "TypeDictionary.hpp"
 #include "Value.hpp"
-#include "TextWriter.hpp"
+#include "TextLogger.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 
 
-Operation::Operation(LOCATION, ActionID a, Extension *ext, Builder * parent, Operation *next, Operation *prev)
-    : _id(parent->comp()->getOperationID())
+INIT_JBALLOC(Operation)
+
+Operation::Operation(MEM_LOCATION(a), ActionID action, Extension *ext, Builder * parent, Operation *next, Operation *prev)
+    : Allocatable(a)
+    , _id(parent->comp()->getOperationID())
     , _ext(ext)
     , _parent(parent)
     , _next(next)
     , _prev(prev)
-    , _action(a)
-    , _name(ext->actionName(a))
+    , _action(action)
+    , _name(ext->actionName(action))
     , _location(parent->location())
     , _creationLocation(PASSLOC) {
 
     } 
+
+Operation::~Operation() {
+}
 
 Operation *
 Operation::setParent(Builder * newParent) {
@@ -124,45 +130,77 @@ Operation::registerDefinition(Value *result) {
 }
 
 void
-Operation::writeFull(TextWriter & w) const {
-    w.indent() << _parent << "!o" << _id << " : ";
-    write(w);
+Operation::logFull(TextLogger & lgr) const {
+    lgr.indent() << _parent << "!o" << _id << " : ";
+    log(lgr);
 }
 
 void
-Operation::write(TextWriter & w) const {
-    w << this->name() << w.endl();
+Operation::log(TextLogger & lgr) const {
+    lgr << this->name() << lgr.endl();
+}
+
+INIT_JBALLOC_REUSECAT(OperationR0S1, Operation)
+
+OperationR0S1::~OperationR0S1() {
 }
 
 void
-OperationR0S1::write(TextWriter & w) const {
-    w << this->name() << " " << this->_symbol << w.endl();
+OperationR0S1::log(TextLogger & lgr) const {
+    lgr << this->name() << " " << this->_symbol << lgr.endl();
+}
+
+INIT_JBALLOC_REUSECAT(OperationR0S1V1, Operation)
+
+OperationR0S1V1::~OperationR0S1V1() {
 }
 
 void
-OperationR0S1V1::write(TextWriter & w) const {
-    w << this->name() << " " << this->_symbol << " " << this->_value << w.endl();
+OperationR0S1V1::log(TextLogger & lgr) const {
+    lgr << this->name() << " " << this->_symbol << " " << this->_value << lgr.endl();
+}
+
+
+INIT_JBALLOC_REUSECAT(OperationR0V1, Operation)
+
+OperationR0V1::~OperationR0V1() {
 }
 
 void
-OperationR0V1::write(TextWriter & w) const {
-    w << this->name() << " " << this->_value << w.endl();
+OperationR0V1::log(TextLogger & lgr) const {
+    lgr << this->name() << " " << this->_value << lgr.endl();
+}
+
+INIT_JBALLOC_REUSECAT(OperationR0V2, Operation)
+
+OperationR0V2::~OperationR0V2() {
+}
+void
+OperationR0V2::log(TextLogger & lgr) const {
+    lgr << this->name() << " " << this->_left << " " << this->_right << lgr.endl();
+}
+
+INIT_JBALLOC_REUSECAT(OperationR0T1, Operation)
+
+OperationR0T1::~OperationR0T1() {
+}
+
+INIT_JBALLOC_REUSECAT(OperationR0T1V2, Operation)
+
+OperationR0T1V2::~OperationR0T1V2() {
 }
 
 void
-OperationR0V2::write(TextWriter & w) const {
-    w << this->name() << " " << this->_left << " " << this->_right << w.endl();
+OperationR0T1V2::log(TextLogger & lgr) const {
+    lgr << this->name() << " ";
+    this->_type->logType(lgr);
+    lgr << " " << this->_base << " " << this->_value << lgr.endl();
 }
 
-void
-OperationR0T1V2::write(TextWriter & w) const {
-    w << this->name() << " ";
-    this->_type->writeType(w);
-    w << " " << this->_base << " " << this->_value << w.endl();
-}
+INIT_JBALLOC_REUSECAT(OperationR0S1VN, Operation)
 
-OperationR0S1VN::OperationR0S1VN(LOCATION, ActionID a, Extension *ext, Builder * parent, OperationCloner * cloner)
-    : OperationR0S1(PASSLOC, a, ext, parent, cloner->symbol()) {
+OperationR0S1VN::OperationR0S1VN(MEM_LOCATION(a), ActionID action, Extension *ext, Builder * parent, OperationCloner * cloner)
+    : OperationR0S1(MEM_PASSLOC(a), action, ext, parent, cloner->symbol()) {
 
     _numValues = cloner->numOperands();
     _values = new Value *[_numValues];
@@ -170,64 +208,125 @@ OperationR0S1VN::OperationR0S1VN(LOCATION, ActionID a, Extension *ext, Builder *
         _values[a] = (cloner->operand(a));
     }
 
+OperationR0S1VN::~OperationR0S1VN() {
+    delete[] _values;
+}
+
 void
-OperationR0S1VN::write(TextWriter & w) const {
-    w << this->name() << " " << this->symbol();
+OperationR0S1VN::log(TextLogger & lgr) const {
+    lgr << this->name() << " " << this->symbol();
     for (auto a=0;a < this->numOperands(); a++)
-        w << " " << operand(a);
-    w << w.endl();
+        lgr << " " << operand(a);
+    lgr << lgr.endl();
+}
+
+INIT_JBALLOC_REUSECAT(OperationR1, Operation)
+
+OperationR1::OperationR1(MEM_LOCATION(a), ActionID action, Extension *ext, Builder * parent, Value * result)
+    : Operation(MEM_PASSLOC(a), action, ext, parent)
+    , _result(result) {
+
+    parent->comp()->forgetNewValue(result);
+    registerDefinition(result);
+}
+
+OperationR1::~OperationR1() {
+    // _result can be cleared during destruction by e.g. Op_MergeDef because only one def should delete _result
+    // Only the original definition of the value will delete it
+    if (_result)
+        delete _result;
+}
+
+INIT_JBALLOC_REUSECAT(OperationR1L1, Operation)
+
+OperationR1L1::~OperationR1L1() {
 }
 
 void
-OperationR1L1::write(TextWriter &w) const {
-    w << result() << " = " << name() << " " << literal() << w.endl();
+OperationR1L1::log(TextLogger &lgr) const {
+    lgr << this->_result << " = " << name() << " " << literal() << lgr.endl();
+}
+
+INIT_JBALLOC_REUSECAT(OperationR1S1, Operation)
+
+OperationR1S1::~OperationR1S1() {
 }
 
 void
-OperationR1S1::write(TextWriter & w) const {
-    w << this->_result << " = " << this->name() << " " << this->_symbol << w.endl();
+OperationR1S1::log(TextLogger & lgr) const {
+    lgr << this->_result << " = " << this->name() << " " << this->_symbol << lgr.endl();
+}
+
+INIT_JBALLOC_REUSECAT(OperationR1T1, Operation)
+
+OperationR1T1::~OperationR1T1() {
 }
 
 void
-OperationR1T1::write(TextWriter & w) const {
-    w << this->_result << " = " << this->name() << " ";
-    this->_type->writeType(w);
-    w << w.endl();
+OperationR1T1::log(TextLogger & lgr) const {
+    lgr << this->_result << " = " << this->name() << " ";
+    this->_type->logType(lgr);
+    lgr << lgr.endl();
+}
+
+OperationR1V1::~OperationR1V1() {
 }
 
 void
-OperationR1V1::write(TextWriter & w) const {
-    w << this->_result << " = " << this->name() << " " << this->_value << w.endl();
+OperationR1V1::log(TextLogger & lgr) const {
+    lgr << this->_result << " = " << this->name() << " " << this->_value << lgr.endl();
+}
+
+INIT_JBALLOC_REUSECAT(OperationR1L1T1, Operation)
+
+OperationR1L1T1::~OperationR1L1T1() {
 }
 
 void
-OperationR1L1T1::write(TextWriter & w) const {
-    w << this->_result << " = " << this->name() << " " << this->_v << " ";
-    this->_elementType->writeType(w);
-    w << w.endl();
+OperationR1L1T1::log(TextLogger & lgr) const {
+    lgr << this->_result << " = " << this->name() << " " << this->_v << " ";
+    this->_elementType->logType(lgr);
+    lgr << lgr.endl();
+}
+
+INIT_JBALLOC_REUSECAT(OperationR1V1T1, Operation)
+
+OperationR1V1T1::~OperationR1V1T1() {
 }
 
 void
-OperationR1V1T1::write(TextWriter & w) const {
-    w << this->_result << " = " << this->name() << " ";
-    this->_type->writeType(w);
-    w << " " << this->_value << w.endl();
+OperationR1V1T1::log(TextLogger & lgr) const {
+    lgr << this->_result << " = " << this->name() << " ";
+    this->_type->logType(lgr);
+    lgr << " " << this->_value << lgr.endl();
+}
+
+INIT_JBALLOC_REUSECAT(OperationR1V2, Operation)
+
+OperationR1V2::~OperationR1V2() {
 }
 
 void
-OperationR1V2::write(TextWriter & w) const {
-    w << this->_result << " = " << this->name() << " " << this->_left << " " << this->_right << w.endl();
+OperationR1V2::log(TextLogger & lgr) const {
+    lgr << this->_result << " = " << this->name() << " " << this->_left << " " << this->_right << lgr.endl();
+}
+
+INIT_JBALLOC_REUSECAT(OperationR1V2T1, Operation)
+
+OperationR1V2T1::~OperationR1V2T1() {
 }
 
 void
-OperationR1V2T1::write(TextWriter & w) const {
-    w << this->_result << " = " << this->name() << " ";
-    this->_type->writeType(w);
-    w << " " << this->_left << " " << this->_right << w.endl();
+OperationR1V2T1::log(TextLogger & lgr) const {
+    lgr << this->_result << " = " << this->name() << " ";
+    this->_type->logType(lgr);
+    lgr << " " << this->_left << " " << this->_right << lgr.endl();
 }
 
-OperationR1S1VN::OperationR1S1VN(LOCATION, ActionID a, Extension *ext, Builder * parent, OperationCloner * cloner)
-    : OperationR1S1(PASSLOC, a, ext, parent, cloner->result(), cloner->symbol()) {
+INIT_JBALLOC_REUSECAT(OperationR1S1VN, Operation)
+
+OperationR1S1VN::OperationR1S1VN(MEM_LOCATION(a), ActionID action, Extension *ext, Builder * parent, OperationCloner * cloner)
+    : OperationR1S1(MEM_PASSLOC(a), action, ext, parent, cloner->result(), cloner->symbol()) {
 
     _numValues = cloner->numOperands();
     _values = new Value *[_numValues];
@@ -235,26 +334,55 @@ OperationR1S1VN::OperationR1S1VN(LOCATION, ActionID a, Extension *ext, Builder *
         _values[a] = (cloner->operand(a));
     }
 
+OperationR1S1VN::~OperationR1S1VN() {
+    delete[] _values;
+}
+
 void
-OperationR1S1VN::write(TextWriter & w) const {
-    w << this->_result << " = ";
-    w << this->name() << " " << this->symbol();
+OperationR1S1VN::log(TextLogger & lgr) const {
+    lgr << this->_result << " = ";
+    lgr << this->name() << " " << this->symbol();
     for (auto a=0;a < this->numOperands(); a++)
-        w << " " << operand(a);
-    w << w.endl();
+        lgr << " " << operand(a);
+    lgr << lgr.endl();
+}
+
+INIT_JBALLOC_REUSECAT(OperationB1, Operation)
+
+OperationB1::~OperationB1() {
+
+}
+
+INIT_JBALLOC_REUSECAT(OperationB1R0V1, Operation)
+
+OperationB1R0V1::~OperationB1R0V1() {
+
+}
+
+INIT_JBALLOC_REUSECAT(OperationB1R0V2, Operation)
+
+OperationB1R0V2::~OperationB1R0V2() {
+
 }
 
 //
 // Core operations
 //
 
-Op_MergeDef::Op_MergeDef(LOCATION, Extension *ext, Builder * parent, ActionID aMergeDef, Value *existingDef, Value *newDef)
-    : OperationR1V1(PASSLOC, aMergeDef, ext, parent, existingDef, newDef) {
+INIT_JBALLOC_REUSECAT(Op_MergeDef, Operation)
+
+Op_MergeDef::~Op_MergeDef() {
+    this->_result = NULL; // hacky but prevents OperationR1 from deleting the definition which is shared with another operation
+}
+
+Op_MergeDef::Op_MergeDef(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aMergeDef, Value *existingDef, Value *newDef)
+    : OperationR1V1(MEM_PASSLOC(a), aMergeDef, ext, parent, existingDef, newDef) {
 }
 
 Operation *
 Op_MergeDef::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    return new Op_MergeDef(PASSLOC, this->_ext, b, this->action(), cloner->result(), cloner->operand());
+    Allocator *mem = b->comp()->mem();
+    return new (mem) Op_MergeDef(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->result(), cloner->operand());
 }
 
 void

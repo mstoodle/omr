@@ -35,9 +35,10 @@ class FunctionSymbol;
 class ParameterSymbol;
 
 class FunctionContext : public Context {
+    JBALLOC_(FunctionContext)
+
     friend class FunctionCompilation;
     friend class FunctionExtension;
-
 public:
     FunctionContext(LOCATION, FunctionCompilation *comp, String name="");
     FunctionContext(LOCATION, FunctionCompilation *comp, FunctionContext *caller, String name="");
@@ -46,10 +47,7 @@ public:
     LocalSymbol * DefineLocal(String name, const Type * type);
     FunctionSymbol * DefineFunction(LOCATION, String name, String fileName, String lineNumber, void *entryPoint, const Type *returnType, int32_t numParms, ...);
     FunctionSymbol * DefineFunction(LOCATION, String name, String fileName, String lineNumber, void *entryPoint, const Type *returnType, int32_t numParms, const Type **parmTypes);
-    void DefineReturnType(const Type * type) {
-        size_t index = _returnTypes.length();
-        _returnTypes.assign(index, type);
-    }
+    void DefineReturnType(const Type * type);
 
     LocalSymbolIterator locals() const { return this->_locals.iterator(); }
     LocalSymbolList resetLocals();

@@ -29,97 +29,108 @@ namespace JitBuilder {
 namespace Base {
 
 class Op_LoadAt : public OperationR1V1 {
+    JBALLOC_(Op_LoadAt)
+
     friend class BaseExtension;
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
     virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
-    Op_LoadAt(LOCATION, Extension *ext, Builder * parent, ActionID aLoadAt, Value *result, Value *value);
+    Op_LoadAt(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aLoadAt, Value *result, Value *value);
 };
 
 class Op_StoreAt : public OperationR0V2 {
+    JBALLOC_(Op_StoreAt)
+
     friend class BaseExtension;
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
     virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
-    Op_StoreAt(LOCATION, Extension *ext, Builder * parent, ActionID aStoreAt, Value *address, Value *value);
+    Op_StoreAt(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aStoreAt, Value *address, Value *value);
 };
 
 class Op_LoadField : public OperationR1V1T1 {
+    JBALLOC_(Op_LoadField)
     friend class BaseExtension;
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
     virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
-    Op_LoadField(LOCATION, Extension *ext, Builder * parent, ActionID aLoadField, Value *result, const FieldType *fieldType, Value *structValue);
+    Op_LoadField(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aLoadField, Value *result, const FieldType *fieldType, Value *structValue);
 };
 
 class Op_StoreField : public OperationR0T1V2 {
+    JBALLOC_(Op_StoreField)
     friend class BaseExtension;
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
     virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
-    Op_StoreField(LOCATION, Extension *ext, Builder * parent, ActionID aStoreField, const FieldType *fieldType, Value *structValue, Value *value);
+    Op_StoreField(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aStoreField, const FieldType *fieldType, Value *structValue, Value *value);
 };
 
 class Op_LoadFieldAt : public OperationR1V1T1 {
+    JBALLOC_(Op_LoadFieldAt)
     friend class BaseExtension;
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
     virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
-    Op_LoadFieldAt(LOCATION, Extension *ext, Builder * parent, ActionID aLoadFieldAt, Value *result, const FieldType *fieldType, Value *pStruct);
+    Op_LoadFieldAt(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aLoadFieldAt, Value *result, const FieldType *fieldType, Value *pStruct);
 };
 
 class Op_StoreFieldAt : public OperationR0T1V2 {
+    JBALLOC_(Op_StoreFieldAt)
     friend class BaseExtension;
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
     virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
-    Op_StoreFieldAt(LOCATION, Extension *ext, Builder * parent, ActionID aStoreFieldAt, const FieldType *fieldType, Value *pStruct, Value *value);
+    Op_StoreFieldAt(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aStoreFieldAt, const FieldType *fieldType, Value *pStruct, Value *value);
 };
 
 class Op_CreateLocalArray : public OperationR1L1T1 {
+    JBALLOC_(Op_CreateLocalArray)
     friend class BaseExtension;
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
     virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
-    Op_CreateLocalArray(LOCATION, Extension *ext, Builder * parent, ActionID aCreateLocalArray, Value *result, Literal *numElements, const PointerType *pElementType)
-       : OperationR1L1T1(PASSLOC, aCreateLocalArray, ext, parent, result, numElements, pElementType)
+    Op_CreateLocalArray(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aCreateLocalArray, Value *result, Literal *numElements, const PointerType *pElementType)
+       : OperationR1L1T1(MEM_PASSLOC(a), aCreateLocalArray, ext, parent, result, numElements, pElementType)
        { }
     };
 
 class Op_CreateLocalStruct : public OperationR1T1 {
+    JBALLOC_(Op_CreateLocalStruct)
     friend class BaseExtension;
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
     virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
-    Op_CreateLocalStruct(LOCATION, Extension *ext, Builder * parent, ActionID aCreateLocalStruct, Value *result, const StructType *structType)
-       : OperationR1T1(PASSLOC, aCreateLocalStruct, ext, parent, result, structType)
+    Op_CreateLocalStruct(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aCreateLocalStruct, Value *result, const StructType *structType)
+       : OperationR1T1(MEM_PASSLOC(a), aCreateLocalStruct, ext, parent, result, structType)
        { }
     };
 
 class Op_IndexAt : public OperationR1V2 {
+    JBALLOC_(Op_IndexAt)
     friend class BaseExtension;
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
     virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
-    Op_IndexAt(LOCATION, Extension *ext, Builder * parent, ActionID aIndexAt, Value *result, Value *base, Value *index);
+    Op_IndexAt(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aIndexAt, Value *result, Value *base, Value *index);
 };
 
 #if 0

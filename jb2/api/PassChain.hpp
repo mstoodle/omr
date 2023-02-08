@@ -22,7 +22,7 @@
 #ifndef PASSCHAIN_INCL
 #define PASSCHAIN_INCL
 
-#include "util/List.hpp"
+#include "List.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -43,10 +43,7 @@ class PassChain {
     };
 
 public:
-    PassChain(Pass *pass)
-        : _pass(pass) {
-
-    }
+    PassChain(Pass *pass);
 
     virtual bool processBuilder(Pass *pass, Builder *b);
     virtual bool processLiteral(Pass *pass, Literal *lv);

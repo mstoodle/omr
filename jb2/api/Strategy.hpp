@@ -31,10 +31,12 @@ class Compilation;
 class Compiler;
 class Pass;
 
-class Strategy {
+class Strategy : public Allocatable {
+    JBALLOC_(Strategy)
+
     friend class Compiler;
 
-    protected:
+protected:
     // TODO: need some mechanism for managing data during lifetime of strategy (longer than a pass)
     //  e.g. use-def-info, dominators, etc.
     class StrategyData {
@@ -44,8 +46,9 @@ class Strategy {
         protected:
     };
 
-    public:
-    Strategy(Compiler *compiler, String name);
+public:
+    DYNAMIC_ALLOC_ONLY(Strategy, Compiler *compiler, String name);
+
     Strategy *addPass(Pass *pass);
 
     StrategyID id() const { return _id; }
@@ -54,7 +57,7 @@ class Strategy {
     virtual CompilerReturnCode perform(Compilation *comp);
     virtual void allocateData() { }
     
-    protected:
+protected:
     StrategyID _id;
     Compiler *_compiler;
     String _name;
@@ -66,4 +69,3 @@ class Strategy {
 } // namespace OMR
 
 #endif // !defined(STRATEGY_INCL)
-

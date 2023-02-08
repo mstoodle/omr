@@ -38,10 +38,10 @@ class LocalSymbol;
 class ParameterSymbol;
 
 class FunctionExtension : public Extension {
+    JBALLOC_(FunctionExtension)
 
 public:
-    FunctionExtension(LOCATION, Compiler *compiler, bool extended=false, String extensionName="");
-    virtual ~FunctionExtension();
+    DYNAMIC_ALLOC_ONLY(FunctionExtension, LOCATION, Compiler *compiler, bool extended=false, String extensionName="");
 
     static const String NAME;
 
@@ -97,7 +97,7 @@ public:
 
     void registerChecker(FunctionExtensionChecker *checker);
 
-    CompilerReturnCode compile(LOCATION, Function *func, StrategyID strategy, TextWriter *logger);
+    CompilerReturnCode compile(LOCATION, Function *func, StrategyID strategy, TextLogger *lgr);
 
 protected:
 
@@ -109,12 +109,11 @@ protected:
     static const SemanticVersion version;
 };
 
-class FunctionExtensionChecker {
-public:
-    FunctionExtensionChecker(FunctionExtension *func)
-        : _func(func) {
+class FunctionExtensionChecker : public Allocatable {
+    JBALLOC(FunctionExtensionChecker, NoAllocationCategory)
 
-    }
+public:
+    DYNAMIC_ALLOC_ONLY(FunctionExtensionChecker, FunctionExtension *func);
 
     virtual bool validateCall(LOCATION, Builder *b, FunctionSymbol *target, std::va_list & args);
     //virtual bool validateCallWithArgArray(LOCATION, Builder *b, FunctionSymbol *target, int32_t numArgs, Value **args);

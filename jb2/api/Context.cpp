@@ -19,6 +19,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#include "Builder.hpp"
 #include "Compilation.hpp"
 #include "Compiler.hpp"
 #include "Context.hpp"
@@ -30,12 +31,14 @@
 namespace OMR {
 namespace JitBuilder {
 
+INIT_JBALLOC(Context)
 
 Context::Context(LOCATION, Compilation *comp, LiteralDictionary *useLitDict, SymbolDictionary *useSymDict, TypeDictionary *useTypeDict, uint32_t numEntryPoints, uint32_t numExitPoints, String name)
     : _id(comp->getContextID())
     , _comp(comp)
     , _name(name)
     , _parent(NULL)
+    , _children(NULL, comp->mem())
     , _litDict((useLitDict != NULL) ? useLitDict : comp->litdict())
     , _symDict((useSymDict != NULL) ? useSymDict : comp->symdict())
     , _typeDict((useTypeDict != NULL) ? useTypeDict : comp->typedict())
@@ -50,9 +53,10 @@ Context::Context(LOCATION, Context *parent, LiteralDictionary *useLitDict, Symbo
     , _comp(parent->comp())
     , _name(name)
     , _parent(parent)
-    , _litDict(useLitDict)
-    , _symDict(useSymDict)
-    , _typeDict(useTypeDict)
+    , _children(NULL, _comp->mem())
+    , _litDict((useLitDict != NULL) ? useLitDict : parent->litDict())
+    , _symDict((useSymDict != NULL) ? useSymDict : parent->symDict())
+    , _typeDict((useTypeDict != NULL) ? useTypeDict : parent->typeDict())
     , _numEntryPoints(numEntryPoints)
     , _numExitPoints(numExitPoints) {
 
@@ -76,6 +80,14 @@ Context::initEntriesAndExits(LOCATION, Compilation *comp) {
     _builderExitPoints = new Builder *[_numExitPoints];
     for (unsigned x=0;x < _numExitPoints;x++)
         _builderExitPoints[x] = core->ExitBuilder(PASSLOC, comp, this);
+}
+
+Context::~Context() {
+    // actual Builders will be deleted by Compilation
+    delete[] _builderExitPoints;
+    delete[] _debugEntryPoints;
+    delete[] _nativeEntryPoints;
+    delete[] _builderEntryPoints;
 }
 
 void

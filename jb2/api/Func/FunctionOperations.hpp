@@ -22,7 +22,7 @@
 #ifndef FUNCTIONOPERATIONS_INCL
 #define FUNCTIONOPERATIONS_INCL
 
-#include "Operation.hpp"
+#include "JBCore.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -32,76 +32,84 @@ class FunctionExtension;
 class FunctionSymbol;
 
 class Op_Load : public OperationR1S1 {
+    JBALLOC_(Op_Load)
+
     friend class FunctionExtension;
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
     virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
-    Op_Load(LOCATION, Extension *ext, Builder * parent, ActionID aLoad, Value *result, Symbol *s);
+    Op_Load(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aLoad, Value *result, Symbol *s);
     };
 
 class Op_Store : public OperationR0S1V1 {
+    JBALLOC_(Op_Store)
+
     friend class FunctionExtension;
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
     virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
-    Op_Store(LOCATION, Extension *ext, Builder * parent, ActionID aStore, Symbol *s, Value *value);
+    Op_Store(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aStore, Symbol *s, Value *value);
 };
 
 class Op_Call : public OperationR1S1VN {
-    friend class FunctionExtension;
+    JBALLOC_(Op_Call)
 
+    friend class FunctionExtension;
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-    virtual void write(TextWriter &w) const;
+    virtual void log(TextLogger &lgr) const;
     virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
-    Op_Call(LOCATION, Extension *ext, Builder * parent, ActionID aCall, Value *result, FunctionSymbol *target, std::va_list & args);
-    Op_Call(LOCATION, Extension *ext, Builder * parent, ActionID aCall, OperationCloner *cloner)
-        : OperationR1S1VN(PASSLOC, aCall, ext, parent, cloner) {
+    Op_Call(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aCall, Value *result, FunctionSymbol *target, std::va_list & args);
+    Op_Call(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aCall, OperationCloner *cloner)
+        : OperationR1S1VN(MEM_PASSLOC(a), aCall, ext, parent, cloner) {
     }
 };
 
 class Op_CallVoid : public OperationR0S1VN {
-    friend class FunctionExtension;
+    JBALLOC_(Op_CallVoid)
 
+    friend class FunctionExtension;
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-    virtual void write(TextWriter &w) const;
+    virtual void log(TextLogger &lgr) const;
     virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
-    Op_CallVoid(LOCATION, Extension *ext, Builder * parent, ActionID aCallVoid, FunctionSymbol *target, std::va_list & args);
-    Op_CallVoid(LOCATION, Extension *ext, Builder * parent, ActionID aCallVoid, OperationCloner *cloner)
-        : OperationR0S1VN(PASSLOC, aCallVoid, ext, parent, cloner) {
+    Op_CallVoid(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aCallVoid, FunctionSymbol *target, std::va_list & args);
+    Op_CallVoid(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aCallVoid, OperationCloner *cloner)
+        : OperationR0S1VN(MEM_PASSLOC(a), aCallVoid, ext, parent, cloner) {
     }
 };
 
 class Op_ReturnVoid : public Operation {
-    friend class FunctionExtension;
+    JBALLOC_(Op_ReturnVoid)
 
+    friend class FunctionExtension;
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
     virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
-    Op_ReturnVoid(LOCATION, Extension *ext, Builder * parent, ActionID aReturnVoid);
+    Op_ReturnVoid(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aReturnVoid);
     };
 
 // eventually generalize to handle multiple return values but not needed yet
 class Op_Return : public OperationR0V1 {
-    friend class FunctionExtension;
+    JBALLOC_(Op_Return)
 
+    friend class FunctionExtension;
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
     virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
-    Op_Return(LOCATION, Extension *ext, Builder * parent, ActionID aReturn, Value * v);
+    Op_Return(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aReturn, Value * v);
     };
 
 } // namespace Func

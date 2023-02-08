@@ -25,8 +25,7 @@
 #include "stdint.h"
 #include "stddef.h"
 #include <map>
-#include "CreateLoc.hpp"
-#include "KindService.hpp"
+#include "JBCore.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -44,15 +43,19 @@ const VirtualMachineStateID NoVirtualMachineStateID=0;
 
 typedef KindService::Kind StateKind;
 
-class VirtualMachineState {
+class VirtualMachineState : public Allocatable {
+    JBALLOC_NO_DESTRUCTOR_(VirtualMachineState)
+
 public:
-    VirtualMachineState(LOCATION, VMExtension *vme, StateKind kind)
-        : _id(nextVirtualMachineStateID++)
+    VirtualMachineState(MEM_LOCATION(a), VMExtension *vme, StateKind kind)
+        : Allocatable(a)
+        , _id(nextVirtualMachineStateID++)
         , _createLocation(PASSLOC)
         , _vme(vme)
         , _kind(kind) {
 
     }
+    virtual ~VirtualMachineState() { }
 
     VirtualMachineStateID id() const { return _id; }
     CreateLocation createLocation() const { return _createLocation; }

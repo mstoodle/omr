@@ -24,12 +24,13 @@
 
 #include "common.hpp"
 #include "CreateLoc.hpp"
-#include "util/String.hpp"
+#include "String.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 
 class Builder;
+class Compilation;
 class Compiler;
 class CompileUnit;
 class Context;
@@ -41,7 +42,9 @@ class SemanticVersion;
 class TypeDictionary;
 class Value;
 
-class Extension {
+class Extension : public Allocatable {
+    JBALLOC_(Extension)
+
     friend class Compiler;
     friend class Context;
     friend class Operation;
@@ -50,7 +53,7 @@ public:
     virtual const SemanticVersion * semver() const { return &version; }
     static const String NAME;
 
-    Extension(LOCATION, Compiler *compiler);
+    DYNAMIC_ALLOC_ONLY(Extension, LOCATION, Compiler *compiler);
 
     Compiler *compiler() const { return _compiler; }
     String name() const { return _name; }
@@ -88,7 +91,7 @@ public:
     Location * SourceLocation(LOCATION, Builder *b, String func, String lineNumber, int32_t bcIndex);
 
 protected:
-    Extension(LOCATION, Compiler *compiler, String name);
+    DYNAMIC_ALLOC_ONLY(Extension, LOCATION, Compiler *compiler, String name);
 
     ActionID registerAction(String name);
     CompilerReturnCode registerReturnCode(String name);
@@ -97,12 +100,20 @@ protected:
     Value *createValue(const Builder *parent, const Type *type);
     void addOperation(Builder *b, Operation *op);
 
+    template <class T>
+    T * registerBuilder(Compilation *comp, Builder *b) {
+        return static_cast<T *>(internalRegisterBuilder(comp, b));
+    }
+
     virtual uint64_t numTypes() const { return static_cast<uint64_t>(_types.length()); }
 
     Builder *EntryBuilder(LOCATION, Compilation *comp, Context *context, String name="");
     Builder *ExitBuilder(LOCATION, Compilation *comp, Context *context, String name="");
 
     static const SemanticVersion version;
+
+private:
+    Builder * internalRegisterBuilder(Compilation *comp, Builder *b);
     
 public:
     // depends on _compiler being initialized

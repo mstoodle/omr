@@ -34,11 +34,12 @@ class PointerType;
 class StructType;
 
 class BaseCompilation : public Func::FunctionCompilation {
+    JBALLOC_NO_DESTRUCTOR_(BaseCompilation)
+
     friend class BaseExtension;
 
 public:
-    BaseCompilation(Compiler *compiler, Func::Function *func, StrategyID strategy=NoStrategy, TypeDictionary *dict=NULL, Config *localConfig=NULL);
-    virtual ~BaseCompilation() { }
+    BaseCompilation(Compiler *compiler, Func::Function *func, StrategyID strategy=NoStrategy, LiteralDictionary *litDict=NULL, SymbolDictionary *symDict=NULL, TypeDictionary *typeDict=NULL, Config *localConfig=NULL);
 
     const PointerType * pointerTypeFromBaseType(const Type * baseType);
     void registerPointerType(const PointerType * pType);

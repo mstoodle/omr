@@ -66,6 +66,8 @@ class VMExtension;
  */
 
 class VirtualMachineRegister : public VirtualMachineState {
+    JBALLOC_NO_DESTRUCTOR_(VirtualMachineRegister)
+
 public:
    /**
     * @brief public constructor used to create a virtual machine state variable
@@ -75,7 +77,8 @@ public:
     * @param addressOfRegister is the address of the actual register
     * @param doReload whether local register should be Reloaded (default true, MakeCopy will pass false)
     */
-    VirtualMachineRegister(LOCATION, VMExtension *vme, String name, Base::BaseCompilation *comp, Value * addressOfRegister, bool doReload=true);
+    VirtualMachineRegister(MEM_LOCATION(a), VMExtension *vme, String name, Base::BaseCompilation *comp, Value * addressOfRegister, bool doReload=true);
+    virtual ~VirtualMachineRegister() { }
 
     // virtualmachinestate api
 
@@ -114,7 +117,7 @@ protected:
      * @param vme the VM extension to use
      * @param func the function being compiled
      */
-    VirtualMachineRegister(LOCATION, VMExtension *vme, String name, Base::BaseCompilation * comp, StateKind kind);
+    VirtualMachineRegister(MEM_LOCATION(a), VMExtension *vme, String name, Base::BaseCompilation * comp, StateKind kind);
 
     String _name;
     Base::BaseCompilation *_comp;

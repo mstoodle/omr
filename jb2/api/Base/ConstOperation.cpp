@@ -26,14 +26,20 @@ namespace OMR {
 namespace JitBuilder {
 namespace Base {
 
+INIT_JBALLOC_REUSECAT(Op_Const, Operation)
 
-Op_Const::Op_Const(LOCATION, Extension *ext, Builder * parent, ActionID aConst, Value * result, Literal *lv)
-    : OperationR1L1(PASSLOC, aConst, ext, parent, result, lv) {
+Op_Const::Op_Const(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aConst, Value * result, Literal *lv)
+    : OperationR1L1(MEM_PASSLOC(a), aConst, ext, parent, result, lv) {
+}
+
+Op_Const::~Op_Const() {
+
 }
 
 Operation *
 Op_Const::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    return new Op_Const(PASSLOC, this->_ext, b, this->action(), cloner->result(), cloner->literal());
+    Allocator *mem = b->comp()->mem();
+    return new (mem) Op_Const(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->result(), cloner->literal());
 }
 
 void
@@ -45,4 +51,3 @@ Op_Const::jbgen(JB1MethodBuilder *j1mb) const {
 } // namespace Base
 } // namespace JitBuilder
 } // namespace OMR
-

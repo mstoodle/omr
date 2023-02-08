@@ -25,8 +25,6 @@
 #include <assert.h>
 #include <stdarg.h>
 
-#include "../JB2.hpp"
-
 namespace OMR {
 namespace JitBuilder {
 
@@ -34,24 +32,48 @@ namespace JitBuilder {
 // This is an abstract class with non-virtual functions so it cannot be used directly
 // Subclass iterators are allowed to add more public API but must at least implement these functions
 // Iterators in jb2 assume that the T type has a valid zero value
+//
+// All Iterators are expected to be manipulated as values and should not be dynamically allocated;
+//
 template <typename T>
 class Iterator {
 public:
-    Iterator()                            { }
+    Iterator(Allocator *a)
+        : _mem(a) {
+
+    }
 
     // Rule of 3:
-    Iterator(const Iterator &)            { }
-    virtual ~Iterator()                   { }
-    Iterator &operator=(const Iterator &) { return *this; }
+    Iterator(const Iterator & other)
+        : _mem(other._mem) {
+
+    }
+
+    virtual ~Iterator() { }
+    Iterator &operator=(const Iterator & other) {
+        _mem = other._mem;
+        return *this;
+    }
 
     // Rule of 5:
-    Iterator(Iterator &&)                 { }
-    Iterator &operator=(Iterator &&)      { return *this; }
+    Iterator(Iterator && other)
+        : _mem(other._mem) {
+    }
+    Iterator &operator=(Iterator && other) {
+        _mem = other._mem;
+        return *this;
+    }
 
     void reset();
     bool hasItem();
     void operator++(int32_t);
     T item();
+
+protected:
+    T *allocate(size_t num) {
+        return reinterpret_cast<T *>(_mem->allocate(num * sizeof(T), NoAllocationCategory));
+    }
+    Allocator *_mem;
 };
 
 template <class T>
@@ -59,13 +81,13 @@ class ForwardSimpleIterator : public Iterator<T> {
 public:
     // Rule of 3
     ForwardSimpleIterator(const ForwardSimpleIterator & other)
-        : Iterator<T>()
+        : Iterator<T>(other)
         , _index(other._index)
         , _items(copyItems(other._items, other._length)) {
     }
     virtual ~ForwardSimpleIterator() {
         if (_ownItems)
-            deallocate(_items, _length);
+            this->_mem->deallocate(_items);
     }
     ForwardSimpleIterator & operator=(const ForwardSimpleIterator & other) {
         _index = other._index;
@@ -74,7 +96,7 @@ public:
 
     // Rule of 5
     ForwardSimpleIterator(ForwardSimpleIterator && other)
-        : Iterator<T>()
+        : Iterator<T>(other)
         , _index(other._index)
         , _length(other._length)
         , _ownItems(other._ownItems)
@@ -90,32 +112,32 @@ public:
     }
 
     ForwardSimpleIterator()
-        : Iterator<T>()
+        : Iterator<T>(NULL)
         , _index(0)
         , _length(0)
         , _ownItems(false)
         , _items(NULL) {
     }
-    ForwardSimpleIterator(T one)
-        : Iterator<T>()
+    ForwardSimpleIterator(Allocator *a, T one)
+        : Iterator<T>(a)
         , _index(0)
         , _items(copyItems(1, one)) {
     }
 
-    ForwardSimpleIterator(T one, T two)
-        : Iterator<T>()
+    ForwardSimpleIterator(Allocator *a, T one, T two)
+        : Iterator<T>(a)
         , _index(0)
         , _items(copyItems(2, one, two)) {
     }
 
-    ForwardSimpleIterator(T one, T two, T three)
-        : Iterator<T>()
+    ForwardSimpleIterator(Allocator *a, T one, T two, T three)
+        : Iterator<T>(a)
         , _index(0)
         , _items(copyItems(3, one, two, three)) {
     }
 
-    ForwardSimpleIterator(int32_t numArgs, ...)
-        : Iterator<T>()
+    ForwardSimpleIterator(Allocator *a, int32_t numArgs, ...)
+        : Iterator<T>(a)
         , _index(0) {
 
         va_list(args);
@@ -123,8 +145,8 @@ public:
         _items = copyItems(args, numArgs);
     }
 
-    ForwardSimpleIterator(T *array, int arraySize)
-        : Iterator<T>()
+    ForwardSimpleIterator(Allocator *a, T *array, int arraySize)
+        : Iterator<T>(a)
         , _index(0)
         , _length(arraySize)
         , _ownItems(false)
@@ -144,7 +166,7 @@ protected:
     }
 
     T *copyItems(va_list args, int32_t numArgs) {
-        T *array = allocate(numArgs);
+        T *array = this->allocate(numArgs);
         for (int32_t a=0;a < numArgs;a++)
             array[a] = va_arg(args, T);
         va_end(args);
@@ -154,19 +176,11 @@ protected:
         return array;
     }
     T *copyItems(T *oldArray, int32_t arraySize) {
-        T *newArray = allocate(arraySize);
-        for (int32_t a=0;a < arraySize;a++)
-            newArray[a] = oldArray[a];
-        _items = newArray;
+        T *newArray = this->allocate(arraySize);
+        for (int32_t a=0;a < arraySize;a++) newArray[a] = oldArray[a]; _items = newArray;
         _ownItems = true;
         _length = arraySize;
         return newArray;
-    }
-    T *allocate(int32_t arraySize) {
-        return JB2::allocate<T>(arraySize);
-    }
-    void deallocate(T *array, int32_t arraySize) {
-        JB2::deallocate<T>(array, arraySize);
     }
 
     int32_t _index;
@@ -181,20 +195,23 @@ public:
     // so long as no BackwardArrayIterator<T> state, rule of 3 and
     //   rule of 5 satisfied already by ForwardArrayIterator<T>
 
-    BackwardArrayIterator<T>(T one)
-        : ForwardSimpleIterator<T>(one) {
-    }
-
-    BackwardArrayIterator<T>(T one, T two)
-        : ForwardSimpleIterator<T>(two, one) {
-    }
-
-    BackwardArrayIterator<T>(T one, T two, T three)
-        : ForwardSimpleIterator<T>(three, two, one) {
-    }
-
-    BackwardArrayIterator<T>(int32_t numArgs, ...)
+    BackwardArrayIterator<T>()
         : ForwardSimpleIterator<T>() {
+    }
+    BackwardArrayIterator<T>(Allocator*a, T one)
+        : ForwardSimpleIterator<T>(a, one) {
+    }
+
+    BackwardArrayIterator<T>(Allocator *a, T one, T two)
+        : ForwardSimpleIterator<T>(a, two, one) {
+    }
+
+    BackwardArrayIterator<T>(Allocator *a, T one, T two, T three)
+        : ForwardSimpleIterator<T>(a, three, two, one) {
+    }
+
+    BackwardArrayIterator<T>(Allocator *a, int32_t numArgs, ...)
+        : ForwardSimpleIterator<T>(a) {
         va_list(args);
         va_start(args, numArgs);
         ForwardSimpleIterator<T>::copyItems(numArgs, args);
@@ -207,8 +224,8 @@ public:
         va_end(args);
     }
 
-    BackwardArrayIterator<T>(T *array, int arraySize)
-        : ForwardSimpleIterator<T>(array, arraySize) {
+    BackwardArrayIterator<T>(Allocator *a, T *array, int arraySize)
+        : ForwardSimpleIterator<T>(a, array, arraySize) {
         
         if (!this->_ownItems) // base class constructor doesn't copy
             this->_items = copyItems(arraySize, array);

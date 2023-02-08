@@ -31,14 +31,33 @@ namespace OMR {
 namespace JitBuilder {
 namespace Func {
 
+INIT_JBALLOC_REUSECAT(FunctionContext, Context)
+
 FunctionContext::FunctionContext(LOCATION, FunctionCompilation *comp, String name)
-    : Context(PASSLOC, comp, NULL, NULL, NULL, 1, 1, name) {
+    : Context(PASSLOC, comp, NULL, NULL, NULL, 1, 1, name)
+    , _parameters((Allocator *)NULL, comp->mem())
+    , _locals((Allocator *)NULL, comp->mem())
+    , _functions((Allocator *)NULL, comp->mem())
+    , _returnTypes((Allocator *)NULL, comp->mem()) {
 
 }
 
 FunctionContext::FunctionContext(LOCATION, FunctionCompilation *comp, FunctionContext *caller, String name)
-    : Context(PASSLOC, caller, NULL, NULL, NULL, 1, 1, name) {
+    : Context(PASSLOC, caller, NULL, NULL, NULL, 1, 1, name)
+    , _parameters((Allocator *)NULL, comp->mem())
+    , _locals((Allocator *)NULL, comp->mem())
+    , _functions((Allocator *)NULL, comp->mem())
+    , _returnTypes((Allocator *)NULL, comp->mem()) {
 
+}
+
+FunctionContext::~FunctionContext() {
+    _functions.erase();
+    _locals.erase();
+    _parameters.erase();
+
+    // FunctionContext doesn't create Type objects, but still need to erase the List
+    _returnTypes.erase();
 }
 
 FunctionCompilation *
@@ -48,7 +67,8 @@ FunctionContext::fComp() const {
 
 ParameterSymbol *
 FunctionContext::DefineParameter(String name, const Type * type) {
-    ParameterSymbol *parm = new ParameterSymbol(name, type, this->_parameters.length());
+    Allocator *mem = _comp->mem();
+    ParameterSymbol *parm = new (mem) ParameterSymbol(mem, name, type, this->_parameters.length());
     this->_parameters.push_back(parm);
     addSymbol(parm);
     return parm;
@@ -67,7 +87,8 @@ FunctionContext::DefineLocal(String name, const Type * type) {
     if (sym && sym->isKind<LocalSymbol>())
        return sym->refine<LocalSymbol>();
 
-    LocalSymbol *local = new LocalSymbol(name, type);
+    Allocator *mem = _comp->mem();
+    LocalSymbol *local = new (mem) LocalSymbol(mem, name, type);
     this->_locals.push_back(local);
     addSymbol(local);
     return local;
@@ -94,6 +115,12 @@ FunctionContext::LookupLocal(String name) {
     }
 
     return NULL;
+}
+
+void
+FunctionContext::DefineReturnType(const Type * type) {
+    size_t index = _returnTypes.length();
+    _returnTypes.assign(index, type);
 }
 
 LocalSymbolList
@@ -174,8 +201,10 @@ FunctionContext::internalDefineFunction(LOCATION,
 
     FunctionExtension *fx = _comp->compiler()->lookupExtension<FunctionExtension>();
     const FunctionType *type = fx->DefineFunctionType(PASSLOC, fComp(), returnType, numParms, parmTypes);
-    FunctionSymbol *sym = new FunctionSymbol(type, name, fileName, lineNumber, entryPoint);
+    Allocator *mem = _comp->mem();
+    FunctionSymbol *sym = new (mem) FunctionSymbol(mem, type, name, fileName, lineNumber, entryPoint);
     _functions.push_back(sym);
+    addSymbol(sym);
     return sym;
 }
 

@@ -20,9 +20,16 @@
  *******************************************************************************/
 
 #include "gtest/gtest.h"
-#include "util/List.hpp"
+#include "AllocatorRaw.hpp"
+#include "Compiler.hpp"
+#include "List.hpp"
 
 using namespace OMR::JitBuilder;
+
+static AllocatorRaw rawAllocator;
+static Allocator *raw=&rawAllocator;
+
+#define NA ((Allocator *)NULL)
 
 int
 main(int argc, char** argv) {
@@ -31,12 +38,12 @@ main(int argc, char** argv) {
 }
 
 TEST(JB2List, EmptyList) {
-    List<int> list;
+    List<int> list(NA, raw);;
     EXPECT_EQ(list.length(), 0) << "fresh list has length zero";
 }
 
 TEST(JB2List, PushAndPopFront) {
-    List<int> list;
+    List<int> list(NA, raw);
     int x=2; int y=3; int z=5; int p;
     list.push_front(x);
     EXPECT_EQ(list.length(), 1) << "one element list has length 1";
@@ -56,7 +63,7 @@ TEST(JB2List, PushAndPopFront) {
 }
 
 TEST(JB2List, PushAndPopBack) {
-    List<int> list;
+    List<int> list(NA,raw);
     int x=2; int y=3; int z=5; int p;
     list.push_back(x);
     EXPECT_EQ(list.length(), 1) << "one element list has length 1";
@@ -76,7 +83,7 @@ TEST(JB2List, PushAndPopBack) {
 }
 
 TEST(JB2List, PushFrontAndPopBack) {
-    List<int *> list;
+    List<int *> list(NA,raw);
     int x=2; int y=3; int z=5; int *p;
     list.push_front(&x);
     list.push_front(&y);
@@ -93,7 +100,7 @@ TEST(JB2List, PushFrontAndPopBack) {
 }
 
 TEST(JB2List, PushAndPopMix) {
-    List<int *> list;
+    List<int *> list(NA,raw);
     int x=2; int y=3; int z=5; int *p;
     list.push_front(&x);
     list.push_front(&y);
@@ -126,7 +133,7 @@ TEST(JB2List, PushAndPopMix) {
 }
 
 TEST(JB2List, Iterator) {
-    List<int *> list;
+    List<int *> list(NA,raw);
     int x=2; int y=3; int z=5; int *p;
     list.push_front(&x);
     list.push_front(&y);

@@ -23,7 +23,7 @@
 #include "Compiler.hpp"
 #include "Extension.hpp"
 #include "JB1MethodBuilder.hpp"
-#include "TextWriter.hpp"
+#include "TextLogger.hpp"
 #include "Type.hpp"
 #include "TypeDictionary.hpp"
 #include "TypeReplacer.hpp"
@@ -31,15 +31,18 @@
 namespace OMR {
 namespace JitBuilder {
 
+INIT_JBALLOC_ON(Type, TypeDictionary)
+
 KindService Type::kindService;
 TypeKind Type::TYPEKIND=KindService::NoKind;
 bool Type::kindRegistered = false;
 
-Type::Type(LOCATION, TypeKind kind, Extension *ext, String name, size_t size, const Type *layout)
-    : _ext(ext)
+Type::Type(MEM_LOCATION(a), TypeKind kind, Extension *ext, String name, size_t size, const Type *layout)
+    : Allocatable(a)
+    , _ext(ext)
     , _createLoc(PASSLOC)
-    , _dict(ext->compiler()->dict())
-    , _id(ext->compiler()->dict()->getTypeID())
+    , _dict(ext->compiler()->typeDict())
+    , _id(_dict->getTypeID())
     , _kind(kind)
     , _name(name)
     , _size(size)
@@ -48,8 +51,9 @@ Type::Type(LOCATION, TypeKind kind, Extension *ext, String name, size_t size, co
     _dict->registerType(this);
 }
 
-Type::Type(LOCATION, TypeKind kind, Extension *ext, TypeDictionary *dict, String name, size_t size, const Type *layout)
-    : _ext(ext)
+Type::Type(MEM_LOCATION(a), TypeKind kind, Extension *ext, TypeDictionary *dict, String name, size_t size, const Type *layout)
+    : Allocatable(a)
+    , _ext(ext)
     , _createLoc(PASSLOC)
     , _dict(dict)
     , _id(dict->getTypeID())
@@ -59,6 +63,10 @@ Type::Type(LOCATION, TypeKind kind, Extension *ext, TypeDictionary *dict, String
     , _layout(layout) {
 
     dict->registerType(this);
+}
+
+Type::~Type() {
+
 }
 
 Literal *
@@ -78,10 +86,10 @@ Type::base_string(bool useHeader) const {
 }
 
 void
-Type::writeType(TextWriter &w, bool useHeader) const {
-    w << "[ ";
-    w << this->to_string(useHeader);
-    w << " ]";
+Type::logType(TextLogger &lgr, bool useHeader) const {
+    lgr << "[ ";
+    lgr << this->to_string(useHeader);
+    lgr << " ]";
 }
 
 String
@@ -116,6 +124,15 @@ Type::getTypeClassKind() {
 TypeKind NoTypeType::TYPEKIND = KindService::NoKind;
 bool NoTypeType::kindRegistered = false;
 
+NoTypeType::NoTypeType(MEM_LOCATION(a), Extension *ext)
+    : Type(MEM_PASSLOC(a), TYPEKIND, ext, "NoType", 0) {
+
+}
+
+NoTypeType::~NoTypeType() {
+
+}
+
 const TypeKind
 NoTypeType::getTypeClassKind() {
     if (!kindRegistered) {
@@ -126,8 +143,8 @@ NoTypeType::getTypeClassKind() {
 }
 
 void
-NoTypeType::printValue(TextWriter &w, const void *p) const {
-    w << name();
+NoTypeType::logValue(TextLogger &lgr, const void *p) const {
+    lgr << name();
 }
 
 bool

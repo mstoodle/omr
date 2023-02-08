@@ -30,7 +30,8 @@ namespace OMR {
 namespace JitBuilder {
 
 template <typename T>
-class Array {
+class Array : public Allocatable {
+    JBALLOC_NO_DESTRUCTOR(Array<T>, NoAllocationCategory)
 
     typedef uint64_t ChangeID;
 
@@ -100,30 +101,76 @@ public:
     };
 
 public:
-    Array()
-        : _changeID(0)
+    Array(Allocator *a)
+        : Allocatable(a)
+        , _arrayAllocator(a)
+        , _changeID(0)
+        , _ownItems(false)
+        , _items(NULL)
+        , _length(0) {
+    }
+    Array(Allocator *a, Allocator *arrayAllocator)
+        : Allocatable(a)
+        , _arrayAllocator(arrayAllocator)
+        , _changeID(0)
+        , _ownItems(false)
         , _items(NULL)
         , _length(0) {
     }
 
-    Array(T one)
-        : _changeID(0)
+    Array(Allocator *a, T one)
+        : Allocatable(a)
+        , _arrayAllocator(a)
+        , _changeID(0)
+        , _items(initialize(1, one))
+        , _length(0) {
+    }
+    Array(Allocator *a, Allocator *arrayAllocator, T one)
+        : Allocatable(a)
+        , _arrayAllocator(arrayAllocator)
+        ,  _changeID(0)
         , _items(initialize(1, one))
         , _length(0) {
     }
 
-    Array(T one, T two)
-        : _changeID(0)
+    Array(Allocator *a, T one, T two)
+        : Allocatable(a)
+        , _arrayAllocator(a)
+        , _changeID(0)
+        , _items(initialize(2, one, two)) {
+    }
+    Array(Allocator *a, Allocator *arrayAllocator, T one, T two)
+        : Allocatable(a)
+        , _arrayAllocator(arrayAllocator)
+        , _changeID(0)
         , _items(initialize(2, one, two)) {
     }
 
-    Array(T one, T two, T three)
-        : _changeID(0)
+    Array(Allocator *a, T one, T two, T three)
+        : Allocatable(a)
+        , _arrayAllocator(a)
+        , _changeID(0)
+        , _items(initialize(3, one, two, three)) {
+    }
+    Array(Allocator *a, Allocator *arrayAllocator, T one, T two, T three)
+        : Allocatable(a)
+        , _arrayAllocator(arrayAllocator)
+        , _changeID(0)
         , _items(initialize(3, one, two, three)) {
     }
 
-    Array(T *array, int arraySize)
-        : _changeID(0)
+    Array(Allocator *a, T *array, int arraySize)
+        : Allocatable(a)
+        , _arrayAllocator(a)
+        , _changeID(0)
+        , _ownItems(false)
+        , _length(arraySize)
+        , _items(array, arraySize) {
+    }
+    Array(Allocator *a, Allocator *arrayAllocator, T *array, int arraySize)
+        : Allocatable(a)
+        , _arrayAllocator(arrayAllocator)
+        , _changeID(0)
         , _ownItems(false)
         , _length(arraySize)
         , _items(array, arraySize) {
@@ -131,7 +178,7 @@ public:
 
     virtual ~Array() {
         if (_ownItems && _items != NULL)
-            deallocate(_items, _length);
+            deallocate(_items);
     }
 
     uint32_t length() const { return _length; }
@@ -191,10 +238,11 @@ protected:
         }
         memset(zeroStart, 0, (newLength - _length) * sizeof(T));
         if (needDeallocate)
-            deallocate(_items, _length);
+            deallocate(_items);
 
         _items = newItems;
         _length = newLength;
+        _ownItems = true;
     }
 
     T *initialize(int32_t numArgs, ...) { 
@@ -222,13 +270,14 @@ protected:
         _length = arraySize;
         return newArray;
     }
-    T *allocate(int32_t arraySize) {
-        return JB2::allocate<T>(arraySize);
+    T *allocate(size_t arraySize) {
+        return reinterpret_cast<T *>(_arrayAllocator->allocate(arraySize, NoAllocationCategory));
     }
-    void deallocate(T *array, size_t arraySize) {
-        JB2::deallocate<T>(array, arraySize);
+    void deallocate(T *array) {
+        _arrayAllocator->deallocate(array);
     }
 
+    Allocator *_arrayAllocator;
     ChangeID _changeID;
     size_t _length;
     bool _ownItems;

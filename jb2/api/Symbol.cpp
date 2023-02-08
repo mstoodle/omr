@@ -20,19 +20,26 @@
  *******************************************************************************/
 
 #include "Symbol.hpp"
-#include "TextWriter.hpp"
+#include "SymbolDictionary.hpp"
+#include "TextLogger.hpp"
 
 namespace OMR {
 namespace JitBuilder {
+
+INIT_JBALLOC_ON(Symbol, SymbolDictionary)
 
 SymbolKind Symbol::SYMBOLKIND=KindService::NoKind;
 bool Symbol::kindRegistered = false;
 
 KindService Symbol::kindService;
 
+Symbol::~Symbol() {
+
+}
+
 void
-Symbol::write(TextWriter &w) const {
-    w << this << w.endl();
+Symbol::log(TextLogger &lgr) const {
+    lgr << this << lgr.endl();
 }
 
 const SymbolKind
@@ -48,4 +55,3 @@ Symbol::getSymbolClassKind() {
 
 } // namespace JitBuilder
 } // namespace OMR
-

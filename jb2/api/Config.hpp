@@ -22,29 +22,29 @@
 #ifndef CONFIG_INCL
 #define CONFIG_INCL
 
+#include "Allocatable.hpp"
+#include "String.hpp"
+
 namespace OMR {
 namespace JitBuilder {
 
+class Allocator;
+class Compilation;
+class Compiler;
 class FunctionBuilder;
+class TextLogger;
 class Transformer;
 
 // Needs method filter concept and construction should decode filter
-class Config {
+class Config : public Allocatable {
+    JBALLOC_(Config)
+
+    friend class Compiler;
+    friend class Compilation;
+
 public:
-    Config()
-        : _traceBuildIL(false)
-        , _traceCodeGenerator(false)
-        , _traceTypeReplacer(false)
-        , _lastTransformationIndex(-1) // no limit
-        , _logRegex("") {
-    }
-    Config(Config *parent)
-        : _traceBuildIL(parent->_traceBuildIL)
-        , _traceCodeGenerator(parent->_traceCodeGenerator)
-        , _traceTypeReplacer(parent->_traceTypeReplacer)
-        , _lastTransformationIndex(parent->_lastTransformationIndex)
-        , _logRegex(parent->_logRegex) {
-    }
+    ALL_ALLOC_ALLOWED_NOARGS(Config);
+    ALL_ALLOC_ALLOWED(Config, Config *parent);
 
     // when true, turn logging on when buildIL() is called
     bool traceBuildIL() const                                 { return _traceBuildIL; }
@@ -54,9 +54,24 @@ public:
     bool traceCodeGenerator() const                           { return _traceCodeGenerator; }
     Config * setTraceCodeGenerator(bool v=true)               { _traceCodeGenerator = v; return this; }
 
+    // when true, turn on logging for allocations made by the Compilation
+    Config * setTraceCompilationAllocations(bool v=true)      { _traceCompilationAllocations = v; return this; }
+
+    // when true, turn on logging for allocations made by the Compiler
+    Config * setTraceCompilerAllocations(bool v=true)         { _traceCompilerAllocations = v; return this; }
+
     // when true, turn logging on when CodeGenerator runs
     bool traceTypeReplacer() const                            { return _traceTypeReplacer; }
     Config * setTraceTypeReplacer(bool v=true)                { _traceTypeReplacer = v; return this; }
+
+    // when true, turn on tracking for allocations made by the Compilation
+    Config * setTrackCompilationAllocations(bool v=true)      { _trackCompilationAllocations = v; return this; }
+
+    // when true, turn on tracking for allocations made by the Compiler
+    Config * setTrackCompilerAllocations(bool v=true)         { _trackCompilerAllocations = v; return this; }
+
+    Config * setVerboseErrors(bool v=true)                    { _verboseErrors = v; return this; }
+    bool verboseErrors()                                      { return _verboseErrors; }
 
     // if >= 0, identifies the last transformation to apply
     bool limitLastTransformationIndex() const                 { return _lastTransformationIndex >= 0; }
@@ -64,17 +79,38 @@ public:
     Config * setLastTransformationIndex(TransformationID idx) { _lastTransformationIndex = idx; return this; }
 
     // when true, logging should be enabled
-    bool logCompilation(Compilation * fb) const               { return false; } // TODO: match name against _logRegex
+    bool logCompilation(Compilation * comp) const             { return false; } // TODO: match name against _logRegex
     Config * setLogRegex(String regex)                        { _logRegex = regex; return this; }
 
+    TextLogger * logger() const                               { return _logger; }
+    Config * setLogger(TextLogger * logger)                   { _logger = logger; return this; }
+
 protected:
+    Allocator * allocateAllocators(Allocator *allocator, bool tracker, bool tracer);
+    void destructAllocators(Allocator *allocator, bool tracker, bool tracer);
+
+    Allocator * compilerAllocator(Allocator *allocator) { return allocateAllocators(allocator, _trackCompilerAllocations, _traceCompilerAllocations); }
+    void destructCompilerAllocator(Allocator *allocator) { destructAllocators(allocator, _trackCompilerAllocations, _traceCompilerAllocations); }
+
+    Allocator * compilationAllocator(Allocator *allocator) { return allocateAllocators(allocator, _trackCompilationAllocations, _traceCompilationAllocations); }
+    void destructCompilationAllocator(Allocator *allocator) { destructAllocators(allocator, _trackCompilationAllocations, _traceCompilationAllocations); }
+
     bool _traceBuildIL;
     bool _traceCodeGenerator;
+    bool _traceCompilationAllocations;
+    bool _traceCompilerAllocations;
     bool _traceTypeReplacer;
+
+    bool _trackCompilationAllocations;
+    bool _trackCompilerAllocations;
+
+    bool _verboseErrors;
 
     TransformationID _lastTransformationIndex;
 
     String _logRegex;
+
+    TextLogger * _logger;
 };
 
 } // namespace JitBuilder

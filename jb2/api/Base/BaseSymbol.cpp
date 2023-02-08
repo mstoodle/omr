@@ -27,9 +27,15 @@ namespace JitBuilder {
 namespace Base {
 
 
+INIT_JBALLOC_REUSECAT(FieldSymbol,Symbol);
+
 // should be initialized first time it's needed by ensureKindRegistered()
 bool FieldSymbol::kindRegistered=false;
 SymbolKind FieldSymbol::SYMBOLKIND=KindService::NoKind;
+
+FieldSymbol::~FieldSymbol() {
+
+}
 
 const SymbolKind
 FieldSymbol::getSymbolClassKind() {
@@ -40,8 +46,8 @@ FieldSymbol::getSymbolClassKind() {
     return SYMBOLKIND;
 }
 
-FieldSymbol::FieldSymbol(String name, const StructType *structType, const FieldType *fieldType)
-    : Symbol(getSymbolClassKind(), name, fieldType->type())
+FieldSymbol::FieldSymbol(Allocator *a, String name, const StructType *structType, const FieldType *fieldType)
+    : Symbol(a, getSymbolClassKind(), name, fieldType->type())
     , _structType(structType)
     , _fieldType(fieldType) {
 

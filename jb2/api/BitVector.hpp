@@ -25,7 +25,8 @@
 #include <cassert>
 #include <cstring>
 #include <cstdint>
-#include "../IDs.hpp"
+#include "Allocator.hpp"
+#include "IDs.hpp"
 #include "Iterator.hpp"
 
 namespace OMR {
@@ -35,12 +36,13 @@ class BitVector {
 
     typedef uint64_t ChangeID;
 
-    static const uint64_t WORD_SHIFT=6;
-    static const uint64_t WORD_MASK=((((uint64_t)1) << WORD_SHIFT) - ((uint64_t)1));
+    typedef uint64_t WordType;
+    static const WordType WORD_SHIFT=6;
+    static const WordType WORD_MASK=((((WordType)1) << WORD_SHIFT) - ((WordType)1));
 
     #define WORD(i)        ((i) >> WORD_SHIFT)
     #define BIT(i)         ((i) & WORD_MASK)
-    #define BITWORD(i)     (((uint64_t)1) << BIT(i))
+    #define BITWORD(i)     (((WordType)1) << BIT(i))
     #define TOTALWORDS(i)  (WORD(i) + (((BIT(i)) == 0) ? 0 : 1))
 
 public:
@@ -48,15 +50,15 @@ public:
     class ForwardIterator : public OMR::JitBuilder::Iterator<bool> {
     public:
         ForwardIterator() // empty iterator
-            : Iterator<bool>()
+            : Iterator<bool>(NULL)
             , _vector(NULL)
             , _changeAtCreation(0)
             , _bitIndex(0)
             , _detectChanges(false) {
         }
 
-        ForwardIterator(BitVector * vector, bool detectChanges)
-            : Iterator<bool>()
+        ForwardIterator(Allocator *a, BitVector * vector, bool detectChanges)
+            : Iterator<bool>(a)
             , _vector(vector)
             , _changeAtCreation(vector->_changeID)
             , _bitIndex(0)
@@ -66,7 +68,7 @@ public:
 
         // rule of 3
         ForwardIterator(const ForwardIterator & other)
-            : Iterator<bool>()
+            : Iterator<bool>(other)
             , _vector(other._vector)
             , _changeAtCreation(other._changeAtCreation)
             , _bitIndex(other._bitIndex)
@@ -84,7 +86,7 @@ public:
 
         // rule of 5
         ForwardIterator(ForwardIterator && other)
-            : Iterator<bool>()
+            : Iterator<bool>(other)
             , _vector(other._vector)
             , _changeAtCreation(other._changeAtCreation)
             , _bitIndex(other._bitIndex)
@@ -144,8 +146,9 @@ public:
     };
 
 public:
-    BitVector()
-        : _changeID(0)
+    BitVector(Allocator *a)
+        : _mem(a)
+        , _changeID(0)
         , _length(0)
         , _words(NULL)
         , _ownWords(false) {
@@ -153,16 +156,18 @@ public:
 
     // rule of 3
     BitVector(const BitVector & other)
-        : _changeID(other._changeID)
+        : _mem(other._mem)
+        , _changeID(other._changeID)
         , _length(other._length)
         , _words(copy(other._words, other._length)) 
         , _ownWords(true) {
     }
     virtual ~BitVector() {
         if (_ownWords && _words != NULL)
-            deallocate(_words, _length);
+            _mem->deallocate(_words);
     }
     void operator=(const BitVector & other) {
+        _mem = other._mem;
         _changeID = other._changeID;
         _length = other._length;
         _words = copy(other._words, other._length);
@@ -171,7 +176,8 @@ public:
 
     // rule of 5
     BitVector(BitVector && other)
-        : _changeID(other._changeID)
+        : _mem(other._mem)
+        , _changeID(other._changeID)
         , _length(other._length)
         , _words(other._words)
         , _ownWords(true) {
@@ -179,6 +185,7 @@ public:
         other._ownWords = false;
     }
     void operator=(BitVector && other) {
+        _mem = other._mem;
         _changeID = other._changeID;
         _length = other._length;
         _words = other._words;
@@ -186,16 +193,18 @@ public:
         other._ownWords = false;
     }
 
-    BitVector(BitIndex sizeHint)
-        : _changeID(0)
+    BitVector(Allocator *a, BitIndex sizeHint)
+        : _mem(a)
+        , _changeID(0)
         , _length(0)
         , _words(NULL)
         , _ownWords(false) {
         grow(sizeHint);
     }
 
-    BitVector(BitIndex sizeHint, BitIndex one)
-        : _changeID(0)
+    BitVector(Allocator *a, BitIndex sizeHint, BitIndex one)
+        : _mem(a)
+        , _changeID(0)
         , _length(0)
         , _words(NULL)
         , _ownWords(false) {
@@ -203,8 +212,9 @@ public:
         setBit(one);
     }
 
-    BitVector(BitIndex sizeHint, BitIndex one, BitIndex two)
-        : _changeID(0)
+    BitVector(Allocator *a, BitIndex sizeHint, BitIndex one, BitIndex two)
+        : _mem(a)
+        , _changeID(0)
         , _length(0)
         , _words(NULL)
         , _ownWords(false) {
@@ -213,8 +223,9 @@ public:
         setBit(two);
     }
 
-    BitVector(BitIndex sizeHint, BitIndex one, BitIndex two, BitIndex three)
-        : _changeID(0)
+    BitVector(Allocator *a, BitIndex sizeHint, BitIndex one, BitIndex two, BitIndex three)
+        : _mem(a)
+        , _changeID(0)
         , _length(0)
         , _words(NULL)
         , _ownWords(false) {
@@ -246,22 +257,22 @@ public:
             _words[WORD(index)] &= ~(BITWORD(index));
     }
     void clear() {
-        for (uint64_t w=0;w < TOTALWORDS(_length); w++)
+        for (WordType w=0;w < TOTALWORDS(_length); w++)
             _words[w] = 0;
     }
     void erase() {
         if (_ownWords && _words != NULL)
-            deallocate(_words, _length);
+            _mem->deallocate(_words);
         _length = 0;
         _ownWords = false;
         _changeID++;
     }
 
     ForwardIterator iterator(bool detectChanges=true) {
-        return ForwardIterator(this, detectChanges);
+        return ForwardIterator(_mem, this, detectChanges);
     }
     ForwardIterator fwdIterator(bool detectChanges=true) {
-        return ForwardIterator(this, detectChanges);
+        return ForwardIterator(_mem, this, detectChanges);
     }
     #if 0
     Array<T>::BackwardIterator revIterator(bool detectChanges=true) const {
@@ -275,8 +286,8 @@ protected:
     bool directGetBit(BitIndex index) const {
         return (_words[WORD(index)] & (BITWORD(index))) != 0;
     }
-    uint64_t *copy(uint64_t *source, BitIndex length) {
-        uint64_t *mem = allocate(length);
+    WordType *copy(WordType *source, BitIndex length) {
+        WordType *mem = _mem->allocate<WordType>(TOTALWORDS(length));
         size_t words = TOTALWORDS(length);
         memcpy(mem, source, words);
         return mem;
@@ -289,35 +300,29 @@ protected:
         int newLength = indexNeeded+1;
         bool needDeallocate = _length > 0;
 
-        uint64_t *newWords = allocate(newLength);
+        WordType *newWords = _mem->allocate<WordType>(TOTALWORDS(newLength));
         assert(newWords != NULL);
 
-        uint64_t *zeroStart = newWords;
+        WordType *zeroStart = newWords;
         int oldWords = TOTALWORDS(_length);
         if (oldWords > 0) {
-            memcpy(newWords, _words, sizeof(uint64_t) * oldWords);
+            memcpy(newWords, _words, sizeof(WordType) * oldWords);
             zeroStart += oldWords;
         }
         int zeroWords = TOTALWORDS(newLength) - oldWords;
-        memset(zeroStart, 0, sizeof(uint64_t) * zeroWords);
+        memset(zeroStart, 0, sizeof(WordType) * zeroWords);
         if (needDeallocate)
-            deallocate(_words, _length);
+            _mem->deallocate(_words);
 
         _ownWords = true;
         _words = newWords;
         _length = newLength;
     }
-    uint64_t *allocate(int32_t bitLength) {
-        uint64_t *mem = JB2::allocate<uint64_t>(TOTALWORDS(bitLength));
-        return mem;
-    }
-    void deallocate(uint64_t *vector, size_t bitLength) {
-        JB2::deallocate<uint64_t>(vector, TOTALWORDS(bitLength));
-    }
 
+    Allocator *_mem;
     ChangeID _changeID;
     size_t _length;
-    uint64_t *_words;
+    WordType *_words;
     bool _ownWords;
 };
 
@@ -326,5 +331,7 @@ protected:
 
 #undef WORD
 #undef BIT
+#undef BITWORD
+#undef TOTALWORDS
 
 #endif // defined(BITVECTOR_INCL)

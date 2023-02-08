@@ -35,11 +35,12 @@ namespace JitBuilder {
 namespace VM {
 
 class VMExtension : public Extension {
+    JBALLOC_(VMExtension)
+
     friend class VMExtensionChecker;
 
 public:
-    VMExtension(LOCATION, Compiler *compiler, bool extended=false, String extensionName="vm");
-    virtual ~VMExtension();
+    DYNAMIC_ALLOC_ONLY(VMExtension, LOCATION, Compiler *compiler, bool extended=false, String extensionName="vm");
 
     static const String NAME;
 

@@ -31,9 +31,21 @@ namespace JitBuilder {
 namespace Func {
 
 
+Function::Function(MEM_LOCATION(a), Compiler *compiler)
+    : CompileUnit(MEM_PASSLOC(a), compiler)
+    , _outerFunction(NULL) {
+
+}
+
 Function::Function(LOCATION, Compiler *compiler)
     : CompileUnit(PASSLOC, compiler)
     , _outerFunction(NULL) {
+
+}
+
+Function::Function(MEM_LOCATION(a), Function *outerFunc)
+    : CompileUnit(MEM_PASSLOC(a), outerFunc->_compiler)
+    , _outerFunction(outerFunc) {
 
 }
 
@@ -41,8 +53,6 @@ Function::Function(LOCATION, Function *outerFunc)
     : CompileUnit(PASSLOC, outerFunc->_compiler)
     , _outerFunction(outerFunc) {
 
-    //_entryPoints[0] = Builder::create(_comp, _nativeContext); //, "Entry");
-    //_base->SourceLocation(LOC, _entryPoints[0], ""); // make sure everything has a location; by default BCIndex is 0
 }
 
 Function::~Function() {

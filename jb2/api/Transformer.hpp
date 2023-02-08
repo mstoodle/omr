@@ -28,12 +28,10 @@ namespace OMR {
 namespace JitBuilder {
 
 class Transformer : public Visitor {
-    public:
-    Transformer(Compiler *compiler, String name="Transformer")
-        : Visitor(compiler, name)
-        , _traceEnabled(false) {
+    JBALLOC_(Transformer)
 
-    }
+    public:
+    DYNAMIC_ALLOC_ONLY(Transformer, Compiler *compiler, String name="Transformer");
  
     Transformer * setTraceEnabled(bool v=true) { _traceEnabled = v; return this; }
 

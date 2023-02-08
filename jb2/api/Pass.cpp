@@ -23,17 +23,25 @@
 #include "Compiler.hpp"
 #include "Extension.hpp"
 #include "Pass.hpp"
-#include "TextWriter.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 
-Pass::Pass(Compiler *compiler, String name)
-    : _id(0)
+INIT_JBALLOC_REUSECAT(Pass, Passes)
+
+Pass::Pass(Allocator *a, Compiler *compiler, String name)
+    : Loggable(a)
+    , _compiler(compiler)
+    , _id(0)
     , _name(name)
-    , _compiler(compiler) {
+    , _chain(NULL)
+    , _traceEnabled(false) {
 
     _id = compiler->addPass(this);
+}
+
+Pass::~Pass() {
+
 }
 
 CompilerReturnCode

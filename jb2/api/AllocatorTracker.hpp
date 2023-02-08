@@ -19,57 +19,49 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef JB2_INCL
-#define JB2_INCL
+#ifndef ALLOCATORTRACKER_INCL
+#define ALLOCATORTRACKER_INCL
 
 #include <cassert>
-#include <cstddef>
+#include "Allocator.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 
-class Compiler;
+class TextLogger;
 
-// eventually shift memory tracking to Compiler using an object rather than static
-class JB2 {
-    friend class Compiler;
+class AllocatorTracker : public Allocator {
+    JBALLOC_(AllocatorTracker)
 
 public:
+    AllocatorTracker(const char * name, Allocator * trackedAllocator, TextLogger * lgr)
+        : Allocator(name, trackedAllocator)
+        , _lgr(lgr)
+        , _totalAllocatedBytes(0)
+        , _totalDeallocatedBytes(0)
+        , _totalAllocations(0)
+        , _totalDeallocations(0) {
 
-    template<typename T>
-    static T *allocate(size_t numItems) {
-        size_t bytes = numItems * sizeof(T);
-        if (bytes == 0)
-            return NULL;
-
-        T *p = (T *) malloc(bytes);
-        assert(p != NULL);
-        _totalAllocations++;
-        _totalAllocated += bytes;
-        return p;
+        assert(trackedAllocator != NULL);
     }
 
-    template<typename T>
-    static void deallocate(T *ptr, size_t numItems) {
-        assert(ptr != NULL);
-        free(ptr);
-        _totalDeallocations++;
-        _totalDeallocated += numItems * sizeof(T);
-    }
+    virtual void * allocate(size_t size, AllocationCategoryID cat);
+    virtual void deallocate(void *ptr);
 
-    static void report();
+    virtual bool verify() const;
 
 protected:
-    JB2();
+    virtual void log() const;
 
-    static size_t _totalAllocated;
-    static size_t _totalDeallocated;
+    TextLogger * _lgr;
+    size_t _totalAllocatedBytes;
+    size_t _totalDeallocatedBytes;
 
-    static size_t _totalAllocations;
-    static size_t _totalDeallocations;
+    size_t _totalAllocations;
+    size_t _totalDeallocations;
 };
 
 } // namespace JitBuilder
 } // namespace OMR
 
-#endif // defined(JB2_INCL)
+#endif // defined(ALLOCATORTRACKER_INCL)

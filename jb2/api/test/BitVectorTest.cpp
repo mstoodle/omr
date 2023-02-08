@@ -20,23 +20,28 @@
  *******************************************************************************/
 
 #include "gtest/gtest.h"
-#include "util/BitVector.hpp"
+#include "AllocatorRaw.hpp"
+#include "BitVector.hpp"
 
 using namespace OMR::JitBuilder;
 
+static Allocator *mem = NULL;
+
 int
 main(int argc, char** argv) {
-   ::testing::InitGoogleTest(&argc, argv);
-   return RUN_ALL_TESTS();
+    AllocatorRaw raw;
+    mem = &raw;
+    ::testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }
 
 TEST(JB2BitVector, EmptyVector) {
-    BitVector bv;
+    BitVector bv(mem);
     EXPECT_EQ(bv.length(), 0) << "fresh bv has length zero";
 }
 
 TEST(JB2BitVector, SetGetBit) {
-    BitVector bv;
+    BitVector bv(mem);
     bv.setBit(10);
     EXPECT_GT(bv.length(), 10) << "length should at least 10";
     EXPECT_TRUE(bv.getBit(10)) << "bv.getBit(10) should be set";
@@ -55,7 +60,7 @@ TEST(JB2BitVector, SetGetBit) {
     EXPECT_FALSE(bv.getBit(10)) << "bv.getBit(10) should now be cleared";
     EXPECT_FALSE(bv[10]) << "bv[10] should now be cleared";
 
-    BitVector bv2;
+    BitVector bv2(mem);
     bv2.setBit(64);
     EXPECT_GT(bv2.length(), 64) << "length should be at least 64";
     EXPECT_TRUE(bv2.getBit(64)) << "bv.getBit(64) should be set";
@@ -65,7 +70,7 @@ TEST(JB2BitVector, SetGetBit) {
     EXPECT_FALSE(bv2.getBit(65)) << "bv.getBit(65) should be set";
     EXPECT_FALSE(bv2[65]) << "bv[64] should be set";
 
-    BitVector bv3;
+    BitVector bv3(mem);
     bv3.setBit(100000);
     EXPECT_GT(bv3.length(), 100000) << "length should be at least 100000";
     EXPECT_TRUE(bv3.getBit(100000)) << "bv.getBit(100000) should be set";
@@ -77,7 +82,7 @@ TEST(JB2BitVector, SetGetBit) {
 }
 
 TEST(JB2BitVector, SetGetMultipleBits) {
-    BitVector bv;
+    BitVector bv(mem);
     bv.setBit(3); bv.setBit(5); bv.setBit(7);
     EXPECT_GT(bv.length(), 7) << "length should be at least largest index (7)";
     EXPECT_FALSE(bv.getBit(2)) << "bit 2 should not be set";
@@ -90,7 +95,7 @@ TEST(JB2BitVector, SetGetMultipleBits) {
 }
 
 TEST(JB2BitVector, ClearMultipleBits) {
-    BitVector bv;
+    BitVector bv(mem);
     bv.setBit(3); bv.setBit(5); bv.setBit(7);
     bv.clear();
     EXPECT_GT(bv.length(), 7) << "length should be at least largest index (7)";
@@ -104,7 +109,7 @@ TEST(JB2BitVector, ClearMultipleBits) {
 }
 
 TEST(JB2BitVector, EraseBits) {
-    BitVector bv;
+    BitVector bv(mem);
     bv.setBit(3); bv.setBit(5); bv.setBit(7);
     bv.erase();
     EXPECT_EQ(bv.length(), 0) << "after erase, length should be zero";
@@ -120,7 +125,7 @@ TEST(JB2BitVector, EraseBits) {
 }
 
 TEST(JB2BitVector, IterateSingleBit) {
-    BitVector bv;
+    BitVector bv(mem);
     auto it1 = bv.iterator();
     EXPECT_FALSE(it1.hasItem()) << "empty bv should return empty iterator";
 
@@ -137,7 +142,7 @@ TEST(JB2BitVector, IterateSingleBit) {
 }
 
 TEST(JB2BitVector, IterateMultipleBits) {
-    BitVector bv;
+    BitVector bv(mem);
     bv.setBit(3); bv.setBit(5); bv.setBit(7); bv.setBit(100000);
 
     auto it = bv.iterator();

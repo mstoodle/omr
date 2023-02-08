@@ -23,40 +23,44 @@
 #include "Compilation.hpp"
 #include "Literal.hpp"
 #include "LiteralDictionary.hpp"
-#include "TextWriter.hpp"
+#include "TextLogger.hpp"
 #include "Type.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 
-Literal::Literal(LOCATION, Compilation *comp, const Type *type, const LiteralBytes *v)
-    : _id(comp->litdict()->getLiteralID())
+INIT_JBALLOC_ON(Literal, LiteralDictionary)
+
+Literal::Literal(MEM_LOCATION(a), Compilation *comp, const Type *type, const LiteralBytes *v)
+    : Allocatable(a)
+    , _id(comp->litdict()->getLiteralID())
     , _creator(PASSLOC)
     , _litDict(comp->litdict())
     , _type(type) {
 
     // privatize the literal value
     size_t numBytes = (type->size() / 8) + ((type->size() & 7 > 0) ? 1 : 0);
-    LiteralBytes *newBytes = new LiteralBytes[numBytes];
+    LiteralBytes *newBytes = reinterpret_cast<LiteralBytes *>(a->allocate(numBytes, NoAllocationCategory));
     memcpy(newBytes, v, numBytes);
     _pValue = newBytes;
 }
 
-Literal::Literal(LOCATION, LiteralDictionary *litDict, const Type *type, const LiteralBytes *v)
-    : _id(litDict->getLiteralID())
+Literal::Literal(MEM_LOCATION(a), LiteralDictionary *litDict, const Type *type, const LiteralBytes *v)
+    : Allocatable(a)
+    , _id(litDict->getLiteralID())
     , _creator(PASSLOC)
     , _litDict(litDict)
     , _type(type) {
 
     // privatize the literal value
     size_t numBytes = (type->size() / 8) + ((type->size() & 7 > 0) ? 1 : 0);
-    LiteralBytes *newBytes = new LiteralBytes[numBytes];
+    LiteralBytes *newBytes = reinterpret_cast<LiteralBytes *>(a->allocate(numBytes, NoAllocationCategory));
     memcpy(newBytes, v, numBytes);
     _pValue = newBytes;
 }
 
 Literal::~Literal() {
-    delete[] this->_pValue;
+    allocator()->deallocate(const_cast<void *>(reinterpret_cast<const void *>(this->_pValue)));
 }
 
 bool
@@ -68,12 +72,12 @@ Literal::operator==(Literal & other) {
 }
 
 void
-Literal::write(TextWriter & w) const {
-    w.indent() << this;
+Literal::log(TextLogger & lgr) const {
+    lgr.indent() << this;
     #if 0
-    w.indent() << this << " ";
-    _type->printLiteral(w, this);
-    w << " ]";
+    lgr.indent() << this << " ";
+    _type->logLiteral(lgr, this);
+    lgr << " ]";
     #endif
 }
 

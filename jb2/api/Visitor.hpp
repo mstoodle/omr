@@ -24,7 +24,7 @@
 
 #include "common.hpp"
 #include "Pass.hpp"
-#include "util/BitVector.hpp"
+#include "BitVector.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -36,8 +36,10 @@ class Extension;
 class Operation;
 
 class Visitor : public Pass {
+    JBALLOC_(Visitor)
+
 public:
-    Visitor(Compiler *compiler, String name="", bool visitAppendedBuilders=false);
+    DYNAMIC_ALLOC_ONLY(Visitor, Compiler *compiler, String name="", bool visitAppendedBuilders=false);
 
     virtual CompilerReturnCode perform(Compilation *comp);
 

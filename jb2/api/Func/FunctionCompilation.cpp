@@ -32,8 +32,11 @@ namespace OMR {
 namespace JitBuilder {
 namespace Func {
 
-FunctionCompilation::FunctionCompilation(Compiler *compiler, Function *func, StrategyID strategy, TypeDictionary *dict, Config *localConfig)
-    : Compilation(compiler, func, strategy, dict, localConfig) {
+FunctionCompilation::FunctionCompilation(Compiler *compiler, Function *func, StrategyID strategy, LiteralDictionary *litdict, SymbolDictionary *symdict, TypeDictionary *typedict, Config *localConfig)
+    : Compilation(compiler, func, strategy, litdict, symdict, typedict, localConfig) {
+
+}
+FunctionCompilation::~FunctionCompilation() {
 
 }
 
@@ -73,40 +76,40 @@ FunctionCompilation::registerFunctionType(const FunctionType *fType) {
 }
 
 void
-FunctionCompilation::write(TextWriter &w) const {
-    w << "Function" << w.endl();
+FunctionCompilation::log(TextLogger &lgr) const {
+    lgr << "Function" << lgr.endl();
 
     TypeDictionary *td = typedict();
-    td->write(w);
+    td->log(lgr);
 
     SymbolDictionary *sd = symdict();
-    sd->write(w);
+    sd->log(lgr);
 
     LiteralDictionary *ld = litdict();
-    ld->write(w);
+    ld->log(lgr);
 
-    w.indent() << "[ Function" /*<< _id*/ << w.endl();
-    w.indentIn();
+    lgr.indent() << "[ Function" /*<< _id*/ << lgr.endl();
+    lgr.indentIn();
 
     FunctionContext *fc = funcContext();
-    w.indent() << "[ name " << func()->name() << " ]" << w.endl();
-    w.indent() << "[ origin " << func()->createLoc()->to_string() << " ]" << w.endl();
-    w.indent() << "[ returnType " << fc->returnType() << "]" << w.endl();
+    lgr.indent() << "[ name " << func()->name() << " ]" << lgr.endl();
+    lgr.indent() << "[ origin " << func()->createLoc()->to_string() << " ]" << lgr.endl();
+    lgr.indent() << "[ returnType " << fc->returnType() << "]" << lgr.endl();
     for (auto paramIt = fc->parameters();paramIt.hasItem(); paramIt++) {
         const ParameterSymbol *parameter = paramIt.item();
-        w.indent() << "[ parameter " << parameter << " ]" << w.endl();
+        lgr.indent() << "[ parameter " << parameter << " ]" << lgr.endl();
     }
     for (auto localIt = fc->locals();localIt.hasItem();localIt++) {
         const LocalSymbol *local = localIt.item();
-        w.indent() << "[ local " << local << " ]" << w.endl();
+        lgr.indent() << "[ local " << local << " ]" << lgr.endl();
     }
     for (auto functionIt = fc->functions();functionIt.hasItem();functionIt++) {
         const FunctionSymbol *function = functionIt.item();
-        w.indent() << "[ function " << function << " ]" << w.endl();
+        lgr.indent() << "[ function " << function << " ]" << lgr.endl();
     }
-    w.indent() << "[ entryPoint " << fc->builderEntryPoint() << " ]" << w.endl();
-    w.indentOut();
-    w.indent() << "]" << w.endl();
+    lgr.indent() << "[ entryPoint " << fc->builderEntryPoint() << " ]" << lgr.endl();
+    lgr.indentOut();
+    lgr.indent() << "]" << lgr.endl();
 }
 
 void
@@ -150,14 +153,14 @@ FunctionCompilation::setNativeEntryPoint(void *entry, unsigned i) {
 void
 FunctionCompilation::replaceTypes(TypeReplacer *repl) {
     FunctionContext *fc = funcContext();
-    TextWriter *log = logger(repl->traceEnabled());
+    TextLogger *lgr = logger(repl->traceEnabled());
 
     // replace return type if needed
     const Type *returnType = fc->returnType();
     const Type *newReturnType = repl->singleMappedType(returnType);
     if (newReturnType != returnType) {
         fc->DefineReturnType(newReturnType);
-        if (log) log->indent() << "Return type t" << returnType->id() << " -> t" << newReturnType->id() << log->endl();
+        if (lgr) lgr->indent() << "Return type t" << returnType->id() << " -> t" << newReturnType->id() << lgr->endl();
     }
 
     // replace parameters if needed, creating new Symbols if needed
@@ -176,22 +179,22 @@ FunctionCompilation::replaceTypes(TypeReplacer *repl) {
         for (auto pIt = prevParameters.iterator(); pIt.hasItem(); pIt++) {
             ParameterSymbol *parm = pIt.item();
             const Type *type = parm->type();
-            SymbolMapper *parmSymMapper = new SymbolMapper();
+            SymbolMapper *parmSymMapper = new (mem()) SymbolMapper(mem());
             if (repl->isModified(type)) {
                 TypeMapper *parmTypeMapper = repl->mapperForType(type);
                 String baseName("");
                 if (parmTypeMapper->size() > 1)
                     baseName = parm->name() + ".";
 
-                LOG_INDENT_REGION(log) {
+                LOG_INDENT_REGION(lgr) {
                     for (int i=0;i < parmTypeMapper->size();i++) {
                         String newName(baseName + parmTypeMapper->name());
                         const Type *newType = parmTypeMapper->next();
                         ParameterSymbol *newSym = fc->DefineParameter(newName, newType);
                         parmIndex++;
                         parmSymMapper->add(newSym);
-                        repl->recordSymbolMapper(newSym, new SymbolMapper(newSym));
-                        if (log) log->indent() << "now DefineParameter " << newName << " (" << newType->name() << " t" << newType->id() << ")" << log->endl();
+                        repl->recordSymbolMapper(newSym, new (mem()) SymbolMapper(mem(), newSym));
+                        if (lgr) lgr->indent() << "now DefineParameter " << newName << " (" << newType->name() << " t" << newType->id() << ")" << lgr->endl();
                     }
                 } LOG_OUTDENT
             }
@@ -226,23 +229,23 @@ FunctionCompilation::replaceTypes(TypeReplacer *repl) {
         for (auto lIt = locals.iterator(); lIt.hasItem(); lIt++) {
             LocalSymbol *local = lIt.item();
             const Type *type = local->type();
-            if (log) log->indent() << "Local " << local->name() << " (" << type->name() << " t" << type->id() << "):" << log->endl();
+            if (lgr) lgr->indent() << "Local " << local->name() << " (" << type->name() << " t" << type->id() << "):" << lgr->endl();
 
-            SymbolMapper *symMapper = new SymbolMapper();
+            SymbolMapper *symMapper = new (mem()) SymbolMapper(mem());
             if (repl->isModified(type)) {
                 TypeMapper *typeMapper = repl->mapperForType(type);
                 String baseName("");
                 if (typeMapper->size() > 1)
                     baseName = local->name() + ".";
 
-                LOG_INDENT_REGION(log) {
+                LOG_INDENT_REGION(lgr) {
                     for (int i=0;i < typeMapper->size();i++) {
                         String newName = baseName + typeMapper->name();
                         const Type *newType = typeMapper->next();
                         Symbol *newSym = fc->DefineLocal(newName, newType);
                         symMapper->add(newSym);
-                        repl->recordSymbolMapper(newSym, new SymbolMapper(newSym));
-                        if (log) log->indent() << "now DefineLocal " << newName << " (" << newType->name() << " t" << newType->id() << ")" << log->endl();
+                        repl->recordSymbolMapper(newSym, new (mem()) SymbolMapper(mem(), newSym));
+                        if (lgr) lgr->indent() << "now DefineLocal " << newName << " (" << newType->name() << " t" << newType->id() << ")" << lgr->endl();
                     }
                 } LOG_OUTDENT
             }
@@ -270,9 +273,9 @@ FunctionCompilation::replaceTypes(TypeReplacer *repl) {
         for (auto fnIt = functions.iterator(); fnIt.hasItem(); fnIt++) {
             FunctionSymbol *function = fnIt.item();
             const FunctionType *type = function->functionType();
-            if (log) log->indent() << "Function " << function->name() << " (" << type->name() << " t" << type->id() << "):" << log->endl();
+            if (lgr) lgr->indent() << "Function " << function->name() << " (" << type->name() << " t" << type->id() << "):" << lgr->endl();
 
-            SymbolMapper *symMapper = new SymbolMapper();
+            SymbolMapper *symMapper = new (mem()) SymbolMapper(mem());
             if (repl->isModified(type)) {
                 TypeMapper *typeMapper = repl->mapperForType(type);
                 assert(typeMapper->size() == 1); // shouldn't be multiple FunctionTypes
@@ -288,10 +291,10 @@ FunctionCompilation::replaceTypes(TypeReplacer *repl) {
                                                             newFnType->returnType(),
                                                             newFnType->numParms(),
                                                             newFnType->parmTypes());
-                repl->recordSymbolMapper(newSym, new SymbolMapper(newSym));
+                repl->recordSymbolMapper(newSym, new (mem()) SymbolMapper(mem(), newSym));
                 symMapper->add(newSym);
-                LOG_INDENT_REGION(log) {
-                    if (log) log->indent() << "now DefineFunction " << function->name() << " (" << newType->name() << " t" << newType->id() << ")" << log->endl();
+                LOG_INDENT_REGION(lgr) {
+                    if (lgr) lgr->indent() << "now DefineFunction " << function->name() << " (" << newType->name() << " t" << newType->id() << ")" << lgr->endl();
                 } LOG_OUTDENT
             }
             else {

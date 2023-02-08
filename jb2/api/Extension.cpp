@@ -20,6 +20,7 @@
  *******************************************************************************/
 
 #include "Builder.hpp"
+#include "Compilation.hpp"
 #include "Compiler.hpp"
 #include "Extension.hpp"
 #include "Location.hpp"
@@ -33,28 +34,36 @@ namespace OMR {
 namespace JitBuilder {
 
 
-const SemanticVersion Extension::version(0,0,0);
+const SemanticVersion Extension::version((MajorID)0,(MinorID)0,(PatchID)0);
 const String Extension::NAME("core");
 
+INIT_JBALLOC_ON(Extension, Compiler)
+
 // used by Compiler to allocate an actual Extension object
-Extension::Extension(LOCATION, Compiler *compiler)
-    : _id(compiler->getExtensionID())
+Extension::Extension(Allocator *a, LOCATION, Compiler *compiler)
+    : Allocatable(a)
+    , _id(compiler->getExtensionID())
     , _name(NAME)
     , _compiler(compiler)
     , _createLoc(PASSLOC)
-    , NoType(new NoTypeType(LOC, this))
+    , _types((Allocator *)NULL, a)
+    , NoType(new (a) NoTypeType(MEM_LOC(a), this))
     , aMergeDef(registerAction(String("MergeDef"))) {
 }
 
-// used by subclasses
-Extension::Extension(LOCATION, Compiler *compiler, String name)
-    : _id(compiler->getExtensionID())
+Extension::Extension(Allocator *a, LOCATION, Compiler *compiler, String name)
+    : Allocatable(a)
+    , _id(compiler->getExtensionID())
     , _name(name)
     , _compiler(compiler)
     , _createLoc(PASSLOC)
-    , _types()
-    , NoType(compiler->lookupExtension<Extension>()->NoType)
+    , _types((Allocator *)NULL, a)
+    , NoType(new (a) NoTypeType(MEM_LOC(a), this))
     , aMergeDef(registerAction(String("MergeDef"))) {
+}
+
+Extension::~Extension() {
+
 }
 
 const String
@@ -87,6 +96,11 @@ Extension::addOperation(Builder *b, Operation *op) {
     b->add(op);
 }
 
+Builder *
+Extension::internalRegisterBuilder(Compilation *comp, Builder *b) {
+    return comp->registerBuilder(b);
+}
+
 
 //
 // Core Operations
@@ -94,7 +108,8 @@ Extension::addOperation(Builder *b, Operation *op) {
 
 void
 Extension::MergeDef(LOCATION, Builder *b, Value *existingDef, Value *newDef) {
-    addOperation(b, new Op_MergeDef(PASSLOC, this, b, this->aMergeDef, existingDef, newDef));
+    Allocator *mem = b->comp()->mem();
+    addOperation(b, new (mem) Op_MergeDef(MEM_PASSLOC(mem), this, b, this->aMergeDef, existingDef, newDef));
 }
 
 
@@ -104,41 +119,50 @@ Extension::MergeDef(LOCATION, Builder *b, Value *existingDef, Value *newDef) {
 
 Builder *
 Extension::BoundBuilder(LOCATION, Builder *parent, Operation *parentOp, String name) {
-    return new Builder(parent, parentOp, name);
+    Compilation *comp = parent->comp();
+    Allocator *mem = comp->mem();
+    return internalRegisterBuilder(comp, new (mem) Builder(mem, parent, parentOp, name));
 }
 
 Builder *
 Extension::OrphanBuilder(LOCATION, Builder *parent, Context *context, String name) {
-    return new Builder(parent, context, name);
+    Compilation *comp = parent->comp();
+    Allocator *mem = comp->mem();
+    return internalRegisterBuilder(comp, new (mem) Builder(mem, parent, context, name));
 }
 
 Builder *
 Extension::EntryBuilder(LOCATION, Compilation *comp, Context *context, String name) {
-    return new Builder(comp, context, name);
+    Allocator *mem = comp->mem();
+    return internalRegisterBuilder(comp, new (mem) Builder(mem, comp, context, name));
 }
 
 Builder *
 Extension::ExitBuilder(LOCATION, Compilation *comp, Context *context, String name) {
-    return new Builder(comp, context, name);
+    Allocator *mem = comp->mem();
+    return internalRegisterBuilder(comp, new (mem) Builder(mem, comp, context, name));
 }
 
 Location *
 Extension::SourceLocation(LOCATION, Builder *b, String func) {
-    Location *loc = new Location(b->comp(), func, "");
+    Allocator *mem = b->comp()->mem();
+    Location *loc = new (mem) Location(mem, b->comp(), func, "");
     b->setLocation(loc);
     return loc;
 }
 
 Location *
 Extension::SourceLocation(LOCATION, Builder *b, String func, String lineNumber) {
-    Location *loc = new Location(b->comp(), func, lineNumber);
+    Allocator *mem = b->comp()->mem();
+    Location *loc = new (mem) Location(mem, b->comp(), func, lineNumber);
     b->setLocation(loc);
     return loc;
 }
 
 Location *
 Extension::SourceLocation(LOCATION, Builder *b, String func, String lineNumber, int32_t bcIndex) {
-    Location *loc = new Location(b->comp(), func, lineNumber, bcIndex);
+    Allocator *mem = b->comp()->mem();
+    Location *loc = new (mem) Location(mem, b->comp(), func, lineNumber, bcIndex);
     b->setLocation(loc);
     return loc;
 }

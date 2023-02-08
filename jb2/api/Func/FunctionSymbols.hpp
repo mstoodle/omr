@@ -30,31 +30,13 @@ namespace Func {
 
 class FunctionType;
 
-class LocalSymbol : public Symbol {
-    friend class FunctionExtension;
-
-public:
-    LocalSymbol(String name, const Type * type)
-        : Symbol(getSymbolClassKind(), name, type) {
-    }
-
-    static const SymbolKind getSymbolClassKind();
-
-protected:
-    LocalSymbol(SymbolKind kind, String name, const Type * type)
-        : Symbol(kind, name, type) {
-    }
-
-    static SymbolKind SYMBOLKIND;
-    static bool kindRegistered;
-};
-
 class FunctionSymbol : public Symbol {
+    JBALLOC_(FunctionSymbol);
+
     friend class FunctionExtension;
     friend class Function;
-
 public:
-    FunctionSymbol(const FunctionType *type, String name, String fileName, String lineNumber, void *entryPoint);
+    FunctionSymbol(Allocator *a, const FunctionType *type, String name, String fileName, String lineNumber, void *entryPoint);
     const FunctionType *functionType() const;
     String fileName() const { return _fileName; }
     String lineNumber() const { return _lineNumber; }
@@ -71,12 +53,33 @@ protected:
     static bool kindRegistered;
 };
 
-class ParameterSymbol : public LocalSymbol {
-    friend class FunctionExtension;
+class LocalSymbol : public Symbol {
+    JBALLOC_(LocalSymbol)
 
+    friend class FunctionExtension;
 public:
-    ParameterSymbol(String name, const Type * type, int index)
-        : LocalSymbol(getSymbolClassKind(), name, type)
+    LocalSymbol(Allocator *a, String name, const Type * type)
+        : Symbol(a, getSymbolClassKind(), name, type) {
+    }
+
+    static const SymbolKind getSymbolClassKind();
+
+protected:
+    LocalSymbol(Allocator *a, SymbolKind kind, String name, const Type * type)
+        : Symbol(a, kind, name, type) {
+    }
+
+    static SymbolKind SYMBOLKIND;
+    static bool kindRegistered;
+};
+
+class ParameterSymbol : public LocalSymbol {
+    JBALLOC_(ParameterSymbol)
+
+    friend class FunctionExtension;
+public:
+    ParameterSymbol(Allocator *a, String name, const Type * type, int index)
+        : LocalSymbol(a, getSymbolClassKind(), name, type)
         , _index(index) {
 
     }

@@ -19,6 +19,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#include "AllocationCategoryClasses.hpp"
 #include "Builder.hpp"
 #include "Compilation.hpp"
 #include "Value.hpp"
@@ -26,17 +27,26 @@
 namespace OMR {
 namespace JitBuilder {
 
+INIT_JBALLOC_ON(Value, IL)
+
 Value *
 Value::create(const Builder * parent, const Type * type) {
-    Value *value = new Value(parent, type);
+    Allocator *mem = parent->comp()->mem();
+    Value *value = new (mem) Value(mem, parent, type);
+    parent->comp()->rememberNewValue(value);
     return value;
 }
 
-Value::Value(const Builder * parent, const Type * type)
-    : _id(parent->comp()->getValueID())
+Value::Value(Allocator *a, const Builder * parent, const Type * type)
+    : Allocatable(a)
+    , _id(parent->comp()->getValueID())
     , _parent(parent)
-    , _type(type) {
+    , _type(type)
+    , _definitions(NULL, a) {
 
+}
+
+Value::~Value() {
 }
 
 } // namespace JitBuilder

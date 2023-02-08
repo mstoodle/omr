@@ -30,20 +30,31 @@ namespace OMR {
 namespace JitBuilder {
 namespace VM {
 
-BytecodeBuilder::BytecodeBuilder(Base::BaseCompilation *comp,
+INIT_JBALLOC_REUSECAT(BytecodeBuilder, Builder)
+
+BytecodeBuilder::BytecodeBuilder(Allocator *a,
+                                 Base::BaseCompilation *comp,
                                  VMExtension *vme,
                                  int32_t bcIndex,
                                  int32_t bcLength,
                                  Context *context,
                                  String name)
-    : Builder(comp, context, name)
+    : Builder(a, comp, context, name)
     , _vme(vme)
     , _bcIndex(bcIndex)
     , _bcLength(bcLength)
     , _initialVMState(0)
     , _vmState(0)
-    , _fallThroughBuilder(0) {
+    , _fallThroughBuilder(0)
+    , _successorBuilders(NULL, comp->mem()) {
 
+}
+
+BytecodeBuilder::~BytecodeBuilder() {
+    if (_vmState)
+        delete _vmState;
+    if (_initialVMState && _initialVMState != _vmState)
+        delete _initialVMState;
 }
 
 BytecodeBuilder *
@@ -125,20 +136,20 @@ BytecodeBuilder::transferVMState(LOCATION, BytecodeBuilder *b) {
 }
 
 void
-BytecodeBuilder::writeProperties(TextWriter & w) {
-    this->Builder::writeProperties(w);
+BytecodeBuilder::logProperties(TextLogger & lgr) {
+    this->Builder::logProperties(lgr);
 
-    w.indent() << "[ bcIndex " << bcIndex() << " ]" << w.endl();
-    w.indent() << "[ bcLength " << bcLength() << " ]" << w.endl();
+    lgr.indent() << "[ bcIndex " << bcIndex() << " ]" << lgr.endl();
+    lgr.indent() << "[ bcLength " << bcLength() << " ]" << lgr.endl();
 
     if (_fallThroughBuilder)
-        w.indent() << "[ fallThroughBuilder " << _fallThroughBuilder << " ]" << w.endl();
+        lgr.indent() << "[ fallThroughBuilder " << _fallThroughBuilder << " ]" << lgr.endl();
     else
-        w.indent() << "[ fallThroughBuilder NULL ]" << w.endl();
+        lgr.indent() << "[ fallThroughBuilder NULL ]" << lgr.endl();
 
     for (auto it=_successorBuilders.iterator(); it.hasItem(); it++) {
         BytecodeBuilder *succ = it.item();
-        w.indent() << "[ successorBuilder " << succ << " ]" << w.endl();
+        lgr.indent() << "[ successorBuilder " << succ << " ]" << lgr.endl();
     }
 }
 
