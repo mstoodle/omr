@@ -35,9 +35,10 @@ namespace Complex {
 class ComplexExtensionChecker;
 
 class ComplexExtension : public Extension {
+    JBALLOC_(ComplexExtension)
+
 public:
-    ComplexExtension(LOCATION, Compiler *compiler, bool extended=false, String extensionName="");
-    virtual ~ComplexExtension();
+    ComplexExtension(MEM_LOCATION(a), Compiler *compiler, bool extended=false, String extensionName="");
 
     static const String NAME;
 
