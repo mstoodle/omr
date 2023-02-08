@@ -129,6 +129,9 @@ initializeJitBuilder(TR_RuntimeHelper *helperIDs, void **helperAddresses, int32_
       }
    catch (const std::bad_alloc&)
       {
+      if (TR::Compiler != NULL)
+         TR::Compiler->rawAllocator.deallocate(TR::Compiler);
+      TR::Compiler = NULL;
       return false;
       }
 
@@ -181,7 +184,9 @@ internal_initializeJitWithOptions(char *options)
 bool
 internal_initializeJit()
    {
-   return initializeJitBuilder(0, 0, 0, (char *)"-Xjit:acceptHugeMethods,enableBasicBlockHoisting,omitFramePointer,useILValidator");
+   // useILValidator is useful but leaks memory
+   return initializeJitBuilder(0, 0, 0, (char *)"-Xjit:acceptHugeMethods,enableBasicBlockHoisting,omitFramePointer");
+   //return initializeJitBuilder(0, 0, 0, (char *)"-Xjit:acceptHugeMethods,enableBasicBlockHoisting,omitFramePointer,useILValidator");
    }
 
 int32_t
@@ -215,8 +220,16 @@ internal_shutdownJit()
    {
    auto fe = JitBuilder::FrontEnd::instance();
 
+   TR::CPU::destroyTargetProcessorInfo();
+
    TR::CodeCacheManager &codeCacheManager = fe->codeCacheManager();
    codeCacheManager.destroy();
 
    TR::CompilationController::shutdown();
+
+   TR::Options::shutdown(fe);
+
+   if (TR::Compiler != NULL)
+      TR::Compiler->rawAllocator.deallocate(TR::Compiler);
+   TR::Compiler = NULL;
    }
