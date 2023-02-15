@@ -19,53 +19,69 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef OPERATIONDEBUGGER_INCL
-#define OPERATIONDEBUGGER_INCL
+#ifndef OPERATIONSIMULATOR_INCL
+#define OPERATIONSIMULATOR_INCL
 
 #include "JBCore.hpp"
-#include "Base/Base.hpp"
-#include "Debug/DebuggerFunction.hpp"
 
 namespace OMR {
 namespace JitBuilder {
-namespace Debug {
+namespace Sim {
 
-class Debugger;
-class DebuggerFrame;
-class DebugValue;
+// OperationSimulator is designed to simulate the execution of a single Operation, but that
+// may include the execution of other Operations inside Builder objects that are bound to
+// the target Operation or bound to an Operation whose parent Builder is bound to the target
+// Operation (transitively). The OperationSimulator object uses a secondary Compiler to compile
+// the target Operation (along with bound Builders) into a function that is then called by the
+// OperationSimulator to compute the results and outbound control flow.
+//
+// The OperationSimulator accepts a set of Literals to replace the operand Values and Symbols.
+// After simulation, the OperationSimulator holds a set of return values that are Literals and
+// also an outbound control flow direction (a BuilderID). If the operation completed normally,
+// the outbound BuilderID is the ID of the Operation's parent Builder. Otherwise, it will be
+// the BuilderID to which control was directed (in the case of a conditional branch, for example).
+// The OperationSimulator can be configured to fully execute the Operation (in which case it
+// will only return the Operation's parent Builder ID even if other Operations in other Builders
+// need to be simulated), or to partially execute the Operation (in which case only the part
+// of the Operation will be simulated up until control needs to transfer to another Operation
+// even if this Operation is not yet done).
+//
 
-class OperationDebugger : public DebuggerFunction {
+class OperationSimulator : public OperationCloner {
+    JBALLOC_(OperationSimulator)
+
 public:
-    OperationDebugger(LOCATION, Debugger *dbgr, Base::FunctionCompilation *comp, Operation *op);
+    DYNAMIC_ALLOC_ONLY(OperationSimulator, Operation *op);
 
-    virtual bool debug(DebuggerFrame *frame, Operation *op);
+    bool simulate();
+
+    OperationSimulator *specifyOperand(Literal *lit, uint32_t i=0);
+    OperationSimulator *specifySymbol(Literal *lit, uint32_t i=0);
+
+    // This class doesn't really "clone" an operation it just reuses code
+    virtual Operation *clone(Builder *b) { return NULL; }
+
+    uint32_t numResults() const {
+        return _numResults;
+    }
+    Value *result(uint32_t i=0) const {
+        if (i < _numResults) return _results[i];
+        return NULL;
+    }
+
 
 protected:
-    void setDebuggerBuilderTarget(Builder *b, Builder *targetBuilder);
-    String valueName(Value *v);
-    void handleLocalsAndValuesIncoming(Builder *b);
-    void handleLocalsOutgoing(Builder *b);
+    Compiler * _parentCompiler;
+    Compiler * _simCompiler;
+    CompiledBody *_body;
 
-    void copyResult(DebugValue *dest, DebugValue *src);
-
-    virtual bool initContext(LOCATION, Base::FunctionCompilation *comp, Base::FunctionContext *fc);
-    virtual bool buildIL(LOCATION, Base::FunctionCompilation *comp, Base::FunctionContext *fc);
-
-    Operation  *_op;
-    String _dbgrName;
-    String _localsName;
-    String _valuesName;
-    String _frameName;
-    String _fromBuilderID;
-    Base::LocalSymbol *_dbgrSym;
-    Base::LocalSymbol *_localsSym;
-    Base::LocalSymbol *_valuesSym;
-    Base::LocalSymbol *_fromBuilderIDSym;
-    Base::ParameterSymbol *_frameSym;
+    Literal **_literalOperandValues;
+    Literal **_literalSymbolValues;
+    Literal **_literalResultValues;
 };
 
-} // namespace Debug
+} // namespace Sim
 } // namespace JitBuilder
 } // namespace OMR
 
-#endif // defined(OPERATIONDEBUGGER_INCL)
+#endif // defined(OPERATIONSIMULATOR_INCL)
