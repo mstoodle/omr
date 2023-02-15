@@ -25,22 +25,6 @@
 #include <map>
 #include "JBCore.hpp"
 
-/*
- * simulate an operation
- *    - until it completes (need to be able to feed literals for all Values referenced)
- *    - until it transfers control to another operation (may not be complete yet, need to be able to feed literals for all Values directly referenced)
- * 
- * used for:
- *    - constant folding
- *        - with this mapping of Values (as literals) and Types, do any results become literals?
- *    - operation debugging
- *    - control folding?
- *        - with these inputs, are any Builders unreachable?
- *    - code specialization?
- *    - constraint propagation?
- *        - constant propagation (if these operands are literals, which results are literals)
- *        - Type refinement (if these operands have specific Types, are result Types any more refined)?
- */
 namespace OMR {
 namespace JitBuilder {
 namespace Sim {
