@@ -19,46 +19,55 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef DEBUGDICTIONARY_INCL
-#define DEBUGDICTIONARY_INCL
+#ifndef SIMULATORFUNCTION_INCL
+#define SIMULATORFUNCTION_INCL
 
 #include <map>
 #include "JBCore.hpp"
+#include "Func/Func.hpp"
+#include "Base/Base.hpp"
 
-/*
- * simulate an operation
- *    - until it completes (need to be able to feed literals for all Values referenced)
- *    - until it transfers control to another operation (may not be complete yet, need to be able to feed literals for all Values directly referenced)
- * 
- * used for:
- *    - constant folding
- *        - with this mapping of Values (as literals) and Types, do any results become literals?
- *    - operation debugging
- *    - control folding?
- *        - with these inputs, are any Builders unreachable?
- *    - code specialization?
- *    - constraint propagation?
- *        - constant propagation (if these operands are literals, which results are literals)
- *        - Type refinement (if these operands have specific Types, are result Types any more refined)?
- */
 namespace OMR {
 namespace JitBuilder {
 namespace Sim {
 
-class SimDictionary : public TypeDictionary {
-    JBALLOC_(SimDictionary)
+class DebugDictionary
+class Debugger;
 
+class SimulatorFunction : public Base::Function {
 public:
-    SimDictionary(Compiler *compiler);
-    SimDictionary(Compiler *compiler, std::string name, DebugDictionary *baseDict);
 
-    Base::BaseExtension *_bx;
-    Func::FuncExtension *_fx;
+    SimulatorFunction(LOCATION, Debugger *dbgr, Base::FunctionCompilation *compToDebug);
+    SimulatorFunction(LOCATION, Debugger *dbgr, Base::FunctionCompilation *compToDebug, DebugDictionary *types);
 
+protected:
+    DebugDictionary *dbgDict() { return _debugDictionary; }
+
+    void initialize(DebugDictionary *types);
+
+    virtual bool initContext(LOCATION, Base::FunctionCompilation *comp, Base::FunctionContext *fc);
+
+    void storeValue(LOCATION, Base::FunctionContext *fc, Builder *b, Symbol *local, Value *value);
+    void storeValue(LOCATION, Base::FunctionContext *fc, Builder *b, Value *debugvalue, Value *value);
+    void storeReturnValue(LOCATION, Base::FunctionContext *fc, Builder *b, int32_t resultIdx, Value *value);
+    Value *loadValue(LOCATION, Base::FunctionContext *fc, Builder *b, Symbol *local);
+    Value *loadValue(LOCATION, Base::FunctionContext *fc, Builder *b, Value *value);
+    void storeToDebugValue(LOCATION, Builder *b, Value *debugValue, Value *value);
+    Value *loadFromDebugValue(LOCATION, Builder *b, Value *debugValue, const Type *type);
+
+    const Base::FieldType *lookupTypeField(const Type *type);
+
+    void transferToBoundBuilder(Builder *b, Builder *bound);
+    void transferToUnboundBuilder(Builder *b, Builder *target);
+
+    Debugger *_debugger;
+    Base::BaseExtension *_base;
+    DebugDictionary *_debugDictionary;
+    Base::FunctionCompilation *_comp;
     const Base::StructType *_DebugValue;
     const Base::PointerType *_pDebugValue;
     const Base::FieldType *_DebugValue_type;
-    std::map<const Type *, const Base::FieldType *> _DebugValue_fields;
+    std::map<const Type *, const Base::FieldType *> *_DebugValue_fields;
 
     const Base::StructType *_DebugFrame;
     const Base::PointerType *_pDebugFrame;
@@ -70,14 +79,10 @@ public:
     const Base::FieldType *_DebugFrame_fromBuilder;
     const Base::FieldType *_DebugFrame_returning;
     const Base::FieldType *_DebugFrame_builderToDebug;
-
-protected:
-    void createTypes(Base::FunctionCompilation *compToDebug);
-    void initTypes(DebugDictionary *baseDict);
 };
 
 } // namespace Sim
 } // namespace JitBuilder
 } // namespace OMR
 
-#endif // defined(DEBUGDICTIONARY_INCL)
+#endif // defined(SIMULATORFUNCTION_INCL)
