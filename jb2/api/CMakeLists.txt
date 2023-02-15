@@ -46,6 +46,7 @@ add_compile_options(
 
 set(JB2_JBCORE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/)
 set(JB2_JBBASE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Base/)
+set(JB2_JBSIM_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Sim/)
 set(JB2_JBVM_DIR ${CMAKE_CURRENT_SOURCE_DIR}/VM/)
 set(JB2_JBCOMPLEX_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Complex/)
 
@@ -97,6 +98,7 @@ add_subdirectory(test)
 # Extensions
 add_subdirectory(Func)
 add_subdirectory(Base)
+add_subdirectory(Sim)
 #add_subdirectory(Debug)
 add_subdirectory(VM)
 #add_subdirectory(Complex)

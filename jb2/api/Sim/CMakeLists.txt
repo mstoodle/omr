@@ -28,17 +28,16 @@ omr_assert(
 )
 
 add_library(jb2sim SHARED
-	SimDictionary.cpp
-	SimExtension.cpp
-	SimContext.cpp
 	OperationSimulator.cpp
-	Simulator.cpp
 )
 
-target_include_directories(jb2sim PRIVATE
-       ${JB2_JBCORE_DIR}
-       ${JB2_JBBASE_DIR}
-       ${JB2_JBDBG_DIR}
-)
+#	SimDictionary.cpp
+#	SimExtension.cpp
+#	SimContext.cpp
+#	Simulator.cpp
+
+target_include_directories(jb2sim PRIVATE ${JB2_JBCORE_DIR})
+
+target_link_libraries(jb2sim jb2core jb2)
 
 #add_subdirectory(test)
