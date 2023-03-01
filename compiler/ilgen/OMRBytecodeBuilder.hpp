@@ -92,6 +92,8 @@ public:
    void IfCmpGreaterOrEqual(TR::BytecodeBuilder *dest, TR::IlValue *v1, TR::IlValue *v2);
    void IfCmpUnsignedGreaterOrEqual(TR::BytecodeBuilder **dest, TR::IlValue *v1, TR::IlValue *v2);
    void IfCmpUnsignedGreaterOrEqual(TR::BytecodeBuilder *dest, TR::IlValue *v1, TR::IlValue *v2);
+   void Return(TR::IlValue *v);
+   void Return();
 
    /**
     * @brief returns the client object associated with this object, allocating it if necessary

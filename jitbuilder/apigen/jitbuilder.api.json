@@ -337,6 +337,18 @@
                     {"name":"target","type":"BytecodeBuilder","attributes":["in_out"]},
                     {"name":"condition","type":"IlValue"}
                     ]
+                },
+                { "name": "Return"
+                , "overloadsuffix": ""
+                , "flags": []
+                , "return": "none"
+                , "parms": []
+                },
+                { "name": "Return"
+                , "overloadsuffix": "Value"
+                , "flags": []
+                , "return": "none"
+                , "parms": [ {"name":"value","type":"IlValue"} ]
                 }
                 ]
         },

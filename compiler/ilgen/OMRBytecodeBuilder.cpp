@@ -428,6 +428,34 @@ OMR::BytecodeBuilder::IfCmpUnsignedGreaterOrEqual(TR::BytecodeBuilder *dest, TR:
    OMR::IlBuilder::IfCmpUnsignedGreaterOrEqual(dest, v1, v2);
    }
 
+void
+OMR::BytecodeBuilder::Return()
+   {
+   TR::IlBuilder *returnBuilder = _methodBuilder->returnBuilder();
+   if (returnBuilder != NULL)
+      {
+      TR_ASSERT_FATAL(returnBuilder->isBytecodeBuilder(), "Return from BytecodeBuilder in inlined call must return to a BytecodeBuilder (Call must have been from a BytecodeBuilde)r");
+      TR::BytecodeBuilder *returnBCBuilder = static_cast<TR::BytecodeBuilder *>(returnBuilder);
+      AddSuccessorBuilder(&returnBCBuilder);
+      }
+
+   OMR::IlBuilder::Return();
+   }
+
+void
+OMR::BytecodeBuilder::Return(TR::IlValue *v)
+   {
+   TR::IlBuilder *returnBuilder = _methodBuilder->returnBuilder();
+   if (returnBuilder != NULL)
+      {
+      TR_ASSERT_FATAL(returnBuilder->isBytecodeBuilder(), "Return from BytecodeBuilder in inlined call must return to a BytecodeBuilder (Call must have been from a BytecodeBuilde)r");
+      TR::BytecodeBuilder *returnBCBuilder = static_cast<TR::BytecodeBuilder *>(returnBuilder);
+      AddSuccessorBuilder(&returnBCBuilder);
+      }
+
+   OMR::IlBuilder::Return(v);
+   }
+
 void *
 OMR::BytecodeBuilder::client()
    {
