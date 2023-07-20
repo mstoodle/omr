@@ -22,9 +22,11 @@
 #ifndef COMPILEDBODY_INCL
 #define COMPILEDBODY_INCL
 
-#include <assert.h>
+#include "common.hpp"
+#include "Array.hpp"
 #include "CreateLoc.hpp"
 #include "IDs.hpp"
+#include "NativeEntry.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -42,28 +44,33 @@ public:
     CompileUnit *unit() const { return _unit; }
     StrategyID strategy() const { return _strategy; }
 
-    uint32_t numEntryPoints() const { return _numEntryPoints; }
-
     template<typename T>
-    T * nativeEntryPoint(unsigned e=0) const {
-        assert(e < _numEntryPoints);
-        return reinterpret_cast<T *>(_nativeEntryPoints[e]);
+    T *nativeEntryPoint(unsigned e=0) const {
+        assert(e < _nativeEntries.length());
+        return _nativeEntries[e]->entry<T>();
+    }
+    void addNativeEntry(NativeEntry *e) {
+        if (e->id() < _nativeEntries.length())
+            assert(_nativeEntries[e->id()] == NULL);
+        _nativeEntries.assign(e->id(), e);
     }
 
     template<typename T>
-    T * debugEntryPoint(unsigned e=0) const {
-        assert(e < _numEntryPoints);
-        return reinterpret_cast<T *>(_debugEntryPoints[e]);
+    T *debugEntryPoint(unsigned e=0) const {
+        assert(e < _debugEntries.length());
+        return _debugEntries[e]->entry<T>();
+    }
+    void addDebugEntry(NativeEntry *e) {
+        assert(_debugEntries[e->id()] == NULL);
+        _debugEntries.assign(e->id(), e);
     }
 
 protected:
-
     CompiledBodyID _id;
     CompileUnit *_unit;
     StrategyID _strategy;
-    uint32_t _numEntryPoints;
-    void **_nativeEntryPoints;
-    void **_debugEntryPoints;
+    Array<NativeEntry *> _nativeEntries;
+    Array<NativeEntry *> _debugEntries;
 };
 
 } // namespace JitBuilder

@@ -24,6 +24,7 @@
 #include "Literal.hpp"
 #include "LiteralDictionary.hpp"
 #include "Operation.hpp"
+#include "Scope.hpp"
 #include "Symbol.hpp"
 #include "SymbolDictionary.hpp"
 #include "TextLogger.hpp"
@@ -96,6 +97,12 @@ operator<< (TextLogger &log, const Operation *op) {
 }
 
 TextLogger &
+operator<< (TextLogger &log, const Scope *s) {
+    log << "[ scope" << s->id() << " \"" << s->name() << "\" ]";
+    return log;
+}
+
+TextLogger &
 operator<< (TextLogger &log, const Symbol *s) {
     log << "[ s" << s->id() << "_" << s->type() << " \"" << s->name() << "\" ]";
     return log;
@@ -121,21 +128,21 @@ operator<<(TextLogger &log, const Value *v) {
     return log << "v" << v->id() << "_" << v->type();
 }
 
+#if 0
 void
 TextLogger::logTypePrefix(const Type * type, bool indent) {
     TextLogger &log = *this;
     if (indent)
         log.indent();
-    //log << "[ " << ((void*)type) << " type " << type << " " << type->size() << " " << type->name() << " ";
     log << "[ type " << type << " " << type->size() << " " << type->name() << " ";
 }
 
 void
 TextLogger::logType(const Type *type, bool indent) {
     TextLogger &log = *this;
-    logTypePrefix(type, indent);
+    //logTypePrefix(type, indent);
+    type->logType(this, true);
 
-#if 0
     // keep here for handy reference until fully migrated
     if (type->isPointer()) {
         PointerType *pType = static_cast<PointerType *>(type);
@@ -171,8 +178,7 @@ TextLogger::logType(const Type *type, bool indent) {
         log << " ]" << log.endl();
     }
     else
-#endif
-         {
+    {
         log << "primitiveType";
         const Type *layout = type->layout();
         if (layout)
@@ -180,6 +186,7 @@ TextLogger::logType(const Type *type, bool indent) {
         log << "]" << log.endl();
     }
 }
+#endif
 
 void
 TextLogger::logOperation(Operation * op) {

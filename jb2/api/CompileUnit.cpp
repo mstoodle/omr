@@ -25,7 +25,7 @@
 #include "Compiler.hpp"
 #include "CompileUnit.hpp"
 #include "Context.hpp"
-#include "Extension.hpp"
+#include "CoreExtension.hpp"
 #include "Operation.hpp"
 #include "TextLogger.hpp"
 #include "TypeDictionary.hpp"
@@ -79,6 +79,11 @@ CompileUnit::~CompileUnit() {
     }
 }
 
+Builder *
+CompileUnit::EntryBuilder(LOCATION, Compilation *comp, Scope *scope) {
+    return comp->compiler()->coreExt()->EntryBuilder(PASSLOC, comp, scope, "Entry");
+}
+
 void
 CompileUnit::log(TextLogger &lgr) const {
     lgr.indent() << "[ " << kindName() << " " << _id << lgr.endl();
@@ -95,10 +100,11 @@ CompileUnit::log(TextLogger &lgr) const {
     lgr.indent() << "]" << lgr.endl();
 }
 
+#if 0
 CompilerReturnCode
 CompileUnit::compile(LOCATION, StrategyID strategy, TextLogger *lgr) {
-    Compilation comp(_compiler, this);
-    Context context(LOC, &comp);
+    Compilation comp(_compiler->coreExt(), CLASSKIND(Compilation,Extensible), this);
+    Context context(PASSLOC, Context::getContextClassKind(), _compiler->coreExt(), &comp);
     comp.setContext(&context);
     comp.setLogger(lgr);
 
@@ -118,6 +124,7 @@ CompileUnit::compile(LOCATION, StrategyID strategy, TextLogger *lgr) {
 
     return rc;
 }
+#endif
 
 CompiledBody *
 CompileUnit::compiledBody(StrategyID strategy) const {

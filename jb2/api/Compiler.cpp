@@ -19,14 +19,14 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#include <assert.h>
 #include <dlfcn.h>
 #include "AllocatorTracker.hpp"
 #include "Compilation.hpp"
 #include "Compiler.hpp"
 #include "Config.hpp"
+#include "CoreExtension.hpp"
 #include "Extension.hpp"
-#include "JB1.hpp"
-#include "JB1CodeGenerator.hpp"
 #include "LiteralDictionary.hpp"
 #include "Pass.hpp"
 #include "SemanticVersion.hpp"
@@ -54,18 +54,19 @@ INIT_JBALLOC(Compiler);
     , _config(_myConfig ? new (_baseAllocator) Config(_baseAllocator) : (cfg)) \
     , _mem(_config->compilerAllocator(_baseAllocator)) \
     , _parent(p) \
-    , _jb1(JB1::instance()) \
     , _nextExtensionID(NoExtension+1) \
     , _extensions() \
+    , _core(NULL) \
     , _nextActionID(NoAction+1) \
     , _actionNames() \
     , _nextPassID(NoPass+1) \
-    , _registeredPassNames() \
-    , _passRegistry() \
-    , _nextCompilationID(NoCompilation) \
-    , _nextCompileUnitID(NoCompileUnit) \
-    , _nextCompiledBodyID(NoCompiledBody) \
-    , _nextContextID(NoContext) \
+    , _passNames() \
+    , _extensiblesByKind() \
+    , _nextCompilationID(NoCompilation+1) \
+    , _nextCompileUnitID(NoCompileUnit+1) \
+    , _nextCompiledBodyID(NoCompiledBody+1) \
+    , _nextContextID(NoContext+1) \
+    , _nextExecutorID(NoExecutor+1) \
     , _nextReturnCode(0) \
     , _returnCodeNames() \
     , _nextStrategyID(NoStrategy+1) \
@@ -83,6 +84,7 @@ INIT_JBALLOC(Compiler);
     , CompileSuccessful(assignReturnCode("CompileSuccessful")) \
     , CompileNotStarted(assignReturnCode("CompileNotStarted")) \
     , CompileFailed(assignReturnCode("CompileFailed")) \
+    , CompileFail_CompilerError(assignReturnCode("CompileFail_CompilerError")) \
     , CompileFail_UnknownStrategyID(assignReturnCode("CompileFail_UnknownStrategy")) \
     , CompileFail_IlGen(assignReturnCode("CompileFail_IlGen")) \
     , CompileFail_TypeMustBeReduced(assignReturnCode("CompileFail_TypeMustBeReduced")) \
@@ -124,15 +126,21 @@ Compiler::Compiler(Compiler *parent, String name, Config *config)
 
 void
 Compiler::init() {
+    #if 0
     _jb1->initialize();
 
     Strategy *jb1cgStrategy = new (_mem, Extension::allocCat()) Strategy(_mem, this, "jb1cg");
     Pass *jb1cg = new (_mem) JB1CodeGenerator(_mem, this);
     jb1cgStrategy->addPass(jb1cg);
     jb1cgStrategyID = jb1cgStrategy->id();
+    #endif
     
-    if (_parent == NULL) // if there's a parent, it will be able to find Extension
-        addExtension(new (_mem) Extension(_mem, LOC, this));
+    if (_parent != NULL) {
+        _core = _parent->lookupExtension<CoreExtension>();
+    } else {
+        _core = new (_mem) CoreExtension(MEM_LOC(_mem), this);
+    }
+    addExtension(_core);
 }
 
 Compiler::~Compiler() {
@@ -148,7 +156,9 @@ Compiler::~Compiler() {
     }
     _strategies.clear();
 
+    #if 0
     _jb1->shutdown();
+    #endif
 
     if (_litDict != NULL)
         delete _litDict;
@@ -162,8 +172,10 @@ Compiler::~Compiler() {
         delete w;
     }
 
-    if (_errorCondition != NULL)
+    if (_errorCondition != NULL) {
         delete _errorCondition;
+        _errorCondition = NULL;
+    }
 
     _config->destructCompilerAllocator(_mem);
 
@@ -172,10 +184,6 @@ Compiler::~Compiler() {
     if (_myConfig && _config != NULL)
         delete _config;
 
-}
-
-extern "C" {
-    typedef Extension * (*CreateFunction)(LOCATION, Compiler *);
 }
 
 Extension *
@@ -230,7 +238,15 @@ Compiler::internalLoadExtension(LOCATION, const SemanticVersion *version, String
 
 void
 Compiler::addExtension(Extension *ext) {
+    for (auto it=_extensions.begin(); it != this->_extensions.end();it++) {
+        assert(!(it->first == ext->name()));
+        Extension *other = it->second;
+        ext->notifyNewExtension(other);
+        other->notifyNewExtension(ext);
+    }
     this->_extensions.insert({ext->name(),ext});
+    for (auto it2=_extensions.begin(); it2 != this->_extensions.end();it2++) {
+    }
 }
 
 bool
@@ -255,6 +271,31 @@ Compiler::internalLookupExtension(String name) {
     return it->second;
 }
 
+void
+Compiler::registerForExtensible(ExtensibleKind kind, Extension *ext) {
+    auto it = _extensionsForAddonsByKind.find(kind);
+    List<Extension *> *list=NULL;
+    if (it != _extensionsForAddonsByKind.end()) {
+        list = it->second;
+    } else {
+        list = new (mem()) List<Extension *>(mem(), mem());
+        _extensionsForAddonsByKind.insert({kind, list});
+    }
+    list->push_back(ext);
+}
+
+void
+Compiler::createAnyAddons(Extensible *e, KINDTYPE(Extensible) kind) {
+    auto list = _extensionsForAddonsByKind.find(kind);
+    if (list == _extensionsForAddonsByKind.end())
+        return;
+
+    for (auto it=list->second->iterator(); it.hasItem(); it++) {
+        Extension *ext = it.item();
+        ext->createAddon(e);
+    }
+}
+
 ActionID
 Compiler::assignActionID(String name) {
     ActionID id = this->_nextActionID++;
@@ -269,18 +310,44 @@ Compiler::assignReturnCode(String name) {
     return rc;
 }
 
+void
+Compiler::registerExtensible(Extensible *e, KINDTYPE(Extensible) kind) {
+    auto it = _extensiblesByKind.find(kind);
+    List<Extensible *> *kindList = NULL;
+    if (it == _extensiblesByKind.end()) {
+        kindList = new (_mem) List<Extensible *>(_mem, _mem);
+        _extensiblesByKind.insert({kind, kindList});
+    } else {
+        kindList = it->second;
+    }
+    kindList->push_back(e);
+}
+
 PassID
 Compiler::addPass(Pass *pass) {
-    auto it = this->_registeredPassNames.find(pass->name());
-    if (it != this->_registeredPassNames.end())
-        return it->second;
-    return _nextPassID++;
+    #if 0
+    PassID id=NoPass;
+    auto it = this->_passNames.find(pass->name());
+    if (it != this->_passNames.end())
+        id = it->second;
+    else {
+        id = _nextPassID++;
+        this->_passNames.insert({pass->name(), id});
+    }
+    #endif
+
+    PassID id = _nextPassID++;
+    this->_passNames.insert({pass->name(), id});
+
+    registerExtensible(pass, CLASSKIND(Pass, Extensible));
+
+    return id;
 }
 
 PassID
 Compiler::lookupPass(String name) {
-    auto it = this->_registeredPassNames.find(name);
-    if (it != this->_registeredPassNames.end())
+    auto it = this->_passNames.find(name);
+    if (it != this->_passNames.end())
         return it->second;
     return NoPass;
 }
@@ -319,7 +386,7 @@ Compiler::textWriter(TextLogger & lgr) {
 CompilerReturnCode
 Compiler::compile(LOCATION, Compilation *comp, StrategyID strategyID) {
     if (_errorCondition != NULL)
-        clearErrorCondition();
+        return CompileFail_CompilerError;
 
     try {
 
@@ -341,7 +408,6 @@ Compiler::compile(LOCATION, Compilation *comp, StrategyID strategyID) {
         return rc;
 
     } catch (CompilationException e) {
-        // only if config.verboseErrors()?
         if (config()->verboseErrors()) {
            std::cerr << "Location: " << e.locationLine().c_str();
            std::cerr << e.message().c_str();

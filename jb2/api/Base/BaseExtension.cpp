@@ -23,8 +23,9 @@
 #include "JBCore.hpp"
 #include "Func/Func.hpp"
 #include "Base/ArithmeticOperations.hpp"
-#include "Base/BaseCompilation.hpp"
+#include "Base/BaseCompilationAddon.hpp"
 #include "Base/BaseExtension.hpp"
+#include "Base/BaseFunctionExtensionAddon.hpp"
 #include "Base/BaseSymbol.hpp"
 #include "Base/BaseTypes.hpp"
 #include "Base/ConstOperation.hpp"
@@ -36,6 +37,7 @@ namespace JitBuilder {
 namespace Base {
 
 INIT_JBALLOC_REUSECAT(BaseExtension, Extension)
+SUBCLASS_KINDSERVICE_IMPL(BaseExtension,"BaseExtension",Extension,Extensible);
 
 const SemanticVersion BaseExtension::version(BASEEXT_MAJOR,BASEEXT_MINOR,BASEEXT_PATCH);
 const String BaseExtension::NAME("jb2base");
@@ -47,17 +49,14 @@ const static SemanticVersion neededFuncVersion(NEEDED_FUNCEXT_MAJOR,NEEDED_FUNCE
 
 extern "C" {
     Extension *create(LOCATION, Compiler *compiler) {
-        Func::FunctionExtension *fx = compiler->loadExtension<Func::FunctionExtension>(PASSLOC, &neededFuncVersion);
-        if (fx == NULL)
-            return NULL;
         Allocator *mem = compiler->mem();
         return new (mem) BaseExtension(MEM_PASSLOC(mem), compiler);
     }
 }
 
 BaseExtension::BaseExtension(MEM_LOCATION(a), Compiler *compiler, bool extended, String extensionName)
-    : Extension(MEM_PASSLOC(a), compiler, (extended ? extensionName : NAME))
-    , _fx(compiler->lookupExtension<Func::FunctionExtension>())
+    : Extension(MEM_PASSLOC(a), CLASSKIND(BaseExtension,Extensible), compiler, (extended ? extensionName : NAME))
+    , _cx(compiler->coreExt()) 
     , Int8(new (a) Int8Type(MEM_PASSLOC(a), this))
     , Int16(new (a) Int16Type(MEM_PASSLOC(a), this))
     , Int32(new (a) Int32Type(MEM_PASSLOC(a), this))
@@ -65,7 +64,7 @@ BaseExtension::BaseExtension(MEM_LOCATION(a), Compiler *compiler, bool extended,
     , Float32(new (a) Float32Type(MEM_PASSLOC(a), this))
     , Float64(new (a) Float64Type(MEM_PASSLOC(a), this))
     , Address(new (a) AddressType(MEM_PASSLOC(a), this))
-    , Word(compiler->platformWordSize() == 64 ? this->Int64->refine<Type>() : this->Int32->refine<Type>())
+    , Word(compiler->platformWordSize() == 64 ? static_cast<const Type *>(this->Int64) : static_cast<const Type *>(this->Int32))
     , aConst(registerAction(String("Const")))
     , aAdd(registerAction(String("Add")))
     , aConvertTo(registerAction(String("ConvertTo")))
@@ -117,10 +116,18 @@ BaseExtension::BaseExtension(MEM_LOCATION(a), Compiler *compiler, bool extended,
     , CompileFail_MismatchedArgumentTypes_Call(registerReturnCode("CompileFail_MismatchedArgumentTypes_Call"))
     , _checkers(NULL, a) {
 
-    assert(_fx);
     if (!extended) {
         _checkers.push_back(new (a) BaseExtensionChecker(a, this));
     }
+
+    registerForExtensible(CLASSKIND(Compilation,Extensible), this);
+    
+    Func::FunctionExtension *fx = compiler->lookupExtension<Func::FunctionExtension>();
+    if (fx != NULL)
+        createAddon(fx);
+    else
+        registerForExtensible(CLASSKIND(Func::FunctionExtension,Extensible), this);
+    // if more are added, need to update createAddon to decode
 }
 
 BaseExtension::~BaseExtension() {
@@ -135,6 +142,20 @@ BaseExtension::registerChecker(BaseExtensionChecker *checker) {
     _checkers.push_front(checker);
 }
 
+void
+BaseExtension::createAddon(Extensible *e) {
+    Allocator *mem = e->allocator();
+
+    if (e->isKind<Compilation>()) {
+        BaseCompilationAddon *bc = new (mem) BaseCompilationAddon(mem, this, e->refine<Compilation>());
+        e->attach(bc);
+    } else if (e->isKind<Func::FunctionExtension>()) {
+        BaseFunctionExtensionAddon *bfe = new (mem) BaseFunctionExtensionAddon(mem, e->refine<Func::FunctionExtension>(), this);
+        e->attach(bfe);
+    }
+}
+
+#if 0
 CompilerReturnCode
 BaseExtension::compile(LOCATION, Func::Function *func, StrategyID strategy, TextWriter *w) {
 
@@ -144,7 +165,8 @@ BaseExtension::compile(LOCATION, Func::Function *func, StrategyID strategy, Text
     LiteralDictionary litDict(_compiler, "Compilation LiteralDictionary", _compiler->litDict());
     SymbolDictionary symDict(_compiler, "Compilation SymbolDictionary", _compiler->symDict());
     TypeDictionary typeDict(_compiler, "Compilation TypeDictionary", _compiler->typeDict());
-    BaseCompilation comp(_compiler, func, strategy, &litDict, &symDict, &typeDict, NULL);
+    BaseCompilation comp(this, func, strategy, &litDict, &symDict, &typeDict, NULL);
+
     Func::FunctionContext context(PASSLOC, &comp);
     comp.setContext(&context);
     comp.setWriter(w);
@@ -160,6 +182,7 @@ BaseExtension::compile(LOCATION, Func::Function *func, StrategyID strategy, Text
 
     return _compiler->CompileSuccessful;
 }
+#endif
 
 
 //
@@ -418,67 +441,7 @@ BaseExtension::Sub(LOCATION, Builder *b, Value *left, Value *right) {
 //
 
 bool
-BaseExtensionChecker::validateCall(LOCATION, Builder *b, Func::FunctionSymbol *target, std::va_list & args) {
-    const Func::FunctionType *tgtType = target->functionType();
-    for (auto a=0;a < tgtType->numParms();a++) {
-        Value *arg = va_arg(args, Value *);
-        if (arg->type() != tgtType->parmTypes()[a]) // should be more like "can be stored to"
-            failValidateCall(PASSLOC, b, target, args);
-    }
-    va_end(args);
-    return true;
-}
-
-void
-BaseExtensionChecker::failValidateCall(LOCATION, Builder *b, Func::FunctionSymbol *target, std::va_list & args) {
-    const Func::FunctionType *tgtType = target->functionType();
-    CompilationException e(PASSLOC, _base->compiler(), _base->CompileFail_MismatchedArgumentTypes_Call);
-    e.setMessageLine(String("Call: mismatched argument types"));
-    for (auto a=0;a < tgtType->numParms();a++) {
-        Value *arg = va_arg(args, Value *);
-        if (arg->type() != tgtType->parmTypes()[a])
-            e.appendMessageLine(String("  X  "));
-        else
-            e.appendMessageLine(String("     "));
-        e.appendMessage(String(" p").append(String::to_string(a)).append(String(" ")).append(tgtType->parmTypes()[a]->to_string())
-         .append(String(" : a")).append(String::to_string(a))
-         .append(String(" v")).append(String::to_string(arg->id()))
-         .append(String(" ")).append(arg->type()->to_string()));
-    }
-    e.appendMessageLine(String("Argument types must match corresponding parameter types (currently exact, should be assignable to)"));
-    throw e;
-}
-
-#if 0
-Value *
-BaseExtension::Call(LOCATION, Builder *b, Func::FunctionSymbol *target, ...) {
-    const Func::FunctionType *tgtType = target->functionType();
-    for (auto it = _checkers.iterator(); it.hasItem(); it++) {
-        BaseExtensionChecker *checker = it.item();
-        std::va_list args;
-        va_start(args, target);
-        if (checker->validateCall(PASSLOC, b, target, args))
-            break;
-        va_end(args);
-    }
-
-    std::va_list args;
-    va_start(args, target);
-
-    Allocator *mem = b->comp()->mem();
-    Value *result = NULL;
-    if (target->functionType()->returnType() != NoType) {
-        result = createValue(b, target->functionType()->returnType());
-        addOperation(b, new (mem) Op_Call(MEM_PASSLOC(mem), this, b, aCall, result, target, args));
-    } else {
-        addOperation(b, new (mem) Op_CallVoid(MEM_PASSLOC(mem), this, b, aCall, target, args));
-    }
-    return result;
-}
-#endif
-
-bool
-BaseExtensionChecker::validateForLoopUp(LOCATION, Builder *b, Func::LocalSymbol *loopVariable, Value *initial, Value *final, Value *bump) {
+BaseExtensionChecker::validateForLoopUp(LOCATION, Builder *b, Symbol *loopVariable, Value *initial, Value *final, Value *bump) {
     const Type *counterType = loopVariable->type();
     if (counterType != _base->Int8
      && counterType != _base->Int16
@@ -499,7 +462,7 @@ BaseExtensionChecker::validateForLoopUp(LOCATION, Builder *b, Func::LocalSymbol 
 }
 
 void
-BaseExtensionChecker::failValidateForLoopUp(LOCATION, Builder *b, Func::LocalSymbol *loopVariable, Value *initial, Value *final, Value *bump) {
+BaseExtensionChecker::failValidateForLoopUp(LOCATION, Builder *b, Symbol *loopVariable, Value *initial, Value *final, Value *bump) {
     CompilationException e(PASSLOC, _base->compiler(), _base->CompileFail_BadInputTypes_ForLoopUp);
     e.setMessageLine(String("ForLoopUp: invalid input types"))
      .appendMessageLine(String("  loop var s").append(String::to_string(loopVariable->id())).append(" ").append(loopVariable->name()).append(" ").append(loopVariable->type()->to_string()))
@@ -511,7 +474,7 @@ BaseExtensionChecker::failValidateForLoopUp(LOCATION, Builder *b, Func::LocalSym
 }
 
 ForLoopBuilder
-BaseExtension::ForLoopUp(LOCATION, Builder *b, Func::LocalSymbol *loopVariable,
+BaseExtension::ForLoopUp(LOCATION, Builder *b, Symbol *loopVariable,
                          Value *initial, Value *final, Value *bump) {
     for (auto it = _checkers.iterator(); it.hasItem(); it++) {
         BaseExtensionChecker *checker = it.item();
@@ -905,6 +868,7 @@ BaseExtension::One(LOCATION, Builder *b, const Type *type) {
     return Const(PASSLOC, b, one);
 }
 
+#if 0
 void
 BaseExtension::Increment(LOCATION, Builder *b, Symbol *sym, Value *bump) {
     Value *oldValue = _fx->Load(PASSLOC, b, sym);
@@ -918,6 +882,7 @@ BaseExtension::Increment(LOCATION, Builder *b, Func::LocalSymbol *sym) {
    Value *newValue = Add(PASSLOC, b, oldValue, One(PASSLOC, b, sym->type()));
    _fx->Store(PASSLOC, b, sym, newValue);
 }
+#endif
 
 void
 BaseExtension::failValidateOffsetAt(LOCATION, Builder *b, Value *array) {
@@ -980,7 +945,7 @@ BaseExtension::StoreArray(LOCATION, Builder *b, Value *array, Value *indexValue,
 
 
 const PointerType *
-BaseExtension::PointerTo(LOCATION, Base::BaseCompilation *comp, const Type *baseType) {
+BaseExtension::PointerTo(LOCATION, Compilation *comp, const Type *baseType) {
     PointerTypeBuilder pb(this, comp);
     pb.setBaseType(baseType);
     return pb.create(PASSLOC);

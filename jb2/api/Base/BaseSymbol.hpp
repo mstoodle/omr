@@ -37,19 +37,18 @@ class FieldSymbol : public Symbol {
 
     friend class BaseExtension;
 public:
-    FieldSymbol(Allocator *a, String name, const StructType *structType, const FieldType *fieldType);
+    FieldSymbol(Allocator *a, Extension *ext, String name, const StructType *structType, const FieldType *fieldType);
 
     const StructType *structType() const { return _structType; }
     const FieldType *fieldType() const { return _fieldType; }
 
-    static const SymbolKind getSymbolClassKind();
-
 protected:
+    FieldSymbol(Allocator *a, SymbolKind kind, Extension *ext, String name, const StructType *structType, const FieldType *fieldType);
+
     const StructType *_structType;
     const FieldType *_fieldType;
 
-    static SymbolKind SYMBOLKIND;
-    static bool kindRegistered;
+    SUBCLASS_KINDSERVICE_DECL(Symbol, FieldSymbol);
 };
 
 } // namespace Base

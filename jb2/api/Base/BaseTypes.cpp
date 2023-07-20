@@ -20,7 +20,7 @@
  *******************************************************************************/
 
 #include <cstring>
-#include "Base/BaseCompilation.hpp"
+#include "Base/BaseCompilationAddon.hpp"
 #include "Base/BaseExtension.hpp"
 #include "Base/BaseTypes.hpp"
 
@@ -29,6 +29,7 @@ namespace JitBuilder {
 namespace Base {
 
 INIT_JBALLOC_REUSECAT(BaseType, Type)
+SUBCLASS_KINDSERVICE_IMPL(BaseType, "BaseType", Type, Type);
 
 BaseType::~BaseType() {
 
@@ -46,61 +47,27 @@ BaseType::baseExt() const {
 
 
 INIT_JBALLOC_REUSECAT(NumericType, BaseType)
-
-TypeKind NumericType::TYPEKIND = KindService::NoKind;
-bool NumericType::kindRegistered = false;
+SUBCLASS_KINDSERVICE_IMPL(NumericType, "NumericType", BaseType, Type);
 
 NumericType::~NumericType() {
 
 }
 
-const TypeKind
-NumericType::getTypeClassKind() {
-    if (!kindRegistered) {
-        TYPEKIND = Type::kindService.assignKind(KindService::AnyKind, "NumericType");
-        kindRegistered = true;
-    }
-    return TYPEKIND;
-}
-
 
 INIT_JBALLOC_REUSECAT(IntegerType, NumericType)
-
-TypeKind IntegerType::TYPEKIND = KindService::NoKind;
-bool IntegerType::kindRegistered = false;
+SUBCLASS_KINDSERVICE_IMPL(IntegerType, "IntegerType", NumericType, Type);
 
 IntegerType::~IntegerType() {
 
 }
 
-const TypeKind
-IntegerType::getTypeClassKind() {
-    if (!kindRegistered) {
-        TYPEKIND = Type::kindService.assignKind(NumericType::getTypeClassKind(), "IntegerType");
-        kindRegistered = true;
-    }
-    return TYPEKIND;
-}
-
 
 INIT_JBALLOC_REUSECAT(Int8Type, IntegerType)
-
-TypeKind Int8Type::TYPEKIND = KindService::NoKind;
-bool Int8Type::kindRegistered = false;
+SUBCLASS_KINDSERVICE_IMPL(Int8Type, "Int8Type", IntegerType, Type);
 
 Int8Type::~Int8Type() {
 
 }
-
-const TypeKind
-Int8Type::getTypeClassKind() {
-    if (!kindRegistered) {
-        TYPEKIND = Type::kindService.assignKind(IntegerType::getTypeClassKind(), "Int8");
-        kindRegistered = true;
-    }
-    return TYPEKIND;
-}
-
 
 Literal *
 Int8Type::literal(LOCATION, Compilation *comp, const int8_t value) const {
@@ -127,36 +94,13 @@ Int8Type::getInteger(const Literal *lv) const {
     return (const int64_t) (lv->value<const int8_t>());
 }
 
-bool
-Int8Type::registerJB1Type(JB1MethodBuilder *j1mb) const {
-    j1mb->registerInt8(this);
-    return true;
-}
-
-void
-Int8Type::createJB1ConstOp(Location *loc, JB1MethodBuilder *j1mb, Builder *b, Value *result, Literal *lv) const {
-    j1mb->ConstInt8(loc, b, result, lv->value<const int8_t>());
-}
-
 
 INIT_JBALLOC_REUSECAT(Int16Type, IntegerType)
-
-TypeKind Int16Type::TYPEKIND = KindService::NoKind;
-bool Int16Type::kindRegistered = false;
+SUBCLASS_KINDSERVICE_IMPL(Int16Type, "Int16Type", IntegerType, Type);
 
 Int16Type::~Int16Type() {
 
 }
-
-const TypeKind
-Int16Type::getTypeClassKind() {
-    if (!kindRegistered) {
-        TYPEKIND = Type::kindService.assignKind(IntegerType::getTypeClassKind(), "Int16");
-        kindRegistered = true;
-    }
-    return TYPEKIND;
-}
-
 
 Literal *
 Int16Type::literal(LOCATION, Compilation *comp, const int16_t value) const {
@@ -183,36 +127,13 @@ Int16Type::getInteger(const Literal *lv) const {
     return (const int64_t) (lv->value<const int16_t>());
 }
 
-bool
-Int16Type::registerJB1Type(JB1MethodBuilder *j1mb) const {
-    j1mb->registerInt16(this);
-    return true;
-}
-
-void
-Int16Type::createJB1ConstOp(Location *loc, JB1MethodBuilder *j1mb, Builder *b, Value *result, Literal *lv) const {
-    j1mb->ConstInt16(loc, b, result, lv->value<const int16_t>());
-}
-
 
 INIT_JBALLOC_REUSECAT(Int32Type, IntegerType)
-
-TypeKind Int32Type::TYPEKIND = KindService::NoKind;
-bool Int32Type::kindRegistered = false;
+SUBCLASS_KINDSERVICE_IMPL(Int32Type, "Int32Type", IntegerType, Type);
 
 Int32Type::~Int32Type() {
 
 }
-
-const TypeKind
-Int32Type::getTypeClassKind() {
-    if (!kindRegistered) {
-        TYPEKIND = Type::kindService.assignKind(IntegerType::getTypeClassKind(), "Int32");
-        kindRegistered = true;
-    }
-    return TYPEKIND;
-}
-
 
 Literal *
 Int32Type::literal(LOCATION, Compilation *comp, const int32_t value) const {
@@ -239,36 +160,13 @@ Int32Type::getInteger(const Literal *lv) const {
     return (const int64_t) (lv->value<const int32_t>());
 }
 
-bool
-Int32Type::registerJB1Type(JB1MethodBuilder *j1mb) const {
-    j1mb->registerInt32(this);
-    return true;
-}
-
-void
-Int32Type::createJB1ConstOp(Location *loc, JB1MethodBuilder *j1mb, Builder *b, Value *result, Literal *lv) const {
-    j1mb->ConstInt32(loc, b, result, lv->value<const int32_t>());
-}
-
 
 INIT_JBALLOC_REUSECAT(Int64Type, IntegerType)
-
-TypeKind Int64Type::TYPEKIND = KindService::NoKind;
-bool Int64Type::kindRegistered = false;
+SUBCLASS_KINDSERVICE_IMPL(Int64Type, "Int64Type", IntegerType, Type);
 
 Int64Type::~Int64Type() {
 
 }
-
-const TypeKind
-Int64Type::getTypeClassKind() {
-    if (!kindRegistered) {
-        TYPEKIND = Type::kindService.assignKind(IntegerType::getTypeClassKind(), "Int64");
-        kindRegistered = true;
-    }
-    return TYPEKIND;
-}
-
 
 Literal *
 Int64Type::literal(LOCATION, Compilation *comp, const int64_t value) const {
@@ -295,55 +193,20 @@ Int64Type::getInteger(const Literal *lv) const {
     return (const int64_t) (lv->value<const int64_t>());
 }
 
-bool
-Int64Type::registerJB1Type(JB1MethodBuilder *j1mb) const {
-    j1mb->registerInt64(this);
-    return true;
-}
-
-void
-Int64Type::createJB1ConstOp(Location *loc, JB1MethodBuilder *j1mb, Builder *b, Value *result, Literal *lv) const {
-    j1mb->ConstInt64(loc, b, result, lv->value<const int64_t>());
-}
-
 
 INIT_JBALLOC_REUSECAT(FloatingPointType, NumericType)
-
-TypeKind FloatingPointType::TYPEKIND = KindService::NoKind;
-bool FloatingPointType::kindRegistered = false;
+SUBCLASS_KINDSERVICE_IMPL(FloatingPointType, "FloatingPointType", IntegerType, Type);
 
 FloatingPointType::~FloatingPointType() {
 
 }
 
-const TypeKind
-FloatingPointType::getTypeClassKind() {
-    if (!kindRegistered) {
-        TYPEKIND = Type::kindService.assignKind(IntegerType::getTypeClassKind(), "FloatingPoint");
-        kindRegistered = true;
-    }
-    return TYPEKIND;
-}
-
-
 INIT_JBALLOC_REUSECAT(Float32Type, FloatingPointType)
-
-TypeKind Float32Type::TYPEKIND = KindService::NoKind;
-bool Float32Type::kindRegistered = false;
+SUBCLASS_KINDSERVICE_IMPL(Float32Type, "Float32Type", FloatingPointType, Type);
 
 Float32Type::~Float32Type() {
 
 }
-
-const TypeKind
-Float32Type::getTypeClassKind() {
-    if (!kindRegistered) {
-        TYPEKIND = Type::kindService.assignKind(IntegerType::getTypeClassKind(), "Float32");
-        kindRegistered = true;
-    }
-    return TYPEKIND;
-}
-
 
 Literal *
 Float32Type::literal(LOCATION, Compilation *comp, const float value) const {
@@ -370,36 +233,13 @@ Float32Type::getFloatingPoint(const Literal *lv) const {
     return (const double) (lv->value<const float>());
 }
 
-bool
-Float32Type::registerJB1Type(JB1MethodBuilder *j1mb) const {
-    j1mb->registerFloat(this);
-    return true;
-}
-
-void
-Float32Type::createJB1ConstOp(Location *loc, JB1MethodBuilder *j1mb, Builder *b, Value *result, Literal *lv) const {
-    j1mb->ConstFloat(loc, b, result, lv->value<const float>());
-}
-
 
 INIT_JBALLOC_REUSECAT(Float64Type, FloatingPointType)
-
-TypeKind Float64Type::TYPEKIND = KindService::NoKind;
-bool Float64Type::kindRegistered = false;
+SUBCLASS_KINDSERVICE_IMPL(Float64Type, "Float64Type", FloatingPointType, Type);
 
 Float64Type::~Float64Type() {
 
 }
-
-const TypeKind
-Float64Type::getTypeClassKind() {
-    if (!kindRegistered) {
-        TYPEKIND = Type::kindService.assignKind(IntegerType::getTypeClassKind(), "Float64");
-        kindRegistered = true;
-    }
-    return TYPEKIND;
-}
-
 
 Literal *
 Float64Type::literal(LOCATION, Compilation *comp, const double value) const {
@@ -426,36 +266,13 @@ Float64Type::getFloatingPoint(const Literal *lv) const {
     return (const double) (lv->value<const double>());
 }
 
-bool
-Float64Type::registerJB1Type(JB1MethodBuilder *j1mb) const {
-    j1mb->registerDouble(this);
-    return true;
-}
-
-void
-Float64Type::createJB1ConstOp(Location *loc, JB1MethodBuilder *j1mb, Builder *b, Value *result, Literal *lv) const {
-    j1mb->ConstDouble(loc, b, result, lv->value<const double>());
-}
-
 
 INIT_JBALLOC_REUSECAT(AddressType, BaseType)
-
-TypeKind AddressType::TYPEKIND = KindService::NoKind;
-bool AddressType::kindRegistered = false;
+SUBCLASS_KINDSERVICE_IMPL(AddressType, "AddressType", IntegerType, Type);
 
 AddressType::~AddressType() {
 
 }
-
-const TypeKind
-AddressType::getTypeClassKind() {
-    if (!kindRegistered) {
-        TYPEKIND = Type::kindService.assignKind(IntegerType::getTypeClassKind(), "Address");
-        kindRegistered = true;
-    }
-    return TYPEKIND;
-}
-
 
 AddressType::AddressType(MEM_LOCATION(a), Extension *ext)
     : BaseType(MEM_PASSLOC(a), getTypeClassKind(), ext, "Address", ext->compiler()->platformWordSize()) {
@@ -473,8 +290,6 @@ AddressType::AddressType(MEM_LOCATION(a), Extension *ext, TypeDictionary *dict, 
 AddressType::AddressType(MEM_LOCATION(a), Extension *ext, TypeDictionary *dict, TypeKind kind, String name)
     : BaseType(MEM_PASSLOC(a), kind, ext, dict, name, dict->compiler()->platformWordSize() ) {
 }
-
-
 
 Literal *
 AddressType::literal(LOCATION, Compilation *comp, const void * value) const {
@@ -495,21 +310,10 @@ AddressType::logLiteral(TextLogger & lgr, const Literal *lv) const {
     lgr << name() << "(" << (lv->value<void * const>()) << ")";
 }
 
-bool
-AddressType::registerJB1Type(JB1MethodBuilder *j1mb) const {
-    j1mb->registerAddress(this);
-    return true;
-}
-
-void
-AddressType::createJB1ConstOp(Location *loc, JB1MethodBuilder *j1mb, Builder *b, Value *result, Literal *lv) const {
-    j1mb->ConstAddress(loc, b, result, lv->value<void * const>());
-}
-
 
 INIT_JBALLOC(PointerTypeBuilder)
 
-PointerTypeBuilder::PointerTypeBuilder(Allocator *a, BaseExtension *ext, Base::BaseCompilation *comp)
+PointerTypeBuilder::PointerTypeBuilder(Allocator *a, BaseExtension *ext, Compilation *comp)
     : Allocatable(a)
     , _ext(ext)
     , _comp(comp)
@@ -519,7 +323,7 @@ PointerTypeBuilder::PointerTypeBuilder(Allocator *a, BaseExtension *ext, Base::B
 
 }
 
-PointerTypeBuilder::PointerTypeBuilder(BaseExtension *ext, Base::BaseCompilation *comp)
+PointerTypeBuilder::PointerTypeBuilder(BaseExtension *ext, Compilation *comp)
     : Allocatable()
     ,  _ext(ext)
     , _comp(comp)
@@ -535,7 +339,7 @@ PointerTypeBuilder::~PointerTypeBuilder() {
 
 const PointerType *
 PointerTypeBuilder::create(LOCATION) {
-    const PointerType *existingType = _comp->pointerTypeFromBaseType(_baseType);
+    const PointerType *existingType = _comp->addon<BaseCompilationAddon>()->pointerTypeFromBaseType(_baseType);
     if (existingType != NULL)
         return existingType;
 
@@ -546,23 +350,11 @@ PointerTypeBuilder::create(LOCATION) {
 
 
 INIT_JBALLOC_REUSECAT(PointerType, BaseType)
-
-TypeKind PointerType::TYPEKIND = KindService::NoKind;
-bool PointerType::kindRegistered = false;
+SUBCLASS_KINDSERVICE_IMPL(PointerType, "PointerType", IntegerType, Type);
 
 PointerType::~PointerType() {
 
 }
-
-const TypeKind
-PointerType::getTypeClassKind() {
-    if (!kindRegistered) {
-        TYPEKIND = Type::kindService.assignKind(IntegerType::getTypeClassKind(), "Pointer");
-        kindRegistered = true;
-    }
-    return TYPEKIND;
-}
-
 
 PointerType::PointerType(MEM_LOCATION(a), PointerTypeBuilder *builder)
     : AddressType(MEM_PASSLOC(a), builder->extension(), builder->dict(), getTypeClassKind(), builder->name()) {
@@ -572,7 +364,7 @@ PointerType::PointerType(MEM_LOCATION(a), PointerTypeBuilder *builder)
     _baseType = builder->baseType();
     assert(_baseType);
 
-    builder->comp()->registerPointerType(this);
+    builder->comp()->addon<BaseCompilationAddon>()->registerPointerType(this);
 }
 
 Literal *
@@ -588,7 +380,7 @@ PointerType::literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) co
 String
 PointerType::to_string(bool useHeader) const {
     String s(Type::base_string(useHeader));
-    return s.append(String("pointerType base t")).append(String::to_string(_baseType->id()));
+    return s.append(String(" pointerType base t")).append(String::to_string(_baseType->id()));
 }
 
 void
@@ -601,43 +393,22 @@ PointerType::logLiteral(TextLogger & lgr, const Literal *lv) const {
     lgr << name() << "(" << (lv->value<void * const>()) << ")";
 }
 
-bool
-PointerType::registerJB1Type(JB1MethodBuilder *j1mb) const {
-    if (!j1mb->typeRegistered(_baseType)) // wait until base type is registered
-        return false;
-
-    j1mb->registerPointer(this, _baseType);
-    return true;
-}
-
 const Type *
 PointerType::replace(TypeReplacer *repl) {
     const Type *currentBaseType = baseType();
     const Type *newBaseType = repl->replacedType(currentBaseType);
-    Base::BaseCompilation *comp = static_cast<Base::BaseCompilation *>(repl->comp());
+    Compilation *comp = repl->comp();
     const Type *newPtrType = baseExt()->PointerTo(LOC, comp, newBaseType);
     return newPtrType;
 }
 
 
 INIT_JBALLOC_REUSECAT(FieldType, BaseType)
-
-TypeKind FieldType::TYPEKIND = KindService::NoKind;
-bool FieldType::kindRegistered = false;
+SUBCLASS_KINDSERVICE_IMPL(FieldType, "FieldType", BaseType, Type);
 
 FieldType::~FieldType() {
 
 }
-
-const TypeKind
-FieldType::getTypeClassKind() {
-    if (!kindRegistered) {
-        TYPEKIND = Type::kindService.assignKind(IntegerType::getTypeClassKind(), "Field");
-        kindRegistered = true;
-    }
-    return TYPEKIND;
-}
-
 
 FieldType::FieldType(MEM_LOCATION(a), BaseExtension *ext, TypeDictionary *dict, const StructType *structType, String name, const Type *type, size_t offset)
     : BaseType(MEM_PASSLOC(a), getTypeClassKind(), ext, dict, name, type->size())
@@ -651,18 +422,11 @@ FieldType::FieldType(MEM_LOCATION(a), BaseExtension *ext, TypeDictionary *dict, 
 String
 FieldType::to_string(bool useHeader) const {
     String s(Type::base_string(useHeader));
-    s.append(String("fieldType ")).append(_fieldName);
+    s.append(String(" fieldType ")).append(_fieldName);
     s.append(String(" size ")).append(String::to_string(_type->size()));
     s.append(String(" t")).append(String::to_string(_type->id()));
     s.append(String("@")).append(String::to_string(_offset));
     return s;
-}
-
-bool
-FieldType::registerJB1Type(JB1MethodBuilder *j1mb) const {
-    // Fields are registered by the StructType
-    //j1mb->registerField(_structType->name(), name(), _type, _offset);
-    return true;
 }
 
 String
@@ -677,10 +441,10 @@ FieldType::explodedName(TypeReplacer *repl, String & baseName) const {
 
 INIT_JBALLOC(StructTypeBuilder)
 
-StructTypeBuilder::StructTypeBuilder(Allocator *a, BaseExtension *ext, Base::BaseCompilation *comp)
+StructTypeBuilder::StructTypeBuilder(Allocator *a, BaseExtension *ext, Compilation *comp)
     : Allocatable(a)
     , _ext(ext)
-    , _func(comp->func())
+    , _unit(comp->unit())
     , _comp(comp)
     , _dict(comp->typedict())
     , _size(0)
@@ -689,10 +453,10 @@ StructTypeBuilder::StructTypeBuilder(Allocator *a, BaseExtension *ext, Base::Bas
 
 }
 
-StructTypeBuilder::StructTypeBuilder(BaseExtension *ext, Base::BaseCompilation *comp)
+StructTypeBuilder::StructTypeBuilder(BaseExtension *ext, Compilation *comp)
     : Allocatable()
     , _ext(ext)
-    , _func(comp->func())
+    , _unit(comp->unit())
     , _comp(comp)
     , _dict(comp->typedict())
     , _size(0)
@@ -721,7 +485,7 @@ StructTypeBuilder::verifyFields(const StructType *sType) {
 
 const StructType *
 StructTypeBuilder::create(LOCATION) {
-    const StructType *existingType = _comp->structTypeFromName(_name);
+    const StructType *existingType = _comp->addon<BaseCompilationAddon>()->structTypeFromName(_name);
     if (existingType != NULL) {
         if (verifyFields(existingType))
             return existingType;
@@ -736,19 +500,7 @@ StructTypeBuilder::create(LOCATION) {
 
 
 INIT_JBALLOC_REUSECAT(StructType, BaseType)
-
-TypeKind StructType::TYPEKIND = KindService::NoKind;
-bool StructType::kindRegistered = false;
-
-const TypeKind
-StructType::getTypeClassKind() {
-    if (!kindRegistered) {
-        TYPEKIND = Type::kindService.assignKind(IntegerType::getTypeClassKind(), "Struct");
-        kindRegistered = true;
-    }
-    return TYPEKIND;
-}
-
+SUBCLASS_KINDSERVICE_IMPL(StructType, "StructType", BaseType, Type);
 
 StructType::StructType(MEM_LOCATION(a), StructTypeBuilder *builder)
     : BaseType(MEM_PASSLOC(a), getTypeClassKind(), builder->extension(), builder->dict(), builder->name(), builder->size())
@@ -758,7 +510,7 @@ StructType::StructType(MEM_LOCATION(a), StructTypeBuilder *builder)
         builder->helper()(this, builder);
     builder->setStructType(this);
     builder->createFields(MEM_PASSLOC(a));
-    builder->comp()->registerStructType(this);
+    builder->comp()->addon<BaseCompilationAddon>()->registerStructType(this);
 }
 
 StructType::~StructType() {
@@ -787,7 +539,7 @@ StructType::addField(MEM_LOCATION(a), Extension *ext, TypeDictionary *dict, Stri
 String
 StructType::to_string(bool useHeader) const {
     String s(Type::base_string(useHeader));
-    s.append(String("structType size ")).append(String::to_string(size()));
+    s.append(String(" structType size ")).append(String::to_string(size()));
     for (auto it = FieldsBegin(); it != FieldsEnd(); it++) {
         auto field = it->second;
         s.append(String(" t")).append(String::to_string(field->id()));
@@ -814,38 +566,6 @@ StructType::logValue(TextLogger & lgr, const void *p) const {
 void
 StructType::logLiteral(TextLogger & lgr, const Literal *lv) const {
     // TODO
-}
-
-void
-StructType::registerAllFields(JB1MethodBuilder *j1mb, String structName, String fNamePrefix, size_t baseOffset) const {
-    for (auto fIt = FieldsBegin(); fIt != FieldsEnd(); fIt++) {
-        const FieldType *fType = fIt->second;
-        String fieldName = fNamePrefix + fType->name();
-        size_t fieldOffset = baseOffset + fType->offset();
-
-        if (fType->isKind<StructType>()) {
-            // define a "dummy" field corresponding to the struct field itself, so we can ask for its address easily
-            // in case this field's struct needs to be passed to anything
-            j1mb->registerField(structName, fieldName, baseExt()->NoType, fieldOffset);
-            const StructType *innerStructType = fType->type()->refine<StructType>();
-            registerAllFields(j1mb, structName, fieldName + ".", fieldOffset);
-        }
-        else {
-            j1mb->registerField(structName, fieldName, fType->type(), fieldOffset);
-        }
-    }
-}
-
-bool
-StructType::registerJB1Type(JB1MethodBuilder *j1mb) const {
-    if (!j1mb->typeRegistered(this)) {
-        j1mb->registerStruct(this);
-        return false; // first pass just creates struct types
-    }
-
-    registerAllFields(j1mb, name(), String(""), 0); // second pass defines the fields
-    j1mb->closeStruct(name());
-    return true;
 }
 
 void
@@ -946,7 +666,7 @@ StructType::replace(TypeReplacer *repl) {
         return this;
 
     String newName = String("_X_::").append(name());
-    StructTypeBuilder stb(base, static_cast<Base::BaseCompilation *>(repl->comp()));
+    StructTypeBuilder stb(base, repl->comp());
     stb.setName(newName)
        ->setSize(this->size());
 

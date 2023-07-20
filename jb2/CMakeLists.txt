@@ -38,9 +38,9 @@ set(JB2_OBJECTS
 	optimizer/Optimizer.hpp
 	runtime/JBCodeCacheManager.cpp
 	runtime/JBJitConfig.cpp
-	api/JB1.cpp
-	api/JB1CodeGenerator.cpp
-	api/JB1MethodBuilder.cpp
+	api/jb/JBCodeGenerator.cpp
+	api/jb/JBMethodBuilder.cpp
+	api/jb/OMRJB.cpp
 )
 
 if(OMR_ARCH_X86)
@@ -75,5 +75,7 @@ create_omr_compiler_library(
 	OBJECTS ${JB2_OBJECTS}
 	DEFINES PROD_WITH_ASSUMES JITTEST
 )
+
+target_include_directories(jb2 PRIVATE ${omr_SOURCE_DIR}/jb2/api/ )
 
 add_subdirectory(api)

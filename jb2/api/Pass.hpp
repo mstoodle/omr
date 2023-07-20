@@ -23,7 +23,7 @@
 #define PASS_INCL
 
 #include "common.hpp"
-#include "Loggable.hpp"
+#include "Extensible.hpp"
 #include "String.hpp"
 
 namespace OMR {
@@ -31,29 +31,27 @@ namespace JitBuilder {
 
 class Compilation;
 class Compiler;
-class PassChain;
+class Extension;
 
-class Pass : public Loggable {
+class Pass : public Extensible {
     JBALLOC_(Pass)
 
     friend class Extension;
     friend class Strategy;
 
 public:
-    DYNAMIC_ALLOC_ONLY(Pass, Compiler *compiler, String name);
+    DYNAMIC_ALLOC_ONLY(Pass, KINDTYPE(Extensible) kind, Extension *ext, String name);
 
     String name() const { return _name; }
     PassID id() const { return _id; }
-    PassChain *chain() const { return _chain; }
 
     virtual CompilerReturnCode perform(Compilation *comp);
 
 protected:
-    Compiler *_compiler;
     PassID _id;
     String _name;
-    PassChain *_chain;
-    bool _traceEnabled;
+
+    SUBCLASS_KINDSERVICE_DECL(Extensible, Pass);
 };
 
 } // namespace JitBuilder

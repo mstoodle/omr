@@ -31,7 +31,7 @@ class Transformer : public Visitor {
     JBALLOC_(Transformer)
 
     public:
-    DYNAMIC_ALLOC_ONLY(Transformer, Compiler *compiler, String name="Transformer");
+    DYNAMIC_ALLOC_ONLY(Transformer, KINDTYPE(Extensible) kind, Extension *ext, String name="Transformer");
  
     Transformer * setTraceEnabled(bool v=true) { _traceEnabled = v; return this; }
 
@@ -56,6 +56,8 @@ protected:
     bool performTransformation(Operation * op, Builder * transformed, String msg="");
 
     bool _traceEnabled;
+
+    SUBCLASS_KINDSERVICE_DECL(Extensible, Transformer);
 };
 
 } // namespace JitBuilder

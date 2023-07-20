@@ -22,6 +22,7 @@
 #include "Builder.hpp"
 #include "Compilation.hpp"
 #include "Compiler.hpp"
+#include "Extension.hpp"
 #include "Operation.hpp"
 #include "TextLogger.hpp"
 #include "Visitor.hpp"
@@ -30,10 +31,12 @@ namespace OMR {
 namespace JitBuilder {
 
 INIT_JBALLOC_REUSECAT(Visitor, Passes)
+SUBCLASS_KINDSERVICE_IMPL(Visitor,"Visitor",Pass,Extensible)
 
-Visitor::Visitor(Allocator *a, Compiler *compiler, String name, bool visitAppendedBuilders)
-    : Pass(a, compiler, name)
+Visitor::Visitor(Allocator *a, KINDTYPE(Extensible) kind, Extension *ext, String name, bool visitAppendedBuilders)
+    : Pass(a, kind, ext, name)
     , _comp(NULL)
+    , _errorCode(ext->compiler()->CompileSuccessful)
     , _aborted(false)
     , _visitAppendedBuilders(visitAppendedBuilders) {
 }
@@ -45,9 +48,12 @@ Visitor::~Visitor() {
 CompilerReturnCode
 Visitor::perform(Compilation *comp) {
     start(comp);
-    if (_aborted)
-        return _compiler->CompileFailed;
-    return _compiler->CompileSuccessful;
+    if (_aborted) {
+        if (_errorCode == compiler()->CompileSuccessful)
+            _errorCode = compiler()->CompileFailed;
+        return _errorCode;
+    }
+    return compiler()->CompileSuccessful;
 }
 
 void
@@ -82,7 +88,8 @@ Visitor::start(Compilation *comp) {
 }
 
 void
-Visitor::abort() {
+Visitor::abort(CompilerReturnCode code) {
+    _errorCode = code;
     _aborted = true;
 }
 

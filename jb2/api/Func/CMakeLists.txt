@@ -31,11 +31,12 @@ add_library(jb2func SHARED
 	FunctionContext.cpp
 	FunctionExtension.cpp
 	FunctionOperations.cpp
+	FunctionScope.cpp
 	FunctionSymbols.cpp
 	FunctionType.cpp
 )
 
-target_include_directories(jb2func PRIVATE ${JB2_JBCORE_DIR})
+target_include_directories(jb2func PRIVATE ${JB2_CORE_DIR})
 
 target_link_libraries(jb2func jb2core jb2)
 

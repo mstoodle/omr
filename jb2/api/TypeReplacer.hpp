@@ -133,6 +133,8 @@ protected:
 
     size_t _mappedBuildersSize;
     BuilderMapper **_mappedBuilders;
+
+    SUBCLASS_KINDSERVICE_DECL(Extensible, TypeReplacer);
 };
 
 } // namespace JitBuilder

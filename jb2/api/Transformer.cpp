@@ -33,9 +33,10 @@ namespace OMR {
 namespace JitBuilder {
 
 INIT_JBALLOC_REUSECAT(Transformer, Passes)
+SUBCLASS_KINDSERVICE_IMPL(Transformer,"Transformer",Visitor,Extensible)
 
-Transformer::Transformer(Allocator *a, Compiler *compiler, String name)
-    : Visitor(a, compiler, name)
+Transformer::Transformer(Allocator *a, KINDTYPE(Extensible) kind, Extension *ext, String name)
+    : Visitor(a, kind, ext, name)
     , _traceEnabled(false) {
 
 }

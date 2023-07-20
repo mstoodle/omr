@@ -25,6 +25,10 @@
 
 #include "common.hpp"
 #include "CreateLoc.hpp"
+#include "Context.hpp"
+#include "EntryPoint.hpp"
+#include "Extensible.hpp"
+#include "Scope.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -40,6 +44,7 @@ class JB1MethodBuilder;
 class Literal;
 class LiteralDictionary;
 class Location;
+class Scope;
 class Symbol;
 class SymbolDictionary;
 class TextLogger;
@@ -48,7 +53,9 @@ class TypeDictionary;
 class TypeReplacer;
 class Visitor;
 
-class Compilation : public Allocatable {
+KINDSERVICE_CATEGORY(Compilation);
+
+class Compilation : public Extensible {
     JBALLOC_(Compilation)
 
     friend class Builder;
@@ -59,20 +66,28 @@ class Compilation : public Allocatable {
     friend class LiteralDictionary;
     friend class Location;
     friend class Operation;
+    friend class Scope;
     friend class Strategy;
     friend class SymbolDictionary;
+    friend class Transformer;
     friend class Type;
     friend class Value;
     friend class Visitor;
 
     public:
-    Compilation(Compiler *compiler, CompileUnit *unit, StrategyID strategy=NoStrategy, LiteralDictionary *litDict=NULL, SymbolDictionary *symDict=NULL, TypeDictionary *typeDict=NULL, Config *config=NULL);
+    DYNAMIC_ALLOC_ONLY(Compilation, Extension *ext,
+                                    ExtensibleKind kind,
+                                    CompileUnit *unit,
+                                    StrategyID strategy=NoStrategy,
+                                    Config *config=NULL);
 
     CompilationID id() const { return _id; }
     Compiler *compiler() const { return _compiler; }
+    Extension *ext() const { return _ext; }
     CompileUnit *unit() const { return _unit; }
+    template<class T> T *context() const { return _context->refine<T>(); }
+    template<class T> T *scope() const { return _scope->refine<T>(); }
     Config *config() const { return _config; }
-    Context *context() const { return _context; }
 
     Allocator *mem() const { return _mem; }
     Allocator *passMem() const { return _passMem; }
@@ -87,23 +102,19 @@ class Compilation : public Allocatable {
     OperationID maxOperationID() const { return _nextOperationID-1; }
     ValueID maxValueID() const { return _nextValueID-1; }
 
-    TransformationID getTransformationID() { return _nextTransformationID++; }
-
-    BuilderListIterator buildersIterator() { return _builders.fwdIterator(); }
-
-    void setLogger(TextLogger * lgr) { _logger = lgr; }
     TextLogger * logger(bool enabled=true) const { return enabled ? _logger : NULL; }
     virtual void log(TextLogger &lgr) const;
 
     void setWriter(TextWriter * w) { _writer = w; }
     TextWriter * writer(bool enabled=true) const { return enabled ? _writer : NULL; }
 
+    BuilderListIterator builders() { return _builders.iterator(); }
+
     virtual bool prepareIL(LOCATION);
     virtual void freeIL(LOCATION);
 
     virtual void constructJB1Function(JB1MethodBuilder *j1mb) { }
     virtual void jbgenProlog(JB1MethodBuilder *j1mb) { }
-    virtual void setNativeEntryPoint(void *entry, int i=0);
 
     virtual void replaceTypes(TypeReplacer *repl) { }
 
@@ -112,6 +123,8 @@ class Compilation : public Allocatable {
 
 protected:
     void setContext(Context *context) { _context = context; }
+    void setScope(Scope *scope) { _scope = scope; }
+    void setLogger(TextLogger * lgr) { _logger = lgr; }
     Builder *registerBuilder(Builder *b);
 
     virtual void addInitialBuildersToWorklist(BuilderList & worklist);
@@ -122,6 +135,9 @@ protected:
     LiteralID getLiteralID() { return _nextLiteralID++; }
     LocationID getLocationID() { return _nextLocationID++; }
     OperationID getOperationID() { return _nextOperationID++; }
+    ScopeID getScopeID() { return this->_nextScopeID++; }
+    TransformationID getTransformationID() { return _nextTransformationID++; }
+
     ValueID getValueID() { return _nextValueID++; }
 
     void setPassAllocator(Allocator *a) { _passMem = a; }
@@ -134,21 +150,21 @@ protected:
     LiteralID _nextLiteralID;
     LocationID _nextLocationID;
     OperationID _nextOperationID;
+    ScopeID _nextScopeID;
     TransformationID _nextTransformationID;
     ValueID _nextValueID;
 
     Compiler *_compiler;
+    Extension *_ext;
     CompileUnit *_unit;
-    StrategyID _strategy;
+    Context *_context;
+    Scope *_scope;
     bool _myConfig;
     Config *_config;
-    Context *_context;
-    Allocator *_mem;     // Compilation allocator
-    Allocator *_passMem; // current Pass allocator
+    StrategyID _strategy;
+    Allocator *_mem;     // Compilation allocator, cannot be NULL
+    Allocator *_passMem; // current Pass allocator, may be NULL
 
-    bool _myLiteralDict;
-    bool _mySymbolDict;
-    bool _myTypeDict;
     LiteralDictionary *_literalDict;
     SymbolDictionary *_symbolDict;
     TypeDictionary *_typeDict;
@@ -156,9 +172,11 @@ protected:
     TextLogger * _logger;
     TextWriter * _writer;
 
+    Value * _lastNewValue;
+
     List<Builder *> _builders;
 
-    Value * _lastNewValue;
+    SUBCLASS_KINDSERVICE_DECL(Extensible,Compilation);
 };
 
 } // namespace JitBuilder

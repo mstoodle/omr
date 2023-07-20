@@ -25,6 +25,7 @@
 #include "Func/Function.hpp"
 #include "Func/FunctionCompilation.hpp"
 #include "Func/FunctionContext.hpp"
+#include "Func/FunctionScope.hpp"
 #include "Func/FunctionSymbols.hpp"
 #include "Func/FunctionType.hpp"
 
@@ -32,10 +33,20 @@ namespace OMR {
 namespace JitBuilder {
 namespace Func {
 
-FunctionCompilation::FunctionCompilation(Compiler *compiler, Function *func, StrategyID strategy, LiteralDictionary *litdict, SymbolDictionary *symdict, TypeDictionary *typedict, Config *localConfig)
-    : Compilation(compiler, func, strategy, litdict, symdict, typedict, localConfig) {
+SUBCLASS_KINDSERVICE_IMPL(FunctionCompilation, "FunctionCompilation", Compilation, Extensible);
 
+FunctionCompilation::FunctionCompilation(Allocator *a, Extension *ext, Function *func, StrategyID strategy, Config *localConfig)
+    : Compilation(a, ext, getExtensibleClassKind(), func, strategy, localConfig) {
+
+    notifyCreation(ext, KIND(Extensible));
 }
+
+FunctionCompilation::FunctionCompilation(Allocator *a, Extension *ext, KINDTYPE(Extensible) kind, Function *func, StrategyID strategy, Config *localConfig)
+    : Compilation(a, ext, kind, func, strategy, localConfig) {
+
+    notifyCreation(ext, KIND(Extensible));
+}
+
 FunctionCompilation::~FunctionCompilation() {
 
 }
@@ -45,22 +56,27 @@ FunctionCompilation::func() const {
     return static_cast<Function *>(_unit);
 }
 
-FunctionContext *
-FunctionCompilation::funcContext() const {
-    return static_cast<FunctionContext *>(_context);
-}
-
 void
 FunctionCompilation::addInitialBuildersToWorklist(BuilderList & worklist) {
-    #if 0
-    func()->addInitialBuildersToWorklist(worklist);
-    #endif
-    for (int i=0;i < context()->numEntryPoints();i++)
-       worklist.push_back(funcContext()->builderEntryPoint(i));
+    Scope *scp = scope<Scope>();
+    for (int i=0;i < scp->numEntryPoints<BuilderEntry>();i++) {
+       Builder *b = scp->entryPoint<BuilderEntry>(i)->builder();
+       worklist.push_back(b);
+    }
+}
+
+
+
+INIT_JBALLOC_REUSECAT(FunctionCompilationAddon, Compilation);
+SUBCLASS_KINDSERVICE_IMPL(FunctionCompilationAddon, "FunctionCompilationAddon", Addon, Extensible);
+
+FunctionCompilationAddon::FunctionCompilationAddon(Allocator *a, Extension *ext, FunctionCompilation *root)
+    : Addon(a, ext, root, KIND(Extensible)) {
+
 }
 
 const FunctionType *
-FunctionCompilation::lookupFunctionType(const Type *returnType, int32_t numParms, const Type **parmTypes) {
+FunctionCompilationAddon::lookupFunctionType(const Type *returnType, int32_t numParms, const Type **parmTypes) {
     String name = FunctionType::typeName(returnType, numParms, parmTypes);
     auto it = _functionTypesFromName.find(name);
     if (it != _functionTypesFromName.end()) {
@@ -71,7 +87,7 @@ FunctionCompilation::lookupFunctionType(const Type *returnType, int32_t numParms
 }
 
 void
-FunctionCompilation::registerFunctionType(const FunctionType *fType) {
+FunctionCompilationAddon::registerFunctionType(const FunctionType *fType) {
     _functionTypesFromName.insert({fType->name(), fType});
 }
 
@@ -91,7 +107,7 @@ FunctionCompilation::log(TextLogger &lgr) const {
     lgr.indent() << "[ Function" /*<< _id*/ << lgr.endl();
     lgr.indentIn();
 
-    FunctionContext *fc = funcContext();
+    FunctionContext *fc = context<FunctionContext>();
     lgr.indent() << "[ name " << func()->name() << " ]" << lgr.endl();
     lgr.indent() << "[ origin " << func()->createLoc()->to_string() << " ]" << lgr.endl();
     lgr.indent() << "[ returnType " << fc->returnType() << "]" << lgr.endl();
@@ -107,27 +123,31 @@ FunctionCompilation::log(TextLogger &lgr) const {
         const FunctionSymbol *function = functionIt.item();
         lgr.indent() << "[ function " << function << " ]" << lgr.endl();
     }
-    lgr.indent() << "[ entryPoint " << fc->builderEntryPoint() << " ]" << lgr.endl();
+    lgr.indent() << "[ entryPoint " << scope<FunctionScope>()->entryPoint<BuilderEntry>()->builder() << " ]" << lgr.endl();
     lgr.indentOut();
     lgr.indent() << "]" << lgr.endl();
 }
 
+#if 0
 void
 FunctionCompilation::constructJB1Function(JB1MethodBuilder *j1mb) {
     j1mb->FunctionName(func()->name());
     j1mb->FunctionFile(func()->fileName());
     j1mb->FunctionLine(func()->lineNumber());
-    j1mb->FunctionReturnType(funcContext()->returnType());
 
-    for (auto paramIt = funcContext()->parameters();paramIt.hasItem(); paramIt++) {
+    FunctionContext *fcontext = context<FunctionContext>();
+
+    j1mb->FunctionReturnType(fcontext->returnType());
+
+    for (auto paramIt = fcontext->parameters();paramIt.hasItem(); paramIt++) {
         const ParameterSymbol *parameter = paramIt.item();
         j1mb->Parameter(parameter->name(), parameter->type());
     }
-    for (auto localIt = funcContext()->locals();localIt.hasItem();localIt++) {
+    for (auto localIt = fcontext->locals();localIt.hasItem();localIt++) {
         const LocalSymbol *symbol = localIt.item();
         j1mb->Local(symbol->name(), symbol->type());
     }
-    for (auto fnIt = funcContext()->functions();fnIt.hasItem();fnIt++) {
+    for (auto fnIt = fcontext->functions();fnIt.hasItem();fnIt++) {
         const FunctionSymbol *fSym = fnIt.item();
         const FunctionType *fType = fSym->functionType();
         j1mb->DefineFunction(fSym->name(),
@@ -142,17 +162,21 @@ FunctionCompilation::constructJB1Function(JB1MethodBuilder *j1mb) {
 
 void
 FunctionCompilation::jbgenProlog(JB1MethodBuilder *j1mb) {
-    j1mb->EntryPoint(context()->builderEntryPoint());
+    j1mb->EntryPoint(scope<FunctionScope>()->entry());
 }
+#endif
 
+#if 0
 void
 FunctionCompilation::setNativeEntryPoint(void *entry, unsigned i) {
-    context()->setNativeEntryPoint(entry, i);
+    NativeEntry *nativeEntry = new (_compiler->mem()) NativeEntry(_compiler->mem(), this, i, entry);
+    addEntryPoint(nativeEntry, i);
 }
+#endif
 
 void
 FunctionCompilation::replaceTypes(TypeReplacer *repl) {
-    FunctionContext *fc = funcContext();
+    FunctionContext *fc = context<FunctionContext>();
     TextLogger *lgr = logger(repl->traceEnabled());
 
     // replace return type if needed

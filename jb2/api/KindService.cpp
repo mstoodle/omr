@@ -40,8 +40,9 @@ KindService::getNextKind(Kind k) {
 KindService::Kind
 KindService::assignKind(Kind baseKind, String name) {
     auto found = _kindFromNameMap.find(name);
-    if (found != _kindFromNameMap.end())
+    if (found != _kindFromNameMap.end()) {
         return found->second;
+    }
             
     Kind kind = _nextKind;
     assert(kind != 0); // will eventually need a bit vector

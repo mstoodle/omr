@@ -44,61 +44,70 @@ add_compile_options(
 	-Wplacement-new=0
 )
 
-set(JB2_JBCORE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/)
-set(JB2_JBBASE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Base/)
-set(JB2_JBSIM_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Sim/)
-set(JB2_JBVM_DIR ${CMAKE_CURRENT_SOURCE_DIR}/VM/)
-set(JB2_JBCOMPLEX_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Complex/)
+set(JB2_CORE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/)
+set(JB2_BASE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Base/)
+set(JB2_DEBUG_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Debug/)
+set(JB2_VM_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vm/)
+set(JB2_COMPLEX_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Complex/)
+set(JB2_JB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/jb)
 
 add_library(jb2core SHARED
-     AllocationCategoryClasses.cpp
-     AllocationCategoryService.cpp
-     Allocator.cpp
-     AllocatorRaw.cpp
-     AllocatorTracer.cpp
-     AllocatorTracker.cpp
-	 Builder.cpp
-	 Compilation.cpp
-	 CompiledBody.cpp
-	 Compiler.cpp
-	 CompileUnit.cpp
-	 Config.cpp
-	 Context.cpp
-	 CreateLoc.cpp
-	 Extension.cpp
-	 InputReader.cpp
-	 JB1.cpp
-	 KindService.cpp
-	 Literal.cpp
-	 LiteralDictionary.cpp
-	 Location.cpp
-	 Loggable.cpp
-	 Operation.cpp
-	 OperationCloner.cpp
-	 OperationReplacer.cpp
-	 Pass.cpp
-	 SemanticVersion.cpp
-	 Strategy.cpp
-	 String.cpp
-	 Symbol.cpp
-	 SymbolDictionary.cpp
-	 TextLogger.cpp
-	 TextWriter.cpp
-	 Transformer.cpp
-	 Type.cpp
-	 TypeDictionary.cpp
-	 TypeReplacer.cpp
-	 Value.cpp
-	 Visitor.cpp
+    Addon.cpp
+    AllocationCategoryClasses.cpp
+    AllocationCategoryService.cpp
+    Allocator.cpp
+    AllocatorRaw.cpp
+    AllocatorTracer.cpp
+    AllocatorTracker.cpp
+    Builder.cpp
+    BuilderEntry.cpp
+    CodeGenerator.cpp
+    Compilation.cpp
+    CompiledBody.cpp
+    Compiler.cpp
+    CompileUnit.cpp
+    Config.cpp
+    Context.cpp
+    CoreExtension.cpp
+    CreateLoc.cpp
+    EntryPoint.cpp
+    Extensible.cpp
+    Extension.cpp
+    InputReader.cpp
+    KindService.cpp
+    Literal.cpp
+    LiteralDictionary.cpp
+    Location.cpp
+    Loggable.cpp
+    NativeEntry.cpp
+    Operation.cpp
+    OperationCloner.cpp
+    OperationReplacer.cpp
+    Pass.cpp
+    Scope.cpp
+    SemanticVersion.cpp
+    Strategy.cpp
+    String.cpp
+    Symbol.cpp
+    SymbolDictionary.cpp
+    TextLogger.cpp
+    TextWriter.cpp
+    Transformer.cpp
+    Type.cpp
+    TypeDictionary.cpp
+    TypeReplacer.cpp
+    Value.cpp
+    Visitor.cpp
 )
 
 target_link_libraries(jb2core jb2)
 add_subdirectory(test)
 
 # Extensions
-add_subdirectory(Func)
 add_subdirectory(Base)
-add_subdirectory(Sim)
-#add_subdirectory(Debug)
-add_subdirectory(VM)
+add_subdirectory(Debug)
+add_subdirectory(Func)
+add_subdirectory(jb)
+#add_subdirectory(Sim)
+add_subdirectory(vm)
 #add_subdirectory(Complex)

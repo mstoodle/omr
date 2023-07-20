@@ -34,19 +34,12 @@ CompiledBody::CompiledBody(Allocator *a, CompileUnit *unit, Context *context, St
     , _id(unit->compiler()->getCompiledBodyID())
     , _unit(unit)
     , _strategy(strategy)
-    , _numEntryPoints(context->numEntryPoints())
-    , _nativeEntryPoints(new void *[_numEntryPoints])
-    , _debugEntryPoints(new void *[_numEntryPoints]) {
-
-    for (unsigned e=0;e < _numEntryPoints;e++) {
-        _nativeEntryPoints[e] = context->nativeEntryPoint(e);
-        _debugEntryPoints[e] = context->debugEntryPoint(e);
-    }
+    , _nativeEntries(NULL, a)
+    , _debugEntries(NULL, a) {
 }
 
 CompiledBody::~CompiledBody() {
-    delete[] _debugEntryPoints;
-    delete[] _nativeEntryPoints;
+
 }
 
 } // namespace JitBuilder

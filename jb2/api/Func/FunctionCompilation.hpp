@@ -41,28 +41,44 @@ class FunctionCompilation : public Compilation {
     friend class FunctionExtension;
 
 public:
-    FunctionCompilation(Compiler *compiler, Function *func, StrategyID strategy=NoStrategy, LiteralDictionary *litdict=NULL, SymbolDictionary *symdict=NULL, TypeDictionary *typedict=NULL, Config *localConfig=NULL);
+    DYNAMIC_ALLOC_ONLY(FunctionCompilation, Extension *ext, Function *func, StrategyID strategy=NoStrategy, Config *localConfig=NULL);
 
     Function *func() const;
 
-    FunctionContext *funcContext() const;
-
     virtual void log(TextLogger & lgr) const;
 
+    #if 0
+    void setNativeEntryPoint(void *entry, unsigned i);
     virtual void constructJB1Function(JB1MethodBuilder *j1mb);
     virtual void jbgenProlog(JB1MethodBuilder *j1mb);
-
-    const FunctionType * lookupFunctionType(const Type *returnType, int32_t numParms, const Type **parmTypes);
-    void registerFunctionType(const FunctionType * fType);
-
-    void setNativeEntryPoint(void *entry, unsigned i);
+    #endif
 
     virtual void replaceTypes(TypeReplacer *repl);
 
 protected:
+    DYNAMIC_ALLOC_ONLY(FunctionCompilation, Extension *ext, KINDTYPE(Extensible) kind, Function *func, StrategyID strategy=NoStrategy, Config *localConfig=NULL);
+
     virtual void addInitialBuildersToWorklist(BuilderList & worklist);
 
+    SUBCLASS_KINDSERVICE_DECL(Extensible, FunctionCompilation);
+};
+
+
+class FunctionCompilationAddon : public Addon {
+    JBALLOC_NO_DESTRUCTOR_(FunctionCompilationAddon)
+ 
+    friend class FunctionExtension;
+
+public:
+    const FunctionType * lookupFunctionType(const Type *returnType, int32_t numParms, const Type **parmTypes);
+    void registerFunctionType(const FunctionType * fType);
+
+protected:
+    FunctionCompilationAddon(Allocator *a, Extension *ext, FunctionCompilation *root);
+
     std::map<String,const FunctionType *> _functionTypesFromName;
+
+    SUBCLASS_KINDSERVICE_DECL(Extensible, FunctionCompilationAddon);
 };
 
 } // namespace Func

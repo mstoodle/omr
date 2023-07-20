@@ -24,13 +24,11 @@
 
 #include <map>
 #include "JBCore.hpp"
-#include "Func/Func.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 namespace Base {
 
-class BaseCompilation;
 class BaseExtension;
 
 class BaseType : public Type {
@@ -50,6 +48,8 @@ class BaseType : public Type {
 
     BaseExtension *baseExt();
     BaseExtension *baseExt() const;
+
+    SUBCLASS_KINDSERVICE_DECL(Type, BaseType);
 };
 
 class NumericType : public BaseType {
@@ -57,18 +57,13 @@ class NumericType : public BaseType {
 
     friend class BaseExtension;
 
-public:
-    static const TypeKind getTypeClassKind();
-
 protected:
     NumericType(MEM_LOCATION(a), TypeKind kind, Extension *ext, String name, size_t size)
-        : BaseType(MEM_PASSLOC(a), TYPEKIND, ext, name, size) {
+        : BaseType(MEM_PASSLOC(a), kind, ext, name, size) {
 
     }
 
-
-    static TypeKind TYPEKIND;
-    static bool kindRegistered;
+    SUBCLASS_KINDSERVICE_DECL(Type, NumericType);
 };
 
 class IntegerType : public NumericType {
@@ -78,16 +73,13 @@ class IntegerType : public NumericType {
 public:
     virtual bool isInteger() const { return true; }
 
-    static const TypeKind getTypeClassKind();
-
 protected:
     IntegerType(MEM_LOCATION(a), TypeKind kind, Extension *ext, String name, size_t size)
-        : NumericType(MEM_PASSLOC(a), TYPEKIND, ext, name, size) {
+        : NumericType(MEM_PASSLOC(a), getTypeClassKind(), ext, name, size) {
 
     }
 
-    static TypeKind TYPEKIND;
-    static bool kindRegistered;
+    SUBCLASS_KINDSERVICE_DECL(Type, IntegerType);
 };
 
 class Int8Type : public IntegerType {
@@ -103,17 +95,12 @@ public:
     virtual bool literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const;
     virtual void logValue(TextLogger & lgr, const void *p) const;
     virtual void logLiteral(TextLogger & lgr, const Literal *lv) const;
-    virtual bool registerJB1Type(JB1MethodBuilder *j1mb) const;
-    virtual void createJB1ConstOp(Location *loc, JB1MethodBuilder *j1mb, Builder *b, Value *result, Literal *lv) const;
     virtual const int64_t getInteger(const Literal *lv) const;
 
-    static const TypeKind getTypeClassKind();
-
 protected:
-    Int8Type(MEM_LOCATION(a), Extension *ext) : IntegerType(MEM_PASSLOC(a), TYPEKIND, ext, "Int8", 8) { }
+    Int8Type(MEM_LOCATION(a), Extension *ext) : IntegerType(MEM_PASSLOC(a), getTypeClassKind(), ext, "Int8", 8) { }
 
-    static TypeKind TYPEKIND;
-    static bool kindRegistered;
+    SUBCLASS_KINDSERVICE_DECL(Type, Int8Type);
 };
 
 class Int16Type : public IntegerType {
@@ -129,17 +116,12 @@ public:
     virtual bool literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const;
     virtual void logValue(TextLogger & lgr, const void *p) const;
     virtual void logLiteral(TextLogger & lgr, const Literal *lv) const;
-    virtual bool registerJB1Type(JB1MethodBuilder *j1mb) const;
-    virtual void createJB1ConstOp(Location *loc, JB1MethodBuilder *j1mb, Builder *b, Value *result, Literal *lv) const;
     virtual const int64_t getInteger(const Literal *lv) const;
 
-    static const TypeKind getTypeClassKind();
-
 protected:
-    Int16Type(MEM_LOCATION(a), Extension *ext) : IntegerType(MEM_PASSLOC(a), TYPEKIND, ext, "Int16", 16) { }
+    Int16Type(MEM_LOCATION(a), Extension *ext) : IntegerType(MEM_PASSLOC(a), getTypeClassKind(), ext, "Int16", 16) { }
 
-    static TypeKind TYPEKIND;
-    static bool kindRegistered;
+    SUBCLASS_KINDSERVICE_DECL(Type, Int16Type);
 };
 
 class Int32Type : public IntegerType {
@@ -155,17 +137,12 @@ public:
     virtual bool literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const;
     virtual void logValue(TextLogger & lgr, const void *p) const;
     virtual void logLiteral(TextLogger & lgr, const Literal *lv) const;
-    virtual bool registerJB1Type(JB1MethodBuilder *j1mb) const;
-    virtual void createJB1ConstOp(Location *loc, JB1MethodBuilder *j1mb, Builder *b, Value *result, Literal *lv) const;
     virtual const int64_t getInteger(const Literal *lv) const;
 
-    static const TypeKind getTypeClassKind();
-
 protected:
-    Int32Type(MEM_LOCATION(a), Extension *ext) : IntegerType(MEM_PASSLOC(a), TYPEKIND, ext, "Int32", 32) { }
+    Int32Type(MEM_LOCATION(a), Extension *ext) : IntegerType(MEM_PASSLOC(a), getTypeClassKind(), ext, "Int32", 32) { }
 
-    static TypeKind TYPEKIND;
-    static bool kindRegistered;
+    SUBCLASS_KINDSERVICE_DECL(Type, Int32Type);
 };
 
 class Int64Type : public IntegerType {
@@ -181,17 +158,12 @@ public:
     virtual bool literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const;
     virtual void logValue(TextLogger & lgr, const void *p) const;
     virtual void logLiteral(TextLogger & lgr, const Literal *lv) const;
-    virtual bool registerJB1Type(JB1MethodBuilder *j1mb) const;
-    virtual void createJB1ConstOp(Location *loc, JB1MethodBuilder *j1mb, Builder *b, Value *result, Literal *lv) const;
     virtual const int64_t getInteger(const Literal *lv) const;
 
-    static const TypeKind getTypeClassKind();
-
 protected:
-    Int64Type(MEM_LOCATION(a), Extension *ext) : IntegerType(MEM_PASSLOC(a), TYPEKIND, ext, "Int64", 64) { }
+    Int64Type(MEM_LOCATION(a), Extension *ext) : IntegerType(MEM_PASSLOC(a), getTypeClassKind(), ext, "Int64", 64) { }
 
-    static TypeKind TYPEKIND;
-    static bool kindRegistered;
+    SUBCLASS_KINDSERVICE_DECL(Type, Int64Type);
 };
 
 class FloatingPointType : public NumericType {
@@ -199,16 +171,13 @@ class FloatingPointType : public NumericType {
 
     friend class BaseExtension;
 
-    static const TypeKind getTypeClassKind();
-
 protected:
     FloatingPointType(MEM_LOCATION(a), TypeKind kind, Extension *ext, String name, size_t size)
         : NumericType(MEM_PASSLOC(a), kind, ext, name, size) {
 
     }
 
-    static TypeKind TYPEKIND;
-    static bool kindRegistered;
+    SUBCLASS_KINDSERVICE_DECL(Type, FloatingPointType);
 };
 
 class Float32Type : public FloatingPointType {
@@ -224,17 +193,12 @@ public:
     virtual bool literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const;
     virtual void logValue(TextLogger & lgr, const void *p) const;
     virtual void logLiteral(TextLogger & lgr, const Literal *lv) const;
-    virtual bool registerJB1Type(JB1MethodBuilder *j1mb) const;
-    virtual void createJB1ConstOp(Location *loc, JB1MethodBuilder *j1mb, Builder *b, Value *result, Literal *lv) const;
     virtual const double getFloatingPoint(const Literal *lv) const;
 
-    static const TypeKind getTypeClassKind();
-
 protected:
-    Float32Type(MEM_LOCATION(a), Extension *ext) : FloatingPointType(MEM_PASSLOC(a), TYPEKIND, ext, "Float32", 32) { }
+    Float32Type(MEM_LOCATION(a), Extension *ext) : FloatingPointType(MEM_PASSLOC(a), getTypeClassKind(), ext, "Float32", 32) { }
 
-    static TypeKind TYPEKIND;
-    static bool kindRegistered;
+    SUBCLASS_KINDSERVICE_DECL(Type, Float32Type);
 };
 
 class Float64Type : public FloatingPointType {
@@ -250,17 +214,12 @@ public:
     virtual bool literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const;
     virtual void logValue(TextLogger & lgr, const void *p) const;
     virtual void logLiteral(TextLogger & lgr, const Literal *lv) const;
-    virtual bool registerJB1Type(JB1MethodBuilder *j1mb) const;
-    virtual void createJB1ConstOp(Location *loc, JB1MethodBuilder *j1mb, Builder *b, Value *result, Literal *lv) const;
     virtual const double getFloatingPoint(const Literal *lv) const;
 
-    static const TypeKind getTypeClassKind();
-
 protected:
-    Float64Type(MEM_LOCATION(a), Extension *ext) : FloatingPointType(MEM_PASSLOC(a), TYPEKIND, ext, "Float64", 64) { }
+    Float64Type(MEM_LOCATION(a), Extension *ext) : FloatingPointType(MEM_PASSLOC(a), getTypeClassKind(), ext, "Float64", 64) { }
 
-    static TypeKind TYPEKIND;
-    static bool kindRegistered;
+    SUBCLASS_KINDSERVICE_DECL(Type, Float64Type);
 };
 
 class AddressType : public BaseType {
@@ -275,10 +234,6 @@ public:
     virtual bool literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const;
     virtual void logValue(TextLogger & lgr, const void *p) const;
     virtual void logLiteral(TextLogger & lgr, const Literal *lv) const;
-    virtual bool registerJB1Type(JB1MethodBuilder *j1mb) const;
-    virtual void createJB1ConstOp(Location *loc, JB1MethodBuilder *j1mb, Builder *b, Value *result, Literal *lv) const;
-
-    static const TypeKind getTypeClassKind();
 
 protected:
     DYNAMIC_ALLOC_ONLY(AddressType, LOCATION, Extension *ext);
@@ -286,8 +241,7 @@ protected:
     DYNAMIC_ALLOC_ONLY(AddressType, LOCATION, Extension *ext, TypeDictionary *dict, String name);
     DYNAMIC_ALLOC_ONLY(AddressType, LOCATION, Extension *ext, TypeDictionary *dict, TypeKind kind, String name);
 
-    static TypeKind TYPEKIND;
-    static bool kindRegistered;
+    SUBCLASS_KINDSERVICE_DECL(Type, AddressType);
 };
 
 class PointerType;
@@ -298,13 +252,13 @@ class PointerTypeBuilder : public Allocatable {
     JBALLOC_(PointerTypeBuilder)
 
 public:
-    ALL_ALLOC_ALLOWED(PointerTypeBuilder, BaseExtension *ext, Base::BaseCompilation *comp);
+    ALL_ALLOC_ALLOWED(PointerTypeBuilder, BaseExtension *ext, Compilation *comp);
 
     PointerTypeBuilder *setBaseType(const Type *type) { _baseType = type; return this; }
     PointerTypeBuilder *setHelper(PointerTypeHelper *helper) { _helper = helper; return this; }
 
     BaseExtension *extension() const { return _ext; }
-    Base::BaseCompilation *comp() const { return _comp; }
+    Compilation *comp() const { return _comp; }
     TypeDictionary *dict() const { return _dict; }
     const Type *baseType() const { return _baseType; }
     PointerTypeHelper *helper() const { return _helper; }
@@ -314,7 +268,7 @@ public:
 
 protected:
     BaseExtension * _ext;
-    Base::BaseCompilation * _comp;
+    Compilation * _comp;
     TypeDictionary *_dict;
     const Type * _baseType;
     PointerTypeHelper *_helper;
@@ -333,17 +287,13 @@ public:
     virtual String to_string(bool useHeader=false) const;
     virtual void logValue(TextLogger & lgr, const void *p) const;
     virtual void logLiteral(TextLogger & lgr, const Literal *lv) const;
-    virtual bool registerJB1Type(JB1MethodBuilder *j1mb) const;
     virtual const Type * replace(TypeReplacer *repl);
-
-    static const TypeKind getTypeClassKind();
 
 protected:
     DYNAMIC_ALLOC_ONLY(PointerType, LOCATION, PointerTypeBuilder *builder);
     const Type * _baseType;
 
-    static TypeKind TYPEKIND;
-    static bool kindRegistered;
+    SUBCLASS_KINDSERVICE_DECL(Type, PointerType);
 };
 
 struct StructType;
@@ -367,9 +317,6 @@ public:
     virtual String to_string(bool useHeader=false) const;
     virtual void logValue(TextLogger & lgr, const void *p) const { }
     virtual void logLiteral(TextLogger & lgr, const Literal *lv) const { }
-    virtual bool registerJB1Type(JB1MethodBuilder *j1mb) const;
-
-    static const TypeKind getTypeClassKind();
 
 protected:
     protected:
@@ -382,8 +329,7 @@ protected:
     const Type *_type;
     size_t _offset;
 
-    static TypeKind TYPEKIND;
-    static bool kindRegistered;
+    SUBCLASS_KINDSERVICE_DECL(Type, FieldType);
 };
 
 typedef std::map<String, const FieldType *>::const_iterator FieldIterator;
@@ -410,7 +356,7 @@ class StructTypeBuilder : public Allocatable {
     };
 
 public:
-    ALL_ALLOC_ALLOWED(StructTypeBuilder, BaseExtension *ext, Base::BaseCompilation *comp);
+    ALL_ALLOC_ALLOWED(StructTypeBuilder, BaseExtension *ext, Compilation *comp);
 
     #if NEED_UNION
     StructTypeBuilder *setUnion(bool v=false); { _buildUnion = v; return this; }
@@ -425,7 +371,7 @@ public:
     }
 
     BaseExtension *extension() const { return _ext; }
-    Base::BaseCompilation *comp() const { return _comp; }
+    Compilation *comp() const { return _comp; }
     TypeDictionary *dict() const { return _dict; }
     String name() const { return _name; }
     size_t size() const { return _size; }
@@ -448,8 +394,8 @@ protected:
     void setStructType(StructType *structType) { _structType = structType; }
 
     BaseExtension * _ext;
-    Func::Function * _func;
-    Base::BaseCompilation * _comp;
+    CompileUnit * _unit;
+    Compilation * _comp;
     TypeDictionary * _dict;
     String _name;
     size_t _size;
@@ -475,7 +421,6 @@ public:
     virtual String to_string(bool useHeader=false) const;
     virtual void logValue(TextLogger & lgr, const void *p) const;
     virtual void logLiteral(TextLogger & lgr, const Literal *lv) const;
-    virtual bool registerJB1Type(JB1MethodBuilder *j1mb) const;
 
     FieldIterator FieldsBegin() const { return _fieldsByName.cbegin(); }
     FieldIterator FieldsEnd() const   { return _fieldsByName.cend(); }
@@ -490,8 +435,6 @@ public:
     virtual const Type * replace(TypeReplacer *repl);
     virtual bool canBeLayout() const { return true; }
     virtual void explodeAsLayout(TypeReplacer *repl, size_t baseOffset, TypeMapper *m) const;
-
-    static const TypeKind getTypeClassKind();
 
 protected:
     DYNAMIC_ALLOC_ONLY(StructType, LOCATION, StructTypeBuilder *builder);
@@ -509,16 +452,13 @@ protected:
     std::map<String, const FieldType *> _fieldsByName;
     std::multimap<size_t, const FieldType *> _fieldsByOffset;
 
-    static TypeKind TYPEKIND;
-    static bool kindRegistered;
+    SUBCLASS_KINDSERVICE_DECL(Type, StructType);
 };
 
 #if NEED_UNION
 // why is this class needed?
 class UnionType : public StructType {
     friend class StructTypeBuilder;
-
-    static const TypeKind getTypeClassKind();
 
 public:
     Literal *literal(LOCATION, Compilation *comp, void * unionValue);
@@ -533,8 +473,7 @@ public:
     virtual void logValue(TextLogger & lgr, const void *p) const;
 
 protected:
-    static TypeKind TYPEKIND;
-    static bool kindRegistered;
+    SUBCLASS_KINDSERVICE_DECL(Type, UnionType);
 };
 #endif
 

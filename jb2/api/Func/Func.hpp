@@ -27,6 +27,7 @@
 #include "Func/FunctionContext.hpp"
 #include "Func/FunctionExtension.hpp"
 #include "Func/FunctionOperations.hpp"
+#include "Func/FunctionScope.hpp"
 #include "Func/FunctionSymbols.hpp"
 #include "Func/FunctionType.hpp"
 

@@ -41,7 +41,7 @@ class FunctionContext : public Context {
     friend class FunctionExtension;
 public:
     FunctionContext(LOCATION, FunctionCompilation *comp, String name="");
-    FunctionContext(LOCATION, FunctionCompilation *comp, FunctionContext *caller, String name="");
+    FunctionContext(LOCATION, FunctionContext *caller, String name="");
 
     ParameterSymbol * DefineParameter(String name, const Type * type);
     LocalSymbol * DefineLocal(String name, const Type * type);
@@ -69,6 +69,9 @@ public:
     }
 
 protected:
+    FunctionContext(LOCATION, KINDTYPE(Context) kind, FunctionCompilation *comp, String name="");
+    FunctionContext(LOCATION, KINDTYPE(Context) kind, FunctionContext *caller, String name="");
+
     FunctionCompilation *fComp() const;
 
     void DefineParameter(ParameterSymbol *parm);
@@ -81,6 +84,8 @@ protected:
     FunctionSymbolList _functions;
 
     TypeArray _returnTypes;
+
+    SUBCLASS_KINDSERVICE_DECL(Context, FunctionContext);
 };
 
 } // namespace Func
