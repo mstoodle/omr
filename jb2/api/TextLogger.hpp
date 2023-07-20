@@ -34,6 +34,7 @@ class Case;
 class Literal;
 class LiteralDictionary;
 class Operation;
+class Scope;
 class Symbol;
 class SymbolDictionary;
 class Type;
@@ -101,13 +102,13 @@ public:
     friend TextLogger & operator<<(TextLogger &log, const Literal *lv);
     friend TextLogger & operator<<(TextLogger &log, const LiteralDictionary *ld);
     friend TextLogger & operator<<(TextLogger &log, const Operation *op);
+    friend TextLogger & operator<<(TextLogger &log, const Scope *s);
     friend TextLogger & operator<<(TextLogger &log, const Symbol *s);
     friend TextLogger & operator<<(TextLogger &log, const SymbolDictionary *sd);
     friend TextLogger & operator<<(TextLogger &log, const Type *t);
     friend TextLogger & operator<<(TextLogger &log, const TypeDictionary *dict);
     friend TextLogger & operator<<(TextLogger &log, const Value *v);
 
-    void logType(const Type *type, bool indent=true);
     void logOperation(Operation *op);
 
     String endl() {

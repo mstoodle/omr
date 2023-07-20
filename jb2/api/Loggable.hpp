@@ -23,6 +23,7 @@
 #define LOGGABLE_INCL
 
 #include "Allocatable.hpp"
+#include "String.hpp"
 
 namespace OMR {
 namespace JitBuilder {

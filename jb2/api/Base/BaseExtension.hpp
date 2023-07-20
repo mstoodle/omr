@@ -46,7 +46,6 @@ class FieldType;
 class StructType;
 class UnionType;
 
-class BaseCompilation;
 class BaseExtensionChecker;
 class ForLoopBuilder;
 
@@ -56,7 +55,7 @@ class BaseExtension : public Extension {
     friend class PointerTypeBuilder;
 
 protected:
-    Func::FunctionExtension *_fx;
+    CoreExtension *_cx;
 
 public:
     DYNAMIC_ALLOC_ONLY(BaseExtension, LOCATION, Compiler *compiler, bool extended=false, String extensionName="");
@@ -74,6 +73,7 @@ public:
     // Types
     //
 
+    const NoTypeType *NoType; // from core extension
     const Int8Type *Int8;
     const Int16Type *Int16;
     const Int32Type *Int32;
@@ -83,7 +83,7 @@ public:
     const AddressType *Address;
     const Type *Word;
 
-    const PointerType *PointerTo(LOCATION, Base::BaseCompilation *comp, const Type *baseType);
+    const PointerType *PointerTo(LOCATION, Compilation *comp, const Type *baseType);
 
     //
     // Actions
@@ -167,9 +167,7 @@ public:
     Value * Sub(LOCATION, Builder *b, Value *left, Value *right);
 
     // Control operations
-    Value *Call(LOCATION, Builder *b, Func::FunctionSymbol *funcSym, ...);
-    Value *CallWithArgArray(LOCATION, Builder *b, Func::FunctionSymbol *funcSym, int32_t numArgs, Value **args);
-    ForLoopBuilder ForLoopUp(LOCATION, Builder *b, Func::LocalSymbol *loopVariable, Value *initial, Value *final, Value *bump);
+    ForLoopBuilder ForLoopUp(LOCATION, Builder *b, Symbol *loopVariable, Value *initial, Value *final, Value *bump);
     void Goto(LOCATION, Builder *b, Builder *target);
     void IfCmpEqual(LOCATION, Builder *b, Builder *target, Value *left, Value *right);
     void IfCmpEqualZero(LOCATION, Builder *b, Builder *target, Value *condition);
@@ -208,9 +206,6 @@ public:
     Value * Zero(LOCATION, Builder *b, const Type *type);
     Value * One(LOCATION, Builder *b, const Type *type);
 
-    void Increment(LOCATION, Builder *b, Symbol *sym, Value *bump);
-    void Increment(LOCATION, Builder *b, Func::LocalSymbol *sym);
-
     Value * OffsetAt(LOCATION, Builder *b, Value *array, size_t elementIndex);
     Value * LoadArray(LOCATION, Builder *b, Value *array, size_t elementIndex);
     void StoreArray(LOCATION, Builder *b, Value *array, size_t elementIndex, Value *value);
@@ -220,10 +215,9 @@ public:
 
     void registerChecker(BaseExtensionChecker *checker);
 
-    CompilerReturnCode compile(LOCATION, Func::Function *func, StrategyID strategy, TextWriter *w);
-
 protected:
     void failValidateOffsetAt(LOCATION, Builder *b, Value *array);
+    virtual void createAddon(Extensible *e);
 
     List<BaseExtensionChecker *> _checkers;
 
@@ -231,6 +225,8 @@ protected:
     static const MinorID BASEEXT_MINOR=1;
     static const PatchID BASEEXT_PATCH=0;
     static const SemanticVersion version;
+
+    SUBCLASS_KINDSERVICE_DECL(Extensible,BaseExtension);
 };
 
 class BaseExtensionChecker : public Allocatable {
@@ -244,25 +240,21 @@ public:
     }
 
     virtual bool validateAdd(LOCATION, Builder *b, Value *left, Value *right);
-    virtual bool validateCall(LOCATION, Builder *b, Func::FunctionSymbol *target, std::va_list & args);
-    //virtual bool validateCallWithArgArray(LOCATION, Builder *b, Func::FunctionSymbol *target, int32_t numArgs, Value **args);
     virtual bool validateConvertTo(LOCATION, Builder *b, const Type *type, Value *value);
     virtual bool validateMul(LOCATION, Builder *b, Value *left, Value *right);
     virtual bool validateSub(LOCATION, Builder *b, Value *left, Value *right);
     virtual bool validateIfCmp(LOCATION, Builder *b, Builder *target, Value *left, Value *right, CompilerReturnCode failCode, String opCodeName);
     virtual bool validateIfCmpZero(LOCATION, Builder *b, Builder *target, Value *value, CompilerReturnCode failCode, String opCodeName);
-    virtual bool validateForLoopUp(LOCATION, Builder *b, Func::LocalSymbol *loopVariable, Value *initial, Value *final, Value *bump);
+    virtual bool validateForLoopUp(LOCATION, Builder *b, Symbol *loopVariable, Value *initial, Value *final, Value *bump);
 
 protected:
     virtual void failValidateAdd(LOCATION, Builder *b, Value *left, Value *right);
-    virtual void failValidateCall(LOCATION, Builder *b, Func::FunctionSymbol *target, std::va_list & args);
-    //virtual void failValidateCallWithArgArray(LOCATION, Builder *b, Func::FunctionSymbol *target, int32_t numArgs, Value **args);
     virtual void failValidateConvertTo(LOCATION, Builder *b, const Type *type, Value *value);
     virtual void failValidateMul(LOCATION, Builder *b, Value *left, Value *right);
     virtual void failValidateSub(LOCATION, Builder *b, Value *left, Value *right);
     virtual void failValidateIfCmp(LOCATION, Builder *b, Builder *target, Value *left, Value *right, CompilerReturnCode failCode, String opCodeName);
     virtual void failValidateIfCmpZero(LOCATION, Builder *b, Builder *target, Value *value, CompilerReturnCode failCode, String opCodeName);
-    virtual void failValidateForLoopUp(LOCATION, Builder *b, Func::LocalSymbol *loopVariable, Value *initial, Value *final, Value *bump);
+    virtual void failValidateForLoopUp(LOCATION, Builder *b, Symbol *loopVariable, Value *initial, Value *final, Value *bump);
 
     BaseExtension *_base;
 };
@@ -283,7 +275,7 @@ public:
 
     }
 
-    Func::LocalSymbol * loopVariable() const { return _loopVariable; }
+    Symbol * loopVariable() const { return _loopVariable; }
     Value *initialValue() const { return _initial; }
     Value *finalValue() const { return _final; }
     Value *bumpValue() const { return _bump; }
@@ -292,7 +284,7 @@ public:
     Builder *loopContinue()const { return _loopContinue; }
 
 private:
-    ForLoopBuilder &setLoopVariable(Func::LocalSymbol *s) { _loopVariable = s; return *this; }
+    ForLoopBuilder &setLoopVariable(Symbol *s) { _loopVariable = s; return *this; }
     ForLoopBuilder &setInitialValue(Value *v) { _initial = v; return *this; }
     ForLoopBuilder &setFinalValue(Value *v) { _final = v; return *this; }
     ForLoopBuilder &setBumpValue(Value *v) { _bump = v; return *this; }
@@ -300,7 +292,7 @@ private:
     ForLoopBuilder &setLoopBreak(Builder *b) { _loopBreak = b; return *this; }
     ForLoopBuilder &setLoopContinue(Builder *b) { _loopContinue = b; return *this; }
 
-    Func::LocalSymbol * _loopVariable;
+    Symbol * _loopVariable;
     Value * _initial;
     Value * _final;
     Value * _bump;

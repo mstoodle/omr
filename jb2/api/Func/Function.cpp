@@ -24,6 +24,7 @@
 #include "Func/Function.hpp"
 #include "Func/FunctionCompilation.hpp"
 #include "Func/FunctionContext.hpp"
+#include "Func/FunctionScope.hpp"
 
 
 namespace OMR {
@@ -33,25 +34,25 @@ namespace Func {
 
 Function::Function(MEM_LOCATION(a), Compiler *compiler)
     : CompileUnit(MEM_PASSLOC(a), compiler)
-    , _outerFunction(NULL) {
+    , _cx(compiler->coreExt()) {
 
 }
 
 Function::Function(LOCATION, Compiler *compiler)
-    : CompileUnit(PASSLOC, compiler)
-    , _outerFunction(NULL) {
+    : CompileUnit(PASSLOC, compiler) 
+    , _cx(compiler->coreExt()){
 
 }
 
 Function::Function(MEM_LOCATION(a), Function *outerFunc)
-    : CompileUnit(MEM_PASSLOC(a), outerFunc->_compiler)
-    , _outerFunction(outerFunc) {
+    : CompileUnit(MEM_PASSLOC(a), outerFunc) 
+    , _cx(_compiler->coreExt()){
 
 }
 
 Function::Function(LOCATION, Function *outerFunc)
-    : CompileUnit(PASSLOC, outerFunc->_compiler)
-    , _outerFunction(outerFunc) {
+    : CompileUnit(PASSLOC, outerFunc) 
+    , _cx(_compiler->coreExt()){
 
 }
 
@@ -59,29 +60,38 @@ Function::~Function() {
 }
 
 bool
-Function::initContext(LOCATION, Compilation *comp, Context *context) {
-    FunctionCompilation *fcomp = static_cast<FunctionCompilation *>(comp);
-    FunctionContext *fc = static_cast<FunctionContext *>(context);
-    assert(fc == fcomp->funcContext());
-    return initContext(PASSLOC, fcomp, fc);
+Function::buildContext(LOCATION, Compilation *comp, Scope *scope, Context *ctx) {
+    FunctionCompilation *fcomp = comp->refine<FunctionCompilation>();
+    FunctionScope *fscope = scope->refine<FunctionScope>();
+    FunctionContext *fctx = ctx->refine<FunctionContext>();
+    return buildContext(PASSLOC, fcomp, fscope, fctx);
 }
 
 bool
-Function::buildIL(LOCATION, Compilation *comp, Context *context) {
-    FunctionCompilation *fcomp = static_cast<FunctionCompilation *>(comp);
-    FunctionContext *fc = static_cast<FunctionContext *>(context);
-    assert(fc == fcomp->funcContext());
-    return buildIL(PASSLOC, fcomp, fc);
+Function::buildIL(LOCATION, Compilation *comp, Scope *scope, Context *ctx) {
+    Builder *entryBuilder = comp->unit()->EntryBuilder(PASSLOC, comp, scope);
+    BuilderEntry *entry = new (comp->mem()) BuilderEntry(comp->mem(), comp, 0, entryBuilder);
+    scope->addEntryPoint(entry);
+
+    FunctionCompilation *fcomp = comp->refine<FunctionCompilation>();
+    FunctionScope *fscope = scope->refine<FunctionScope>();
+    FunctionContext *fctx = ctx->refine<FunctionContext>();
+    return buildIL(PASSLOC, fcomp, fscope, fctx);
 }
 
 FunctionCompilation *
 Function::fcomp(Compilation *comp) {
-    return static_cast<FunctionCompilation *>(comp);
+    return comp->refine<FunctionCompilation>();
+}
+
+FunctionScope *
+Function::fscope(Compilation *comp) {
+    return comp->scope<FunctionScope>();
 }
 
 FunctionContext *
-Function::fcontext(Compilation *comp) {
-    return fcomp(comp)->funcContext();
+Function::fctx(Compilation *comp) {
+    return comp->context<FunctionContext>();
 }
 
 void

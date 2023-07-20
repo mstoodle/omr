@@ -22,6 +22,7 @@
 #include "Builder.hpp"
 #include "Compilation.hpp"
 #include "Compiler.hpp"
+#include "CoreExtension.hpp"
 #include "Literal.hpp"
 #include "LiteralDictionary.hpp"
 #include "Operation.hpp"
@@ -36,15 +37,16 @@ namespace OMR {
 namespace JitBuilder {
 
 INIT_JBALLOC_REUSECAT(TextWriter, Compiler)
+SUBCLASS_KINDSERVICE_IMPL(TextWriter,"TextWriter",Visitor, Extensible);
 
 TextWriter::TextWriter(Allocator *a, Compiler * compiler, std::ostream & os, String perIndent)
-    : Visitor(a, compiler)
+    : Visitor(a, CLASSKIND(TextWriter, Extensible), compiler->coreExt())
     , _logger(*(new (a) TextLogger(a, os, perIndent))) {
 
 }
 
 TextWriter::TextWriter(Allocator *a, Compiler * compiler, TextLogger & logger)
-    : Visitor(a, compiler)
+    : Visitor(a, CLASSKIND(TextWriter, Extensible), compiler->coreExt())
     , _logger(logger) {
 
 }

@@ -66,6 +66,8 @@ protected:
         // __mem being NULL tells delete operator that new didn't allocate it so should be ignored
     }
 
+private:
+    // make these private so we can change the implementation later: base class fields isn't ideal for e.g. arrays
     Allocator *__mem;
     size_t __size;
 };
@@ -172,12 +174,12 @@ protected:
         return C::allocCategory; \
     }
 
-#define INIT_JBALLOC_TEMPLATE(C,T,cat) \
-    template<> \
+#define INIT_JBALLOC_TEMPLATE(C,cat) \
+    template<class T> \
     AllocationCategoryID C<T>::allocCategory=NoAllocationCategory; \
-    template<> \
+    template<class T> \
     bool C<T>::allocCategoryInitialized = false; \
-    template<> \
+    template<class T> \
     AllocationCategoryID \
     C<T>::allocCat() { \
         if (!C<T>::allocCategoryInitialized) { \

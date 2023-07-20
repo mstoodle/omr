@@ -59,6 +59,12 @@ const CompileUnitID NoCompileUnit=0;
 typedef uint64_t ContextID;
 const ContextID NoContext=0;
 
+typedef uint64_t EntryID;
+const EntryID PrimaryEntry=0;
+
+typedef uint64_t ExecutorID;
+const ExecutorID NoExecutor=0;
+
 typedef uint64_t ExtensionID;
 const ExtensionID NoExtension=0;
 
@@ -78,6 +84,9 @@ const OperationID NoOperation=0;
 
 typedef uint64_t PassID;
 const PassID NoPass=0;
+
+typedef uint64_t ScopeID;
+const PassID NoScope=0;
 
 typedef uint64_t StrategyID;
 const StrategyID NoStrategy=0;

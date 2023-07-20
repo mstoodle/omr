@@ -29,24 +29,21 @@ namespace Func {
 
 INIT_JBALLOC_CAT(FunctionSymbol, (Symbol::allocCat()))
 
-// should be initialized first time it's needed by ensureKindRegistered()
-bool FunctionSymbol::kindRegistered=false;
-SymbolKind FunctionSymbol::SYMBOLKIND=KindService::NoKind;
+SUBCLASS_KINDSERVICE_IMPL(FunctionSymbol, "FunctionSymbol", Symbol, Symbol);
 
 FunctionSymbol::~FunctionSymbol() {
 }
 
-const SymbolKind
-FunctionSymbol::getSymbolClassKind() {
-    if (!kindRegistered) {
-        SYMBOLKIND = Symbol::kindService.assignKind(KindService::AnyKind, "FunctionSymbol");
-	kindRegistered = true;
-    }
-    return SYMBOLKIND;
+FunctionSymbol::FunctionSymbol(Allocator *a, Extension *ext, const FunctionType *type, String name, String fileName, String lineNumber, void *entryPoint)
+    : Symbol(a, getSymbolClassKind(), ext, name, type)
+    , _fileName(fileName)
+    , _lineNumber(lineNumber)
+    , _entryPoint(entryPoint) {
+
 }
 
-FunctionSymbol::FunctionSymbol(Allocator *a, const FunctionType *type, String name, String fileName, String lineNumber, void *entryPoint)
-    : Symbol(a, getSymbolClassKind(), name, type)
+FunctionSymbol::FunctionSymbol(Allocator *a, SymbolKind kind, Extension *ext, const FunctionType *type, String name, String fileName, String lineNumber, void *entryPoint)
+    : Symbol(a, kind, ext, name, type)
     , _fileName(fileName)
     , _lineNumber(lineNumber)
     , _entryPoint(entryPoint) {
@@ -60,42 +57,17 @@ FunctionSymbol::functionType() const {
 
 
 INIT_JBALLOC_REUSECAT(LocalSymbol, Symbol)
-
-// should be initialized first time it's needed by ensureKindRegistered()
-bool LocalSymbol::kindRegistered=false;
-SymbolKind LocalSymbol::SYMBOLKIND=KindService::NoKind;
+SUBCLASS_KINDSERVICE_IMPL(LocalSymbol, "LocalSymbol", Symbol, Symbol);
 
 LocalSymbol::~LocalSymbol() {
 
 }
 
-const SymbolKind
-LocalSymbol::getSymbolClassKind() {
-    if (!kindRegistered) {
-        SYMBOLKIND = Symbol::kindService.assignKind(KindService::AnyKind, "LocalSymbol");
-	kindRegistered = true;
-    }
-    return SYMBOLKIND;
-}
-
-
 INIT_JBALLOC_REUSECAT(ParameterSymbol, Symbol)
-
-// should be initialized first time it's needed by ensureKindRegistered()
-bool ParameterSymbol::kindRegistered=false;
-SymbolKind ParameterSymbol::SYMBOLKIND=KindService::NoKind;
+SUBCLASS_KINDSERVICE_IMPL(ParameterSymbol, "ParameterSymbol", LocalSymbol, Symbol);
 
 ParameterSymbol::~ParameterSymbol() {
 
-}
-
-const SymbolKind
-ParameterSymbol::getSymbolClassKind() {
-    if (!kindRegistered) {
-        SYMBOLKIND = Symbol::kindService.assignKind(LocalSymbol::getSymbolClassKind(), "ParameterSymbol");
-	kindRegistered = true;
-    }
-    return SYMBOLKIND;
 }
 
 

@@ -35,6 +35,7 @@ set(GTEST_DIR $(omr_SOURCE_DIR)/third_party/gtest-1.8.0)
 		BaseTest.cpp
 	)
 	target_link_libraries(testbase
+	    jb2jb
 		jb2base
 		jb2func
 		jb2core
@@ -43,10 +44,10 @@ set(GTEST_DIR $(omr_SOURCE_DIR)/third_party/gtest-1.8.0)
 		${CMAKE_DL_LIBS}
 	)
 	target_include_directories(testbase PRIVATE
-		${JB2_JBBASE_DIR}
-		${JB2_JBFUNC_DIR}
-		${JB2_JBCORE_DIR}
-	       	${GTEST_DIR}/include
+		${JB2_BASE_DIR}
+		${JB2_FUNC_DIR}
+		${JB2_CORE_DIR}
+	    ${GTEST_DIR}/include
 	)
 
 	#omr_add_test( NAME JitBuilderTest COMMAND $<TARGET_FILE:jitbuildertest> --gtest_output=xml:${CMAKE_CURRENT_BINARY_DIR}/jitbuildertest-results.xml)

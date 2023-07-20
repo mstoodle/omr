@@ -64,6 +64,8 @@ protected:
     virtual void visitBuilderPreOps(Builder * b);
     virtual void visitBuilderPostOps(Builder * b);
     virtual void visitOperation(Operation * op);
+
+    SUBCLASS_KINDSERVICE_DECL(Extensible, TextWriter);
 };
 
 } // namespace JitBuilder

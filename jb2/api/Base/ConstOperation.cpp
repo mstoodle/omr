@@ -42,12 +42,6 @@ Op_Const::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
     return new (mem) Op_Const(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->result(), cloner->literal());
 }
 
-void
-Op_Const::jbgen(JB1MethodBuilder *j1mb) const {
-    literal()->type()->createJB1ConstOp(location(), j1mb, parent(), result(), literal());
-}
-
-
 } // namespace Base
 } // namespace JitBuilder
 } // namespace OMR

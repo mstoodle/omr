@@ -70,44 +70,44 @@ public:
     virtual bool isDynamic() const                      { return false; }
 
     virtual BuilderIterator builders()                  { return BuilderIterator(); }
-    virtual int32_t numBuilders() const                 { return 0; }
+    virtual size_t numBuilders() const                 { return 0; }
     virtual Builder *builder(int i=0) const             { return NULL; }
 
     virtual LiteralIterator literals()                  { return LiteralIterator(); }
-    virtual int32_t numLiterals() const                 { return 0; }
+    virtual size_t numLiterals() const                 { return 0; }
     virtual Literal * literal(int i=0) const            { assert(0); return 0; }
 
     virtual SymbolIterator symbols()                    { return SymbolIterator(); }
-    virtual int32_t numSymbols() const                  { return 0; }
+    virtual size_t numSymbols() const                  { return 0; }
     virtual Symbol *symbol(int i=0) const               { assert(0); return 0; }
 
     virtual ValueIterator operands()                    { return ValueIterator(); }
-    virtual int32_t numOperands() const                 { return 0; }
+    virtual size_t numOperands() const                  { return 0; }
     virtual Value * operand(int i=0) const              { return NULL; }
 
     virtual ValueIterator results()                     { return ValueIterator(); }
-    virtual int32_t numResults() const                  { return 0; }
+    virtual size_t numResults() const                  { return 0; }
     virtual Value * result(int i=0) const               { return NULL; }
  
     // Change to mayReadShadow() and mustReadShadow
     virtual SymbolIterator readSymbols()                { return SymbolIterator(); }
-    virtual int32_t numReadSymbols() const              { return 0; }
+    virtual size_t numReadSymbols() const              { return 0; }
     virtual Symbol * readSymbol(int i=0) const          { return NULL; }
 
     // Change to mayWriteShadow() and mustWriteShadow
     virtual SymbolIterator writtenSymbols()             { return SymbolIterator(); }
-    virtual int32_t numWrittenSymbols() const           { return 0; }
+    virtual size_t numWrittenSymbols() const           { return 0; }
     virtual Symbol * writtenSymbol(int i=0) const       { return NULL; }
 
 #ifdef CASES_BECOME_CORE
     virtual CaseIterator CasesBegin()                   { return CaseIterator(); }
     virtual CaseIterator CasesEnd()                     { return caseEndIterator; }
-    virtual int32_t numCases() const                    { return 0; }
+    virtual size_t numCases() const                    { return 0; }
     virtual Case * getCase(int i=0) const               { return NULL; }
 #endif
 
     virtual TypeIterator types()                        { return TypeIterator(); }
-    virtual int32_t numTypes() const                    { return 0; }
+    virtual size_t numTypes() const                    { return 0; }
     virtual const Type * type(int i=0) const            { return NULL; }
 
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const = 0;
@@ -118,7 +118,6 @@ public:
     void logFull(TextLogger & log) const;
     const String & name() const { return _name; }
     virtual void log(TextLogger & log) const;
-    virtual void jbgen(JB1MethodBuilder *j1mb) const { }
 
 protected:
     Operation(MEM_LOCATION(a), ActionID action, Extension *ext, Builder * parent, Operation *next=NULL, Operation *prev=NULL);
@@ -156,7 +155,7 @@ class OperationR0S1 : public Operation {
 public:
     virtual size_t size() const { return sizeof(OperationR0S1); }
 
-    virtual int32_t numSymbols() const { return 1; }
+    virtual size_t numSymbols() const { return 1; }
     virtual Symbol *symbol(int i=0) const {
         if (i == 0) return _symbol;
         return NULL;
@@ -181,7 +180,7 @@ class OperationR0S1V1 : public OperationR0S1 {
 public:
     virtual size_t size() const { return sizeof(OperationR0S1V1); }
 
-    virtual int32_t numOperands() const { return 1; }
+    virtual size_t numOperands() const { return 1; }
     virtual Value * operand(int i=0) const {
         if (i == 0) return _value;
         return NULL;
@@ -206,7 +205,7 @@ class OperationR0T1 : public Operation {
     public:
     virtual size_t size() const { return sizeof(OperationR0T1); }
 
-    virtual int32_t numTypes() const { return 1; }
+    virtual size_t numTypes() const { return 1; }
     virtual const Type *type(int i=0) const {
         if (i == 0) return _type;
         return NULL;
@@ -227,7 +226,7 @@ class OperationR0T1V2 : public OperationR0T1 {
 
 public:
     virtual size_t size() const            { return sizeof(OperationR0T1V2); }
-    virtual int32_t numOperands() const    { return 2; }
+    virtual size_t numOperands() const     { return 2; }
     virtual Value * operand(int i=0) const {
         if (i == 0) return _base;
         if (i == 1) return _value;
@@ -253,7 +252,7 @@ class OperationR0V1 : public Operation {
 
 public:
     virtual size_t size() const            { return sizeof(OperationR0V1); }
-    virtual int32_t numOperands() const    { return 1; }
+    virtual size_t numOperands() const     { return 1; }
     virtual Value * operand(int i=0) const {
         if (i == 0) return _value;
         return NULL;
@@ -277,7 +276,7 @@ class OperationR0V2 : public Operation {
 
 public:
     virtual size_t size() const            { return sizeof(OperationR0V2); }
-    virtual int32_t numOperands() const    { return 2; }
+    virtual size_t numOperands() const     { return 2; }
     virtual Value * operand(int i=0) const {
         if (i == 0) return _left;
         if (i == 1) return _right;
@@ -307,18 +306,18 @@ class OperationR0S1VN : public OperationR0S1 {
 public:
     virtual size_t size() const            { return sizeof(OperationR0S1VN); }
 
-    virtual int32_t numOperands() const    { return _numValues; }
+    virtual size_t numOperands() const     { return _numValues; }
     virtual Value * operand(int i=0) const {
         if (i < _numValues) return _values[i];
         return NULL;
     }
 
-    virtual ValueIterator operands()       { return ValueIterator(allocator(), _numValues, _values); }
+    virtual ValueIterator operands()       { return ValueIterator(allocator(), _values, _numValues); }
 
     virtual void log(TextLogger & log) const;
 
 protected:
-    OperationR0S1VN(MEM_LOCATION(a), ActionID action, Extension *ext, Builder * parent, Symbol *symbol, int32_t numArgs, std::va_list & args)
+    OperationR0S1VN(MEM_LOCATION(a), ActionID action, Extension *ext, Builder * parent, Symbol *symbol, size_t numArgs, std::va_list & args)
         : OperationR0S1(MEM_PASSLOC(a), action, ext, parent, symbol) {
 
         _numValues = numArgs;
@@ -338,7 +337,7 @@ class OperationR1 : public Operation {
 
 public:
     virtual size_t size() const           { return sizeof(OperationR1); }
-    virtual int32_t numResults() const    { return 1; }
+    virtual size_t numResults() const    { return 1; }
     virtual Value * result(int i=0) const {
         if (i == 0) return _result;
         return NULL;
@@ -355,7 +354,7 @@ class OperationR1L1 : public OperationR1 {
     JBALLOC_(OperationR1L1)
 
 public:
-    virtual int32_t numLiterals() const { return 1; }
+    virtual size_t numLiterals() const { return 1; }
     virtual Literal *literal(int i=0) const {
         if (i == 0) return _v;
         return NULL;
@@ -377,7 +376,7 @@ class OperationR1L1T1 : public OperationR1L1 {
 
 public:
     virtual size_t size() const      { return sizeof(OperationR1L1T1); }
-    virtual int32_t numTypes() const { return 1; }
+    virtual size_t numTypes() const { return 1; }
     virtual const Type * type(int i=0) const {
         if (i == 0) return _elementType;
         return NULL;
@@ -399,7 +398,7 @@ class OperationR1S1 : public OperationR1 {
     JBALLOC_(OperationR1S1)
 
 public:
-    virtual int32_t numSymbols() const { return 1; }
+    virtual size_t numSymbols() const { return 1; }
     virtual Symbol *symbol(int i=0) const {
         if (i == 0) return _symbol;
         return NULL;
@@ -421,7 +420,7 @@ class OperationR1T1 : public OperationR1 {
 
 public:
     virtual size_t size() const         { return sizeof(OperationR1T1); }
-    virtual int32_t numTypes() const { return 1; }
+    virtual size_t numTypes() const { return 1; }
     virtual const Type * type(int i=0) const {
         if (i == 0) return _type;
         return NULL;
@@ -445,7 +444,7 @@ class OperationR1V1 : public OperationR1 {
 
 public:
     virtual size_t size() const         { return sizeof(OperationR1V1); }
-    virtual int32_t numOperands() const { return 1; }
+    virtual size_t numOperands() const  { return 1; }
     virtual Value * operand(int i=0) const {
         if (i == 0) return _value;
         return NULL;
@@ -469,7 +468,7 @@ class OperationR1V1T1 : public OperationR1V1 {
 
 public:
     virtual size_t size() const         { return sizeof(OperationR1V1T1); }
-    virtual int32_t numTypes() const { return 1; }
+    virtual size_t numTypes() const { return 1; }
     virtual const Type * type(int i=0) const {
         if (i == 0) return _type;
         return NULL;
@@ -494,7 +493,7 @@ class OperationR1V2 : public OperationR1 {
 
 public:
     virtual size_t size() const         { return sizeof(OperationR1V2); }
-    virtual int32_t numOperands() const { return 2; }
+    virtual size_t numOperands() const  { return 2; }
     virtual Value * operand(int i=0) const {
         if (i == 0) return _left;
         if (i == 1) return _right;
@@ -524,7 +523,7 @@ class OperationR1V2T1 : public OperationR1V2 {
 
 public:
     virtual size_t size() const         { return sizeof(OperationR1V2T1); }
-    virtual int32_t numTypes() const { return 1; }
+    virtual size_t numTypes() const { return 1; }
     virtual const Type * type(int i=0) const {
         if (i == 0) return _type;
         return NULL;
@@ -552,7 +551,7 @@ class OperationR1S1VN : public OperationR1S1 {
 public:
     virtual size_t size() const { return sizeof(OperationR1S1VN); }
 
-    virtual int32_t numOperands() const { return _numValues; }
+    virtual size_t numOperands() const { return _numValues; }
     virtual Value * operand(int i=0) const {
         if (i < _numValues) return _values[i];
         return NULL;
@@ -563,7 +562,7 @@ public:
     virtual void log(TextLogger & log) const;
 
 protected:
-    OperationR1S1VN(MEM_LOCATION(a), ActionID action, Extension *ext, Builder * parent, Value *result, Symbol *symbol, int32_t numArgs, std::va_list & args)
+    OperationR1S1VN(MEM_LOCATION(a), ActionID action, Extension *ext, Builder * parent, Value *result, Symbol *symbol, size_t numArgs, std::va_list & args)
         : OperationR1S1(MEM_PASSLOC(a), action, ext, parent, result, symbol) {
 
         _numValues = numArgs;
@@ -583,7 +582,7 @@ class OperationB1 : public Operation {
 
     public:
     virtual size_t size() const              { return sizeof(OperationB1); }
-    virtual int32_t numBuilders() const      { return 1; }
+    virtual size_t numBuilders() const      { return 1; }
     virtual Builder * builder(int i=0) const {
         if (i == 0) return _builder;
         return NULL;
@@ -606,7 +605,7 @@ class OperationB1R0V1 : public OperationR0V1 {
 
     public:
     virtual size_t size() const { return sizeof(OperationB1R0V1); }
-    virtual int32_t numBuilders() const { return 1; }
+    virtual size_t numBuilders() const { return 1; }
     virtual Builder * builder(int i=0) const {
         if (i == 0) return _builder;
         return NULL;
@@ -628,7 +627,7 @@ class OperationB1R0V2 : public OperationR0V2 {
 
     public:
     virtual size_t size() const              { return sizeof(OperationB1R0V2); }
-    virtual int32_t numBuilders() const      { return 1; }
+    virtual size_t numBuilders() const      { return 1; }
     virtual Builder * builder(int i=0) const {
         if (i == 0) return _builder;
         return NULL;
@@ -653,11 +652,11 @@ class OperationB1R0V2 : public OperationR0V2 {
 class Op_MergeDef : public OperationR1V1 {
     JBALLOC_(Op_MergeDef)
 
-    friend class Extension;
+    friend class CoreExtension;
 
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-    virtual void jbgen(JB1MethodBuilder *j1mb) const;
+    //virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
     Op_MergeDef(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aMergeDef, Value *existingDef, Value *newDef);
@@ -937,22 +936,22 @@ class AppendBuilder : public OperationB1
 class Call : public Operation
    {
    public:
-   static Call * create(Builder * parent, Value *function, int32_t numArgs, va_list args)
+   static Call * create(Builder * parent, Value *function, size_t numArgs, va_list args)
       {
       Call *call = new Call(parent, function, NULL, numArgs, args);
       return call;
       }
-   static Call * create(Builder * parent, Value *function, Value *result, int32_t numArgs, va_list args)
+   static Call * create(Builder * parent, Value *function, Value *result, size_t numArgs, va_list args)
       {
       Call *call = new Call(parent, function, result, numArgs, args);
       return call;
       }
-   static Call * create(Builder * parent, Value *function, int32_t numArgs, Value **args)
+   static Call * create(Builder * parent, Value *function, size_t numArgs, Value **args)
       {
       Call *call = new Call(parent, function, NULL, numArgs, args);
       return call;
       }
-   static Call * create(Builder * parent, Value *function, Value *result, int32_t numArgs, Value **args)
+   static Call * create(Builder * parent, Value *function, Value *result, size_t numArgs, Value **args)
       {
       Call *call = new Call(parent, function, result, numArgs, args);
       return call;
@@ -961,15 +960,15 @@ class Call : public Operation
    virtual size_t size() const { return sizeof(Call); }
    
    Value *function() const  { return _function; }
-   int32_t numArguments() const { return _numArgs; }
-   Value *argument(int32_t a) const
+   size_t numArguments() const { return _numArgs; }
+   Value *argument(size_t a) const
       {
       if (a < _numArgs)
          return _args[a];
       return NULL;
       }
 
-   virtual int32_t numOperands() const   { return _numArgs+1; }
+   virtual size_t numOperands() const   { return _numArgs+1; }
    virtual Value * operand(int i=0) const
       {
       if (i == 0)
@@ -986,7 +985,7 @@ class Call : public Operation
       return it2;
       }
 
-   virtual int32_t numResults() const          { return (_result != NULL) ? 1 : 0; }
+   virtual size_t numResults() const          { return (_result != NULL) ? 1 : 0; }
    virtual Value * result(int i=0) const
       {
       if (i == 0) return _result; // may return NULL if there is no result
@@ -1002,7 +1001,7 @@ class Call : public Operation
    virtual Operation * clone(Builder *b, Value **results) const
       {
       Value **cloneArgs = new Value *[_numArgs];
-      for (int32_t a=0;a < _numArgs;a++)
+      for (size_t a=0;a < _numArgs;a++)
          cloneArgs[a] = _args[a];
       if (_result)
          {
@@ -1033,12 +1032,12 @@ class Call : public Operation
    virtual Operation * clone(Builder *b, OperationCloner *cloner) const;
 
    protected:
-   Call(Builder * parent, Value *result, Value *function, int32_t numArgs, va_list args);
-   Call(Builder * parent, Value *result, Value *function, int32_t numArgs, Value **args);
+   Call(Builder * parent, Value *result, Value *function, size_t numArgs, va_list args);
+   Call(Builder * parent, Value *result, Value *function, size_t numArgs, Value **args);
 
    Value *_function;
    Value *_result;
-   int32_t _numArgs;
+   size_t _numArgs;
    Value **_args;
    };
 
@@ -1088,7 +1087,7 @@ class ForLoop : public Operation
    virtual Value * getEnd() const                      { return _end; }
    virtual Value * getBump() const                     { return _bump; }
 
-   virtual int32_t numLiterals() const                 { return 1; }
+   virtual size_t numLiterals() const                 { return 1; }
    virtual Literal *literal(int i=0) const
       {
       if (i == 0) return _countsUp;
@@ -1096,7 +1095,7 @@ class ForLoop : public Operation
       }
    virtual LiteralIterator litIterator()             { return LiteralIterator(_countsUp); }
 
-   virtual int32_t numSymbols() const                  { return 1; }
+   virtual size_t numSymbols() const                  { return 1; }
    virtual Symbol *symbol(int i=0) const
       {
       if (i == 0) return _loopSym;
@@ -1104,7 +1103,7 @@ class ForLoop : public Operation
       }
    virtual SymbolIterator SymbolsBegin()               { return SymbolIterator(_loopSym); }
 
-   virtual int32_t numOperands() const                 { return 3; }
+   virtual size_t numOperands() const                 { return 3; }
    virtual Value * operand(int i=0) const
       {
       if (i == 0) return _initial;
@@ -1117,7 +1116,7 @@ class ForLoop : public Operation
    virtual Builder * getBody() const                   { return _loopBody; }
    virtual Builder * getBreak() const                  { return _loopBreak; }
    virtual Builder * getContinue() const               { return _loopContinue; }
-   virtual int32_t numBuilders() const                 { return 1 + (_loopBreak ? 1 : 0) + (_loopContinue ? 1 : 0); }
+   virtual size_t numBuilders() const                 { return 1 + (_loopBreak ? 1 : 0) + (_loopContinue ? 1 : 0); }
 
    virtual Builder * builder(int i=0) const
       {
@@ -1287,7 +1286,7 @@ class IfThenElse : public OperationB1R0V1
    virtual Builder * getThenBuilder() const { return _builder; }
    virtual Builder * getElseBuilder() const { return _elseBuilder; }
 
-   virtual int32_t numBuilders() const { return _elseBuilder ? 2 : 1; }
+   virtual size_t numBuilders() const { return _elseBuilder ? 2 : 1; }
    virtual Builder * builder(int i=0) const
       {
       if (i == 0)
@@ -1335,8 +1334,8 @@ class Return : public Operation
 
    static void initializeTypeProductions(TypeDictionary * types, TypeGraph * graph);
 
-   virtual int32_t numOperands() const { return _value ? 1 : 0; }
-   virtual Value * operand(int32_t i=0) const
+   virtual size_t numOperands() const { return _value ? 1 : 0; }
+   virtual Value * operand(size_t i=0) const
       {
       if (i == 0 && _value)
          return _value;
@@ -1385,8 +1384,8 @@ class Switch : public OperationR0V1
 
    virtual Value * getSelector() const { return _value; }
 
-   virtual int32_t numBuilders() const { return 1 + _cases.size(); }
-   virtual Builder *builder(int32_t i=0) const
+   virtual size_t numBuilders() const { return 1 + _cases.size(); }
+   virtual Builder *builder(size_t i=0) const
       {
       if (i == 0)
          return _defaultTarget;
@@ -1403,7 +1402,7 @@ class Switch : public OperationR0V1
       return BuilderIterator(it);
       }
 
-   virtual int32_t numCases() const  { return _cases.size(); }
+   virtual size_t numCases() const  { return _cases.size(); }
    virtual CaseIterator CasesBegin() { return CaseIterator(_cases); }
 
    static void initializeTypeProductions(TypeDictionary * types, TypeGraph * graph);
@@ -1424,7 +1423,7 @@ class Switch : public OperationR0V1
 class CreateLocalArray : public OperationR1L1T1
    {
    public:
-   static CreateLocalArray * create(Builder * parent, Value * result, int32_t numElements, Type * elementType)
+   static CreateLocalArray * create(Builder * parent, Value * result, size_t numElements, Type * elementType)
       { return new CreateLocalArray(parent, result, numElements, elementType); }
    
    virtual Operation * clone(Builder *b, Value **results) const
@@ -1442,7 +1441,7 @@ class CreateLocalArray : public OperationR1L1T1
    virtual Operation * clone(Builder *b, OperationCloner *cloner) const;
 
    protected:
-   CreateLocalArray(Builder * parent, Value * result, int32_t numElements, Type * elementType);
+   CreateLocalArray(Builder * parent, Value * result, size_t numElements, Type * elementType);
    };
 
 class CreateLocalStruct : public OperationR1T1

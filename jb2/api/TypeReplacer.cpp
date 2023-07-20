@@ -21,6 +21,7 @@
 #include "Compilation.hpp"
 #include "Compiler.hpp"
 #include "Config.hpp"
+#include "CoreExtension.hpp"
 #include "Builder.hpp"
 #include "Extension.hpp"
 #include "Literal.hpp"
@@ -35,6 +36,8 @@
 #include "Value.hpp"
 
 using namespace OMR::JitBuilder;
+
+SUBCLASS_KINDSERVICE_IMPL(TypeReplacer,"TypeReplacer",Transformer,Extensible);
 
 // TypeReplacer is responsible for rewriting a Function according to a
 // list of types to be replaced (with a corresponding list of replacement types)
@@ -107,7 +110,7 @@ using namespace OMR::JitBuilder;
 
 
 TypeReplacer::TypeReplacer(Allocator *a, Compiler * compiler)
-    : Transformer(a, compiler, String("TypeReplacer"))
+    : Transformer(a, CLASSKIND(TypeReplacer, Extensible), compiler->coreExt(), String("TypeReplacer"))
     , _typesTransformed(false) {
 
 }
@@ -142,7 +145,7 @@ TypeReplacer::recordMapper(const Type *type, TypeMapper *mapper) {
             for (int i=0;i < mapper->size();i++) {
                 const Type *newType = mapper->current();
                 if (lgr) lgr->indent() << i << " : " << "\"" << mapper->name() << "\"" << " offset " << mapper->offset() << " : ";
-                if (lgr) lgr->logType(newType, false);
+                if (lgr) newType->logType(*lgr, false);
                 mapper->next();
             }
         }
@@ -281,7 +284,7 @@ TypeReplacer::transformType(const Type *type) {
 void
 TypeReplacer::transformTypeIfNeeded(const Type *type) {
     TextLogger *lgr = _comp->logger(traceEnabled());
-    if (lgr) lgr->logType(type);
+    if (lgr) type->logType(*lgr);
 
     if (_examinedType.find(type) != _examinedType.end())
         return;
@@ -673,7 +676,7 @@ TypeReplacer::transformOperation(Operation * op) {
 
         // otherwise this operation needs to be cloned
         if (lgr) lgr->indent() << "Cloning operation" << lgr->endl();
-        b = op->ext()->OrphanBuilder(LOC, op->parent());
+        b = compiler()->coreExt()->OrphanBuilder(LOC, op->parent());
         cloneOperation(b, &r, numMaps);
 
         // store any new result mappings
@@ -743,7 +746,7 @@ TypeReplacer::finalCleanup() {
             }
             #endif
             if (lgr) lgr->indent() << "Removing ";
-            if (lgr) lgr->logType(typeToRemove);
+            if (lgr) typeToRemove->logType(*lgr);
             dict->RemoveType(typeToRemove);
         }
     }

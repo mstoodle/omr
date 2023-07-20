@@ -28,10 +28,7 @@ namespace JitBuilder {
 
 INIT_JBALLOC_ON(Symbol, SymbolDictionary)
 
-SymbolKind Symbol::SYMBOLKIND=KindService::NoKind;
-bool Symbol::kindRegistered = false;
-
-KindService Symbol::kindService;
+BASECLASS_KINDSERVICE_IMPL(Symbol);
 
 Symbol::~Symbol() {
 
@@ -40,17 +37,6 @@ Symbol::~Symbol() {
 void
 Symbol::log(TextLogger &lgr) const {
     lgr << this << lgr.endl();
-}
-
-const SymbolKind
-Symbol::getSymbolClassKind() {
-    // ensures static field has been initialized before anyone reads it
-    // probably not needed for base Symbol class, but establishes model for subclasses
-    if (!kindRegistered) {
-        SYMBOLKIND = KindService::NoKind;
-	kindRegistered = true;
-    }
-    return SYMBOLKIND;
 }
 
 } // namespace JitBuilder

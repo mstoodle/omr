@@ -36,21 +36,19 @@ class FunctionSymbol : public Symbol {
     friend class FunctionExtension;
     friend class Function;
 public:
-    FunctionSymbol(Allocator *a, const FunctionType *type, String name, String fileName, String lineNumber, void *entryPoint);
+    FunctionSymbol(Allocator *a, Extension *ext, const FunctionType *type, String name, String fileName, String lineNumber, void *entryPoint);
+    FunctionSymbol(Allocator *a, SymbolKind kind, Extension *ext, const FunctionType *type, String name, String fileName, String lineNumber, void *entryPoint);
     const FunctionType *functionType() const;
     String fileName() const { return _fileName; }
     String lineNumber() const { return _lineNumber; }
     void *entryPoint() const { return _entryPoint; }
-
-    static const SymbolKind getSymbolClassKind();
 
 protected:
     String _fileName;
     String _lineNumber;
     void *_entryPoint;
 
-    static SymbolKind SYMBOLKIND;
-    static bool kindRegistered;
+    SUBCLASS_KINDSERVICE_DECL(Symbol, FunctionSymbol);
 };
 
 class LocalSymbol : public Symbol {
@@ -58,19 +56,16 @@ class LocalSymbol : public Symbol {
 
     friend class FunctionExtension;
 public:
-    LocalSymbol(Allocator *a, String name, const Type * type)
-        : Symbol(a, getSymbolClassKind(), name, type) {
+    LocalSymbol(Allocator *a, Extension *ext, String name, const Type * type)
+        : Symbol(a, getSymbolClassKind(), ext, name, type) {
     }
-
-    static const SymbolKind getSymbolClassKind();
 
 protected:
-    LocalSymbol(Allocator *a, SymbolKind kind, String name, const Type * type)
-        : Symbol(a, kind, name, type) {
+    LocalSymbol(Allocator *a, SymbolKind kind, Extension *ext, String name, const Type * type)
+        : Symbol(a, kind, ext, name, type) {
     }
 
-    static SymbolKind SYMBOLKIND;
-    static bool kindRegistered;
+    SUBCLASS_KINDSERVICE_DECL(Symbol, LocalSymbol);
 };
 
 class ParameterSymbol : public LocalSymbol {
@@ -78,21 +73,18 @@ class ParameterSymbol : public LocalSymbol {
 
     friend class FunctionExtension;
 public:
-    ParameterSymbol(Allocator *a, String name, const Type * type, int index)
-        : LocalSymbol(a, getSymbolClassKind(), name, type)
+    ParameterSymbol(Allocator *a, Extension *ext, String name, const Type * type, int index)
+        : LocalSymbol(a, getSymbolClassKind(), ext, name, type)
         , _index(index) {
 
     }
 
     int index() const { return _index; }
 
-    static const SymbolKind getSymbolClassKind();
-
 protected:
     int _index;
 
-    static SymbolKind SYMBOLKIND;
-    static bool kindRegistered;
+    SUBCLASS_KINDSERVICE_DECL(Symbol, ParameterSymbol);
 };
 
 } // namespace Func

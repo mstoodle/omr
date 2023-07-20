@@ -32,38 +32,56 @@ namespace OMR {
 namespace JitBuilder {
 
 INIT_JBALLOC(Context)
+BASECLASS_KINDSERVICE_IMPL(Context)
 
-Context::Context(LOCATION, Compilation *comp, LiteralDictionary *useLitDict, SymbolDictionary *useSymDict, TypeDictionary *useTypeDict, uint32_t numEntryPoints, uint32_t numExitPoints, String name)
-    : _id(comp->getContextID())
+Context::Context(LOCATION, ContextKind kind, Extension *ext, Compilation *comp, String name) //LiteralDictionary *useLitDict, SymbolDictionary *useSymDict, TypeDictionary *useTypeDict, uint32_t numEntryPoints, uint32_t numExitPoints, String name)
+    : Allocatable()
+    , _id(comp->getContextID())
+    , _ext(ext)
     , _comp(comp)
     , _name(name)
     , _parent(NULL)
     , _children(NULL, comp->mem())
+    , _builders(NULL, comp->mem())
+    #if 0
     , _litDict((useLitDict != NULL) ? useLitDict : comp->litdict())
     , _symDict((useSymDict != NULL) ? useSymDict : comp->symdict())
     , _typeDict((useTypeDict != NULL) ? useTypeDict : comp->typedict())
     , _numEntryPoints(numEntryPoints)
-    , _numExitPoints(numExitPoints) {
+    , _numExitPoints(numExitPoints)
+    #endif
+    , BASECLASS_KINDINIT(kind) {
 
+    #if 0
     initEntriesAndExits(PASSLOC, comp);
+    #endif
 }
 
-Context::Context(LOCATION, Context *parent, LiteralDictionary *useLitDict, SymbolDictionary *useSymDict, TypeDictionary *useTypeDict, uint32_t numEntryPoints, uint32_t numExitPoints, String name)
-    : _id(parent->comp()->getContextID())
+Context::Context(LOCATION, ContextKind kind, Extension *ext, Context *parent, String name) //LiteralDictionary *useLitDict, SymbolDictionary *useSymDict, TypeDictionary *useTypeDict, uint32_t numEntryPoints, uint32_t numExitPoints, String name)
+    : Allocatable()
+    , _id(parent->comp()->getContextID())
+    , _ext(ext)
     , _comp(parent->comp())
     , _name(name)
     , _parent(parent)
     , _children(NULL, _comp->mem())
+    , _builders(NULL, _comp->mem())
+    #if 0
     , _litDict((useLitDict != NULL) ? useLitDict : parent->litDict())
     , _symDict((useSymDict != NULL) ? useSymDict : parent->symDict())
     , _typeDict((useTypeDict != NULL) ? useTypeDict : parent->typeDict())
     , _numEntryPoints(numEntryPoints)
-    , _numExitPoints(numExitPoints) {
+    , _numExitPoints(numExitPoints)
+    #endif
+    , BASECLASS_KINDINIT(kind) {
 
     parent->addChild(this);
+    #if 0
     initEntriesAndExits(PASSLOC, parent->comp());
+    #endif
 }
 
+#if 0
 void
 Context::initEntriesAndExits(LOCATION, Compilation *comp) {
     Extension *core = _comp->compiler()->lookupExtension<Extension>();
@@ -81,17 +99,22 @@ Context::initEntriesAndExits(LOCATION, Compilation *comp) {
     for (unsigned x=0;x < _numExitPoints;x++)
         _builderExitPoints[x] = core->ExitBuilder(PASSLOC, comp, this);
 }
+#endif
 
 Context::~Context() {
     // actual Builders will be deleted by Compilation
+    #if 0
     delete[] _builderExitPoints;
     delete[] _debugEntryPoints;
     delete[] _nativeEntryPoints;
     delete[] _builderEntryPoints;
+    #endif
 }
 
 void
 Context::addSymbol(Symbol *sym) {
+    _comp->symdict()->registerSymbol(sym);
+    #if 0
     if (_symDict) {
         _symDict->registerSymbol(sym);
         return;
@@ -102,12 +125,13 @@ Context::addSymbol(Symbol *sym) {
         return;
     }
 
-    assert(0); // there should be some symbol dictionary!
+    #endif
 }
 
 Symbol *
-Context::lookupSymbol(String name, bool includeParents) {
-    Symbol *sym = NULL;
+Context::lookupSymbol(String name) {
+    return _comp->symdict()->LookupSymbol(name);
+    #if 0
     if (_symDict) {
         sym = _symDict->LookupSymbol(name);
     }
@@ -116,8 +140,7 @@ Context::lookupSymbol(String name, bool includeParents) {
 	if (includeParents && _parent != NULL)
             return this->_parent->lookupSymbol(name);
     }
-
-    return sym;
+    #endif
 }
 
 } // namespace JitBuilder

@@ -32,22 +32,41 @@ namespace JitBuilder {
 namespace Func {
 
 INIT_JBALLOC_REUSECAT(FunctionContext, Context)
+SUBCLASS_KINDSERVICE_IMPL(FunctionContext, "FunctionContext", Context, Context)
 
 FunctionContext::FunctionContext(LOCATION, FunctionCompilation *comp, String name)
-    : Context(PASSLOC, comp, NULL, NULL, NULL, 1, 1, name)
-    , _parameters((Allocator *)NULL, comp->mem())
-    , _locals((Allocator *)NULL, comp->mem())
-    , _functions((Allocator *)NULL, comp->mem())
-    , _returnTypes((Allocator *)NULL, comp->mem()) {
+    : Context(PASSLOC, KIND(Context), comp->ext(), comp, name)
+    , _parameters(NULL, comp->mem())
+    , _locals(NULL, comp->mem())
+    , _functions(NULL, comp->mem())
+    , _returnTypes(NULL, comp->mem()) {
 
 }
 
-FunctionContext::FunctionContext(LOCATION, FunctionCompilation *comp, FunctionContext *caller, String name)
-    : Context(PASSLOC, caller, NULL, NULL, NULL, 1, 1, name)
-    , _parameters((Allocator *)NULL, comp->mem())
-    , _locals((Allocator *)NULL, comp->mem())
-    , _functions((Allocator *)NULL, comp->mem())
-    , _returnTypes((Allocator *)NULL, comp->mem()) {
+FunctionContext::FunctionContext(LOCATION, KINDTYPE(Context) kind, FunctionCompilation *comp, String name)
+    : Context(PASSLOC, kind, comp->ext(), comp, name)
+    , _parameters(NULL, comp->mem())
+    , _locals(NULL, comp->mem())
+    , _functions(NULL, comp->mem())
+    , _returnTypes(NULL, comp->mem()) {
+
+}
+
+FunctionContext::FunctionContext(LOCATION, FunctionContext *caller, String name)
+    : Context(PASSLOC, getContextClassKind(), caller->comp()->ext(), caller, name)
+    , _parameters(NULL, caller->comp()->mem())
+    , _locals(NULL, caller->comp()->mem())
+    , _functions(NULL, caller->comp()->mem())
+    , _returnTypes(NULL, caller->comp()->mem()) {
+
+}
+
+FunctionContext::FunctionContext(LOCATION, KINDTYPE(Context) kind, FunctionContext *caller, String name)
+    : Context(PASSLOC, kind, caller->comp()->ext(), caller, name)
+    , _parameters(NULL, caller->comp()->mem())
+    , _locals(NULL, caller->comp()->mem())
+    , _functions(NULL, caller->comp()->mem())
+    , _returnTypes(NULL, caller->comp()->mem()) {
 
 }
 
@@ -62,13 +81,13 @@ FunctionContext::~FunctionContext() {
 
 FunctionCompilation *
 FunctionContext::fComp() const {
-    return static_cast<FunctionCompilation *>(_comp);
+    return _comp->refine<FunctionCompilation>();
 }
 
 ParameterSymbol *
 FunctionContext::DefineParameter(String name, const Type * type) {
     Allocator *mem = _comp->mem();
-    ParameterSymbol *parm = new (mem) ParameterSymbol(mem, name, type, this->_parameters.length());
+    ParameterSymbol *parm = new (mem) ParameterSymbol(mem, _ext, name, type, this->_parameters.length());
     this->_parameters.push_back(parm);
     addSymbol(parm);
     return parm;
@@ -88,7 +107,7 @@ FunctionContext::DefineLocal(String name, const Type * type) {
        return sym->refine<LocalSymbol>();
 
     Allocator *mem = _comp->mem();
-    LocalSymbol *local = new (mem) LocalSymbol(mem, name, type);
+    LocalSymbol *local = new (mem) LocalSymbol(mem, _ext, name, type);
     this->_locals.push_back(local);
     addSymbol(local);
     return local;
@@ -202,7 +221,7 @@ FunctionContext::internalDefineFunction(LOCATION,
     FunctionExtension *fx = _comp->compiler()->lookupExtension<FunctionExtension>();
     const FunctionType *type = fx->DefineFunctionType(PASSLOC, fComp(), returnType, numParms, parmTypes);
     Allocator *mem = _comp->mem();
-    FunctionSymbol *sym = new (mem) FunctionSymbol(mem, type, name, fileName, lineNumber, entryPoint);
+    FunctionSymbol *sym = new (mem) FunctionSymbol(mem, _ext, type, name, fileName, lineNumber, entryPoint);
     _functions.push_back(sym);
     addSymbol(sym);
     return sym;

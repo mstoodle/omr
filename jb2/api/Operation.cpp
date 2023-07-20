@@ -385,11 +385,6 @@ Op_MergeDef::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
     return new (mem) Op_MergeDef(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->result(), cloner->operand());
 }
 
-void
-Op_MergeDef::jbgen(JB1MethodBuilder *j1mb) const {
-    j1mb->StoreOver(location(), parent(), result(), operand());
-}
-
 #if 0
 // keep this stuff handy during the migration
 
@@ -596,21 +591,21 @@ AppendBuilder::clone(Builder *b, OperationCloner *cloner) const
    return create(b, cloner->builder());
    }
 
-Call::Call(Builder * parent, Value *result, Value *function, int32_t numArgs, va_list args)
+Call::Call(Builder * parent, Value *result, Value *function, size_t numArgs, va_list args)
    : Operation(aCall, parent)
    , _result(result)
    , _function(function)
    , _numArgs(numArgs)
    {
    _args = new Value *[numArgs];
-   for (int32_t a=0;a < _numArgs;a++)
+   for (size_t a=0;a < _numArgs;a++)
       {
       Value *arg = va_arg(args,Value *);
       _args[a] = arg;
       }
    }
 
-Call::Call(Builder * parent, Value *result, Value *function, int32_t numArgs, Value **args)
+Call::Call(Builder * parent, Value *result, Value *function, size_t numArgs, Value **args)
    : Operation(aCall, parent)
    , _result(result)
    , _function(function)
@@ -1012,7 +1007,7 @@ Switch::clone(Builder *b, Value **results) const
    {
    assert(NULL == results);
    Case **clonedCases = new Case *[numCases()];
-   for (int32_t c=0;c < numCases(); c++)
+   for (size_t c=0;c < numCases(); c++)
       clonedCases[c] = Case::create(_cases[c]->value(), _cases[c]->builder(), _cases[c]->fallsThrough());
    return new Switch(b, operand(), builder(), numCases(), clonedCases);
    }
@@ -1022,7 +1017,7 @@ Switch::clone(Builder *b, Value **results, Value **operands, Builder **builders)
    {
    assert(NULL == results && operands && builders);
    Case **clonedCases = new Case *[numCases()];
-   for (int32_t c=0;c < numCases(); c++)
+   for (size_t c=0;c < numCases(); c++)
       clonedCases[c] = Case::create(_cases[c]->value(), builders[c+1], _cases[c]->fallsThrough());
    return new Switch(b, operands[0], builders[0], numCases(), clonedCases);
    }
@@ -1045,7 +1040,7 @@ Switch::initializeTypeProductions(TypeDictionary * types, TypeGraph * graph)
    graph->registerValidOperation(types->NoType, aSwitch, types->Int32);
    }
 
-CreateLocalArray::CreateLocalArray(Builder * parent, Value * result, int32_t numElements, Type * elementType)
+CreateLocalArray::CreateLocalArray(Builder * parent, Value * result, size_t numElements, Type * elementType)
    : OperationR1L1T1(aCreateLocalArray, parent, result, Literal::create(parent->fb()->dict(), numElements), elementType)
    {
    }

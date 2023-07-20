@@ -27,8 +27,10 @@ omr_assert(
 
 add_library(jb2base SHARED
 	ArithmeticOperations.cpp
-	BaseCompilation.cpp
+	BaseAddon.cpp
+	BaseCompilationAddon.cpp
 	BaseExtension.cpp
+	BaseFunctionExtensionAddon.cpp
 	BaseSymbol.cpp
 	BaseTypes.cpp
 	ConstOperation.cpp
@@ -38,8 +40,8 @@ add_library(jb2base SHARED
 
 #	Debugger.cpp
 
-target_include_directories(jb2base PRIVATE ${JB2_JBCORE_DIR})
+target_include_directories(jb2base PRIVATE ${JB2_CORE_DIR})
 
-target_link_libraries(jb2base jb2core jb2)
+target_link_libraries(jb2base jb2func jb2core jb2)
 
 add_subdirectory(test)

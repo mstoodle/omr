@@ -34,7 +34,6 @@ class Op_Add : public OperationR1V2 {
     friend class BaseExtension;
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-    virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
     Op_Add(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aAdd, Value *result, Value *left, Value *right);
@@ -46,7 +45,6 @@ class Op_ConvertTo : public OperationR1V1T1 {
     friend class BaseExtension;
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-    virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
     Op_ConvertTo(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aConvertTo, Value *result, const Type *type, Value *value);
@@ -58,7 +56,6 @@ class Op_Mul : public OperationR1V2 {
     friend class BaseExtension;
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-    virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
     Op_Mul(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aMul, Value *result, Value *left, Value *right);
@@ -70,7 +67,6 @@ class Op_Sub : public OperationR1V2 {
     friend class BaseExtension;
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-    virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
     Op_Sub(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aSub, Value *result, Value *left, Value *right);

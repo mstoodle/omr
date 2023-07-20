@@ -30,11 +30,12 @@
 namespace OMR {
 namespace JitBuilder {
 
+class Extension;
 class SymbolDictionary;
 class TextLogger;
 class Type;
 
-typedef KindService::Kind SymbolKind;
+KINDSERVICE_CATEGORY(Symbol);
 
 class Symbol : public Allocatable {
     JBALLOC_(Symbol)
@@ -45,43 +46,25 @@ public:
     String name() const { return _name; }
     const Type * type() const { return _type; }
     SymbolID id() const { return _id; }
-    virtual SymbolKind kind() const { return _kind; }
-
-    template<typename T>
-    bool isExactKind() const {
-        return (kindService.isExactMatch(_kind, T::getSymbolClassKind()));
-    }
-
-    template<typename T>
-    bool isKind() const {
-        return (kindService.isMatch(_kind, T::getSymbolClassKind()));
-    }
-
-    template<typename T>
-    T *refine() {
-        assert(isKind<T>());
-        return static_cast<T *>(this);
-    }
-
     virtual void log(TextLogger & lgr) const;
 
-    static const SymbolKind getSymbolClassKind();
-
 protected:
-    Symbol(Allocator *mem, String name, const Type * type)
+    Symbol(Allocator *mem, Extension *ext, String name, const Type * type)
         : Allocatable(mem)
+        , _ext(ext)
         , _id(NoSymbol)
-        , _kind(getSymbolClassKind())
         , _name(name)
-        , _type(type) {
+        , _type(type)
+        , BASECLASS_KINDINIT(getSymbolClassKind()) {
 
     }
-    Symbol(Allocator *mem, SymbolKind kind, String name, const Type * type)
+    Symbol(Allocator *mem, SymbolKind kind, Extension *ext, String name, const Type * type)
         : Allocatable(mem)
+        , _ext(ext)
         , _id(NoSymbol)
-        , _kind(kind)
         , _name(name)
-        , _type(type) {
+        , _type(type)
+        , BASECLASS_KINDINIT(kind) {
 
     }
 
@@ -91,16 +74,13 @@ protected:
        	assert(id != NoSymbol);
        	_id = id;
     }
-    SymbolKind assignSymbolKind(SymbolKind baseKind, String name);
 
+    Extension *_ext;
     SymbolID _id;
-    SymbolKind _kind;
     String _name;
     const Type * _type;
 
-    static KindService kindService;
-    static SymbolKind SYMBOLKIND;
-    static bool kindRegistered;
+    BASECLASS_KINDSERVICE_DECL(Symbol);
 };
 
 } // namespace JitBuilder

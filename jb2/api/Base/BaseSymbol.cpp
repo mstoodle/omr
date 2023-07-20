@@ -28,28 +28,23 @@ namespace Base {
 
 
 INIT_JBALLOC_REUSECAT(FieldSymbol,Symbol);
+SUBCLASS_KINDSERVICE_IMPL(FieldSymbol, "FieldSymbol", Symbol, Symbol);
 
-// should be initialized first time it's needed by ensureKindRegistered()
-bool FieldSymbol::kindRegistered=false;
-SymbolKind FieldSymbol::SYMBOLKIND=KindService::NoKind;
-
-FieldSymbol::~FieldSymbol() {
-
-}
-
-const SymbolKind
-FieldSymbol::getSymbolClassKind() {
-    if (!kindRegistered) {
-        SYMBOLKIND = Symbol::kindService.assignKind(KindService::AnyKind, "FieldSymbol");
-	kindRegistered = true;
-    }
-    return SYMBOLKIND;
-}
-
-FieldSymbol::FieldSymbol(Allocator *a, String name, const StructType *structType, const FieldType *fieldType)
-    : Symbol(a, getSymbolClassKind(), name, fieldType->type())
+FieldSymbol::FieldSymbol(Allocator *a, Extension *ext, String name, const StructType *structType, const FieldType *fieldType)
+    : Symbol (a, getSymbolClassKind(), ext, name, fieldType->type())
     , _structType(structType)
     , _fieldType(fieldType) {
+
+}
+
+FieldSymbol::FieldSymbol(Allocator *a, SymbolKind kind, Extension *ext, String name, const StructType *structType, const FieldType *fieldType)
+    : Symbol (a, kind, ext, name, fieldType->type())
+    , _structType(structType)
+    , _fieldType(fieldType) {
+
+}
+
+FieldSymbol::~FieldSymbol() {
 
 }
 

@@ -23,8 +23,9 @@
 #define OMR_JITBUILDER_Base_INCL
 
 #include "Base/ArithmeticOperations.hpp"
-#include "Base/BaseCompilation.hpp"
+#include "Base/BaseCompilationAddon.hpp"
 #include "Base/BaseExtension.hpp"
+#include "Base/BaseFunctionExtensionAddon.hpp"
 #include "Base/BaseSymbol.hpp"
 #include "Base/BaseTypes.hpp"
 #include "Base/ConstOperation.hpp"
