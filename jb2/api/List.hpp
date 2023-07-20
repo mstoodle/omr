@@ -170,7 +170,7 @@ public:
             , _detectChanges(false) {
         }
         #endif
-        virtual bool detectChange()  { return (_list->_changeID != _listSnapshot); }
+        virtual bool detectChange()  { return (_list != NULL && _list->_changeID != _listSnapshot); }
 
         const List<T> * const _list;
         List<T>::Item *_cursor;

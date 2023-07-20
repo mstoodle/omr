@@ -28,16 +28,14 @@ namespace OMR {
 namespace JitBuilder {
 
 INIT_JBALLOC_REUSECAT(Pass, Passes)
+SUBCLASS_KINDSERVICE_IMPL(Pass,"Pass",Extensible,Extensible);
 
-Pass::Pass(Allocator *a, Compiler *compiler, String name)
-    : Loggable(a)
-    , _compiler(compiler)
+Pass::Pass(Allocator *a, KINDTYPE(Extensible) kind, Extension *ext, String name)
+    : Extensible(a, ext, kind)
     , _id(0)
-    , _name(name)
-    , _chain(NULL)
-    , _traceEnabled(false) {
+    , _name(name) {
 
-    _id = compiler->addPass(this);
+    _id = ext->compiler()->addPass(this);
 }
 
 Pass::~Pass() {
@@ -46,7 +44,7 @@ Pass::~Pass() {
 
 CompilerReturnCode
 Pass::perform(Compilation *comp) {
-    return _compiler->CompileSuccessful;
+    return compiler()->CompileSuccessful;
 }
 
 } // namespace JitBuilder

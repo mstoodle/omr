@@ -26,7 +26,9 @@
 #include <map>
 #include "AllocationCategoryService.hpp"
 #include "AllocatorRaw.hpp"
+#include "Extensible.hpp"
 #include "CreateLoc.hpp"
+#include "KindService.hpp"
 #include "String.hpp"
 
 namespace OMR {
@@ -37,8 +39,8 @@ class CompilationException;
 class CompiledBody;
 class CompileUnit;
 class Config;
+class CoreExtension;
 class Extension;
-class JB1;
 class LiteralDictionary;
 class Pass;
 class Platform;
@@ -59,15 +61,14 @@ class Compiler : public Allocatable {
     friend class CompiledBody;
     friend class CompileUnit;
     friend class Context;
+    friend class Executor;
+    friend class Extensible;
     friend class Extension;
     friend class LiteralDictionary;
     friend class Pass;
     friend class Strategy;
     friend class SymbolDictionary;
     friend class TypeDictionary;
-
-    typedef Array<Pass *> PassChain;
-    typedef std::map<PassID, PassChain> PassRegistry;
 
 public:
     ALL_ALLOC_ALLOWED(Compiler, String name, Config *config=NULL);
@@ -84,6 +85,7 @@ public:
     TextWriter *textWriter(TextLogger & lgr);
 
     ExtensionID getExtensionID() { return _nextExtensionID++; }
+    CoreExtension *coreExt() const { return _core; }
     template<typename T>
     T *loadExtension(LOCATION, const SemanticVersion *version=NULL, String name=T::NAME) {
         return static_cast<T *>(internalLoadExtension(PASSLOC, version, name));
@@ -94,8 +96,19 @@ public:
     }
     bool validateExtension(String name) const;
 
+    void registerExtensible(Extensible *e, KINDTYPE(Extensible) kind);
+
     PassID lookupPass(String name);
+    Strategy * lookupStrategy(StrategyID id);
     CompilerReturnCode compile(LOCATION, Compilation *comp, StrategyID strategyID);
+
+    List<Extensible *>::Iterator extensibles(KINDTYPE(Extensible) kind) const {
+        auto it=_extensiblesByKind.find(kind);
+        if (it == _extensiblesByKind.end())
+            return List<Extensible *>::Iterator(); // empty iterator
+        List<Extensible *> *list = it->second;
+        return list->iterator();
+    }
 
     const String actionName(ActionID a) const {
         assert(a < _nextActionID);
@@ -121,6 +134,9 @@ protected:
     void init();
 
     void addExtension(Extension *ext);
+    void createAnyAddons(Extensible *e, KINDTYPE(Extensible) kind);
+    void registerForExtensible(ExtensibleKind kind, Extension *ext);
+
     PassID addPass(Pass *pass);
     StrategyID addStrategy(Strategy *st);
 
@@ -134,7 +150,6 @@ protected:
 
     Extension *internalLoadExtension(LOCATION, const SemanticVersion * version, String name);
     Extension *internalLookupExtension(String name);
-    Strategy * lookupStrategy(StrategyID id);
 
     void extensionCouldNotLoad(LOCATION, String name, char *dlerrorMsg);
     void extensionHasNoCreateFunction(LOCATION, Extension *ext, String name, char *dlerrorMsg);
@@ -153,18 +168,19 @@ protected:
     Allocator *_mem; // must come after _config;
     Compiler *_parent;
 
-    JB1 *_jb1;
-
     ExtensionID _nextExtensionID;
     std::map<String, Extension *> _extensions;
+    CoreExtension *_core;
+
+    std::map<KINDTYPE(Extensible), List<Extensible *> *> _extensiblesByKind;
+    std::map<KINDTYPE(Extensible), List<Extension *> *> _extensionsForAddonsByKind;
 
     ActionID assignActionID(String name);
     ActionID _nextActionID;
     std::map<ActionID, String> _actionNames;
 
     PassID _nextPassID;
-    std::map<String, PassID> _registeredPassNames;
-    PassRegistry _passRegistry;
+    std::map<String, PassID> _passNames;
 
     CompilationID getCompilationID() { return this->_nextCompilationID++; }
     CompilationID _nextCompilationID;
@@ -175,8 +191,11 @@ protected:
     CompileUnitID getCompileUnitID() { return this->_nextCompileUnitID++; }
     CompileUnitID _nextCompileUnitID;
 
-    ContextID getContextID() { return _nextContextID++; }
+    ContextID getContextID() { return this->_nextContextID++; }
     ContextID _nextContextID;
+
+    ExecutorID getExecutorID() { return this->_nextExecutorID++; }
+    ExecutorID _nextExecutorID;
 
     CompilerReturnCode assignReturnCode(String name);
     CompilerReturnCode _nextReturnCode;
@@ -212,6 +231,7 @@ public:
     CompilerReturnCode CompileSuccessful;
     CompilerReturnCode CompileNotStarted;
     CompilerReturnCode CompileFailed;
+    CompilerReturnCode CompileFail_CompilerError;
     CompilerReturnCode CompileFail_UnknownStrategyID;
     CompilerReturnCode CompileFail_IlGen;
     CompilerReturnCode CompileFail_TypeMustBeReduced;

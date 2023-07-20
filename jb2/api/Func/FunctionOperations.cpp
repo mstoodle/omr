@@ -50,11 +50,6 @@ Op_Load::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
     return new (mem) Op_Load(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->result(), cloner->symbol());
 }
 
-void
-Op_Load::jbgen(JB1MethodBuilder *j1mb) const {
-    j1mb->Load(location(), this->parent(), this->_result, this->_symbol);
-}
-
 
 //
 // Store
@@ -74,11 +69,6 @@ Operation *
 Op_Store::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
     Allocator *mem = b->comp()->mem();
     return new (mem) Op_Store(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->symbol(), cloner->operand());
-}
-
-void
-Op_Store::jbgen(JB1MethodBuilder *j1mb) const {
-    j1mb->Store(location(), this->parent(), this->_symbol, this->_value);
 }
 
 
@@ -114,14 +104,6 @@ Op_Call::log(TextLogger & lgr) const {
     lgr << lgr.endl();
 }
 
-void
-Op_Call::jbgen(JB1MethodBuilder *j1mb) const {
-    FunctionSymbol *funcSym = symbol()->refine<FunctionSymbol>();
-    const FunctionType *funcType = funcSym->functionType();
-    //j1mb->DefineFunction(funcSym->name(), funcSym->fileName(), funcSym->lineNumber(), funcSym->entryPoint(), funcType->returnType(), funcType->numParms(), funcType->parmTypes());
-    j1mb->Call(location(), parent(), result(), funcSym->name(), _numValues, _values);
-}
-
 
 //
 // CallVoid
@@ -153,14 +135,6 @@ Op_CallVoid::log(TextLogger & lgr) const {
     lgr << lgr.endl();
 }
 
-void
-Op_CallVoid::jbgen(JB1MethodBuilder *j1mb) const {
-    FunctionSymbol *funcSym = symbol()->refine<FunctionSymbol>();
-    const FunctionType *funcType = funcSym->functionType();
-    //j1mb->DefineFunction(funcSym->name(), funcSym->fileName(), funcSym->lineNumber(), funcSym->entryPoint(), funcType->returnType(), funcType->numParms(), funcType->parmTypes());
-    j1mb->Call(location(), parent(), funcSym->name(), _numValues, _values);
-}
-
 
 //
 // ReturnVoid
@@ -182,11 +156,6 @@ Op_ReturnVoid::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
     return new (mem) Op_ReturnVoid(MEM_PASSLOC(mem), this->_ext, b, this->action());
 }
 
-void
-Op_ReturnVoid::jbgen(JB1MethodBuilder *j1mb) const {
-    j1mb->Return(location(), parent());
-}
-
 
 //
 // Return
@@ -206,11 +175,6 @@ Operation *
 Op_Return::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
     Allocator *mem = b->comp()->mem();
     return new (mem) Op_Return(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->operand());
-}
-
-void
-Op_Return::jbgen(JB1MethodBuilder *j1mb) const {
-    j1mb->Return(location(), parent(), operand());
 }
 
 

@@ -166,19 +166,23 @@ protected:
     }
 
     T *copyItems(va_list args, int32_t numArgs) {
-        T *array = this->allocate(numArgs);
-        for (int32_t a=0;a < numArgs;a++)
-            array[a] = va_arg(args, T);
-        va_end(args);
+        T *array = NULL;
+        if (numArgs > 0) {
+            array = this->allocate(numArgs);
+            for (int32_t a=0;a < numArgs;a++)
+                array[a] = va_arg(args, T);
+            va_end(args);
+        }
         _items = array;
-        _ownItems = true;
+        _ownItems = (_items != NULL);
         _length = numArgs;
         return array;
     }
     T *copyItems(T *oldArray, int32_t arraySize) {
         T *newArray = this->allocate(arraySize);
-        for (int32_t a=0;a < arraySize;a++) newArray[a] = oldArray[a]; _items = newArray;
-        _ownItems = true;
+        for (int32_t a=0;a < arraySize;a++)
+            newArray[a] = oldArray[a]; _items = newArray;
+        _ownItems = (_items != NULL);
         _length = arraySize;
         return newArray;
     }

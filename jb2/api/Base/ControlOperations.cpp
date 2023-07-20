@@ -88,11 +88,6 @@ Op_ForLoopUp::log(TextLogger & lgr) const {
     lgr << lgr.endl();
 }
 
-void
-Op_ForLoopUp::jbgen(JB1MethodBuilder *j1mb) const {
-    j1mb->ForLoopUp(location(), parent(), this->_loopVariable, this->_initial, this->_final, this->_bump, this->_loopBody, this->_loopBreak, this->_loopContinue);
-}
-
 
 //
 // Goto
@@ -114,10 +109,6 @@ Op_Goto::log(TextLogger & lgr) const {
     lgr << name() << " " << builder() << lgr.endl();
 }
 
-void
-Op_Goto::jbgen(JB1MethodBuilder *j1mb) const {
-    j1mb->Goto(location(), parent(), builder());
-}
 
 //
 // IfCmpEqual
@@ -139,10 +130,6 @@ Op_IfCmpEqual::log(TextLogger & lgr) const {
     lgr << name() << " " << builder() << " " << operand(0) << " " << operand(1) << lgr.endl();
 }
 
-void
-Op_IfCmpEqual::jbgen(JB1MethodBuilder *j1mb) const {
-    j1mb->IfCmpEqual(location(), parent(), builder(), operand(0), operand(1));
-}
 
 //
 // IfCmpEqualZero
@@ -164,10 +151,6 @@ Op_IfCmpEqualZero::log(TextLogger & lgr) const {
     lgr << name() << " " << builder() << " " << operand(0) << lgr.endl();
 }
 
-void
-Op_IfCmpEqualZero::jbgen(JB1MethodBuilder *j1mb) const {
-    j1mb->IfCmpEqualZero(location(), parent(), builder(), operand());
-}
 
 //
 // IfCmpGreaterThan
@@ -189,10 +172,6 @@ Op_IfCmpGreaterThan::log(TextLogger & lgr) const {
     lgr << name() << " " << builder() << " " << operand(0) << " " << operand(1) << lgr.endl();
 }
 
-void
-Op_IfCmpGreaterThan::jbgen(JB1MethodBuilder *j1mb) const {
-    j1mb->IfCmpGreaterThan(location(), parent(), builder(), operand(0), operand(1));
-}
 
 //
 // IfCmpGreaterOrEqual
@@ -214,10 +193,6 @@ Op_IfCmpGreaterOrEqual::log(TextLogger & lgr) const {
     lgr << name() << " " << builder() << " " << operand(0) << " " << operand(1) << lgr.endl();
 }
 
-void
-Op_IfCmpGreaterOrEqual::jbgen(JB1MethodBuilder *j1mb) const {
-    j1mb->IfCmpGreaterOrEqual(location(), parent(), builder(), operand(0), operand(1));
-}
 
 //
 // IfCmpLessThan
@@ -239,10 +214,6 @@ Op_IfCmpLessThan::log(TextLogger & lgr) const {
     lgr << name() << " " << builder() << " " << operand(0) << " " << operand(1) << lgr.endl();
 }
 
-void
-Op_IfCmpLessThan::jbgen(JB1MethodBuilder *j1mb) const {
-    j1mb->IfCmpLessThan(location(), parent(), builder(), operand(0), operand(1));
-}
 
 //
 // IfCmpLessOrEqual
@@ -264,10 +235,6 @@ Op_IfCmpLessOrEqual::log(TextLogger & lgr) const {
     lgr << name() << " " << builder() << " " << operand(0) << " " << operand(1) << lgr.endl();
 }
 
-void
-Op_IfCmpLessOrEqual::jbgen(JB1MethodBuilder *j1mb) const {
-    j1mb->IfCmpLessOrEqual(location(), parent(), builder(), operand(0), operand(1));
-}
 
 //
 // IfCmpNotEqual
@@ -289,10 +256,6 @@ Op_IfCmpNotEqual::log(TextLogger & lgr) const {
     lgr << name() << " " << builder() << " " << operand(0) << " " << operand(1) << lgr.endl();
 }
 
-void
-Op_IfCmpNotEqual::jbgen(JB1MethodBuilder *j1mb) const {
-    j1mb->IfCmpNotEqual(location(), parent(), builder(), operand(0), operand(1));
-}
 
 //
 // IfCmpNotEqualZero
@@ -314,10 +277,6 @@ Op_IfCmpNotEqualZero::log(TextLogger & lgr) const {
     lgr << name() << " " << builder() << " " << operand(0) << lgr.endl();
 }
 
-void
-Op_IfCmpNotEqualZero::jbgen(JB1MethodBuilder *j1mb) const {
-    j1mb->IfCmpNotEqualZero(location(), parent(), builder(), operand());
-}
 
 //
 // IfCmpUnsignedGreaterThan
@@ -339,10 +298,6 @@ Op_IfCmpUnsignedGreaterThan::log(TextLogger & lgr) const {
     lgr << name() << " " << builder() << " " << operand(0) << " " << operand(1) << lgr.endl();
 }
 
-void
-Op_IfCmpUnsignedGreaterThan::jbgen(JB1MethodBuilder *j1mb) const {
-    j1mb->IfCmpUnsignedGreaterThan(location(), parent(), builder(), operand(0), operand(1));
-}
 
 //
 // IfCmpUnsignedGreaterOrEqual
@@ -364,10 +319,6 @@ Op_IfCmpUnsignedGreaterOrEqual::log(TextLogger & lgr) const {
     lgr << name() << " " << builder() << " " << operand(0) << " " << operand(1) << lgr.endl();
 }
 
-void
-Op_IfCmpUnsignedGreaterOrEqual::jbgen(JB1MethodBuilder *j1mb) const {
-    j1mb->IfCmpUnsignedGreaterOrEqual(location(), parent(), builder(), operand(0), operand(1));
-}
 
 //
 // IfCmpUnsignedLessThan
@@ -389,10 +340,6 @@ Op_IfCmpUnsignedLessThan::log(TextLogger & lgr) const {
     lgr << name() << " " << builder() << " " << operand(0) << " " << operand(1) << lgr.endl();
 }
 
-void
-Op_IfCmpUnsignedLessThan::jbgen(JB1MethodBuilder *j1mb) const {
-    j1mb->IfCmpUnsignedLessThan(location(), parent(), builder(), operand(0), operand(1));
-}
 
 //
 // IfCmpUnsignedLessOrEqual
@@ -412,11 +359,6 @@ Op_IfCmpUnsignedLessOrEqual::clone(LOCATION, Builder *b, OperationCloner *cloner
 void
 Op_IfCmpUnsignedLessOrEqual::log(TextLogger & lgr) const {
     lgr << name() << " " << builder() << " " << operand(0) << " " << operand(1) << lgr.endl();
-}
-
-void
-Op_IfCmpUnsignedLessOrEqual::jbgen(JB1MethodBuilder *j1mb) const {
-    j1mb->IfCmpUnsignedLessOrEqual(location(), parent(), builder(), operand(0), operand(1));
 }
 
 

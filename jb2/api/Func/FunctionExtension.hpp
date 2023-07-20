@@ -95,8 +95,8 @@ public:
     Value * Load(LOCATION, Builder *b, Symbol *sym);
     void Store(LOCATION, Builder *b, Symbol *sym, Value *value);
 
+    void createAddon(Extensible *e);
     void registerChecker(FunctionExtensionChecker *checker);
-
     CompilerReturnCode compile(LOCATION, Function *func, StrategyID strategy, TextLogger *lgr);
 
 protected:
@@ -107,6 +107,8 @@ protected:
     static const MinorID FUNCTIONEXT_MINOR=1;
     static const PatchID FUNCTIONEXT_PATCH=0;
     static const SemanticVersion version;
+
+    SUBCLASS_KINDSERVICE_DECL(Extensible, FunctionExtension);
 };
 
 class FunctionExtensionChecker : public Allocatable {
@@ -123,6 +125,8 @@ protected:
     //virtual void failValidateCallWithArgArray(LOCATION, Builder *b, FunctionSymbol *target, int32_t numArgs, Value **args);
 
     FunctionExtension *_func;
+
+    SUBCLASS_KINDSERVICE_DECL(Extensible, FunctionExtension);
 };
 
 typedef List<FunctionSymbol *> FunctionSymbolList;

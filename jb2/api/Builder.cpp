@@ -22,26 +22,28 @@
 #include "AllocationCategoryClasses.hpp"
 #include "Builder.hpp"
 #include "Compilation.hpp"
-#include "Context.hpp"
 #include "JB1MethodBuilder.hpp"
 #include "Location.hpp"
 #include "Operation.hpp"
+#include "Scope.hpp"
 #include "TextLogger.hpp"
 #include "Value.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 
-INIT_JBALLOC_ON(Builder, IL)
+INIT_JBALLOC_ON(Builder, IL);
+SUBCLASS_KINDSERVICE_IMPL(Builder, "Builder", Extensible, Extensible);
 
-Builder::Builder(Allocator *a, Compilation * comp, Context *context, String name)
-    : Allocatable(a)
+Builder::Builder(Allocator *a, Extension *ext, KINDTYPE(Extensible) kind, Compilation *comp, Scope *scope, String name)
+    : Extensible(a, ext, kind)
     , _id(comp->getBuilderID())
+    , _ext(ext)
     , _comp(comp)
     , _name(name)
     , _parent(NULL)
     , _children(NULL, comp->mem())
-    , _context(context)
+    , _scope(scope)
     , _successor(NULL)
     , _operations(NULL, comp->mem())
     , _operationCount(0)
@@ -53,16 +55,45 @@ Builder::Builder(Allocator *a, Compilation * comp, Context *context, String name
     , _isTarget(false)
     , _isBound(false)
     , _controlReachesEnd(true) {
+
+    if (scope == NULL)
+        _scope = comp->scope<Scope>();
 }
 
-Builder::Builder(Allocator *a, Builder *parent, Context *context, String name)
-    : Allocatable(a)
+Builder::Builder(Allocator *a, Extension *ext, Compilation * comp, Scope *scope, String name)
+    : Extensible(a, ext, CLASSKIND(Builder, Extensible))
+    , _id(comp->getBuilderID())
+    , _ext(ext)
+    , _comp(comp)
+    , _name(name)
+    , _parent(NULL)
+    , _children(NULL, comp->mem())
+    , _scope(scope)
+    , _successor(NULL)
+    , _operations(NULL, comp->mem())
+    , _operationCount(0)
+    , _firstOperation(NULL)
+    , _lastOperation(NULL)
+    , _myLocation(true)
+    , _currentLocation(new (comp->mem()) Location(comp->mem(), comp, "", "", 0) )
+    , _boundToOperation(NULL)
+    , _isTarget(false)
+    , _isBound(false)
+    , _controlReachesEnd(true) {
+
+    if (scope == NULL)
+        _scope = comp->scope<Scope>();
+}
+
+Builder::Builder(Allocator *a, Extension *ext, Builder *parent, Scope *scope, String name)
+    : Extensible(a, ext, CLASSKIND(Builder, Extensible))
     , _id(parent->_comp->getBuilderID())
+    , _ext(ext)
     , _comp(parent->_comp)
     , _name(name)
     , _parent(parent)
     , _children(NULL, parent->comp()->mem())
-    , _context(context)
+    , _scope(scope)
     , _successor(NULL)
     , _operations(NULL, parent->comp()->mem())
     , _operationCount(0)
@@ -75,16 +106,19 @@ Builder::Builder(Allocator *a, Builder *parent, Context *context, String name)
     , _isBound(false)
     , _controlReachesEnd(true) {
     parent->addChild(this);
+    if (scope == NULL)
+        scope = parent->scope();
 }
 
-Builder::Builder(Allocator *a, Builder *parent, Operation *boundToOp, String name)
-    : Allocatable(a)
+Builder::Builder(Allocator *a, Extension *ext, Builder *parent, Operation *boundToOp, String name)
+    : Extensible(a, ext, CLASSKIND(Builder, Extensible))
     , _id(parent->_comp->getBuilderID())
+    , _ext(ext)
     , _comp(parent->_comp)
     , _name(name)
     , _parent(parent)
     , _children(NULL, parent->comp()->mem())
-    , _context(parent->context())
+    , _scope(parent->scope())
     , _successor(NULL)
     , _operations(NULL, parent->comp()->mem())
     , _operationCount(0)
@@ -107,18 +141,6 @@ Builder::~Builder() {
     }
     if (_myLocation)
         delete _currentLocation;
-}
-
-Builder *
-Builder::create(Builder *parent, Context *context, String name) {
-    Allocator *mem = parent->allocator();
-    return new (mem) Builder(mem, parent, context, name);
-}
-
-Builder *
-Builder::create(Compilation *comp, Context *context, String name) {
-    Allocator *mem = comp->mem();
-    return new (mem) Builder(mem, comp, context, name);
 }
 
 void
@@ -144,20 +166,13 @@ Builder::add(Operation *op) {
 }
 
 void
-Builder::jbgen(JB1MethodBuilder *j1mb) const {
-    j1mb->createBuilder(this);
-}
-
-void
-Builder::jbgenSuccessors(JB1MethodBuilder *j1mb) const {
-}
-
-void
 Builder::logProperties(TextLogger & lgr) const {
     if (parent())
         lgr.indent() << "[ parent " << parent() << " ]" << lgr.endl();
     else
         lgr.indent() << "[ parent NULL ]" << lgr.endl();
+
+    lgr.indent() << "[ scope " << scope() << " ]" << lgr.endl();
 
     if (numChildren() > 0) {
         lgr.indent() << "[ children" << lgr.endl();

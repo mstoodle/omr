@@ -32,6 +32,7 @@ namespace Func {
 class Debugger;
 class FunctionCompilation;
 class FunctionContext;
+class FunctionScope;
 class FunctionSymbol;
 class LocalSymbol;
 class ParameterSymbol;
@@ -43,8 +44,9 @@ class Function : public CompileUnit {
     friend class FunctionExtension;
 
 public:
-    virtual String kindName() const { return "Function"; }
+    // no public constructors intentionally: meant to be subclassed
 
+    virtual String kindName() const { return "Function"; }
 
     void DefineName(String name);
     void DefineFile(String file);
@@ -55,24 +57,27 @@ public:
     String lineNumber() const { return _lineNumber; }
 
 protected:
-    ALL_ALLOC_ALLOWED(Function, LOCATION, Compiler *compiler); // meant to be subclassed
+    ALL_ALLOC_ALLOWED(Function, LOCATION, Compiler *compiler);
     ALL_ALLOC_ALLOWED(Function, LOCATION, Function *outerFunction);
 
-    static FunctionCompilation *fcomp(Compilation *comp);
-    static FunctionContext *fcontext(Compilation *comp);
-
-    virtual bool initContext(LOCATION, Compilation *comp, Context *context);
-    virtual bool buildIL(LOCATION, Compilation *comp, Context *context);
+    virtual bool buildContext(LOCATION, Compilation *comp, Scope *scope, Context *ctx);
+    virtual bool buildIL(LOCATION, Compilation *comp, Scope *scope, Context *ctx);
 
     // Next two are the API that drives user sub classes of Function
-    virtual bool initContext(LOCATION, FunctionCompilation *comp, FunctionContext *fc) { return true; }
-    virtual bool buildIL(LOCATION, FunctionCompilation *comp, FunctionContext *fc) { return true; }
+    virtual bool buildContext(LOCATION, FunctionCompilation *comp, FunctionScope *scope, FunctionContext *ctx) { return true; }
+    virtual bool buildIL(LOCATION, FunctionCompilation *comp, FunctionScope *scope, FunctionContext *ctx) { return true; }
 
-    Function         * _outerFunction;
+    CoreExtension *cx() { return _cx; }
 
-    String             _givenName;
-    String             _fileName;
-    String             _lineNumber;
+    static FunctionCompilation *fcomp(Compilation *comp);
+    static FunctionScope *fscope(Compilation *comp);
+    static FunctionContext *fctx(Compilation *comp);
+
+private:
+    CoreExtension * _cx;
+    String _givenName;
+    String _fileName;
+    String _lineNumber;
 };
 
 } // namespace Func

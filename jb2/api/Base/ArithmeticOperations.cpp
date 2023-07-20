@@ -50,11 +50,6 @@ Op_Add::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
     return new (mem) Op_Add(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->result(), cloner->operand(0), cloner->operand(1));
 }
 
-void
-Op_Add::jbgen(JB1MethodBuilder *j1mb) const {
-    j1mb->Add(location(), this->parent(), this->_result, this->_left, this->_right);
-}
-
 
 //
 // ConvertTo
@@ -74,11 +69,6 @@ Operation *
 Op_ConvertTo::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
     Allocator *mem = b->comp()->mem();
     return new (mem) Op_ConvertTo(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->result(), cloner->type(), cloner->operand());
-}
-
-void
-Op_ConvertTo::jbgen(JB1MethodBuilder *j1mb) const {
-    j1mb->ConvertTo(location(), this->parent(), this->_result, this->_type, this->_value);
 }
 
 
@@ -102,11 +92,6 @@ Op_Mul::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
     return new (mem) Op_Mul(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->result(), cloner->operand(0), cloner->operand(1));
 }
 
-void
-Op_Mul::jbgen(JB1MethodBuilder *j1mb) const {
-    j1mb->Mul(location(), this->parent(), this->_result, this->_left, this->_right);
-}
-
 
 //
 // Sub
@@ -126,11 +111,6 @@ Operation *
 Op_Sub::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
     Allocator *mem = b->comp()->mem();
     return new (mem) Op_Sub(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->result(), cloner->operand(0), cloner->operand(1));
-}
-
-void
-Op_Sub::jbgen(JB1MethodBuilder *j1mb) const {
-    j1mb->Sub(location(), this->parent(), this->_result, this->_left, this->_right);
 }
 
 

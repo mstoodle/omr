@@ -20,9 +20,7 @@
  *******************************************************************************/
 
 #include "gtest/gtest.h"
-#include "Compiler.hpp"
-#include "Config.hpp"
-#include "Extension.hpp"
+#include "JBCore.hpp"
 
 using namespace OMR::JitBuilder;
 
@@ -65,7 +63,7 @@ TEST(BasicJB2, compilerCreation) {
     {
         Config cfg;
         Compiler c("test2", &cfg);
-	EXPECT_EQ(c.name(), "test2") << "Compiler gets the name test2";
+        EXPECT_EQ(c.name(), "test2") << "Compiler gets the name test2";
         EXPECT_EQ(c.config(), &cfg) << "Comppiler takes the provided config";
     }
 }

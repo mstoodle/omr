@@ -23,6 +23,7 @@
 #define BUILDER_INCL
 
 #include "common.hpp"
+#include "Extensible.hpp"
 #include "String.hpp"
 
 namespace OMR {
@@ -30,22 +31,23 @@ namespace JitBuilder {
 
 class Compilation;
 class Context;
+class Extension;
 class FunctionBuilder;
-class JB1MethodBuilder;
 class Location;
 class Operation;
 class OperationBuilder;
 class OperationCloner;
+class Scope;
 class Type;
 class Value;
 class TextLogger;
 class Transformer;
 class TypeDictionary;
 
-class Builder : public Allocatable
-    {
+class Builder : public Extensible {
     JBALLOC_(Builder);
 
+    friend class CoreExtension;
     friend class Extension;
     friend class Operation;
     friend class OperationBuilder;
@@ -53,9 +55,6 @@ class Builder : public Allocatable
 
 public:
     Compilation *comp() const { return _comp; }
-
-    static Builder * create(Builder *parent, Context *context=NULL, String name="");
-    static Builder * create(Compilation *comp, Context *context=NULL, String name="");
 
     #if 0
     Operation * appendClone(Operation *op);
@@ -83,12 +82,12 @@ public:
 
     int64_t id() const                                  { return _id; }
     String name() const                                 { return _name; }
-    virtual size_t size() const                         { return sizeof(Builder); }
+    Extension *ext() const                              { return _ext; }
 
     TypeDictionary * dict() const;
     Builder * parent() const                            { return _parent; }
 
-    Context * context() const                           { return _context; }
+    Scope * scope() const                               { return _scope; }
 
     int32_t numChildren() const                         { return _children.length(); }
     BuilderListIterator childrenIterator() const        { return _children.iterator(); }
@@ -124,24 +123,24 @@ public:
     virtual void logPrefix(TextLogger & log) const;
     virtual void logSuffix(TextLogger & log) const;
 
-    virtual void jbgen(JB1MethodBuilder *j1mb) const;
-    virtual void jbgenSuccessors(JB1MethodBuilder *j1mb) const;
-
-    protected:
-    DYNAMIC_ALLOC_ONLY(Builder, Compilation *comp, Context *context=NULL, String name="");
-    DYNAMIC_ALLOC_ONLY(Builder, Builder *parent, Context *context=NULL, String name="");
-    DYNAMIC_ALLOC_ONLY(Builder, Builder *parent, Operation *boundToOp, String name="");
+protected:
+    DYNAMIC_ALLOC_ONLY(Builder, Extension *ext, KINDTYPE(Extensible) kind, Compilation *comp, Scope *scope=NULL, String name="");
+    DYNAMIC_ALLOC_ONLY(Builder, Extension *ext, Compilation *comp, Scope *scope=NULL, String name="");
+    DYNAMIC_ALLOC_ONLY(Builder, Extension *ext, Builder *parent, Scope *scope=NULL, String name="");
+    DYNAMIC_ALLOC_ONLY(Builder, Extension *ext, Builder *parent, Operation *boundToOp, String name="");
 
     void setParent(Builder *parent);
     void addChild(Builder *child);
     Builder * add(Operation * op);
 
     BuilderID            _id;
+    Extension          * _ext;
     Compilation        * _comp;
     String               _name;
     Builder            * _parent;
     List<Builder *>      _children;
     Context            * _context;
+    Scope              * _scope;
     Builder            * _successor;
     List<Operation *>    _operations;
     int32_t              _operationCount;
@@ -153,7 +152,9 @@ public:
     bool                 _isTarget;
     bool                 _isBound;
     bool                 _controlReachesEnd;
-    };
+
+    SUBCLASS_KINDSERVICE_DECL(Extensible, Builder);
+};
 
 } // namespace JitBuilder
 } // namespace OMR

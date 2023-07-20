@@ -19,13 +19,17 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#include <iostream>
 #include "Builder.hpp"
+#include "CodeGenerator.hpp"
 #include "Compilation.hpp"
 #include "Compiler.hpp"
+#include "Dispatcher.hpp"
 #include "Extension.hpp"
 #include "Location.hpp"
 #include "Operation.hpp"
 #include "SemanticVersion.hpp"
+#include "Strategy.hpp"
 #include "Type.hpp"
 #include "TypeDictionary.hpp"
 #include "Value.hpp"
@@ -33,37 +37,24 @@
 namespace OMR {
 namespace JitBuilder {
 
+INIT_JBALLOC_ON(Extension, Compiler);
+SUBCLASS_KINDSERVICE_IMPL(Extension,"Extension",Extensible,Extensible);
 
 const SemanticVersion Extension::version((MajorID)0,(MinorID)0,(PatchID)0);
 const String Extension::NAME("core");
 
-INIT_JBALLOC_ON(Extension, Compiler)
-
-// used by Compiler to allocate an actual Extension object
-Extension::Extension(Allocator *a, LOCATION, Compiler *compiler)
-    : Allocatable(a)
-    , _id(compiler->getExtensionID())
-    , _name(NAME)
-    , _compiler(compiler)
-    , _createLoc(PASSLOC)
-    , _types((Allocator *)NULL, a)
-    , NoType(new (a) NoTypeType(MEM_LOC(a), this))
-    , aMergeDef(registerAction(String("MergeDef"))) {
-}
-
-Extension::Extension(Allocator *a, LOCATION, Compiler *compiler, String name)
-    : Allocatable(a)
+Extension::Extension(MEM_LOCATION(a), KINDTYPE(Extensible) kind, Compiler *compiler, String name)
+    : Extensible(a, this, kind)
     , _id(compiler->getExtensionID())
     , _name(name)
     , _compiler(compiler)
     , _createLoc(PASSLOC)
     , _types((Allocator *)NULL, a)
-    , NoType(new (a) NoTypeType(MEM_LOC(a), this))
-    , aMergeDef(registerAction(String("MergeDef"))) {
+    , _codegenStrategy(NULL) {
+
 }
 
 Extension::~Extension() {
-
 }
 
 const String
@@ -101,17 +92,30 @@ Extension::internalRegisterBuilder(Compilation *comp, Builder *b) {
     return comp->registerBuilder(b);
 }
 
-
-//
-// Core Operations
-//
-
 void
-Extension::MergeDef(LOCATION, Builder *b, Value *existingDef, Value *newDef) {
-    Allocator *mem = b->comp()->mem();
-    addOperation(b, new (mem) Op_MergeDef(MEM_PASSLOC(mem), this, b, this->aMergeDef, existingDef, newDef));
+Extension::registerExtendedPass(Extension *ext, KINDTYPE(Extensible) kind, Pass *extendedPass) {
+    ext->_extendedPasses.insert({kind, extendedPass});
 }
 
+void
+Extension::registerForExtensible(ExtensibleKind kind, Extension *ext) {
+    compiler()->registerForExtensible(kind, ext);
+}
+
+void
+Extension::setContext(Compilation *comp, Context *context) {
+    comp->setContext(context);
+}
+
+void
+Extension::setScope(Compilation *comp, Scope *scope) {
+    comp->setScope(scope);
+}
+
+void
+Extension::setLogger(Compilation *comp, TextLogger *logger) {
+    comp->setLogger(logger);
+}
 
 //
 // Core Pseudo Operations
@@ -121,26 +125,26 @@ Builder *
 Extension::BoundBuilder(LOCATION, Builder *parent, Operation *parentOp, String name) {
     Compilation *comp = parent->comp();
     Allocator *mem = comp->mem();
-    return internalRegisterBuilder(comp, new (mem) Builder(mem, parent, parentOp, name));
+    return this->registerBuilder<Builder>(comp, new (mem) Builder(mem, this, parent, parentOp, name));
 }
 
 Builder *
-Extension::OrphanBuilder(LOCATION, Builder *parent, Context *context, String name) {
+Extension::EntryBuilder(LOCATION, Compilation *comp, Scope *scope, String name) {
+    Allocator *mem = comp->mem();
+    return this->registerBuilder<Builder>(comp, new (mem) Builder(mem, this, comp, scope, name));
+}
+
+Builder *
+Extension::ExitBuilder(LOCATION, Compilation *comp, Scope *scope, String name) {
+    Allocator *mem = comp->mem();
+    return this->registerBuilder<Builder>(comp, new (mem) Builder(mem, this, comp, scope, name));
+}
+
+Builder *
+Extension::OrphanBuilder(LOCATION, Builder *parent, Scope *scope, String name) {
     Compilation *comp = parent->comp();
     Allocator *mem = comp->mem();
-    return internalRegisterBuilder(comp, new (mem) Builder(mem, parent, context, name));
-}
-
-Builder *
-Extension::EntryBuilder(LOCATION, Compilation *comp, Context *context, String name) {
-    Allocator *mem = comp->mem();
-    return internalRegisterBuilder(comp, new (mem) Builder(mem, comp, context, name));
-}
-
-Builder *
-Extension::ExitBuilder(LOCATION, Compilation *comp, Context *context, String name) {
-    Allocator *mem = comp->mem();
-    return internalRegisterBuilder(comp, new (mem) Builder(mem, comp, context, name));
+    return this->registerBuilder<Builder>(comp, new (mem) Builder(mem, this, parent, scope, name));
 }
 
 Location *
@@ -169,4 +173,3 @@ Extension::SourceLocation(LOCATION, Builder *b, String func, String lineNumber, 
 
 } // namespace JitBuilder
 } // namespace OMR
-

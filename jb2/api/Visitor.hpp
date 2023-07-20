@@ -39,7 +39,7 @@ class Visitor : public Pass {
     JBALLOC_(Visitor)
 
 public:
-    DYNAMIC_ALLOC_ONLY(Visitor, Compiler *compiler, String name="", bool visitAppendedBuilders=false);
+    DYNAMIC_ALLOC_ONLY(Visitor, KINDTYPE(Extensible) kind, Extension *ext, String name="", bool visitAppendedBuilders=false);
 
     virtual CompilerReturnCode perform(Compilation *comp);
 
@@ -49,10 +49,10 @@ public:
 
 protected:
 
-    // more dramatic visit patterns can be done by overriding these functions
+    // more dramatic visit patterns can be implemented by overriding these functions
     virtual void visitBuilder(Builder * b, BitVector & visited, BuilderList & list);
     virtual void visitOperations(Builder * b, BitVector & visited, BuilderList & worklist);
-    virtual void abort();
+    virtual void abort(CompilerReturnCode code);
 
     // subclass Visitor and override these functions as needed
     virtual void visitBegin()                             { }
@@ -67,8 +67,11 @@ protected:
     void trace(String msg);
 
     Compilation *_comp;
+    CompilerReturnCode _errorCode;
     bool _aborted;
     bool _visitAppendedBuilders;
+
+    SUBCLASS_KINDSERVICE_DECL(Extensible, Visitor);
 };
 
 } // namespace JitBuilder

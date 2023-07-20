@@ -67,6 +67,85 @@ protected:
     static KindServiceID kindServiceID;
 };
 
+
+// Create a new kind service category typedef
+#define KINDTYPE(name) name ## Kind
+#define KINDSERVICE_CATEGORY(name) typedef KindService::Kind KINDTYPE(name)
+
+
+// Use this line in the base class to add support for the new kind service category of the given name
+// Usually put at the end of the class declaration in the header since it may modify the apparent
+// access type (to protected)
+#define BASECLASS_KINDSERVICE_DECL_CONST_ONLY(name) \
+public: \
+    virtual KINDTYPE(name) kind() const { return _kind; } \
+    template<typename T> bool isExactKind() const { \
+        return kindService.isExactMatch(_kind, T::get ## name ## ClassKind()); \
+    } \
+    template<typename T> bool isKind() const { \
+        return kindService.isMatch(_kind, T::get ## name ## ClassKind()); \
+    } \
+    template<typename T> const T *refine() const { \
+        assert(isKind<const T>()); \
+        return static_cast<const T *>(this); \
+    } \
+    const KINDTYPE(name) _kind; \
+    static const name ## Kind get ## name ## ClassKind(); \
+protected: \
+    static KindService kindService; \
+    static KINDTYPE(name) name ## BaseClassKind; \
+    static bool kindRegistered
+
+#define BASECLASS_KINDSERVICE_DECL(name) \
+public: \
+    template<typename T> T *refine() { \
+        assert(isKind<T>()); \
+        return static_cast<T *>(this); \
+    } \
+    BASECLASS_KINDSERVICE_DECL_CONST_ONLY(name)
+
+
+#define SUBCLASS_KINDSERVICE_DECL(base,name) \
+public: \
+    static const KINDTYPE(base) get ## base ## ClassKind(); \
+protected: \
+    static KINDTYPE(base) name ## ## base ## Kind; \
+    static bool kindRegistered
+
+// Use this line in the base class to add support for the new kind service category of the given name
+// Usually put at the top of the cpp file and assumes that the base class is "abstract" i.e. it has NoKind
+#define BASECLASS_KINDSERVICE_IMPL(name) \
+    KindService name::kindService; \
+    KINDTYPE(name) name::name ## BaseClassKind=KindService::NoKind; \
+    bool name::kindRegistered = false; \
+    const name ## Kind \
+    name::get ## name ## ClassKind() { \
+        if (!kindRegistered) { \
+            name ## BaseClassKind = KindService::NoKind; \
+            kindRegistered = true; \
+        } \
+        return name ## BaseClassKind; \
+    }
+
+#define BASECLASS_KINDINIT(value) _kind(value)
+
+#define SUBCLASS_KINDSERVICE_IMPL(name,string,super,base) \
+    KINDTYPE(base) name::name ## base ## Kind=KindService::NoKind; \
+    bool name::kindRegistered = false; \
+    const base ## Kind \
+    name::get ## base ## ClassKind() { \
+        if (!name::kindRegistered) { \
+            name::name ## base ## Kind = base::kindService.assignKind(super::get ## base ## ClassKind(), string); \
+            name::kindRegistered = true; \
+        } \
+        return name::name ## base ## Kind; \
+    }
+
+#define KIND(base) (get ## base ## ClassKind())
+#define CLASSKIND(name,base) (name::get ## base ## ClassKind())
+#define KINDINIT(base) _kind(KIND(base))
+
+
 } // namespace JitBuilder
 } // namespace OMR
 

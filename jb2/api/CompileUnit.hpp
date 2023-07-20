@@ -36,6 +36,7 @@ class CompiledBody;
 class Compiler;
 class Config;
 class Debugger;
+class Scope;
 class Symbol;
 class TextLogger;
 class TypeDictionary;
@@ -46,6 +47,8 @@ class CompileUnit : public Allocatable {
     friend class Compilation;
 
 public:
+    // There are intentionally no public constructors. CompileUnit is meant to be subclassed.
+
     CompileUnitID id() const { return _id; }
     virtual String kindName() const { return "CompileUnit"; }
 
@@ -54,36 +57,31 @@ public:
 
     String name() const { return _name; }
 
+    CompileUnit *outerUnit() const { return _outerUnit; }
+
     CompiledBody *compiledBody(StrategyID strategy=NoStrategy) const;
     void saveCompiledBody(CompiledBody *body, StrategyID strategy=NoStrategy);
 
-    //Context *context() const { return _context; }
-
-    //uint32_t numEntryPoints() const { return _numEntryPoints; }
-
-    //template<typename T>
-    //T * nativeEntry(uint32_t e=0) const { assert(e < _numEntryPoints && _nativeEntryPoints[e] != NULL); return reinterpret_cast<T *>(_nativeEntryPoints[e]); }
-
-    //template<typename T>
-    //T *debugEntry(uint32_t e=0) const { assert(e < _numEntryPoints && _debugEntryPoints[e] != NULL); return reinterpret_cast<T *>(_debugEntryPoints[e]); }
-
+    #if 0
     virtual CompilerReturnCode compile(LOCATION, StrategyID strategy=NoStrategy, TextLogger *lgr=NULL);
+    #endif
 
     void log(TextLogger & lgr) const;
 
     virtual void notifyRecompile(CompiledBody *oldBody, CompiledBody *newBody) { }
 
+    virtual Builder *EntryBuilder(LOCATION, Compilation *comp, Scope *scope);
     //void addLocation(Location *loc ) { _locations.push_back(loc); }
 
 protected:
-    ALL_ALLOC_ALLOWED(CompileUnit, LOCATION, Compiler *compiler, String name=""); // meant to be subclassed
+    ALL_ALLOC_ALLOWED(CompileUnit, LOCATION, Compiler *compiler, String name="");
     ALL_ALLOC_ALLOWED(CompileUnit, LOCATION, CompileUnit *outerUnit, String name="");
 
     virtual void logSpecific(TextLogger & lgr) const { }
 
     // Next two are the public API for user sub classes
-    virtual bool initContext(LOCATION, Compilation *comp, Context *context) { return true; }
-    virtual bool buildIL(LOCATION, Compilation *comp, Context *context) { return true; }
+    virtual bool buildContext(LOCATION, Compilation *comp, Scope *scope, Context *ctx) { return true; }
+    virtual bool buildIL(LOCATION, Compilation *comp, Scope *scope, Context *ctx) { return true; }
 
     CompileUnitID                         _id;
     CreateLocation                        _createLocation;
@@ -91,18 +89,6 @@ protected:
     Compiler                            * _compiler;
     CompileUnit                         * _outerUnit;
     std::map<StrategyID,CompiledBody *>   _bodies;
-
-    //bool                    _myContext;
-    //Context               * _context;
-
-    //uint32_t                _numEntryPoints;
-    //void                 ** _nativeEntryPoints;
-    //void                 ** _debugEntryPoints;
-    //Debugger              * _debuggerObject;
-
-    //Builder              ** _builderEntryPoints;
-    //uint32_t                _numExitPoints;
-    //Builder              ** _builderExitPoints;
 
     //List<Location *>        _locations;
 };

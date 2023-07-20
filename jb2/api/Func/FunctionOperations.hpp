@@ -37,7 +37,6 @@ class Op_Load : public OperationR1S1 {
     friend class FunctionExtension;
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-    virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
     Op_Load(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aLoad, Value *result, Symbol *s);
@@ -49,7 +48,6 @@ class Op_Store : public OperationR0S1V1 {
     friend class FunctionExtension;
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-    virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
     Op_Store(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aStore, Symbol *s, Value *value);
@@ -62,7 +60,6 @@ class Op_Call : public OperationR1S1VN {
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
     virtual void log(TextLogger &lgr) const;
-    virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
     Op_Call(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aCall, Value *result, FunctionSymbol *target, std::va_list & args);
@@ -78,7 +75,6 @@ class Op_CallVoid : public OperationR0S1VN {
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
     virtual void log(TextLogger &lgr) const;
-    virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
     Op_CallVoid(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aCallVoid, FunctionSymbol *target, std::va_list & args);
@@ -93,7 +89,6 @@ class Op_ReturnVoid : public Operation {
     friend class FunctionExtension;
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-    virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
     Op_ReturnVoid(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aReturnVoid);
@@ -106,7 +101,6 @@ class Op_Return : public OperationR0V1 {
     friend class FunctionExtension;
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-    virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
     Op_Return(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aReturn, Value * v);

@@ -25,6 +25,7 @@
 #include "CompileUnit.hpp"
 #include "Config.hpp"
 #include "Context.hpp"
+#include "Extension.hpp"
 #include "Literal.hpp"
 #include "LiteralDictionary.hpp"
 #include "SymbolDictionary.hpp"
@@ -35,44 +36,43 @@ namespace OMR {
 namespace JitBuilder {
 
 INIT_JBALLOC_ON(Compilation, Compiler)
+SUBCLASS_KINDSERVICE_IMPL(Compilation,"Compilation",Extensible,Extensible)
 
-Compilation::Compilation(Compiler *compiler, CompileUnit *unit, StrategyID strategy, LiteralDictionary *litDict, SymbolDictionary *symDict, TypeDictionary *typeDict, Config *config)
-    : Allocatable() // Compilation objects are allocated on the stack by Extension objects
-    , _id(compiler->getCompilationID())
+Compilation::Compilation(Allocator *a, Extension *ext, ExtensibleKind kind, CompileUnit *unit, StrategyID strategy, Config *config)
+    : Extensible(a, ext, kind)
+    , _id(ext->compiler()->getCompilationID())
     , _nextBuilderID(NoBuilder+1) // must precede anything that might create Builders
     , _nextContextID(NoContext+1) // must precede anything that might create Contexts
     , _nextLiteralID(NoLiteral+1) // must precede anything that might create Literal
     , _nextLocationID(NoLocation+1) // must precede anything that might create Locations
     , _nextOperationID(NoOperation+1) // must precede anything that might create Operations
+    , _nextScopeID(NoScope+1) // must precede anything that might create Scopes
     , _nextTransformationID(NoTransformation) // must precede anything that might create Transformations
     , _nextValueID(NoValue) // must precede anything that might create Values
-    , _compiler(compiler)
+    , _compiler(ext->compiler())
+    , _ext(ext)
     , _unit(unit)
     , _strategy(strategy)
+    , _context(NULL) // expected to be created by subclass or by extension's ::compile
+    , _scope(NULL) // expected to be created by subclass or by extension's ::compile
     , _myConfig(config == NULL)
-    , _config((config == NULL) ? new (compiler->mem()) Config(compiler->mem(), compiler->config()) : config)
-    , _context(NULL)
+    , _config((config == NULL) ? new (_compiler->mem()) Config(_compiler->mem(), _compiler->config()) : config)
     , _mem(_config->compilationAllocator(_compiler->mem()))
     , _passMem(NULL)
-    , _myLiteralDict(litDict == NULL)
-    , _mySymbolDict(symDict == NULL)
-    , _myTypeDict(typeDict == NULL)
-    , _literalDict(_myLiteralDict ? new (_mem) LiteralDictionary(_mem, compiler, "Compilation Literal Dictionary", compiler->litDict()) : litDict)
-    , _symbolDict(_mySymbolDict ? new (_mem) SymbolDictionary(_mem, compiler, "Compilation Symbol Dictionary", compiler->symDict()) : symDict)
-    , _typeDict(_myTypeDict ? new (_mem) TypeDictionary(_mem, compiler, "Compilation Type Dictionary", compiler->typeDict()) : typeDict)
+    , _literalDict(new (_mem) LiteralDictionary(_mem, _compiler, "Compilation Literal Dictionary", _compiler->litDict()))
+    , _symbolDict(new (_mem) SymbolDictionary(_mem, _compiler, "Compilation Symbol Dictionary", _compiler->symDict()))
+    , _typeDict(new (_mem) TypeDictionary(_mem, _compiler, "Compilation Type Dictionary", _compiler->typeDict()))
     , _logger(NULL)
     , _writer(NULL)
     , _builders(NULL, _mem) {
 
+    notifyCreation(ext, KIND(Extensible));
 }
 
 Compilation::~Compilation() {
-    if (_myTypeDict && _typeDict != NULL)
-        delete _typeDict;
-    if (_mySymbolDict && _symbolDict != NULL)
-        delete _symbolDict;
-    if (_myLiteralDict && _literalDict != NULL)
-        delete _literalDict;
+    delete _typeDict;
+    delete _symbolDict;
+    delete _literalDict;
     _config->destructCompilationAllocator(_mem);
     if (_myConfig && _config != NULL)
         delete _config;
@@ -114,10 +114,10 @@ Compilation::log(TextLogger &lgr) const {
 
 bool
 Compilation::prepareIL(LOCATION) {
-    if (unit()->initContext(PASSLOC, this, _context) == false)
+    if (unit()->buildContext(PASSLOC, this, _scope, _context) == false)
         return false;
 
-    return unit()->buildIL(PASSLOC, this, _context);
+    return unit()->buildIL(PASSLOC, this, _scope, _context);
 }
 
 void
@@ -126,11 +126,6 @@ Compilation::freeIL(LOCATION) {
         Builder *b = it.item();
         delete b;
     }
-}
-
-void
-Compilation::setNativeEntryPoint(void *entryPoint, int e) {
-    _context->setNativeEntryPoint(entryPoint, e);
 }
 
 } // namespace JitBuilder

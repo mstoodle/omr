@@ -53,7 +53,7 @@ Strategy::~Strategy() {
 Strategy *
 Strategy::addPass(Pass *pass) {
     // TODO: convert to CompilationException
-    assert(pass->_compiler == _compiler);
+    assert(pass->compiler() == _compiler);
     _passes.push_back(pass);
     return this;
 }

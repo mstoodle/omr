@@ -34,7 +34,6 @@ class Op_LoadAt : public OperationR1V1 {
     friend class BaseExtension;
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-    virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
     Op_LoadAt(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aLoadAt, Value *result, Value *value);
@@ -46,7 +45,6 @@ class Op_StoreAt : public OperationR0V2 {
     friend class BaseExtension;
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-    virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
     Op_StoreAt(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aStoreAt, Value *address, Value *value);
@@ -57,7 +55,6 @@ class Op_LoadField : public OperationR1V1T1 {
     friend class BaseExtension;
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-    virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
     Op_LoadField(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aLoadField, Value *result, const FieldType *fieldType, Value *structValue);
@@ -68,7 +65,6 @@ class Op_StoreField : public OperationR0T1V2 {
     friend class BaseExtension;
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-    virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
     Op_StoreField(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aStoreField, const FieldType *fieldType, Value *structValue, Value *value);
@@ -79,7 +75,6 @@ class Op_LoadFieldAt : public OperationR1V1T1 {
     friend class BaseExtension;
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-    virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
     Op_LoadFieldAt(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aLoadFieldAt, Value *result, const FieldType *fieldType, Value *pStruct);
@@ -90,7 +85,6 @@ class Op_StoreFieldAt : public OperationR0T1V2 {
     friend class BaseExtension;
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-    virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
     Op_StoreFieldAt(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aStoreFieldAt, const FieldType *fieldType, Value *pStruct, Value *value);
@@ -101,7 +95,6 @@ class Op_CreateLocalArray : public OperationR1L1T1 {
     friend class BaseExtension;
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-    virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
     Op_CreateLocalArray(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aCreateLocalArray, Value *result, Literal *numElements, const PointerType *pElementType)
@@ -114,7 +107,6 @@ class Op_CreateLocalStruct : public OperationR1T1 {
     friend class BaseExtension;
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-    virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
     Op_CreateLocalStruct(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aCreateLocalStruct, Value *result, const StructType *structType)
@@ -127,7 +119,6 @@ class Op_IndexAt : public OperationR1V2 {
     friend class BaseExtension;
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-    virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
     Op_IndexAt(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aIndexAt, Value *result, Value *base, Value *index);

@@ -24,6 +24,8 @@
 
 #include "common.hpp"
 #include "CreateLoc.hpp"
+#include "Extensible.hpp"
+#include "Pass.hpp"
 #include "String.hpp"
 
 namespace OMR {
@@ -37,12 +39,13 @@ class Context;
 class Location;
 class NoTypeType;
 class Operation;
-class Pass;
+class Scope;
 class SemanticVersion;
+class Strategy;
 class TypeDictionary;
 class Value;
 
-class Extension : public Allocatable {
+class Extension : public Extensible {
     JBALLOC_(Extension)
 
     friend class Compiler;
@@ -53,45 +56,55 @@ public:
     virtual const SemanticVersion * semver() const { return &version; }
     static const String NAME;
 
-    DYNAMIC_ALLOC_ONLY(Extension, LOCATION, Compiler *compiler);
-
     Compiler *compiler() const { return _compiler; }
     String name() const { return _name; }
 
     const String actionName(ActionID a) const;
 
+    template <class T>
+    T *extendedPass() {
+        auto it = _extendedPasses.find(CLASSKIND(T,Extensible));
+        if (it == _extendedPasses.end())
+            return NULL;
+        Pass *extPass = it->second;
+        return extPass->refine<T>();
+    }
+
+    Builder *BoundBuilder(LOCATION, Builder *parent, Operation *parentOp, String name="");
+    Builder *EntryBuilder(LOCATION, Compilation *comp, Scope *scope, String name="");
+    Builder *ExitBuilder(LOCATION, Compilation *comp, Scope *scope, String name="");
+    Builder *OrphanBuilder(LOCATION, Builder *parent, Scope *scope=NULL, String name="");
+    Location * SourceLocation(LOCATION, Builder *b, String func);
+    Location * SourceLocation(LOCATION, Builder *b, String func, String lineNumber);
+    Location * SourceLocation(LOCATION, Builder *b, String func, String lineNumber, int32_t bcIndex);
+
+    // register extension to be notified (by createAddon) when Extensible objects of the given kind are created by this Extension
+    void registerForExtensible(ExtensibleKind kind, Extension *ext);
+
 protected:
+    DYNAMIC_ALLOC_ONLY(Extension, LOCATION, KINDTYPE(Extensible) kind, Compiler *compiler, String name);
+    void setContext(Compilation *comp, Context *context);
+    void setScope(Compilation *comp, Scope *scope);
+    void setLogger(Compilation *comp, TextLogger *logger);
+
     ExtensionID _id;
     String _name;
     Compiler *_compiler;
     CreateLocation _createLoc;
     Array<const Type *> _types;
+    
+    Strategy *_codegenStrategy;
 
-public:
-    // 
-    // Core types
-    //
+    // Other extensions may register passes that provide support for this Extension's elements (Builders, Literals, Operations, Symbols, Types, other)
+    std::map<ExtensibleKind, Pass *> _extendedPasses; // should be folded into addons
 
-    const NoTypeType *NoType;
+    // subclasses can override to be notified whenever a new Extension is loaded into the same Compiler
+    virtual void notifyNewExtension(Extension *other) { }
 
-    // 
-    // Core operations
-    //
+    // will be called on Extensible objects for which this Extension object has registered
+    virtual void createAddon(Extensible *e) { }
 
-    void MergeDef(LOCATION, Builder *parent, Value *existingDef, Value *newDef);
-
-    //
-    // Core pseudo operations
-    //
-
-    Builder *BoundBuilder(LOCATION, Builder *parent, Operation *parentOp, String name="");
-    Builder *OrphanBuilder(LOCATION, Builder *parent, Context *context=NULL, String name="");
-    Location * SourceLocation(LOCATION, Builder *b, String func);
-    Location * SourceLocation(LOCATION, Builder *b, String func, String lineNumber);
-    Location * SourceLocation(LOCATION, Builder *b, String func, String lineNumber, int32_t bcIndex);
-
-protected:
-    DYNAMIC_ALLOC_ONLY(Extension, LOCATION, Compiler *compiler, String name);
+    static void registerExtendedPass(Extension *ext, KINDTYPE(Extensible) kind, Pass *extendedPass);
 
     ActionID registerAction(String name);
     CompilerReturnCode registerReturnCode(String name);
@@ -107,24 +120,17 @@ protected:
 
     virtual uint64_t numTypes() const { return static_cast<uint64_t>(_types.length()); }
 
-    Builder *EntryBuilder(LOCATION, Compilation *comp, Context *context, String name="");
-    Builder *ExitBuilder(LOCATION, Compilation *comp, Context *context, String name="");
-
     static const SemanticVersion version;
 
 private:
     Builder * internalRegisterBuilder(Compilation *comp, Builder *b);
     
-public:
-    // depends on _compiler being initialized
-
-    //
-    // Core actions
-    //
-
-    const ActionID aMergeDef;
-
+    SUBCLASS_KINDSERVICE_DECL(Extensible,Extension);
 };
+
+extern "C" {
+    typedef Extension * (*CreateFunction)(LOCATION, Compiler *);
+}
 
 } // namespace JitBuilder
 } // namespace OMR

@@ -49,11 +49,6 @@ Op_LoadAt::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
     return new (mem) Op_LoadAt(MEM_PASSLOC(mem), this->_ext, b, this->action(), this->result(), this->operand());
 }
 
-void
-Op_LoadAt::jbgen(JB1MethodBuilder *j1mb) const {
-    j1mb->LoadAt(location(), this->parent(), this->_result, this->_value);
-}
-
 
 //
 // StoreAt
@@ -72,11 +67,6 @@ Operation *
 Op_StoreAt::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
     Allocator *mem = b->comp()->mem();
     return new (mem) Op_StoreAt(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->operand(0), this->operand(1));
-}
-
-void
-Op_StoreAt::jbgen(JB1MethodBuilder *j1mb) const {
-    j1mb->StoreAt(location(), this->parent(), this->_left, this->_right);
 }
 
 
@@ -99,11 +89,6 @@ Op_LoadField::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
     return new (mem) Op_LoadField(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->result(), cloner->type()->refine<FieldType>(), cloner->operand());
 }
 
-void
-Op_LoadField::jbgen(JB1MethodBuilder *j1mb) const {
-    assert(0); // needs to be expanded
-}
-
 
 //
 // StoreField
@@ -122,11 +107,6 @@ Operation *
 Op_StoreField::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
     Allocator *mem = b->comp()->mem();
     return new (mem) Op_StoreField(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->type()->refine<FieldType>(), cloner->operand(0), cloner->operand(1));
-}
-
-void
-Op_StoreField::jbgen(JB1MethodBuilder *j1mb) const {
-    assert(0); // needs to be expanded
 }
 
 
@@ -149,13 +129,6 @@ Op_LoadFieldAt::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
     return new (mem) Op_LoadFieldAt(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->result(), cloner->type()->refine<FieldType>(), cloner->operand());
 }
 
-void
-Op_LoadFieldAt::jbgen(JB1MethodBuilder *j1mb) const {
-    const FieldType *fType = _type->refine<FieldType>();
-    const StructType *sType = fType->owningStruct();
-    j1mb->LoadIndirect(location(), this->parent(), this->_result, sType->name(), fType->name(), this->_value);
-}
-
 
 //
 // StoreFieldAt
@@ -176,13 +149,6 @@ Op_StoreFieldAt::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
     return new (mem) Op_StoreFieldAt(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->type()->refine<FieldType>(), cloner->operand(0), cloner->operand(1));
 }
 
-void
-Op_StoreFieldAt::jbgen(JB1MethodBuilder *j1mb) const {
-    const FieldType *fType = _type->refine<FieldType>();
-    const StructType *sType = fType->owningStruct();
-    j1mb->StoreIndirect(location(), this->parent(), sType->name(), fType->name(), this->_base, this->_value);
-}
-
 
 //
 // CreateLocalArray
@@ -199,11 +165,6 @@ Op_CreateLocalArray::clone(LOCATION, Builder *b, OperationCloner *cloner) const 
     const Type *cloneType = cloner->type();
     assert(cloneType->isKind<PointerType>());
     return new (mem) Op_CreateLocalArray(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->result(), cloner->literal(), cloneType->refine<PointerType>());
-}
-
-void
-Op_CreateLocalArray::jbgen(JB1MethodBuilder *j1mb) const {
-    j1mb->CreateLocalArray(location(), this->parent(), this->result(), this->literal(), this->type());
 }
 
 
@@ -224,11 +185,6 @@ Op_CreateLocalStruct::clone(LOCATION, Builder *b, OperationCloner *cloner) const
     return new (mem) Op_CreateLocalStruct(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->result(), cloneType->refine<StructType>());
 }
 
-void
-Op_CreateLocalStruct::jbgen(JB1MethodBuilder *j1mb) const {
-    j1mb->CreateLocalStruct(location(), this->parent(), this->result(), this->type());
-}
-
 
 //
 // IndexAt
@@ -247,11 +203,6 @@ Operation *
 Op_IndexAt::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
     Allocator *mem = b->comp()->mem();
     return new (mem) Op_IndexAt(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->result(), cloner->operand(0), cloner->operand(1));
-}
-
-void
-Op_IndexAt::jbgen(JB1MethodBuilder *j1mb) const {
-    j1mb->IndexAt(location(), this->parent(), this->_result, this->_left, this->_right);
 }
 
 

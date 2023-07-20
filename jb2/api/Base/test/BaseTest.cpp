@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,6 +25,7 @@
 #include "gtest/gtest.h"
 #include "JBCore.hpp"
 #include "Base/Base.hpp"
+#include "jb/JB.hpp"
 
 using namespace OMR::JitBuilder;
 
@@ -52,9 +53,7 @@ TEST(BaseExtension, loadExtension) {
 }
 
 TEST(BaseExtension, cannotLoadUnknownExtension) {
-    TextLogger logger(std::cout, String("    "));
-    Config cfg;
-    Compiler c("testNotBase", &cfg);
+    Compiler c("testNotBase");
     Base::BaseExtension *ext = c.loadExtension<Base::BaseExtension>(LOC, NULL, "unknown");
     EXPECT_EQ(ext, nullptr) << "notbase extension correctly could not be loaded";
 }
@@ -68,76 +67,111 @@ TEST(BaseExtension, checkVersionPass) {
 
 TEST(BaseExtension, checkVersionFail) {
     Compiler c("testBase");
-    SemanticVersion v((MajorID)1,0,0);
+    SemanticVersion v((MajorID)1,0,0); // random version number that doesn't exist yet
     Base::BaseExtension *ext = c.loadExtension<Base::BaseExtension>(LOC, &v, "jb2base");
     EXPECT_EQ(ext, nullptr) << "Base extension with v(1,0,0) correctly could not be loaded";
 }
 
-#define BASE_FUNC(name,line,file,fields,bx,fx,entry,xtor_code,init_code,il_code) \
-    class name : public Func::Function { \
+// Base should really not be dependent on the Func extension, but currently there's no way
+// to generate code without Func, so all these tests are written to depend on Func
+
+// BaseFunc is an abstract class used by subclasses to create test functions for Base
+class BaseFunc : public Func::Function {
+public:
+    BaseFunc(LOCATION, Compiler *c, String name, String line, String file)
+        : Func::Function(PASSLOC, c)
+        , _cx(c->lookupExtension<CoreExtension>())
+        , _bx(c->lookupExtension<Base::BaseExtension>())
+        , _fx(c->lookupExtension<Func::FunctionExtension>()) {
+        DefineName(name);
+        DefineLine(line);
+        DefineFile(file);
+    }
+
+protected:
+    virtual ~BaseFunc() { }
+
+    // implement in subclasses
+    virtual bool buildContext(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) = 0;
+    virtual bool buildIL(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) = 0;
+
+    CoreExtension *_cx;
+    Base::BaseExtension *_bx;
+    Func::FunctionExtension *_fx;
+    std::map<String, Func::ParameterSymbol *> _parmSymbols;
+};
+
+#define BASE_FUNC(name,line,file,fields,entry,xtor_code,init_code,il_code) \
+    class name : public BaseFunc { \
     public: \
-        name(LOCATION, Compiler *c) : Func::Function(PASSLOC, c), bx(c->lookupExtension<Base::BaseExtension>()), fx(c->lookupExtension<Func::FunctionExtension>()) { \
-            DefineName(#name); \
-            DefineLine(line); \
-            DefineFile(file); \
+        name(LOCATION, Compiler *c) : BaseFunc(PASSLOC, c, #name, line, file) { \
             xtor_code; \
         } \
-        Base::BaseExtension *bx; \
-        Func::FunctionExtension *fx; \
-        fields; \
     protected: \
-        virtual bool initContext(LOCATION, Func::FunctionCompilation *theComp, Func::FunctionContext *fc) { \
-            Base::BaseCompilation *comp = static_cast<Base::BaseCompilation *>(theComp); \
+        virtual bool buildContext(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) { \
+            Base::BaseCompilationAddon *bao = comp->addon<Base::BaseCompilationAddon>(); \
             init_code \
             return true; \
 	    } \
-        virtual bool buildIL(LOCATION, Func::FunctionCompilation *theComp, Func::FunctionContext *fc) { \
-            Base::BaseCompilation *comp = static_cast<Base::BaseCompilation *>(theComp); \
-            Builder *entry = fc->builderEntryPoint(); \
+        virtual bool buildIL(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) { \
+            Base::BaseCompilationAddon *bao = comp->addon<Base::BaseCompilationAddon>(); \
+            Builder *entry = scope->entryPoint<BuilderEntry>(0)->builder(); \
             il_code \
             return true; \
         } \
+        fields; \
     };
 
-#define COMPILE_FUNC(FuncClass, FuncProto, f, DO_LOGGING) \
-    TextLogger logger(std::cout, String("    ")); \
+#define COMPILER(c,cfg,cx,fx,bx) \
     Config cfg; \
     Compiler c("testBase", &cfg); \
-    Func::FunctionExtension *fx = c.loadExtension<Func::FunctionExtension>(LOC, NULL, "jb2func"); \
-    Base::BaseExtension *bx = c.loadExtension<Base::BaseExtension>(LOC, NULL, "jb2base"); \
-    FuncClass func(LOC, &c); \
-    TextWriter *writer = c.textWriter(logger); \
-    TextWriter *wrt = (DO_LOGGING) ? writer : NULL; \
-    StrategyID sID = c.jb1cgStrategyID; \
-    CompilerReturnCode result = bx->compile(LOC, &func, sID, wrt); \
-    EXPECT_EQ((int)result, (int)c.CompileSuccessful) << "Compiled function ok"; \
-    CompiledBody *body = func.compiledBody(sID); \
-    EXPECT_NE(body, nullptr) << "Compiled function ok"; \
-    FuncProto *f = body->nativeEntryPoint<FuncProto>(); \
-    EXPECT_NE(f, nullptr)
+    CoreExtension *cx = c.lookupExtension<CoreExtension>(); \
+    Func::FunctionExtension *fx = c.loadExtension<Func::FunctionExtension>(LOC); \
+    Base::BaseExtension *bx = c.loadExtension<Base::BaseExtension>(LOC); \
+    c.loadExtension<JB::JBExtension>(LOC);
+
+#define LOGGING(c,cfg,wrt,DO_LOGGING) \
+    TextLogger logger(std::cout, String("    ")); \
+    TextLogger *wrt = (DO_LOGGING) ? &logger : NULL;
+    
+
+//    TextWriter *writer = c.textWriter(logger); \
 
 //    cfg.setTraceCompilerAllocations() \
 //       ->setLogger(&logger); \
 
-#define COMPILE_FUNC_TO_FAIL(FuncClass, expectedFailureCode, DO_LOGGING) \
-    TextLogger logger(std::cout, String("    ")); \
-    Config cfg; \
-    Compiler c("testBase", &cfg); \
-    Func::FunctionExtension *fx = c.loadExtension<Func::FunctionExtension>(LOC, NULL, "jb2func"); \
-    Base::BaseExtension *bx = c.loadExtension<Base::BaseExtension>(LOC, NULL, "jb2base"); \
+
+#define COMPILE_TO_SUCCEED(c,FuncClass,cx,fx,wrt,body,FuncProto,f) \
     FuncClass func(LOC, &c); \
-    TextWriter *writer = c.textWriter(logger); \
-    TextWriter *wrt = (DO_LOGGING) ? writer : NULL; \
-    StrategyID sID = c.jb1cgStrategyID; \
-    CompilerReturnCode result = bx->compile(LOC, &func, sID, wrt); \
+    const StrategyID codegenStrategy = cx->strategyCodegen; \
+    CompilerReturnCode result = fx->compile(LOC, &func, codegenStrategy, wrt); \
+    EXPECT_EQ((int)result, (int)c.CompileSuccessful) << "Compiled function ok"; \
+    CompiledBody *body = func.compiledBody(codegenStrategy); \
+    EXPECT_NE(body, nullptr) << "Compiled function ok"; \
+    FuncProto *f = body->nativeEntryPoint<FuncProto>(); \
+    EXPECT_NE(f, nullptr)
+
+#define COMPILE_TO_FAIL(c,FuncClass,cx,fx,wrt,expectedFailureCode) \
+    FuncClass func(LOC, &c); \
+    CompilerReturnCode result = fx->compile(LOC, &func, cx->strategyCodegen, wrt); \
     EXPECT_EQ((int)result, (int)expectedFailureCode) << "Function compilation expected to fail";
+
+#define COMPILE_FUNC(FuncClass, FuncProto, f, DO_LOGGING) \
+    COMPILER(c,cfg,cx,fx,bx) \
+    LOGGING(c,cfg,wrt,DO_LOGGING) \
+    COMPILE_TO_SUCCEED(c,FuncClass,cx,fx,wrt,body,FuncProto,f)
+
+#define COMPILE_FUNC_TO_FAIL(FuncClass, expectedFailureCode, DO_LOGGING) \
+    COMPILER(c,cfg,cx,fx,bx) \
+    LOGGING(c,cfg,wrt,DO_LOGGING) \
+    COMPILE_TO_FAIL(c,FuncClass,cx,fx,wrt,expectedFailureCode)
+
 
 // Test function that returns a constant value
 #define CONSTFUNC(type,seq,v) \
-    BASE_FUNC(Const ## type ## Function ## seq, "0", #type ".cpp", , \
-        _bx, _fx, b, \
+    BASE_FUNC(Const ## type ## Function ## seq, "0", #type ".cpp", , b, \
         { }, \
-        { fc->DefineReturnType(_bx->type); }, \
+        { ctx->DefineReturnType(_bx->type); }, \
         { _fx->Return(LOC, b, _bx->Const ## type(LOC, b, v)); })
 
 #define TESTONECONSTFUNC(type,ctype,seq,v) \
@@ -163,11 +197,10 @@ TESTCONSTFUNC(Float64, double, 3.0, 0.0)
 
 // Test function that returns the value of its single parameter
 #define TYPEFUNC(type) \
-    BASE_FUNC(type ## Function, "0", #type ".cpp", , \
-        _bx, _fx, b, \
+    BASE_FUNC(type ## Function, "0", #type ".cpp", , b, \
         { }, \
-        { fc->DefineReturnType(_bx->type); fc->DefineParameter("val", _bx->type); }, \
-        { auto parmSym=fc->LookupLocal("val"); _fx->Return(LOC, b, _fx->Load(LOC, b, parmSym)); })
+        { ctx->DefineReturnType(_bx->type); ctx->DefineParameter("val", _bx->type); }, \
+        { auto parmSym=ctx->LookupLocal("val"); _fx->Return(LOC, b, _fx->Load(LOC, b, parmSym)); })
 
 #define TESTTYPEFUNC(type,ctype,a,b) \
     TYPEFUNC(type) \
@@ -202,11 +235,10 @@ TEST(BaseExtension, createAddressFunction) {
 // Test function that loads parm, stores it into a local variable, then loads and returns the local
 #define STORETYPEFUNC(type) \
     BASE_FUNC(Store ## type ## Function, "0", "Store" #type ".cpp", \
-        Func::LocalSymbol * _val, \
-        _bx, _fx, b, \
+        Func::LocalSymbol * _val, b, \
         { }, \
-        { fc->DefineReturnType(_bx->type); fc->DefineParameter("parm", _bx->type); _val = fc->DefineLocal("val", _bx->type); }, \
-        { auto parm=fc->LookupLocal("parm"); _fx->Store(LOC, b, _val, _fx->Load(LOC, b, parm)); _fx->Return(LOC, b, _fx->Load(LOC, b, _val)); })
+        { ctx->DefineReturnType(_bx->type); ctx->DefineParameter("parm", _bx->type); _val = ctx->DefineLocal("val", _bx->type); }, \
+        { auto parm=ctx->LookupLocal("parm"); _fx->Store(LOC, b, _val, _fx->Load(LOC, b, parm)); _fx->Return(LOC, b, _fx->Load(LOC, b, _val)); })
 
 #define TESTSTORETYPEFUNC(type,ctype,a,b) \
     STORETYPEFUNC(type) \
@@ -240,11 +272,10 @@ TEST(BaseExtension, createStoreAddressFunction) {
 
 // Test function that returns the value pointed to by its single parameter
 #define POINTERTOTYPEFUNC(type) \
-    BASE_FUNC(PointerTo ## type ## Function, "0", "PointerTo" #type ".cpp", , \
-        _bx, _fx, b, \
+    BASE_FUNC(PointerTo ## type ## Function, "0", "PointerTo" #type ".cpp", , b, \
         { }, \
-        { fc->DefineReturnType(_bx->type); fc->DefineParameter("ptr", _bx->PointerTo(LOC, comp, _bx->type)); }, \
-        { auto parmSym = fc->LookupLocal("ptr"); _fx->Return(LOC, b, _bx->LoadAt(LOC, b, _fx->Load(LOC, b, parmSym))); })
+        { ctx->DefineReturnType(_bx->type); ctx->DefineParameter("ptr", _bx->PointerTo(LOC, comp, _bx->type)); }, \
+        { auto parmSym = ctx->LookupLocal("ptr"); _fx->Return(LOC, b, _bx->LoadAt(LOC, b, _fx->Load(LOC, b, parmSym))); })
 
 #define TESTPOINTERTOTYPEFUNC(type,ctype,a,b) \
     POINTERTOTYPEFUNC(type) \
@@ -277,14 +308,13 @@ TEST(BaseExtension, createPointerAddressFunction) {
 
 // Test function that stores a parameter value through a second pointer parameter
 #define STOREPOINTERTOTYPEFUNC(type) \
-    BASE_FUNC(StorePointerTo ## type ## Function, "0", "StorePointerTo" #type ".cpp", , \
-        _bx, _fx, b, \
+    BASE_FUNC(StorePointerTo ## type ## Function, "0", "StorePointerTo" #type ".cpp", , b, \
         { }, \
-        { fc->DefineReturnType(_compiler->lookupExtension<Extension>()->NoType); \
-          fc->DefineParameter("ptr", _bx->PointerTo(LOC, comp, _bx->type)); \
-          fc->DefineParameter("val", _bx->type); }, \
-        { auto ptrParm = fc->LookupLocal("ptr"); \
-          auto valParm = fc->LookupLocal("val"); \
+        { ctx->DefineReturnType(_cx->NoType); \
+          ctx->DefineParameter("ptr", _bx->PointerTo(LOC, comp, _bx->type)); \
+          ctx->DefineParameter("val", _bx->type); }, \
+        { auto ptrParm = ctx->LookupLocal("ptr"); \
+          auto valParm = ctx->LookupLocal("val"); \
           _bx->StoreAt(LOC, b, _fx->Load(LOC, b, ptrParm), _fx->Load(LOC, b, valParm)); \
           _fx->Return(LOC, b); })
 
@@ -321,16 +351,15 @@ TEST(BaseExtension, createStorePointerAddressFunction) {
 // Test function that loads and returns a field's value from a struct pointer passed as parameter
 #define ONEFIELDSTRUCTTYPEFUNC(type) \
     BASE_FUNC(OneFieldStruct ## type ## Function, "0", "OneFieldStruct_" #type ".cpp", \
-        Func::ParameterSymbol *_parm; const Base::StructType *_structType; const Base::PointerType *_pStructType;, \
-        _bx, _fx, b, \
+        Func::ParameterSymbol *_parm; const Base::StructType *_structType; const Base::PointerType *_pStructType;, b, \
         { }, \
         { Base::StructTypeBuilder stb(_bx, comp); \
-          stb.setName("Struct") \
+          stb.setName(",Struct") \
              ->addField("field", _bx->type, 0); \
           _structType = stb.create(LOC); \
           _pStructType = _bx->PointerTo(LOC, comp, _structType); \
-          _parm = fc->DefineParameter("parm", _pStructType); \
-          fc->DefineReturnType(_bx->type); }, \
+          _parm = ctx->DefineParameter("parm", _pStructType); \
+          ctx->DefineReturnType(_bx->type); }, \
         { Value *base = _fx->Load(LOC, b, _parm); \
           const Base::FieldType *field = _structType->LookupField("field"); \
           Value *fieldVal = _bx->LoadFieldAt(LOC, b, field, base); \
@@ -372,8 +401,7 @@ TEST(BaseExtension, createOneFieldStructAddress) {
 // Test function that loads and returns the fifth field's value from a struct pointer passed as parameter
 #define FIVEFIELDSTRUCTTYPEFUNC(type,ctype) \
     BASE_FUNC(FiveFieldStruct ## type ## Function, "0", "FiveFieldStruct_" #type ".cpp", \
-        Func::ParameterSymbol *_parm; const Base::StructType *_structType; const Base::PointerType *_pStructType;, \
-        _bx, _fx, b, \
+        Func::ParameterSymbol *_parm; const Base::StructType *_structType; const Base::PointerType *_pStructType;, b, \
         { }, \
         { Base::StructTypeBuilder stb(_bx, comp); \
           typedef struct { ctype f1; ctype f2; ctype f3; ctype f4; ctype f5; } TheStructType; \
@@ -385,8 +413,8 @@ TEST(BaseExtension, createOneFieldStructAddress) {
              ->addField("f5", _bx->type, 8*offsetof(TheStructType,f5)); \
           _structType = stb.create(LOC); \
           _pStructType = _bx->PointerTo(LOC, comp, _structType); \
-          _parm = fc->DefineParameter("parm", _pStructType); \
-          fc->DefineReturnType(_bx->type); }, \
+          _parm = ctx->DefineParameter("parm", _pStructType); \
+          ctx->DefineReturnType(_bx->type); }, \
         { Value *base = _fx->Load(LOC, b, _parm); \
           const Base::FieldType *field = _structType->LookupField("f5"); \
           Value *fieldVal = _bx->LoadFieldAt(LOC, b, field, base); \
@@ -428,8 +456,7 @@ TEST(BaseExtension, createFiveFieldStructAddress) {
 // Test function that stores a parameter to the fifth field's value in a struct pointer also passed as parameter
 #define STOREFIVEFIELDSTRUCTTYPEFUNC(type,ctype) \
     BASE_FUNC(StoreFiveFieldStruct ## type ## Function, "0", "StoreFiveFieldStruct_" #type ".cpp", \
-        Func::ParameterSymbol *_valParm; Func::ParameterSymbol *_baseParm; const Base::StructType *_structType; const Base::PointerType *_pStructType;, \
-        _bx, _fx, b, \
+        Func::ParameterSymbol *_valParm; Func::ParameterSymbol *_baseParm; const Base::StructType *_structType; const Base::PointerType *_pStructType;, b, \
         { }, \
         { Base::StructTypeBuilder stb(_bx, comp); \
           typedef struct { ctype f1; ctype f2; ctype f3; ctype f4; ctype f5; } TheStructType; \
@@ -441,9 +468,9 @@ TEST(BaseExtension, createFiveFieldStructAddress) {
              ->addField("f5", _bx->type, 8*offsetof(TheStructType,f5)); \
           _structType = stb.create(LOC); \
           _pStructType = _bx->PointerTo(LOC, comp, _structType); \
-          _valParm = fc->DefineParameter("val", _bx->type); \
-          _baseParm = fc->DefineParameter("pStruct", _pStructType); \
-          fc->DefineReturnType(_compiler->lookupExtension<Extension>()->NoType); }, \
+          _valParm = ctx->DefineParameter("val", _bx->type); \
+          _baseParm = ctx->DefineParameter("pStruct", _pStructType); \
+          ctx->DefineReturnType(_cx->NoType); }, \
         { Value *base = _fx->Load(LOC, b, _baseParm); \
           const Base::FieldType *field = _structType->LookupField("f5"); \
           Value *val = _fx->Load(LOC, b, _valParm); \
@@ -486,8 +513,7 @@ TEST(BaseExtension, createStoreFiveFieldStructAddress) {
 // Test function that loads f2 from a parameter struct, stores it to f2 of a locally allocated struct, then loads f2 again and returns it
 #define CREATESTRUCTFUNC(type1,type2,type3,ctype1,ctype2,ctype3) \
     BASE_FUNC(CreateStruct_ ## type1 ## _ ## type2 ## _ ## type3 ## _Function, "0", "CreateStruct_" #type1 "_" #type2 "_" #type3 ".cpp", \
-        Func::ParameterSymbol *_parm; const Base::StructType *_structType; const Base::FieldType *_f2Type; const Base::PointerType *_pStructType;, \
-        _bx, _fx, b, \
+        Func::ParameterSymbol *_parm; const Base::StructType *_structType; const Base::FieldType *_f2Type; const Base::PointerType *_pStructType;, b, \
         { }, \
         { Base::StructTypeBuilder stb(_bx, comp); \
           typedef struct { ctype1 f1; ctype2 f2; ctype3 f3; } cStruct; \
@@ -498,8 +524,8 @@ TEST(BaseExtension, createStoreFiveFieldStructAddress) {
           _structType = stb.create(LOC); \
           _pStructType = _bx->PointerTo(LOC, comp, _structType); \
           _f2Type = _structType->LookupField("f2"); \
-          _parm = fc->DefineParameter("parm", _pStructType); \
-          fc->DefineReturnType(_bx->type2); }, \
+          _parm = ctx->DefineParameter("parm", _pStructType); \
+          ctx->DefineReturnType(_bx->type2); }, \
         { Value *base = _fx->Load(LOC, b, _parm); \
           Value *f2val_parm = _bx->LoadFieldAt(LOC, b, _f2Type, base); \
           Value *pLocalStruct = _bx->CreateLocalStruct(LOC, b, _pStructType); \
@@ -577,18 +603,17 @@ BASE_FUNC(CreateRecursiveStructFunction, "0", "CreateRecursiveStruct.cpp", \
     const Base::FieldType *_xType; \
     const Base::FieldType *_nextType; \
     const Base::PointerType *_pStructType; \
-    , \
-    _bx, _fx, b, \
+    , b, \
     { }, \
     { Base::StructTypeBuilder stb(_bx, comp); \
       stb.setName("MyRecursiveStruct") \
          ->setHelper(&MyRecursiveStructHelper); \
       _structType = stb.create(LOC); \
       _pStructType = _bx->PointerTo(LOC, comp, _structType); \
-      _parm = fc->DefineParameter("parm", _pStructType); \
+      _parm = ctx->DefineParameter("parm", _pStructType); \
       _nextType = _structType->LookupField("next"); \
       _xType = _structType->LookupField("x"); \
-      fc->DefineReturnType(_bx->Int32); }, \
+      ctx->DefineReturnType(_bx->Int32); }, \
     { Value *base = _fx->Load(LOC, b, _parm); \
       Value *nextval = _bx->LoadFieldAt(LOC, b, _nextType, base); \
       Value *nextnextval = _bx->LoadFieldAt(LOC, b, _nextType, nextval); \
@@ -607,15 +632,14 @@ TEST(BaseExtension, createRecursiveStructFunction) {
 
 // Test function that returns an indexed value from an array parameter
 #define ARRAYTYPEFUNC(type) \
-    BASE_FUNC(type ## ArrayFunction, "0", #type ".cpp", , \
-        _bx, _fx, b, \
+    BASE_FUNC(type ## ArrayFunction, "0", #type ".cpp", , b, \
         { }, \
-        { fc->DefineReturnType(_bx->type); \
-          fc->DefineParameter("array", _bx->PointerTo(LOC, comp, _bx->type)); \
-          fc->DefineParameter("index", _bx->Int32); }, \
-        { auto arraySym=fc->LookupLocal("array"); \
+        { ctx->DefineReturnType(_bx->type); \
+          ctx->DefineParameter("array", _bx->PointerTo(LOC, comp, _bx->type)); \
+          ctx->DefineParameter("index", _bx->Int32); }, \
+        { auto arraySym=ctx->LookupLocal("array"); \
           Value * array = _fx->Load(LOC, b, arraySym); \
-          auto indexSym=fc->LookupLocal("index"); \
+          auto indexSym=ctx->LookupLocal("index"); \
           Value * index = _fx->Load(LOC, b, indexSym); \
           Value * pElement = _bx->IndexAt(LOC, b, array, index); \
           Value * element = _bx->LoadAt(LOC, b, pElement); \
@@ -660,15 +684,14 @@ TEST(BaseExtension, createAddressArrayFunction) {
 
 // Test function that returns the sum of two values of a type
 #define ADDTWOTYPEFUNC(leftType,rightType,suffix) \
-    BASE_FUNC(leftType ## _ ## rightType ## _AddFunction ## suffix, "0", #leftType "_" #rightType ".cpp", , \
-        _bx, _fx, b, \
+    BASE_FUNC(leftType ## _ ## rightType ## _AddFunction ## suffix, "0", #leftType "_" #rightType ".cpp", , b, \
         { }, \
-        { fc->DefineReturnType(_bx->leftType); \
-          fc->DefineParameter("left", _bx->leftType); \
-          fc->DefineParameter("right", _bx->rightType); }, \
-        { auto leftSym=fc->LookupLocal("left"); \
+        { ctx->DefineReturnType(_bx->leftType); \
+          ctx->DefineParameter("left", _bx->leftType); \
+          ctx->DefineParameter("right", _bx->rightType); }, \
+        { auto leftSym=ctx->LookupLocal("left"); \
           Value * left = _fx->Load(LOC, b, leftSym); \
-          auto rightSym=fc->LookupLocal("right"); \
+          auto rightSym=ctx->LookupLocal("right"); \
           Value * right = _fx->Load(LOC, b, rightSym); \
           Value * sum = _bx->Add(LOC, b, left, right); \
           _fx->Return(LOC, b, sum); })
@@ -716,7 +739,7 @@ TEST(BaseExtension, createAddressAddFunction) {
 #define TESTADDTYPESINVALID(leftType,rightType) \
     ADDTWOTYPEFUNC(leftType,rightType,Validity) \
     TEST(BaseExtension, testAddTypesInvalid_ ## leftType ## rightType ) { \
-        COMPILE_FUNC_TO_FAIL(leftType ## _ ## rightType ## _AddFunctionValidity , func._bx->CompileFail_BadInputTypes_Add, false); \
+        COMPILE_FUNC_TO_FAIL(leftType ## _ ## rightType ## _AddFunctionValidity , c.lookupExtension<Base::BaseExtension>()->CompileFail_BadInputTypes_Add, false); \
     }
 
 #define TESTBADADDTYPES(leftType,bad1,bad2,bad3,bad4,bad5) \
@@ -750,15 +773,14 @@ TESTBADADDTYPES(Float64,Int8,Int16,Int32,Int64,Float32)
 
 // Test function that returns the product of two values of a type
 #define MULTWOTYPEFUNC(leftType,rightType,suffix) \
-    BASE_FUNC(leftType ## _ ## rightType ## _MulFunction ## suffix, "0", #leftType "_" #rightType ".cpp", , \
-        _bx, _fx, b, \
+    BASE_FUNC(leftType ## _ ## rightType ## _MulFunction ## suffix, "0", #leftType "_" #rightType ".cpp", , b, \
         { }, \
-        { fc->DefineReturnType(_bx->leftType); \
-          fc->DefineParameter("left", _bx->leftType); \
-          fc->DefineParameter("right", _bx->rightType); }, \
-        { auto leftSym=fc->LookupLocal("left"); \
+        { ctx->DefineReturnType(_bx->leftType); \
+          ctx->DefineParameter("left", _bx->leftType); \
+          ctx->DefineParameter("right", _bx->rightType); }, \
+        { auto leftSym=ctx->LookupLocal("left"); \
           Value * left = _fx->Load(LOC, b, leftSym); \
-          auto rightSym=fc->LookupLocal("right"); \
+          auto rightSym=ctx->LookupLocal("right"); \
           Value * right = _fx->Load(LOC, b, rightSym); \
           Value * prod = _bx->Mul(LOC, b, left, right); \
           _fx->Return(LOC, b, prod); })
@@ -795,7 +817,7 @@ TESTMULTYPEFUNC(Float64, double, 0.0, 2.0, 1.0, -1.0)
 #define TESTMULTYPESINVALID(leftType,rightType) \
     MULTWOTYPEFUNC(leftType,rightType,Validity) \
     TEST(BaseExtension, testMulTypesInvalid_ ## leftType ## rightType ) { \
-        COMPILE_FUNC_TO_FAIL(leftType ## _ ## rightType ## _MulFunctionValidity , func._bx->CompileFail_BadInputTypes_Mul, false); \
+        COMPILE_FUNC_TO_FAIL(leftType ## _ ## rightType ## _MulFunctionValidity , c.lookupExtension<Base::BaseExtension>()->CompileFail_BadInputTypes_Mul, false); \
     }
 
 #define TESTBADMULTYPES(leftType,bad1,bad2,bad3,bad4,bad5,bad6) \
@@ -817,15 +839,14 @@ TESTMULTYPESINVALID(Address,Address);
 
 // Test function that returns the difference of two values of a type
 #define SUBTYPEFUNC(returnType,leftType,rightType,suffix) \
-    BASE_FUNC(returnType ## _ ## leftType ## _ ## rightType ## _SubFunction ## suffix, "0", #returnType "_" #leftType "_" #rightType ".cpp", , \
-        _bx, _fx, b, \
+    BASE_FUNC(returnType ## _ ## leftType ## _ ## rightType ## _SubFunction ## suffix, "0", #returnType "_" #leftType "_" #rightType ".cpp", , b, \
         { }, \
-        { fc->DefineReturnType(_bx->returnType); \
-          fc->DefineParameter("left", _bx->leftType); \
-          fc->DefineParameter("right", _bx->rightType); }, \
-        { auto leftSym=fc->LookupLocal("left"); \
+        { ctx->DefineReturnType(_bx->returnType); \
+          ctx->DefineParameter("left", _bx->leftType); \
+          ctx->DefineParameter("right", _bx->rightType); }, \
+        { auto leftSym=ctx->LookupLocal("left"); \
           Value * left = _fx->Load(LOC, b, leftSym); \
-          auto rightSym=fc->LookupLocal("right"); \
+          auto rightSym=ctx->LookupLocal("right"); \
           Value * right = _fx->Load(LOC, b, rightSym); \
           Value * sum = _bx->Sub(LOC, b, left, right); \
           _fx->Return(LOC, b, sum); })
@@ -882,7 +903,7 @@ TEST(BaseExtension, createWordAddressSubFunction) {
 #define TESTSUBTYPESINVALID(returnType,leftType,rightType) \
     SUBTYPEFUNC(returnType,leftType,rightType,Validity) \
     TEST(BaseExtension, testSubTypesInvalid_ ## leftType ## rightType ) { \
-        COMPILE_FUNC_TO_FAIL(returnType ## _ ## leftType ## _ ## rightType ## _SubFunctionValidity , func._bx->CompileFail_BadInputTypes_Sub, false); \
+        COMPILE_FUNC_TO_FAIL(returnType ## _ ## leftType ## _ ## rightType ## _SubFunctionValidity , c.lookupExtension<Base::BaseExtension>()->CompileFail_BadInputTypes_Sub, false); \
     }
 
 #define TESTBADSUBTYPES(returnType,leftType,bad1,bad2,bad3,bad4,bad5) \
@@ -918,27 +939,26 @@ TESTBADSUBTYPES(Float64,Float64,Int8,Int16,Int32,Int64,Float32)
 #define FORLOOPFUNCNAME(iterType,initialType,finalType,bumpType,suffix) iterType ## _ ## initialType ## _ ## finalType ## _ ## bumpType ## _ForLoopFunction ## suffix
 
 #define FORLOOPFUNC(iterType,initialType,finalType,bumpType,suffix) \
-    BASE_FUNC(FORLOOPFUNCNAME(iterType,initialType,finalType,bumpType,suffix), "0", "ForLoop.cpp", , \
-        _bx, _fx, b, \
+    BASE_FUNC(FORLOOPFUNCNAME(iterType,initialType,finalType,bumpType,suffix), "0", "ForLoop.cpp", , b, \
         { }, \
-        { fc->DefineReturnType(_bx->Word); \
-          fc->DefineParameter("initial", _bx->initialType); \
-          fc->DefineParameter("final", _bx->finalType); \
-          fc->DefineParameter("bump", _bx->bumpType); \
-          fc->DefineLocal("i", _bx->iterType); \
-          fc->DefineLocal("counter", _bx->Word); }, \
-        { auto counterSym=fc->LookupLocal("counter"); \
+        { ctx->DefineReturnType(_bx->Word); \
+          ctx->DefineParameter("initial", _bx->initialType); \
+          ctx->DefineParameter("final", _bx->finalType); \
+          ctx->DefineParameter("bump", _bx->bumpType); \
+          ctx->DefineLocal("i", _bx->iterType); \
+          ctx->DefineLocal("counter", _bx->Word); }, \
+        { auto counterSym=ctx->LookupLocal("counter"); \
           _fx->Store(LOC, b, counterSym, _bx->Zero(LOC, b, counterSym->type())); \
-          auto iterVarSym = fc->LookupLocal("i"); \
-          auto initialSym=fc->LookupLocal("initial"); \
+          auto iterVarSym = ctx->LookupLocal("i"); \
+          auto initialSym=ctx->LookupLocal("initial"); \
           Value * initial = _fx->Load(LOC, b, initialSym); \
-          auto finalSym=fc->LookupLocal("final"); \
+          auto finalSym=ctx->LookupLocal("final"); \
           Value * final = _fx->Load(LOC, b, finalSym); \
-          auto bumpSym=fc->LookupLocal("bump"); \
+          auto bumpSym=ctx->LookupLocal("bump"); \
           Value * bump = _fx->Load(LOC, b, bumpSym); \
           Base::ForLoopBuilder loop = _bx->ForLoopUp(LOC, b, iterVarSym, initial, final, bump); { \
               Builder *loopBody = loop.loopBody(); \
-              _bx->Increment(LOC, loopBody, counterSym); \
+              _fx->addon<Base::BaseFunctionExtensionAddon>()->Increment(LOC, loopBody, counterSym); \
           } \
           _fx->Return(LOC, b, _fx->Load(LOC, b, counterSym)); })
 
@@ -967,7 +987,7 @@ TESTFORLOOPTYPEFUNC(Int32,int32_t)
 #define TESTINVALIDFORLOOP(iterType,initialType,finalType,bumpType) \
     FORLOOPFUNC(iterType,initialType,finalType,bumpType,Validity) \
     TEST(BaseExtension, testForLoopUpTypesInvalid_ ## iterType ## _ ## initialType ## _ ## finalType ## _ ## bumpType ) { \
-        COMPILE_FUNC_TO_FAIL(FORLOOPFUNCNAME(iterType,initialType,finalType,bumpType,Validity), func._bx->CompileFail_BadInputTypes_ForLoopUp, false); \
+        COMPILE_FUNC_TO_FAIL(FORLOOPFUNCNAME(iterType,initialType,finalType,bumpType,Validity), c.lookupExtension<Base::BaseExtension>()->CompileFail_BadInputTypes_ForLoopUp, false); \
     }
 
 TESTINVALIDFORLOOP(Int8,Int32,Int32,Int32)

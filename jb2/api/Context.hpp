@@ -23,82 +23,132 @@
 #define CONTEXT_INCL
 
 #include "common.hpp"
+#include "KindService.hpp"
 #include "String.hpp"
+
+// Context is an extremely important concept. Every Builder B has a Context C though B
+// can (and frequently does) reuse B's parent's Context. A Builder B's Context C includes
+// any bound Builders referenced by B's Operations; Contexts nest via bound Builders. So,
+// for example, the Context for an outer loop includes an inner loop (though the inner
+// loop and the outer loop can have different Contexts, the inner loop's Context will have
+// the outer loop's Context as its parent). But an operation O that conditionally branches
+// to another Builder does not necessarily have (though it can have) the same Context as
+// O's parent. The CompileUnit has a single Context that covers all the Builders in the
+// CompileUnit. This special Context has designated exit Builders for each program point
+// that exits the CompileUnit. In the common case of a function, there would be one
+// designated exit Builder corresponding to each program point that returns from the
+// function. The return itself takes place from the exit Builder; the program point ends
+// with an unconditional Goto operation to the exit Builder. The exit Builder can contain
+// whatever Operations are needed to perform the exit.
+//
+// A Context can in general have multiple entry points (Builders) and transfer destinations
+// (Builders) but frequently has a single entry point and may also have a single transfer
+// destination. Transfer destinations are simply Builders that are not contained in the
+// Context to which an Operation in the Context can direct control flow. Every Context but
+// the CompileUnit's Context has a parent Context. In addition, each Context may optionally
+// contain a LiteralDictionary, a SymbolDictionary, and/or a TypeDictionary. If a Context is
+// not created with a specific *Dictionary of each kind, lookups for that kind (Literals,
+// Symbols, or Types) automatically delegate to the parent Context. Delegation can be
+// prevented, if desired, by providing specific *Dictionaries that do not have parent
+// Dictionary objects. Note that the various Dictionary objects will also delegate lookup to
+// their parent Dictionary if specified at creation.
+//
+// Contexts are the primary way that scoping is represented in the code (especially when the
+// initial IL is produced), but different subclasses of Contexts can facilitate closures, or
+// to represent different kinds of informaton propagating through a Builder's Operations
+// (Contexts play a central role with OperationRewriter, for example).
+//
+// Contexts can be windows to different kinds of state:
+//    - stack frame
+//    - thread local data
+//    - global memory
+//    - tenant context
+//    - debug stack frame or debug thread local data or debug memory
+//    - register state
+//    - some kinds of privatized variables?
+//    - mock state?
+//    - profiled state?
+// One accesses each of these windows through Symbols. Contexts can be built on other Contexts.
+// For example, a debug stack frame may be built on top of a stack frame context but provide
+// a mapping between the Symbols loaded through the debug Context to different Symbols loaded
+// through the underlying stack frame.
+//
+// Need an Executor to provide same mechanism for Builders and Operations?
+//    - Direct just runs it directly or transfers directly to the same Builder object
+//    - DebugExecutor runs through DebugContexts?
+//    - Folder runs with LiteralContexts and identies control flows as definite / definitely not / indeterminate and propagates Literals to results
+//    - Enclave manages transitions across Context boundaries
+//    - Profiler collects information about paths/symbols/values
+//
+// Maybe Context needs to be split into Context and Scope?
+//    - Context is a data context that changes over time
+//    - Scope is a code context with entry points and exits?
+//        - CompileUnit is particular kind of a Scope
+//    - Executor handles execution for a Scope given a particular Context
+//
+// Contexts are a therefore critical infrastructure for the Compiler to analyze, transform,
+// and manage the compilation process.
 
 namespace OMR {
 namespace JitBuilder {
 
 class Compilation;
+class Extension;
 class LiteralDictionary;
 class Symbol;
 class SymbolDictionary;
 class TypeDictionary;
 
+KINDSERVICE_CATEGORY(Context);
+
 class Context : public Allocatable {
     JBALLOC_(Context)
 
 public:
-    Context(LOCATION, Compilation *comp, LiteralDictionary *useLitDict=NULL, SymbolDictionary *useSymDict=NULL, TypeDictionary *useTypeDict=NULL, uint32_t numEntryPoints=1, uint32_t numExitPoints=1, String name="");
-    Context(LOCATION, Context *parent, LiteralDictionary *useLitDict=NULL, SymbolDictionary *useSymDict=NULL, TypeDictionary *useTypeDict=NULL, uint32_t numEntryPoints=1, uint32_t numExitPoints=1, String name="");
+    //Context(LOCATION, ContextKind kind, Compilation *comp, LiteralDictionary *useLitDict=NULL, SymbolDictionary *useSymDict=NULL, TypeDictionary *useTypeDict=NULL, uint32_t numEntryPoints=1, uint32_t numExitPoints=1, String name="");
+    //Context(LOCATION, ContextKind kind, Context *parent, LiteralDictionary *useLitDict=NULL, SymbolDictionary *useSymDict=NULL, TypeDictionary *useTypeDict=NULL, uint32_t numEntryPoints=1, uint32_t numExitPoints=1, String name="");
 
+    Context(LOCATION, ContextKind kind, Extension *ext, Compilation *comp, String name="");
+    Context(LOCATION, ContextKind kind, Extension *ext, Context *parent, String name="");
+
+    Extension *ext() const { return _ext; }
     ContextID id() const { return _id; }
     String name() const { return _name; }
 
-    LiteralDictionary *litDict() const { return _litDict; }
-    SymbolDictionary *symDict() const { return _symDict; }
-    TypeDictionary *typeDict() const { return _typeDict; }
-
-    uint32_t numEntryPoints() const { return _numEntryPoints; }
-    uint32_t numExitPoints() const { return _numExitPoints; }
-
-    void * nativeEntryPoint(unsigned e=0) const { assert(e < _numEntryPoints); return _nativeEntryPoints[e]; }
-    void setNativeEntryPoint(void *entry, unsigned e=0) {
-        assert(e < _numEntryPoints);
-        _nativeEntryPoints[e] = entry;
+    virtual Value *readValue(Builder *b, Value *readFrom) {
+        return readFrom; // by default, no mapping of Values
+    }
+    virtual Value *writeValue(Builder *b, Value *writeTo, Value *toWrite) {
+        return writeTo; // by default, no mapping of Values
     }
 
-    void * debugEntryPoint(unsigned e=0) const { assert(e < _numEntryPoints); return _debugEntryPoints[e]; }
-    void setDebugEntryPoint(void *entry, unsigned e=0) {
-        assert(e < _numEntryPoints);
-        _debugEntryPoints[e] = entry;
+    virtual Symbol *readSymbol(Builder *b, Symbol *readFrom) {
+        return readFrom; // by default, no mapping of Symbols
+    }
+    virtual Symbol *writeSymbol(Builder *b, Symbol *writeTo, Value *toWrite) {
+        return writeTo; // by default, no mapping of Symbols
     }
 
-    Builder *builderEntryPoint(unsigned e=0) const {
-        assert(e < _numEntryPoints);
-        return _builderEntryPoints[e];
-    }
-
-    Builder *builderExitPoint(unsigned x=0) const {
-        assert(x < _numExitPoints);
-        return _builderExitPoints[x];
-    }
-
-    Symbol *lookupSymbol(String name, bool includeParents=true);
+    virtual Symbol *lookupSymbol(String name);
 
 protected:
+    #if 0
     void initEntriesAndExits(LOCATION, Compilation *comp);
+    #endif
     void addSymbol(Symbol *sym);
     void addChild(Context *child) { _children.push_back(child); }
     Compilation *comp() const { return _comp; }
 
-    uint64_t _id;
+    ContextID _id;
+    Extension *_ext;
     Compilation *_comp;
     String _name;
 
     Context * _parent;
     List<Context *> _children;
+    List<Builder *> _builders;
 
-    LiteralDictionary *_litDict;
-    SymbolDictionary *_symDict;
-    TypeDictionary *_typeDict;
-
-    uint32_t _numEntryPoints;
-    void **_nativeEntryPoints;
-    void **_debugEntryPoints;
-    Builder **_builderEntryPoints;
-
-    uint32_t _numExitPoints;
-    Builder **_builderExitPoints;
+    BASECLASS_KINDSERVICE_DECL(Context);
 };
 
 } // namespace JitBuilder

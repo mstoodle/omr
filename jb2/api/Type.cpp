@@ -32,10 +32,7 @@ namespace OMR {
 namespace JitBuilder {
 
 INIT_JBALLOC_ON(Type, TypeDictionary)
-
-KindService Type::kindService;
-TypeKind Type::TYPEKIND=KindService::NoKind;
-bool Type::kindRegistered = false;
+BASECLASS_KINDSERVICE_IMPL(Type)
 
 Type::Type(MEM_LOCATION(a), TypeKind kind, Extension *ext, String name, size_t size, const Type *layout)
     : Allocatable(a)
@@ -43,10 +40,10 @@ Type::Type(MEM_LOCATION(a), TypeKind kind, Extension *ext, String name, size_t s
     , _createLoc(PASSLOC)
     , _dict(ext->compiler()->typeDict())
     , _id(_dict->getTypeID())
-    , _kind(kind)
     , _name(name)
     , _size(size)
-    , _layout(layout) {
+    , _layout(layout)
+    , BASECLASS_KINDINIT(kind) {
 
     _dict->registerType(this);
 }
@@ -57,10 +54,10 @@ Type::Type(MEM_LOCATION(a), TypeKind kind, Extension *ext, TypeDictionary *dict,
     , _createLoc(PASSLOC)
     , _dict(dict)
     , _id(dict->getTypeID())
-    , _kind(kind)
     , _name(name)
     , _size(size)
-    , _layout(layout) {
+    , _layout(layout)
+    , BASECLASS_KINDINIT(kind) {
 
     dict->registerType(this);
 }
@@ -79,9 +76,12 @@ Type::base_string(bool useHeader) const {
     String s;
     if (useHeader)
         s.append("type ");
-    s.append("t").append(String::to_string(this->id())).append(" ");
-    s.append(String::to_string(this->size())).append(" ");
-    s.append(this->name()).append(" ");
+    s.append(String("t")).append(String::to_string(this->id()));
+    s.append(String(" "));
+    s.append(String::to_string(this->size()));
+    s.append(String(" "));
+    s.append(this->name());
+    s.append(String(" "));
     return s;
 }
 
@@ -95,9 +95,10 @@ Type::logType(TextLogger &lgr, bool useHeader) const {
 String
 Type::to_string(bool useHeader) const {
     String s;
-    s.append(base_string()).append("primitiveType");
+    s.append(base_string(useHeader));
+    s.append("primitiveType");
     if (_layout)
-        s.append(" layout t").append(String::to_string(_layout->id())).append(" ").append(_layout->name());
+        s.append(" layout t").append(String::to_string(_layout->id())).append(String(" ")).append(_layout->name());
     return s;
 }
 
@@ -106,40 +107,20 @@ Type::transformTypeIfNeeded(TypeReplacer *repl, const Type *type) const {
     repl->transformTypeIfNeeded(type);
 }
 
-const TypeKind
-Type::getTypeClassKind() {
-    if (!kindRegistered) {
-        // not really needed for Type class itself, but eatablishes general model for subclasses to use
-        TYPEKIND = KindService::NoKind;
-        kindRegistered = true;
-    }
-    return TYPEKIND;
-}
-
 
 //
 // NoType
 //
 
-TypeKind NoTypeType::TYPEKIND = KindService::NoKind;
-bool NoTypeType::kindRegistered = false;
+SUBCLASS_KINDSERVICE_IMPL(NoTypeType, "NoType", Type, Type);
 
 NoTypeType::NoTypeType(MEM_LOCATION(a), Extension *ext)
-    : Type(MEM_PASSLOC(a), TYPEKIND, ext, "NoType", 0) {
+    : Type(MEM_PASSLOC(a), getTypeClassKind(), ext, "NoType", 0) {
 
 }
 
 NoTypeType::~NoTypeType() {
 
-}
-
-const TypeKind
-NoTypeType::getTypeClassKind() {
-    if (!kindRegistered) {
-        TYPEKIND = KindService::NoKind;
-        kindRegistered = true;
-    }
-    return TYPEKIND;
 }
 
 void
@@ -149,7 +130,7 @@ NoTypeType::logValue(TextLogger &lgr, const void *p) const {
 
 bool
 NoTypeType::registerJB1Type(JB1MethodBuilder *j1mb) const {
-    j1mb->registerNoType(this);
+    //j1mb->registerNoType(this);
     return true;
 }
 

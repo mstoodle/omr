@@ -37,7 +37,6 @@ class Op_Const : public OperationR1L1 {
     friend class BaseExtension;
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-    virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
     Op_Const(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aConst, Value *result, Literal *lv);

@@ -188,7 +188,7 @@ public:
         return _items[index];
     }
     T operator[](int index) {
-        assert(index >= 0);
+        assert(index >= 0 && index < _length);
         return _items[index];
     }
     void assign(int index, T v) {
@@ -271,7 +271,7 @@ protected:
         return newArray;
     }
     T *allocate(size_t arraySize) {
-        return reinterpret_cast<T *>(_arrayAllocator->allocate(arraySize, NoAllocationCategory));
+        return reinterpret_cast<T *>(_arrayAllocator->allocate<T>(arraySize * sizeof(T), NoAllocationCategory));
     }
     void deallocate(T *array) {
         _arrayAllocator->deallocate(array);

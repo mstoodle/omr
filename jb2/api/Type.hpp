@@ -42,7 +42,7 @@ class Type;
 class TypeDictionary;
 class TypeReplacer;
 
-typedef KindService::Kind TypeKind;
+KINDSERVICE_CATEGORY(Type);
 
 class Type : public Allocatable {
     JBALLOC_(Type)
@@ -52,10 +52,10 @@ class Type : public Allocatable {
     friend class TypeDictionary;
 
 public:
-    String name() const                      { return _name; }
     Extension *ext() const                   { return _ext; }
-    TypeDictionary *owningDictionary() const { return _dict; }
     TypeID id() const                        { return _id; }
+    String name() const                      { return _name; }
+    TypeDictionary *owningDictionary() const { return _dict; }
     virtual size_t size() const              { return _size; } // some Types cannot set size at construction
 
     bool operator!=(const Type & other) const {
@@ -63,18 +63,6 @@ public:
     }
     bool operator==(const Type & other) const {
         return _dict == other._dict && _id == other._id;
-    }
-
-    virtual TypeKind kind() const { return _kind; }
-    template<typename T> bool isExactKind() const {
-        return kindService.isExactMatch(_kind, T::getTypeClassKind());
-    }
-    template<typename T> bool isKind() const {
-        return kindService.isMatch(_kind, T::getTypeClassKind());
-    }
-    template<typename T> const T *refine() const {
-        assert(isKind<T>());
-        return static_cast<const T *>(this);
     }
 
     String base_string(bool useHeader=false) const;
@@ -119,8 +107,6 @@ public:
         assert(0); // default must be to assert TODO convert to CompilationException
     }
 
-    static const TypeKind getTypeClassKind();
-
 protected:
     DYNAMIC_ALLOC_ONLY(Type, LOCATION, TypeKind kind, Extension *ext, String name, size_t size, const Type *layout=NULL);
     DYNAMIC_ALLOC_ONLY(Type, LOCATION, TypeKind kind, Extension *ext, TypeDictionary *dict, String name, size_t size, const Type *layout=NULL);
@@ -131,33 +117,26 @@ protected:
     CreateLocation _createLoc;
     TypeDictionary * _dict;
     const TypeID _id;
-    const TypeKind _kind;
     const String _name;
     const size_t _size;
     const Type * _layout;
 
-    static KindService kindService;
-    static TypeKind TYPEKIND;
-    static bool kindRegistered;
+    BASECLASS_KINDSERVICE_DECL_CONST_ONLY(Type);
 };
 
 class NoTypeType : public Type {
     JBALLOC(NoTypeType, NoAllocationCategory);
 
-    friend class Extension;
+    friend class CoreExtension;
 
     public:
-    //static NoTypeType * create(MEM_LOCATION(a), Extension *ext) { return new (a) NoTypeType(MEM_PASSLOC(a), ext); }
     virtual void logValue(TextLogger &lgr, const void *p) const;
     virtual bool registerJB1Type(JB1MethodBuilder *j1mb) const;
-
-    static const TypeKind getTypeClassKind();
 
     protected:
     DYNAMIC_ALLOC_ONLY(NoTypeType, LOCATION, Extension *ext);
 
-    static TypeKind TYPEKIND;
-    static bool kindRegistered;
+    SUBCLASS_KINDSERVICE_DECL(Type, NoTypeType);
 };
 
 } // namespace JitBuilder
