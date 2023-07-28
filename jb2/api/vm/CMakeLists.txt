@@ -37,8 +37,6 @@ add_library(jb2vm SHARED
 	VMFunction.cpp
 )
 
-target_include_directories(jb2vm PRIVATE
-       ${JB2_CORE_DIR}
-)
+target_include_directories(jb2vm PRIVATE ${JB2_CORE_DIR})
 
 add_subdirectory(test)

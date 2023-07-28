@@ -32,13 +32,7 @@ add_library(jb2dbg SHARED
 	# add more source files here
 )
 
-target_include_directories(jb2dbg PRIVATE
-       ${JB2_JBCORE_DIR}
+target_include_directories(jb2dbg PRIVATE ${JB2_CORE_DIR})
 
-       # only needed if new extension depends on the Base extension
-       ${JB2_JBBASE_DIR}
-
-       # add any other extensions required here
-)
-
-add_subdirectory(test)
+# add when there are tests
+#add_subdirectory(test)
