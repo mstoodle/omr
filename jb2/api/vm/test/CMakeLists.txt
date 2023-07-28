@@ -44,7 +44,7 @@ set(GTEST_DIR $(omr_SOURCE_DIR)/third_party/gtest-1.8.0)
 	)
 	target_include_directories(testregister PRIVATE
 		${JB2_CORE_DIR}
-	    ${GTEST_DIR}/include
+		${GTEST_DIR}/include
 	)
 
 	#omr_add_test( NAME JitBuilderTest COMMAND $<TARGET_FILE:jitbuildertest> --gtest_output=xml:${CMAKE_CURRENT_BINARY_DIR}/jitbuildertest-results.xml)
@@ -71,7 +71,7 @@ set(GTEST_DIR $(omr_SOURCE_DIR)/third_party/gtest-1.8.0)
 	)
 	target_include_directories(testoperandstack PRIVATE
 		${JB2_CORE_DIR}
-	    ${GTEST_DIR}/include
+		${GTEST_DIR}/include
 	)
 
 	#omr_add_test( NAME JitBuilderTest COMMAND $<TARGET_FILE:jitbuildertest> --gtest_output=xml:${CMAKE_CURRENT_BINARY_DIR}/jitbuildertest-results.xml)

@@ -42,7 +42,7 @@ set(GTEST_DIR $(omr_SOURCE_DIR)/third_party/gtest-1.8.0)
 	)
 	target_include_directories(testsemver PRIVATE
 		${JB2_CORE_DIR}
-	    ${GTEST_DIR}/include
+		${GTEST_DIR}/include
 	)
 
 	add_test(
@@ -82,7 +82,7 @@ set(GTEST_DIR $(omr_SOURCE_DIR)/third_party/gtest-1.8.0)
 	)
 	target_include_directories(testlist PRIVATE
 		${JB2_CORE_DIR}
-	    ${GTEST_DIR}/include
+		${GTEST_DIR}/include
 	)
 
 	add_test(
@@ -102,7 +102,7 @@ set(GTEST_DIR $(omr_SOURCE_DIR)/third_party/gtest-1.8.0)
 	)
 	target_include_directories(testbv PRIVATE
 		${JB2_CORE_DIR}
-	    ${GTEST_DIR}/include
+		${GTEST_DIR}/include
 	)
 
 	add_test(

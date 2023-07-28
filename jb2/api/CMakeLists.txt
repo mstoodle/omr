@@ -27,14 +27,6 @@ omr_assert(
 	MESSAGE "OMR_JB2 must be set."
 )
 
-# Add interface path so that include paths propagate.
-# NOTE: `release` directory isn't being automatically setup, so this
-#       is adding the actual compiler dir, as opposed to the 'composed'
-#       install directory.
-#target_include_directories(jb2
-#	INTERFACE
-#                ${CMAKE_CURRENT_BINARY_DIR}/api/)
-
 #target_link_libraries(jb2
 #	PUBLIC
 #		${OMR_PORT_LIB}
@@ -100,7 +92,6 @@ add_library(jb2core SHARED
     Visitor.cpp
 )
 
-target_link_libraries(jb2core jb2)
 add_subdirectory(test)
 
 # Extensions
