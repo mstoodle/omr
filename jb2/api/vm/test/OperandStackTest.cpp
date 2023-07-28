@@ -63,9 +63,9 @@ public:
     virtual ~TestState() {
         Allocator *mem = allocator();
         if (_stackTop)
-            mem->deallocate(_stackTop);
+            delete _stackTop;
         if (_stack)
-            mem->deallocate(_stack);
+            delete _stack;
     }
 
     virtual void Commit(LOCATION, Builder *b) {
@@ -607,7 +607,7 @@ OperandStackTestFunction::buildIL(LOCATION, Func::FunctionCompilation *comp, Fun
     TestState *vmState = new (mem) TestState(MEM_LOC(mem), _vmx, stack, stackTop);
 
     VM::BytecodeBuilder *bb = _vmx->OrphanBytecodeBuilder(comp, 0, 1, NULL, String("entry"));
-    bb->setVMState(vmState);
+    bb->setVMState(vmState); // ownership passed to bb so we should never delete vmState ourselves
     _bx->Goto(LOC, entry, bb);
 
     testStack(bb, comp, true);
@@ -651,7 +651,7 @@ OperandStackTestUsingStructFunction::buildIL(LOCATION, Func::FunctionCompilation
 
     TestState *vmState = new (mem) TestState(MEM_LOC(mem), _vmx, stack, stackTop);
     VM::BytecodeBuilder *bb = _vmx->OrphanBytecodeBuilder(comp, 0, 1, NULL, String("entry"));
-    bb->setVMState(vmState);
+    bb->setVMState(vmState); // ownership transferred to bb so should never delete it ourselves
     _bx->Goto(LOC, entry, bb);
 
     testStack(bb, comp, false);

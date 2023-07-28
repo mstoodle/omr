@@ -239,8 +239,6 @@ public:
     CompilerReturnCode CompilerError_Extension_HasNoCreateFunction;
     CompilerReturnCode CompilerError_Extension_CouldNotCreate;
     CompilerReturnCode CompilerError_Extension_VersionMismatch;
-
-    StrategyID jb1cgStrategyID;
 };
 
 class CompilationException : public Allocatable, public std::exception {

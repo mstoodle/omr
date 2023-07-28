@@ -28,27 +28,20 @@
 namespace OMR {
 namespace JitBuilder {
 
-class Compilation;
-
-KINDSERVICE_CATEGORY(BuilderEntry);
+KINDSERVICE_CATEGORY(NativeEntry);
 
 class NativeEntry : public EntryPoint {
     JBALLOC_(NativeEntry)
 
 public:
-    DYNAMIC_ALLOC_ONLY(NativeEntry, Compilation *comp, EntryID id, void *entry, String name="");
-
-    EntryID id() const { return _id; }
-    bool isEntry(EntryID id) { return _id == id; }
-
-    String name() const { return _name; }
-
-    Compilation *comp() const { return _comp; }
+    DYNAMIC_ALLOC_ONLY(NativeEntry, EntryID id, void *entry, String name="");
 
     template<typename T>
     T *entry() { return reinterpret_cast<T *>(_entry); }
 
 protected:
+    DYNAMIC_ALLOC_ONLY(NativeEntry, EntryPointKind kind, EntryID id, void *entry, String name="");
+
     void *_entry;
 
     SUBCLASS_KINDSERVICE_DECL(EntryPoint,NativeEntry);

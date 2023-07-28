@@ -146,7 +146,7 @@ CompilerReturnCode
 VMExtension::compile(LOCATION, Func::Function *func, StrategyID strategy, TextLogger *lgr) {
 
     if (strategy == NoStrategy)
-        strategy = compiler()->jb1cgStrategyID;
+        strategy = compiler()->coreExt()->strategyCodegen;
 
     Allocator *mem = compiler()->mem();
     Func::FunctionCompilation *comp = new (mem) Func::FunctionCompilation(mem, this, func, strategy);

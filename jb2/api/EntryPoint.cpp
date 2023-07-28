@@ -28,10 +28,9 @@ namespace JitBuilder {
 INIT_JBALLOC(EntryPoint)
 BASECLASS_KINDSERVICE_IMPL(EntryPoint)
 
-EntryPoint::EntryPoint(Allocator *a, EntryPointKind kind, Compilation *comp, EntryID id, String name)
+EntryPoint::EntryPoint(Allocator *a, EntryPointKind kind, EntryID id, String name)
     : Allocatable(a)
     , _id(id)
-    , _comp(comp)
     , _name(name)
     , BASECLASS_KINDINIT(kind) {
 

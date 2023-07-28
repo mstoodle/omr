@@ -32,6 +32,7 @@ namespace OMR {
 namespace JitBuilder {
 namespace Base {
 
+class Case;
 class IntegerType;
 class Int8Type;
 class Int16Type;
@@ -44,10 +45,12 @@ class PointerType;
 class PointerTypeBuilder;
 class FieldType;
 class StructType;
+class SwitchBuilder;
 class UnionType;
 
 class BaseExtensionChecker;
 class ForLoopBuilder;
+class IfThenElseBuilder;
 
 class BaseExtension : public Extension {
     JBALLOC_(BaseExtension)
@@ -115,6 +118,8 @@ public:
     const ActionID aIfCmpUnsignedGreaterOrEqual;
     const ActionID aIfCmpUnsignedLessThan;
     const ActionID aIfCmpUnsignedLessOrEqual;
+    const ActionID aIfThenElse;
+    const ActionID aSwitch;
 
     // Memory actions
     const ActionID aLoadAt;
@@ -149,6 +154,8 @@ public:
     const CompilerReturnCode CompileFail_BadInputTypes_IfCmpUnsignedLessThan;
     const CompilerReturnCode CompileFail_BadInputTypes_IfCmpUnsignedLessOrEqual;
     const CompilerReturnCode CompileFail_BadInputTypes_ForLoopUp;
+    const CompilerReturnCode CompileFail_BadInputTypes_IfThenElse;
+    const CompilerReturnCode CompileFail_BadInputTypes_Switch;
     const CompilerReturnCode CompileFail_BadInputArray_OffsetAt;
     const CompilerReturnCode CompileFail_MismatchedArgumentTypes_Call;
 
@@ -181,6 +188,8 @@ public:
     void IfCmpUnsignedLessThan(LOCATION, Builder *b, Builder *target, Value *left, Value *right);
     void IfCmpUnsignedGreaterOrEqual(LOCATION, Builder *b, Builder *target, Value *left, Value *right);
     void IfCmpUnsignedGreaterThan(LOCATION, Builder *b, Builder *target, Value *left, Value *right);
+    IfThenElseBuilder IfThenElse(LOCATION, Builder *b, Value *selector);
+    void Switch(LOCATION, Builder *b, SwitchBuilder *builder);
 
     // Memory operations
     Value * LoadAt(LOCATION, Builder *b, Value *ptrValue);
@@ -299,6 +308,32 @@ private:
     Builder * _loopBody;
     Builder * _loopBreak;
     Builder * _loopContinue;
+};
+
+class IfThenElseBuilder {
+    friend class BaseExtension;
+    friend class Op_IfThenElse;
+
+public:
+    IfThenElseBuilder()
+        : _selector(NULL)
+        , _thenPath(NULL)
+        , _elsePath(NULL) {
+
+    }
+
+    Value *selector() const { return _selector; }
+    Builder *thenPath() const { return _thenPath; }
+    Builder *elsePath() const { return _elsePath; }
+
+private:
+    IfThenElseBuilder &setSelector(Value *v) { _selector = v; return *this; }
+    IfThenElseBuilder &setThenPath(Builder *b) { _thenPath = b; return *this; }
+    IfThenElseBuilder &setElsePath(Builder *b) { _elsePath = b; return *this; }
+
+    Value * _selector;
+    Builder * _thenPath;
+    Builder * _elsePath;
 };
 
 } // namespace Base

@@ -22,7 +22,6 @@
 #include "Compilation.hpp"
 #include "Compiler.hpp"
 #include "Extension.hpp"
-#include "JB1MethodBuilder.hpp"
 #include "TextLogger.hpp"
 #include "Type.hpp"
 #include "TypeDictionary.hpp"
@@ -128,11 +127,6 @@ NoTypeType::logValue(TextLogger &lgr, const void *p) const {
     lgr << name();
 }
 
-bool
-NoTypeType::registerJB1Type(JB1MethodBuilder *j1mb) const {
-    //j1mb->registerNoType(this);
-    return true;
-}
 
 } // namespace JitBuilder
 } // namespace OMR

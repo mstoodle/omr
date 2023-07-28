@@ -47,20 +47,28 @@ CoreExtension::CoreExtension(Allocator *a, LOCATION, Compiler *compiler)
     : Extension(MEM_PASSLOC(a), CLASSKIND(CoreExtension,Extensible), compiler, NAME)
     , _codegenStrategy(new (a) Strategy(a, compiler, "CodeGen"))
     , NoType(new (a) NoTypeType(MEM_LOC(a), this))
+    , aAppendBuilder(registerAction(String("AppendBuilder")))
     , aMergeDef(registerAction(String("MergeDef")))
     , strategyCodegen(_codegenStrategy->id()) {
 
-    _codegenStrategy->addPass(new (a) Dispatcher<CodeGenerator>(a, this, "CodeGenDispatcher"));
+    _dispatcher = new (a) Dispatcher<CodeGenerator>(a, this, "CodeGenDispatcher");
+    _codegenStrategy->addPass(_dispatcher);
 }
 
 CoreExtension::~CoreExtension() {
-
+    delete _dispatcher;
 }
 
 
 //
 // Core Operations
 //
+
+void
+CoreExtension::AppendBuilder(LOCATION, Builder *parent, Builder *b) {
+    Allocator *mem = parent->comp()->mem();
+    addOperation(b, new (mem) Op_AppendBuilder(MEM_PASSLOC(mem), this, b, this->aAppendBuilder, b));
+}
 
 void
 CoreExtension::MergeDef(LOCATION, Builder *b, Value *existingDef, Value *newDef) {

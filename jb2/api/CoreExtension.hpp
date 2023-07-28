@@ -44,11 +44,13 @@ public:
 protected:
     // needs to precede _strategyCodegen
     Strategy *_codegenStrategy;
+    Pass *_dispatcher;
 
 public:
     //
     // Core actions
     //
+    const ActionID aAppendBuilder;
     const ActionID aMergeDef;
 
     //
@@ -64,6 +66,7 @@ public:
     // 
     // Core operations
     //
+    void AppendBuilder(LOCATION, Builder *parent, Builder *b);
     void MergeDef(LOCATION, Builder *parent, Value *existingDef, Value *newDef);
 
 protected:

@@ -46,13 +46,6 @@ public:
     Function *func() const;
 
     virtual void log(TextLogger & lgr) const;
-
-    #if 0
-    void setNativeEntryPoint(void *entry, unsigned i);
-    virtual void constructJB1Function(JB1MethodBuilder *j1mb);
-    virtual void jbgenProlog(JB1MethodBuilder *j1mb);
-    #endif
-
     virtual void replaceTypes(TypeReplacer *repl);
 
 protected:

@@ -288,6 +288,118 @@ protected:
     };
 
 
+class Op_IfThenElse : public OperationB1R0V1 {
+    JBALLOC_(Op_IfThenElse)
+
+    friend class BaseExtension;
+public:
+    virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
+    virtual void log(TextLogger & lgr) const;
+
+    virtual size_t size() const { return sizeof(Op_IfThenElse); }
+
+    virtual Builder * thenPath() const { return _builder; }
+    virtual Builder * elsePath() const { return _elseBuilder; }
+
+    virtual size_t numBuilders() const { return 2; }
+    virtual Builder * builder(int i=0) const {
+        if (i == 0)
+            return _builder;
+        else if (i == 1)
+            return _elseBuilder;
+        return NULL;
+    }
+    virtual BuilderIterator builders() {
+        return BuilderIterator(allocator(), _builder, _elseBuilder);
+    }
+
+protected:
+    Op_IfThenElse(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aIfThenElse, IfThenElseBuilder * bldr);
+
+    Builder * _elseBuilder;
+    };
+
+class Case : Allocatable {
+public:
+    Case(Allocator *a, Literal *lv, Builder *builder, bool fallsThrough)
+        : Allocatable(a)
+        , _lv(lv)
+        , _builder(builder)
+        , _fallsThrough(fallsThrough) {
+    
+        }
+
+    Literal *literal() const { return _lv; }
+    Builder *builder() const { return _builder; }
+    bool fallsThrough() const { return _fallsThrough; }
+
+private:
+    Literal *_lv;
+    Builder *_builder;
+    bool _fallsThrough;
+};
+
+class Op_Switch;
+
+class SwitchBuilder {
+    friend class BaseExtension;
+    friend class Op_Switch;
+
+public:
+    SwitchBuilder(Allocator *a)
+        : _selector(NULL)
+        , _cases(new (a) Array<Case *>(a, a))
+        , _defaultBuilder(NULL) {
+
+    }
+    ~SwitchBuilder();
+
+    SwitchBuilder *setSelector(Value *selector) { _selector = selector; return this; }
+    SwitchBuilder *setDefaultBuilder(Builder *builder) { _defaultBuilder = builder; return this; }
+    SwitchBuilder *addCase(Literal *lv, Builder *builder, bool fallsThrough);
+
+protected:
+    Value *selector() const { return _selector; }
+    Array<Case *>::ForwardIterator cases() { return _cases->iterator(); }
+    Array<Case *> *casesArray() const { return _cases; }
+    Builder *defaultBuilder() const { return _defaultBuilder; }
+
+private:
+    Value *_selector;
+    Array<Case *> *_cases;
+    Builder *_defaultBuilder;
+};
+
+class Op_Switch : public OperationR0V1 {
+    JBALLOC_(Op_Switch)
+
+    friend class BaseExtension;
+public:
+    virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
+    virtual void log(TextLogger & lgr) const;
+
+    virtual size_t size() const { return sizeof(Op_Switch); }
+
+    virtual Value * selector() const { return _value; }
+    virtual Builder *defaultBuilder() const { return _defaultBuilder; }
+    virtual size_t numBuilders() const { return 1 + _cases.length(); }
+    virtual Builder *builder(size_t i=0) const {
+        if (i < _cases.length())
+            return _cases[i]->builder();
+        return NULL;
+    }
+    virtual BuilderIterator builders();
+
+    virtual size_t numCases() const  { return _cases.length(); }
+    virtual Array<Case *>::ForwardIterator cases() const { return _cases.constIterator(); }
+
+    protected:
+    Op_Switch(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aSwitch, Value *selector, Builder *defaultBuilder, Array<Case *> *cases);
+
+    Builder *_defaultBuilder;
+    Array<Case *> _cases;
+    };
+
 #if 0
 // keep handy during migration
 

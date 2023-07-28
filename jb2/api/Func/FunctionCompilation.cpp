@@ -128,51 +128,6 @@ FunctionCompilation::log(TextLogger &lgr) const {
     lgr.indent() << "]" << lgr.endl();
 }
 
-#if 0
-void
-FunctionCompilation::constructJB1Function(JB1MethodBuilder *j1mb) {
-    j1mb->FunctionName(func()->name());
-    j1mb->FunctionFile(func()->fileName());
-    j1mb->FunctionLine(func()->lineNumber());
-
-    FunctionContext *fcontext = context<FunctionContext>();
-
-    j1mb->FunctionReturnType(fcontext->returnType());
-
-    for (auto paramIt = fcontext->parameters();paramIt.hasItem(); paramIt++) {
-        const ParameterSymbol *parameter = paramIt.item();
-        j1mb->Parameter(parameter->name(), parameter->type());
-    }
-    for (auto localIt = fcontext->locals();localIt.hasItem();localIt++) {
-        const LocalSymbol *symbol = localIt.item();
-        j1mb->Local(symbol->name(), symbol->type());
-    }
-    for (auto fnIt = fcontext->functions();fnIt.hasItem();fnIt++) {
-        const FunctionSymbol *fSym = fnIt.item();
-        const FunctionType *fType = fSym->functionType();
-        j1mb->DefineFunction(fSym->name(),
-                             fSym->fileName(),
-                             fSym->lineNumber(),
-                             fSym->entryPoint(),
-                             fType->returnType(),
-                             fType->numParms(),
-                             fType->parmTypes());
-     }
-}
-
-void
-FunctionCompilation::jbgenProlog(JB1MethodBuilder *j1mb) {
-    j1mb->EntryPoint(scope<FunctionScope>()->entry());
-}
-#endif
-
-#if 0
-void
-FunctionCompilation::setNativeEntryPoint(void *entry, unsigned i) {
-    NativeEntry *nativeEntry = new (_compiler->mem()) NativeEntry(_compiler->mem(), this, i, entry);
-    addEntryPoint(nativeEntry, i);
-}
-#endif
 
 void
 FunctionCompilation::replaceTypes(TypeReplacer *repl) {

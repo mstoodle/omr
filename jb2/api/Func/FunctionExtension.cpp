@@ -208,7 +208,7 @@ CompilerReturnCode
 FunctionExtension::compile(LOCATION, Function *func, StrategyID strategy, TextLogger *lgr) {
 
     if (strategy == NoStrategy)
-        strategy = _compiler->jb1cgStrategyID;
+        strategy = _compiler->coreExt()->strategyCodegen;
 
     Allocator *mem = _compiler->mem();
     FunctionCompilation *comp = new (mem) FunctionCompilation(mem, this, func, strategy);

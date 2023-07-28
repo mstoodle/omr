@@ -58,7 +58,7 @@ class Extension;
 KINDSERVICE_CATEGORY(Extensible);
 
 class Extensible : public Loggable {
-    JBALLOC_NO_DESTRUCTOR_(Extensible)
+    JBALLOC_(Extensible)
 
 public:
     DYNAMIC_ALLOC_ONLY(Extensible, Extension *ext, KINDTYPE(Extensible)=KIND(Extensible));

@@ -39,18 +39,17 @@ class EntryPoint : public Allocatable {
     JBALLOC_(EntryPoint)
 
 public:
-    DYNAMIC_ALLOC_ONLY(EntryPoint, EntryPointKind kind, Compilation *comp, EntryID id, String name="");
+    DYNAMIC_ALLOC_ONLY(EntryPoint, EntryPointKind kind, EntryID id, String name="");
 
     EntryID id() const { return _id; }
     bool isEntry(EntryID id) { return _id == id; }
 
     String name() const { return _name; }
 
-    Compilation *comp() const { return _comp; }
+    //Compilation *comp() const { return _comp; }
 
 protected:
     EntryID _id;
-    Compilation *_comp;
     String _name;
 
     BASECLASS_KINDSERVICE_DECL(EntryPoint);

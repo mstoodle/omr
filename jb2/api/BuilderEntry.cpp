@@ -28,8 +28,8 @@ namespace JitBuilder {
 INIT_JBALLOC(BuilderEntry)
 SUBCLASS_KINDSERVICE_IMPL(BuilderEntry,"Builder",EntryPoint,EntryPoint)
 
-BuilderEntry::BuilderEntry(Allocator *a, Compilation *comp, EntryID id, Builder *b, String name)
-    : EntryPoint(a, KIND(EntryPoint), comp, id, name)
+BuilderEntry::BuilderEntry(Allocator *a, EntryID id, Builder *b, String name)
+    : EntryPoint(a, KIND(EntryPoint), id, name)
     , _builder(b) {
 
 }

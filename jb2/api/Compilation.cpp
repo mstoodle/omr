@@ -76,6 +76,7 @@ Compilation::~Compilation() {
     _config->destructCompilationAllocator(_mem);
     if (_myConfig && _config != NULL)
         delete _config;
+    // scope and context are typically not dynamically allocated
 }
 
 void

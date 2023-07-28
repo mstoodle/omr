@@ -43,10 +43,12 @@ Strategy::Strategy(Allocator *a, Compiler *compiler, String name)
 }
 
 Strategy::~Strategy() {
+    #if 0 // freed by compiler
     for (auto it = _passes.iterator(); it.hasItem(); it++) {
         Pass *pass = it.item();
         delete pass;
     }
+    #endif
     _passes.erase();
 }
 

@@ -35,7 +35,6 @@ class Builder;
 class Compilation;
 class Compiler;
 class Extension;
-class JB1MethodBuilder;
 class Location;
 class TextLogger;
 class Type;
@@ -88,14 +87,6 @@ public:
     // for Types with non-NULL layout, converts a literal of Type to the literals of the layout type in the LiteralMapper
     virtual LiteralMapper *explode(Literal *value, LiteralMapper *m=NULL) const { return NULL; }
 
-    // register this Type's corresponding JB1 type(s) in the JB1MethodBuilder
-    virtual bool registerJB1Type(JB1MethodBuilder *j1mb) const { return true; }
-    
-    // create a JB1 Const operation for a Literal of this Type
-    virtual void createJB1ConstOp(Location *loc, JB1MethodBuilder *j1mb, Builder *b, Value *result, Literal *lv) const {
-        assert(0); // default must be to assert TODO convert to CompilationException
-    }
-
     // if this Type should be mapped to another, use repl and create that Type if needed and return it (NULL if not mapped to another Type)
     //virtual const Type * mapIfNeeded(TypeReplacer *repl);
 
@@ -131,7 +122,6 @@ class NoTypeType : public Type {
 
     public:
     virtual void logValue(TextLogger &lgr, const void *p) const;
-    virtual bool registerJB1Type(JB1MethodBuilder *j1mb) const;
 
     protected:
     DYNAMIC_ALLOC_ONLY(NoTypeType, LOCATION, Extension *ext);

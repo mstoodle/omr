@@ -68,6 +68,8 @@ protected:
     void gencodeIfCmpUnsignedGreaterOrEqual(JBMethodBuilder *jbmb, Operation *op);
     void gencodeIfCmpUnsignedLessThan(JBMethodBuilder *jbmb, Operation *op);
     void gencodeIfCmpUnsignedLessOrEqual(JBMethodBuilder *jbmb, Operation *op);
+    void gencodeIfThenElse(JBMethodBuilder *jbmb, Operation *op);
+    void gencodeSwitch(JBMethodBuilder *jbmb, Operation *op);
     void gencodeLoadAt(JBMethodBuilder *jbmb, Operation *op);
     void gencodeStoreAt(JBMethodBuilder *jbmb, Operation *op);
     void gencodeLoadField(JBMethodBuilder *jbmb, Operation *op);
@@ -97,7 +99,7 @@ protected:
     void regtypeFloat64(JBMethodBuilder *jbmb, const Type *Float64);
     void regtypeAddress(JBMethodBuilder *jbmb, const Type *Address);
 
-    Base::BaseExtension *_base;
+    Base::BaseExtension *_bx;
     Array<gencodeFunction> _gencodeVFT;
     Array<genconstFunction> _genconstVFT;
     Array<regtypeFunction> _regtypeVFT;

@@ -158,6 +158,8 @@ VMRegisterFunction::buildIL(LOCATION, Func::FunctionCompilation *comp, Func::Fun
 
     _fx->Return(LOC, entry, _fx->Load(LOC, entry, result));
 
+    delete vmreg;
+
     return true;
 }
 
@@ -214,6 +216,8 @@ VMRegisterInStructFunction::buildIL(LOCATION, Func::FunctionCompilation *comp, F
     }
 
     _fx->Return(LOC, entry, _fx->Load(LOC, entry, result));
+
+    delete vmreg;
 
     return true;
 }

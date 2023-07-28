@@ -103,6 +103,7 @@ public:
     void Mul(Location *loc, Builder *b, Value *result, Value *left, Value *right);
     void Sub(Location *loc, Builder *b, Value *result, Value *left, Value *right);
 
+    void AppendBuilder(Location *loc, Builder *parent, Builder *b);
     void Call(Location *loc, Builder *b, Value *result, String targetName, size_t numArgs, ValueIterator argIt);
     void Call(Location *loc, Builder *b, String targetName, size_t numArgs, ValueIterator argIt);
     void EntryPoint(Builder *entryBuilder);
@@ -120,8 +121,11 @@ public:
     void IfCmpUnsignedGreaterOrEqual(Location *loc, Builder *b, Builder *target, Value *left, Value *right);
     void IfCmpUnsignedLessThan(Location *loc, Builder *b, Builder *target, Value *left, Value *right);
     void IfCmpUnsignedLessOrEqual(Location *loc, Builder *b, Builder *target, Value *left, Value *right);
+    void IfThen(Location *loc, Builder *b, Builder *thenPath, Value *condition);
+    void IfThenElse(Location *loc, Builder *b, Builder *thenPath, Builder *elsePath, Value *selector);
     void Return(Location *loc, Builder *b);
     void Return(Location *loc, Builder *b, Value *value);
+    void Switch(Location *loc, Builder *b, Builder *defaultBuilder, Value *selector, int32_t numCases, Literal **lvs, Builder **caseBuilders, bool *fallThroughs);
 
     void Load(Location *loc, Builder *b, Value *result, Symbol *sym);
     void Store(Location *loc, Builder *b, Symbol *sym, Value *value);
