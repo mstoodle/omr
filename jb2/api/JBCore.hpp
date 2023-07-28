@@ -38,7 +38,6 @@
 #include "CoreExtension.hpp"
 #include "CreateLoc.hpp"
 #include "EntryPoint.hpp"
-#include "Executor.hpp"
 #include "Extensible.hpp"
 #include "Extension.hpp"
 #include "InputReader.hpp"
