@@ -230,7 +230,6 @@ OperationR1::OperationR1(MEM_LOCATION(a), ActionID action, Extension *ext, Build
     : Operation(MEM_PASSLOC(a), action, ext, parent)
     , _result(result) {
 
-    parent->comp()->forgetNewValue(result);
     registerDefinition(result);
 }
 

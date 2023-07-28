@@ -114,9 +114,6 @@ class Compilation : public Extensible {
 
     virtual void replaceTypes(TypeReplacer *repl) { }
 
-    void rememberNewValue(Value *v) { _lastNewValue = v; }
-    void forgetNewValue(Value *v) { if (_lastNewValue == v) _lastNewValue = NULL; }
-
 protected:
     void setContext(Context *context) { _context = context; }
     void setScope(Scope *scope) { _scope = scope; }
@@ -167,8 +164,6 @@ protected:
 
     TextLogger * _logger;
     TextWriter * _writer;
-
-    Value * _lastNewValue;
 
     List<Builder *> _builders;
 
