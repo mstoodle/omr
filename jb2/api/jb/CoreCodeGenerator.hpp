@@ -46,6 +46,7 @@ public:
 protected:
     virtual void visitPreCompilation(Compilation * comp) { }
 
+    void gencodeAppendBuilder(JBMethodBuilder *jbmb, Operation *op);
     void gencodeMergeDef(JBMethodBuilder *jbmb, Operation *op);
 
     CoreExtension *_cx;

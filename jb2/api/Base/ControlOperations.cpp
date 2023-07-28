@@ -43,21 +43,13 @@ Op_ForLoopUp::Op_ForLoopUp(MEM_LOCATION(a), Extension *ext, Builder * parent, Ac
     , _initial(loopBuilder->initialValue())
     , _final(loopBuilder->finalValue())
     , _bump(loopBuilder->bumpValue())
-    , _loopBody(A_UNLESS_B(ext->BoundBuilder(PASSLOC, parent, this, String("loopBody")), loopBuilder->loopBody()))
-    , _loopBreak(A_UNLESS_B(ext->BoundBuilder(PASSLOC, parent, this, String("loopBreak")), loopBuilder->loopBreak()))
-    , _loopContinue(A_UNLESS_B(ext->BoundBuilder(PASSLOC, parent, this, String("loopContinue")), loopBuilder->loopContinue())) {
+    , _loopBody(ext->BoundBuilder(PASSLOC, parent, this, String("loopBody")))
+    , _loopBreak(ext->BoundBuilder(PASSLOC, parent, this, String("loopBreak")))
+    , _loopContinue(ext->BoundBuilder(PASSLOC, parent, this, String("loopContinue"))) {
 
-    if (loopBuilder->loopBody() == NULL)
-        loopBuilder->setLoopBody(_loopBody);
-    _loopBody->setBound(this);
-
-    if (loopBuilder->loopBreak() == NULL)
-        loopBuilder->setLoopBreak(_loopBreak);
-    _loopBreak->setBound(this);
-
-    if (loopBuilder->loopContinue() == NULL)
-        loopBuilder->setLoopContinue(_loopContinue);
-    _loopContinue->setBound(this);
+    loopBuilder->setLoopBody(_loopBody);
+    loopBuilder->setLoopBreak(_loopBreak);
+    loopBuilder->setLoopContinue(_loopContinue);
 }
 
 Op_ForLoopUp::~Op_ForLoopUp() {
@@ -70,10 +62,7 @@ Op_ForLoopUp::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
     loopBuilder.setLoopVariable(static_cast<Func::LocalSymbol *>(cloner->symbol()))
                .setInitialValue(cloner->operand(0))
                .setFinalValue(cloner->operand(1))
-               .setBumpValue(cloner->operand(2))
-               .setLoopBody(cloner->builder(0))
-               .setLoopBreak(cloner->builder(1))
-               .setLoopContinue(cloner->builder(2));
+               .setBumpValue(cloner->operand(2));
     Allocator *mem = b->comp()->mem();
     return new (mem) Op_ForLoopUp(MEM_PASSLOC(mem), this->_ext, b, this->action(), &loopBuilder);
    }
@@ -359,6 +348,127 @@ Op_IfCmpUnsignedLessOrEqual::clone(LOCATION, Builder *b, OperationCloner *cloner
 void
 Op_IfCmpUnsignedLessOrEqual::log(TextLogger & lgr) const {
     lgr << name() << " " << builder() << " " << operand(0) << " " << operand(1) << lgr.endl();
+}
+
+
+//
+// IfThenElse
+//
+INIT_JBALLOC_REUSECAT(Op_IfThenElse, Operation)
+
+Op_IfThenElse::Op_IfThenElse(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aIfThenElse, IfThenElseBuilder *bldr)
+    : OperationB1R0V1(MEM_PASSLOC(a), aIfThenElse, ext, parent, ext->BoundBuilder(PASSLOC, parent, this, String("thenPath")), bldr->selector())
+    , _elseBuilder(ext->BoundBuilder(PASSLOC, parent, this, String("elsePath"))) {
+
+    bldr->setThenPath(thenPath());
+    bldr->setElsePath(elsePath());
+}
+
+Op_IfThenElse::~Op_IfThenElse() {
+
+}
+
+Operation *
+Op_IfThenElse::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
+    Allocator *mem = b->comp()->mem();
+    IfThenElseBuilder bldr;
+    bldr.setSelector(cloner->operand(0));
+    return new (mem) Op_IfThenElse(MEM_PASSLOC(mem), this->_ext, b, this->action(), &bldr);
+}
+
+void
+Op_IfThenElse::log(TextLogger & lgr) const {
+    lgr << name() << " " << operand() << " " << thenPath();
+    if (elsePath())
+        lgr << " " << elsePath();
+    lgr << lgr.endl();
+}
+
+
+//
+// SwitchBuilde3r
+//
+SwitchBuilder *
+SwitchBuilder::addCase(Literal *lv, Builder *builder, bool fallsThrough) {
+    Allocator *mem = builder->comp()->mem();
+    Case *c = new (mem) Case(mem, lv, builder, fallsThrough);
+    _cases->assign(_cases->length(), c);
+    return this;
+}
+
+SwitchBuilder::~SwitchBuilder() {
+    delete _cases;
+}
+
+//
+// Switch
+//
+INIT_JBALLOC_REUSECAT(Op_Switch, Operation)
+
+Op_Switch::~Op_Switch() {
+
+}
+
+Op_Switch::Op_Switch(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aSwitch, Value *selector, Builder *defaultBuilder, Array<Case *> *cases)
+    : OperationR0V1(MEM_PASSLOC(a), aSwitch, ext, parent, selector)
+    , _defaultBuilder(defaultBuilder)
+    , _cases(a) {
+
+    Allocator *mem = allocator();
+    Array<Case *> *myCases = new (mem) Array<Case*>(mem);
+    myCases->assign(cases->length()-1, NULL); // grow it to right size immediately
+    int index = 0;
+    for (auto caseIt = _cases.iterator(); caseIt.hasItem(); caseIt++) {
+        Case *c = caseIt.item();
+        assert(!c->builder()->isBound());
+        captureBuilder(c->builder());
+        Case *myCase = new (mem) Case(mem, c->literal(), c->builder(), c->fallsThrough());
+        myCases->assign(index++, myCase);
+    }
+}
+
+Operation *
+Op_Switch::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
+    Allocator *mem = b->comp()->mem();
+    SwitchBuilder bldr(mem);
+    bldr.setSelector(cloner->operand(0));
+    uint32_t index=0;
+    for (auto it=cases();it.hasItem();it++) {
+        Case *c = it.item();
+        bldr.addCase(cloner->literal(index), cloner->builder(index), c->fallsThrough());
+        index++;
+    }
+    return new (mem) Op_Switch(MEM_PASSLOC(mem), _ext, b, this->action(), cloner->operand(0), cloner->builder(0), bldr.casesArray());
+}
+
+void
+Op_Switch::log(TextLogger & lgr) const {
+    lgr << name() << " " << operand() << lgr.endl();
+    LOG_INDENT_REGION(lgr) {
+        for (auto it = cases(); it.hasItem(); it++) {
+            Case *c = it.item();
+            lgr << "[ " << c->literal() << " -> " << c->builder();
+            if (c->fallsThrough())
+                lgr << " fallsThrough";
+        }
+        lgr << " ]" << lgr.endl();
+    } LOG_OUTDENT
+}
+
+
+BuilderIterator
+Op_Switch::builders() {
+    Allocator *mem = allocator();
+    Builder **array = mem->allocate<Builder *>(_cases.length() + 1);
+    int index = 0;
+    for (auto caseIt = _cases.iterator(); caseIt.hasItem(); caseIt++) {
+        Case *c = caseIt.item();
+        array[index++] = c->builder();
+    }
+    array[index] = _defaultBuilder;
+    BuilderIterator it(mem, array, index);
+    mem->deallocate(array); // iterator copied it
+    return it;
 }
 
 

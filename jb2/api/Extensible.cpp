@@ -37,6 +37,16 @@ Extensible::Extensible(Allocator *a, Extension *ext, KINDTYPE(Extensible) kind)
     , BASECLASS_KINDINIT(kind) {
 }
 
+Extensible::~Extensible() {
+    if (_addons != NULL) {
+        for (auto it = _addons->iterator(); it.hasItem(); it++) {
+            Addon *addon = it.item();
+            delete addon;
+        }
+        delete _addons;
+    }
+}
+
 Compiler *
 Extensible::compiler() const {
     return _ext->compiler();

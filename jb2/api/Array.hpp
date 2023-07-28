@@ -46,8 +46,8 @@ public:
 
             }
 
-        ForwardIterator(Array<T> * array, bool detectChanges)
-            : ForwardSimpleIterator<T>(array->_items, array->_length)
+        ForwardIterator(const Array<T> * array, bool detectChanges)
+            : ForwardSimpleIterator<T>(array->allocator(), array->_items, array->_length)
             , _array(array)
             , _changeAtCreation(array->_changeID) {
 
@@ -55,7 +55,7 @@ public:
 
         // rule of 3
         ForwardIterator(const ForwardIterator & other)
-            : ForwardSimpleIterator<T>(other._items, other._length)
+            : ForwardSimpleIterator<T>(other.allocator(), other._items, other._length)
             , _array(other._array)
             , _changeAtCreation(other._changeAtCreation) {
         }
@@ -67,7 +67,7 @@ public:
 
         // rule of 5
         ForwardIterator(ForwardIterator && other)
-            : ForwardSimpleIterator<T>(other._items, other._length)
+            : ForwardSimpleIterator<T>(other.allocator(), other._items, other._length)
             , _array(other._array)
             , _changeAtCreation(other._changeAtCreation) {
         }
@@ -96,7 +96,7 @@ public:
         }
 
     protected:
-        Array<T> *_array;
+        const Array<T> *_array;
         ChangeID _changeAtCreation;
     };
 
@@ -208,6 +208,9 @@ public:
     }
 
     ForwardIterator iterator(bool detectChanges=true) {
+        return ForwardIterator(this, detectChanges);
+    }
+    ForwardIterator constIterator(bool detectChanges=true) const {
         return ForwardIterator(this, detectChanges);
     }
     ForwardIterator fwdIterator(bool detectChanges=true) {

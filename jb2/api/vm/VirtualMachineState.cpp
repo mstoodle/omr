@@ -31,6 +31,10 @@ SUBCLASS_KINDSERVICE_IMPL(VirtualMachineState,"VirtualMachineState",Extensible,E
 
 VirtualMachineStateID VirtualMachineState::nextVirtualMachineStateID = NoVirtualMachineStateID+1;
 
+VirtualMachineState::~VirtualMachineState() {
+
+}
+
 VirtualMachineState *
 VirtualMachineState::MakeCopy(LOCATION, Builder *b) {
     Allocator *mem = allocator();

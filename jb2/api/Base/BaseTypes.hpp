@@ -378,6 +378,7 @@ public:
     StructHelperFunction *helper() const { return _helper; }
 
     const StructType * create(LOCATION);
+
 protected:
     #if NEED_UNION
     const UnionType *createUnion();
@@ -443,7 +444,6 @@ protected:
     virtual const FieldType * addField(LOCATION, Extension *ext, TypeDictionary *dict, String name, const Type *type, size_t offset) {
         return addField(MEM_PASSLOC(allocator()), ext, dict, name, type, offset);
     }
-    void registerAllFields(JB1MethodBuilder *j1mb, String structName, String fNamePrefix, size_t baseOffset) const;
     void transformFields(TypeReplacer *repl, StructTypeBuilder *stb, StructType *origStruct, String baseName, size_t baseOffset) const;
     void mapTransformedFields(TypeReplacer *repl, const StructType *type, String baseName, TypeMapper *mapper) const;
 

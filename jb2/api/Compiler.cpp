@@ -73,6 +73,8 @@ INIT_JBALLOC(Compiler);
     , _strategies() \
     , _nextTypeID(NoTypeID+1) \
     , _types() \
+    , _nextLiteralDictionaryID(0) \
+    , _nextSymbolDictionaryID(0) \
     , _nextTypeDictionaryID(0) \
     , _target(NULL) \
     , _compiler(NULL) \
@@ -126,15 +128,6 @@ Compiler::Compiler(Compiler *parent, String name, Config *config)
 
 void
 Compiler::init() {
-    #if 0
-    _jb1->initialize();
-
-    Strategy *jb1cgStrategy = new (_mem, Extension::allocCat()) Strategy(_mem, this, "jb1cg");
-    Pass *jb1cg = new (_mem) JB1CodeGenerator(_mem, this);
-    jb1cgStrategy->addPass(jb1cg);
-    jb1cgStrategyID = jb1cgStrategy->id();
-    #endif
-    
     if (_parent != NULL) {
         _core = _parent->lookupExtension<CoreExtension>();
     } else {
@@ -144,6 +137,26 @@ Compiler::init() {
 }
 
 Compiler::~Compiler() {
+    for (auto it = _extensionsForAddonsByKind.begin(); it != _extensionsForAddonsByKind.end(); it++) {
+        List<Extension *> *list = it->second;
+        if (list != NULL) {
+            delete list;
+        }
+    }
+    _extensionsForAddonsByKind.clear();
+
+    for (auto it =_extensiblesByKind.begin(); it != _extensiblesByKind.end(); it++) {
+        List<Extensible *> *kindList = it->second;
+        if (kindList != NULL) {
+            for (auto it2=kindList->iterator();it2.hasItem();it2++) {
+                Extensible *e = it2.item();
+                delete e;
+            }
+            delete kindList;
+        }
+    }
+    _extensiblesByKind.clear();
+
     for (auto it = _extensions.begin();it != _extensions.end();it++) {
         Extension *ext = it->second;
         delete ext;
@@ -155,10 +168,6 @@ Compiler::~Compiler() {
         delete st;
     }
     _strategies.clear();
-
-    #if 0
-    _jb1->shutdown();
-    #endif
 
     if (_litDict != NULL)
         delete _litDict;
@@ -339,7 +348,7 @@ Compiler::addPass(Pass *pass) {
     PassID id = _nextPassID++;
     this->_passNames.insert({pass->name(), id});
 
-    registerExtensible(pass, CLASSKIND(Pass, Extensible));
+    //registerExtensible(pass, CLASSKIND(Pass, Extensible));
 
     return id;
 }
@@ -393,6 +402,11 @@ Compiler::compile(LOCATION, Compilation *comp, StrategyID strategyID) {
         bool success = comp->prepareIL(PASSLOC);
         if (!success)
             return CompileFail_IlGen;
+
+        if (config()->traceBuildIL()) {
+            TextWriter writer(NULL, this, *comp->logger());
+            writer.perform(comp);
+        }
 
         if (strategyID == NoStrategy) // nothing more to do
             return CompileSuccessful;

@@ -41,7 +41,6 @@ const String JBExtension::NAME("jb2jb");
 
 extern "C" {
     Extension *create(LOCATION, Compiler *compiler) {
-        OMR_JB::instance()->initialize();
         Allocator *mem = compiler->mem();
         return new (mem) JBExtension(MEM_PASSLOC(mem), compiler);
     }
@@ -60,7 +59,7 @@ JBExtension::JBExtension(MEM_LOCATION(a), Compiler *compiler, bool extended, Str
 }
 
 JBExtension::~JBExtension() {
-
+    _jb->shutdown();
 }
 
 void

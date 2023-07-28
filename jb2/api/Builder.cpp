@@ -22,7 +22,6 @@
 #include "AllocationCategoryClasses.hpp"
 #include "Builder.hpp"
 #include "Compilation.hpp"
-#include "JB1MethodBuilder.hpp"
 #include "Location.hpp"
 #include "Operation.hpp"
 #include "Scope.hpp"

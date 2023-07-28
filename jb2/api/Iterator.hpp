@@ -73,6 +73,8 @@ protected:
     T *allocate(size_t num) {
         return reinterpret_cast<T *>(_mem->allocate(num * sizeof(T), NoAllocationCategory));
     }
+    Allocator *allocator() const { return _mem; }
+
     Allocator *_mem;
 };
 

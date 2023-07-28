@@ -28,18 +28,13 @@
 namespace OMR {
 namespace JitBuilder {
 
-class Compilation;
+KINDSERVICE_CATEGORY(BuilderEntry);
 
 class BuilderEntry : public EntryPoint {
     JBALLOC_(BuilderEntry)
 
 public:
-    DYNAMIC_ALLOC_ONLY(BuilderEntry, Compilation *comp, EntryID id, Builder *b, String name="");
-
-    EntryID id() const { return _id; }
-    bool isEntry(EntryID id) { return _id == id; }
-    String name() const { return _name; }
-    Compilation *comp() const { return _comp; }
+    DYNAMIC_ALLOC_ONLY(BuilderEntry, EntryID id, Builder *b, String name="");
 
     Builder *builder() const { return _builder; }
 

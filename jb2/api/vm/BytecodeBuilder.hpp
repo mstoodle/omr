@@ -53,11 +53,6 @@ public:
     virtual String logName() const { return String("BytecodeBuilder"); }
     virtual void logProperties(TextLogger & lgr);
 
-    #if 0
-    virtual void jbgen(JB1MethodBuilder *j1mb) const;
-    virtual void jbgenSuccessors(JB1MethodBuilder *j1mb) const;
-    #endif
-
 protected:
     // no longer need clients to call these; they are called directly by control flow operations created by VMExtension
     VMExtension *vmx() const;

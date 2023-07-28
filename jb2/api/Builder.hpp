@@ -98,7 +98,6 @@ public:
 
     bool isBound() const                                { return _isBound; }
     Operation * boundToOperation() const                { assert(_isBound); return _boundToOperation; }
-    Builder * setBound(Operation *op)                   { _isBound = true; _boundToOperation = op; return this; }
 
     bool isTarget() const                               { return _isTarget; }
     Builder * setTarget(bool v=true);
@@ -132,6 +131,7 @@ protected:
     void setParent(Builder *parent);
     void addChild(Builder *child);
     Builder * add(Operation * op);
+    Builder * setBound(Operation *op) { _isBound = true; _boundToOperation = op; return this; }
 
     BuilderID            _id;
     Extension          * _ext;

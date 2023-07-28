@@ -46,7 +46,9 @@ VirtualMachineOperandStack::VirtualMachineOperandStack(MEM_LOCATION(a),
     , _stackOffset(stackInitialOffset)
     , _stackMax(sizeHint)
     , _stackTop(-1)
-    , _pushAmount(growsUp ? +1 : -1) {
+    , _stackBaseLocal(NULL)
+    , _pushAmount(growsUp ? +1 : -1)
+    , _stack(NULL) {
 
     init(PASSLOC);
 }
@@ -59,8 +61,9 @@ VirtualMachineOperandStack::VirtualMachineOperandStack(MEM_LOCATION(a), VirtualM
     , _stackOffset(other->_stackOffset)
     , _stackMax(other->_stackMax)
     , _stackTop(other->_stackTop)
+    , _stackBaseLocal(other->_stackBaseLocal)
     , _pushAmount(other->_pushAmount)
-    , _stackBaseLocal(other->_stackBaseLocal) {
+    , _stack(NULL) {
 
     _stack = a->allocate<Value *>(_stackMax);
     int32_t numBytes = _stackMax * sizeof(Value *);
@@ -68,8 +71,9 @@ VirtualMachineOperandStack::VirtualMachineOperandStack(MEM_LOCATION(a), VirtualM
 }
 
 VirtualMachineOperandStack::~VirtualMachineOperandStack() {
-    if (_stack)
+    if (_stack) {
         allocator()->deallocate(_stack);
+    }
 }
 
 // commits the simulated operand stack of values to the virtual machine state
@@ -208,8 +212,9 @@ VirtualMachineOperandStack::grow(int32_t growAmount) {
     int32_t numBytes = _stackMax * sizeof(Value *);
     memcpy(newStack, _stack, numBytes);
 
-    if (_stack)
+    if (_stack) {
         allocator()->deallocate(_stack);
+    }
 
     _stack = newStack;
     _stackMax = newMax;
@@ -220,6 +225,7 @@ VirtualMachineOperandStack::init(LOCATION) {
     Base::BaseExtension *bx = this->bx();
     Func::FunctionExtension *fx = this->fx();
 
+    assert(_stack == NULL);
     _stack = allocator()->allocate<Value *>(_stackMax);
 
     int32_t numBytes = _stackMax * sizeof(Value *);

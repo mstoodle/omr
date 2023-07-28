@@ -32,16 +32,8 @@ namespace OMR {
 namespace JitBuilder {
 
 class Builder;
-class Case;
 class Compilation;
-class Literal;
-class LiteralDictionary;
 class Operation;
-class Symbol;
-class SymbolDictionary;
-class Type;
-class TypeDictionary;
-class Value;
 
 class TextWriter : public Visitor {
     JBALLOC_(TextWriter)
