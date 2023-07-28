@@ -33,7 +33,6 @@ Value *
 Value::create(const Builder * parent, const Type * type) {
     Allocator *mem = parent->comp()->mem();
     Value *value = new (mem) Value(mem, parent, type);
-    parent->comp()->rememberNewValue(value);
     return value;
 }
 
