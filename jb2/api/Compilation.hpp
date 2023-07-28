@@ -40,7 +40,6 @@ class CompileUnit;
 class Config;
 class Context;
 class CreateLocation;
-class JB1MethodBuilder;
 class Literal;
 class LiteralDictionary;
 class Location;
@@ -112,9 +111,6 @@ class Compilation : public Extensible {
 
     virtual bool prepareIL(LOCATION);
     virtual void freeIL(LOCATION);
-
-    virtual void constructJB1Function(JB1MethodBuilder *j1mb) { }
-    virtual void jbgenProlog(JB1MethodBuilder *j1mb) { }
 
     virtual void replaceTypes(TypeReplacer *repl) { }
 

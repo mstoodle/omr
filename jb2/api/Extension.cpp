@@ -55,6 +55,11 @@ Extension::Extension(MEM_LOCATION(a), KINDTYPE(Extensible) kind, Compiler *compi
 }
 
 Extension::~Extension() {
+    for (auto it = _extendedPasses.begin(); it != _extendedPasses.end(); it++) {
+        Pass *extendedPass = it->second;
+        delete extendedPass;
+    }
+    _extendedPasses.clear();
 }
 
 const String

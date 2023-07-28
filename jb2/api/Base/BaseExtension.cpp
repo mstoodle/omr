@@ -95,6 +95,8 @@ BaseExtension::BaseExtension(MEM_LOCATION(a), Compiler *compiler, bool extended,
     , aIfCmpUnsignedGreaterOrEqual(registerAction(String("IfCmpUnsignedGreaterOrEqual")))
     , aIfCmpUnsignedLessThan(registerAction(String("IfCmpUnsignedLessThan")))
     , aIfCmpUnsignedLessOrEqual(registerAction(String("IfCmpUnsignedLessOrEqual")))
+    , aIfThenElse(registerAction(String("IfThenElse")))
+    , aSwitch(registerAction(String("Switch")))
     , CompileFail_BadInputTypes_Add(registerReturnCode("CompileFail_BadInputTypes_Add"))
     , CompileFail_BadInputTypes_ConvertTo(registerReturnCode("CompileFail_BadInputTypes_ConvertTo"))
     , CompileFail_BadInputTypes_Mul(registerReturnCode("CompileFail_BadInputTypes_Mul"))
@@ -112,6 +114,8 @@ BaseExtension::BaseExtension(MEM_LOCATION(a), Compiler *compiler, bool extended,
     , CompileFail_BadInputTypes_IfCmpUnsignedLessThan(registerReturnCode("CompileFail_BadInputTypes_IfCmpUnsignedLessThan"))
     , CompileFail_BadInputTypes_IfCmpUnsignedLessOrEqual(registerReturnCode("CompileFail_BadInputTypes_IfCmpUnsignedLessOrEqual"))
     , CompileFail_BadInputTypes_ForLoopUp(registerReturnCode("CompileFail_BadInputTypes_ForLoopUp"))
+    , CompileFail_BadInputTypes_IfThenElse(registerReturnCode("CompileFail_BadInputTypes_IfThenElse"))
+    , CompileFail_BadInputTypes_Switch(registerReturnCode("CompileFail_BadInputTypes_Switch"))
     , CompileFail_BadInputArray_OffsetAt(registerReturnCode("CompileFail_BadInputArray_OffsetAt"))
     , CompileFail_MismatchedArgumentTypes_Call(registerReturnCode("CompileFail_MismatchedArgumentTypes_Call"))
     , _checkers(NULL, a) {
@@ -154,35 +158,6 @@ BaseExtension::createAddon(Extensible *e) {
         e->attach(bfe);
     }
 }
-
-#if 0
-CompilerReturnCode
-BaseExtension::compile(LOCATION, Func::Function *func, StrategyID strategy, TextWriter *w) {
-
-    if (strategy == NoStrategy)
-        strategy = _compiler->jb1cgStrategyID;
-
-    LiteralDictionary litDict(_compiler, "Compilation LiteralDictionary", _compiler->litDict());
-    SymbolDictionary symDict(_compiler, "Compilation SymbolDictionary", _compiler->symDict());
-    TypeDictionary typeDict(_compiler, "Compilation TypeDictionary", _compiler->typeDict());
-    BaseCompilation comp(this, func, strategy, &litDict, &symDict, &typeDict, NULL);
-
-    Func::FunctionContext context(PASSLOC, &comp);
-    comp.setContext(&context);
-    comp.setWriter(w);
-
-    CompilerReturnCode rc = _compiler->compile(PASSLOC, &comp, strategy);
-    if (rc != _compiler->CompileSuccessful) {
-        return rc;
-    }
-
-    Allocator *mem = comp.mem();
-    CompiledBody *body = new (mem) CompiledBody(mem, func, &context, strategy);
-    func->saveCompiledBody(body, strategy);
-
-    return _compiler->CompileSuccessful;
-}
-#endif
 
 
 //
@@ -708,6 +683,39 @@ BaseExtension::IfCmpUnsignedLessOrEqual(LOCATION, Builder *b, Builder *target, V
     Allocator *mem = b->comp()->mem();
     addOperation(b, new (mem) Op_IfCmpUnsignedLessOrEqual(MEM_PASSLOC(mem), this, b, aIfCmpUnsignedLessOrEqual, target, left, right));
 }
+
+IfThenElseBuilder
+BaseExtension::IfThenElse(LOCATION, Builder *b, Value *selector) {
+    #if 0
+    for (auto it = _checkers.iterator(); it.hasItem(); it++) {
+        BaseExtensionChecker *checker = it.item();
+        if (checker->validateIfCmp(PASSLOC, b, target, left, right, CompileFail_BadInputTypes_IfCmpUnsignedLessOrEqual, "IfCmpUnsignedLessOrEqual"))
+            break;
+    }
+    #endif
+
+    IfThenElseBuilder ifThenElseBuilder;
+    ifThenElseBuilder.setSelector(selector);
+    Allocator *mem = b->comp()->mem();
+    addOperation(b, new (mem) Op_IfThenElse(MEM_PASSLOC(mem), this, b, this->aIfThenElse, &ifThenElseBuilder));
+    return ifThenElseBuilder;
+}
+
+
+void
+BaseExtension::Switch(LOCATION, Builder *b, SwitchBuilder *bldr) {
+    #if 0
+    for (auto it = _checkers.iterator(); it.hasItem(); it++) {
+        BaseExtensionChecker *checker = it.item();
+        if (checker->validateIfCmp(PASSLOC, b, target, left, right, CompileFail_BadInputTypes_IfCmpUnsignedLessOrEqual, "IfCmpUnsignedLessOrEqual"))
+            break;
+    }
+    #endif
+
+    Allocator *mem = b->comp()->mem();
+    addOperation(b, new (mem) Op_Switch(MEM_PASSLOC(mem), this, b, aSwitch, bldr->selector(), bldr->defaultBuilder(), bldr->casesArray()));
+}
+
 
 
 //

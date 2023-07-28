@@ -378,6 +378,14 @@ JBMethodBuilder::EntryPoint(Builder *entryBuilder) {
 }
 
 void
+JBMethodBuilder::AppendBuilder(Location *loc, Builder *b, Builder *toAppend) {
+    TR::IlBuilder *omr_b = map(b);
+    TR::IlBuilder *omr_toAppend = map(toAppend);
+    omr_b->setBCIndex(loc->bcIndex())->SetCurrentIlGenerator();
+    omr_b->AppendBuilder(omr_toAppend);
+}
+
+void
 JBMethodBuilder::Call(Location *loc, Builder *b, Value *result, String targetName, size_t numArgs, ValueIterator argIt) {
     TR::IlBuilder *omr_b = map(b);
     omr_b->setBCIndex(loc->bcIndex())->SetCurrentIlGenerator();
@@ -557,6 +565,23 @@ JBMethodBuilder::IfCmpUnsignedLessOrEqual(Location *loc, Builder *b, Builder *ta
 }
 
 void
+JBMethodBuilder::IfThen(Location *loc, Builder *b, Builder *thenPath, Value *condition) {
+    TR::IlBuilder *omr_b = map(b);
+    TR::IlBuilder *omr_thenPath = map(thenPath);
+    omr_b->setBCIndex(loc->bcIndex())->SetCurrentIlGenerator();
+    omr_b->IfThen(&omr_thenPath, map(condition));
+}
+
+void
+JBMethodBuilder::IfThenElse(Location *loc, Builder *b, Builder *thenPath, Builder *elsePath, Value *selector) {
+    TR::IlBuilder *omr_b = map(b);
+    TR::IlBuilder *omr_thenPath = map(thenPath);
+    TR::IlBuilder *omr_elsePath = map(elsePath);
+    omr_b->setBCIndex(loc->bcIndex())->SetCurrentIlGenerator();
+    omr_b->IfThenElse(&omr_thenPath, &omr_elsePath, map(selector));
+}
+
+void
 JBMethodBuilder::Return(Location *loc, Builder *b) {
     TR::IlBuilder *omr_b = map(b);
     omr_b->setBCIndex(loc->bcIndex())->SetCurrentIlGenerator();
@@ -571,6 +596,21 @@ JBMethodBuilder::Return(Location *loc, Builder *b, Value *v) {
         omr_b->Return(map(v));
     else
         omr_b->Return();
+}
+
+void
+JBMethodBuilder::Switch(Location *loc, Builder *b, Builder *defaultBuilder, Value *selector, int32_t numCases, Literal **lvs, Builder **caseBuilders, bool *fallThroughs) {
+    TR::IlBuilder *omr_b = map(b);
+    omr_b->setBCIndex(loc->bcIndex())->SetCurrentIlGenerator();
+    TR::IlBuilder::JBCase *cases[numCases];
+    TR::IlBuilder *builders[numCases];
+    int32_t cNum = 0;
+    for (int32_t cNum=0;cNum < numCases;cNum++) {
+        builders[cNum] = map(caseBuilders[cNum]);
+        cases[cNum] = omr_b->MakeCase(lvs[cNum]->value<int32_t>(), builders+cNum, fallThroughs[cNum]);
+    }
+    TR::IlBuilder *omr_defaultTarget = map(defaultBuilder);
+    omr_b->Switch(map(selector), &omr_defaultTarget, numCases, cases);
 }
 
 void

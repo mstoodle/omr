@@ -24,7 +24,6 @@
 //#include "Case.hpp"
 #include "Compilation.hpp"
 #include "Extension.hpp"
-#include "JB1MethodBuilder.hpp"
 #include "Literal.hpp"
 #include "Location.hpp"
 #include "Operation.hpp"
@@ -129,6 +128,11 @@ Operation::registerDefinition(Value *result) {
     result->addDefinition(this);
 }
 
+void
+Operation::captureBuilder(Builder *b) {
+    assert(!b->isBound());
+    b->setBound(this);
+}
 void
 Operation::logFull(TextLogger & lgr) const {
     lgr.indent() << _parent << "!o" << _id << " : ";
@@ -368,6 +372,22 @@ OperationB1R0V2::~OperationB1R0V2() {
 //
 // Core operations
 //
+
+INIT_JBALLOC_REUSECAT(Op_AppendBuilder, Operation)
+
+Op_AppendBuilder::~Op_AppendBuilder() {
+}
+
+Op_AppendBuilder::Op_AppendBuilder(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aAppendBuilder, Builder *b)
+    : OperationB1(MEM_PASSLOC(a), aAppendBuilder, ext, parent, b) {
+}
+
+Operation *
+Op_AppendBuilder::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
+    Allocator *mem = b->comp()->mem();
+    return new (mem) Op_AppendBuilder(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->builder());
+}
+
 
 INIT_JBALLOC_REUSECAT(Op_MergeDef, Operation)
 

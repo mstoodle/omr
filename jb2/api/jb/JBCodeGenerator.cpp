@@ -105,7 +105,7 @@ JBCodeGenerator::perform(Compilation *comp) {
 
     Allocator *mem = comp->compiler()->mem();
     EntryID eid = 0;
-    NativeEntry *entry = new (mem) NativeEntry(mem, comp, eid, entryPoint);
+    NativeEntry *entry = new (mem) NativeEntry(mem, eid, entryPoint);
     comp->scope<Scope>()->addEntryPoint(entry, eid);
 
     _compileReturnCode = comp->compiler()->CompileSuccessful;

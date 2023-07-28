@@ -62,9 +62,7 @@ class Value;
 // for a particular Extension) must be negotiated when registering CodeGenerator
 // objects against an Extension. An Extension is allowed to have multiple kinds
 // of registered CodeGenerator objects, but there can be only one CodeGenerator
-// object of a particular kind. For example, the Base extension may have both
-// JB1CodeGenerator and LLVMCodeGenerator objects registered, but it cannot
-// have two JB1CodeGenerator or two LLVMCodeGenerator objects registered.
+// object of a particular kind.
 // Fine-grained conflicts can be managed by creating a new kind of CodeGenerator
 // whose purpose is to decide, for a specific Operation, how to deal appropriately
 // with that Operation's multiple CodeGenerator objects. In the example above,

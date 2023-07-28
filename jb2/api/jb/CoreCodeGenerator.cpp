@@ -65,8 +65,12 @@ CoreJBCodeGenerator::registerBuilder(JBMethodBuilder *jbmb, Builder *b) {
 
 void
 CoreJBCodeGenerator::gencode(JBMethodBuilder *jbmb, Operation *op) {
-    assert(op->action() == _cx->aMergeDef);
-    jbmb->StoreOver(op->location(), op->parent(), op->result(), op->operand());
+    if (op->action() == _cx->aAppendBuilder)
+        jbmb->AppendBuilder(op->location(), op->parent(), op->builder());
+    else if (op->action() == _cx->aMergeDef)
+        jbmb->StoreOver(op->location(), op->parent(), op->result(), op->operand());
+    else
+        assert(0);
 }
 
 } // namespace JB

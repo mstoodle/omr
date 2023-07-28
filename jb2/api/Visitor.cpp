@@ -125,8 +125,9 @@ Visitor::visitOperations(Builder *b, BitVector & visited, BuilderList & worklist
 
         for (auto it = op->builders(); it.hasItem(); it++) {
             Builder * inner_b = it.item();
-            if (inner_b && !visited.getBit(inner_b->id()))
+            if (inner_b && !visited.getBit(inner_b->id())) {
                 worklist.push_front(inner_b);
+            }
         }
     }
 }

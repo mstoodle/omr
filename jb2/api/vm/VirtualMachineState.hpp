@@ -43,7 +43,7 @@ typedef uint64_t VirtualMachineStateID;
 const VirtualMachineStateID NoVirtualMachineStateID=0;
 
 class VirtualMachineState : public Extensible {
-    JBALLOC_NO_DESTRUCTOR_(VirtualMachineState)
+    JBALLOC_(VirtualMachineState)
 
 public:
     DYNAMIC_ALLOC_ONLY(VirtualMachineState, LOCATION, VMExtension *vmx, KINDTYPE(Extensible) kind)
@@ -52,7 +52,6 @@ public:
         , _createLocation(PASSLOC) {
 
     }
-    virtual ~VirtualMachineState() { }
 
     VirtualMachineStateID id() const { return _id; }
     CreateLocation createLocation() const { return _createLocation; }

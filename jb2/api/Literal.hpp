@@ -46,7 +46,7 @@ public:
     LiteralID id() const { return _id; }
     const Type *type() const { return _type; }
     template<typename T>
-    const T value() const { return *reinterpret_cast<T *>(_pValue); }
+    const T value() const { return *reinterpret_cast<const T *>(_pValue); }
     const LiteralBytes *value() const { return _pValue; }
     void log(TextLogger & lgr) const;
     bool operator==(Literal & other);

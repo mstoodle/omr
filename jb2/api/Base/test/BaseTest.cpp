@@ -128,11 +128,14 @@ protected:
     CoreExtension *cx = c.lookupExtension<CoreExtension>(); \
     Func::FunctionExtension *fx = c.loadExtension<Func::FunctionExtension>(LOC); \
     Base::BaseExtension *bx = c.loadExtension<Base::BaseExtension>(LOC); \
-    c.loadExtension<JB::JBExtension>(LOC);
+    JB::JBExtension *jx = c.loadExtension<JB::JBExtension>(LOC);
 
 #define LOGGING(c,cfg,wrt,DO_LOGGING) \
     TextLogger logger(std::cout, String("    ")); \
-    TextLogger *wrt = (DO_LOGGING) ? &logger : NULL;
+    TextLogger *wrt = (DO_LOGGING) ? &logger : NULL; \
+    if (DO_LOGGING) { \
+        c.config()->setTraceBuildIL(); \
+    }
     
 
 //    TextWriter *writer = c.textWriter(logger); \
@@ -934,6 +937,92 @@ TESTSUBTYPESINVALID(Address,Address,Float64);
 TESTSUBTYPESINVALID(Address,Float64,Address);
 TESTBADSUBTYPES(Float32,Float32,Int8,Int16,Int32,Int64,Float64)
 TESTBADSUBTYPES(Float64,Float64,Int8,Int16,Int32,Int64,Float32)
+
+// Test function that implements an IfThenElse without usint the Else
+#define IFTHENFUNCNAME(selectorType) selectorType ## _IfThenFunction
+
+#define IFTHENFUNC(selectorType) \
+    BASE_FUNC(IFTHENFUNCNAME(selectorType), "0", "IfThen.cpp", , b, \
+        { }, \
+        { ctx->DefineReturnType(_bx->Word); \
+          ctx->DefineParameter("selector", _bx->selectorType); }, \
+        { auto selectorSym=ctx->LookupLocal("selector"); \
+          Value * selector = _fx->Load(LOC, b, selectorSym); \
+          Base::IfThenElseBuilder bldr = _bx->IfThenElse(LOC, b, selector); { \
+              Builder *thenPath = bldr.thenPath(); \
+              _fx->Return(LOC, thenPath, _bx->One(LOC, thenPath, _bx->Word)); \
+          } \
+          _fx->Return(LOC, b, _bx->Zero(LOC, b, _bx->Word)); })
+
+#define TESTIFTHENTYPEFUNC(type,ctype) \
+    IFTHENFUNC(type) \
+    TEST(BaseExtension, create ## type ## IfThenFunction) { \
+        typedef size_t (FuncProto)(ctype); \
+        COMPILE_FUNC(IFTHENFUNCNAME(type), FuncProto, f, false); \
+        EXPECT_EQ(f(0), 0) << "IfThen(0) returns 0"; \
+        EXPECT_EQ(f(1), 1) << "IfThen(1) returns 1"; \
+        EXPECT_EQ(f(100), 1) << "IfThen(100) returns 1"; \
+        EXPECT_EQ(f(-15), 1) << "IfThen(-15) returns 1"; \
+        EXPECT_EQ(f(-127), 1) << "IfThen(-127) return 1"; \
+    }
+
+TESTIFTHENTYPEFUNC(Int8,int8_t)
+TESTIFTHENTYPEFUNC(Int16,int16_t)
+TESTIFTHENTYPEFUNC(Int32,int32_t)
+TESTIFTHENTYPEFUNC(Int64,int64_t)
+TESTIFTHENTYPEFUNC(Address,size_t)
+
+// Test function that implements an IfThenElse
+#define IFTHENELSEFUNCNAME(selectorType) selectorType ## _IfThenElseFunction
+
+#define ELSE
+
+#define IFTHENELSEFUNC(selectorType) \
+    BASE_FUNC(IFTHENELSEFUNCNAME(selectorType), "0", "IfThenElse.cpp", , b, \
+        { }, \
+        { ctx->DefineReturnType(_bx->Word); \
+          ctx->DefineParameter("selector", _bx->selectorType); }, \
+        { auto selectorSym=ctx->LookupLocal("selector"); \
+          Value * selector = _fx->Load(LOC, b, selectorSym); \
+          Base::IfThenElseBuilder bldr = _bx->IfThenElse(LOC, b, selector); { \
+              Builder *thenPath = bldr.thenPath(); \
+              _fx->Return(LOC, thenPath, _bx->One(LOC, thenPath, _bx->Word)); \
+          } ELSE { \
+              Builder *elsePath = bldr.elsePath(); \
+              _fx->Return(LOC, elsePath, _bx->Zero(LOC, elsePath, _bx->Word)); \
+          } \
+          size_t allOnes=~(size_t)0; \
+          LiteralBytes *p = reinterpret_cast<LiteralBytes *>(&allOnes); \
+          _fx->Return(LOC, b, _bx->Const(LOC, b, _bx->Word->literal(LOC, comp, p))); })
+
+#define TESTIFTHENELSETYPEFUNC(type,ctype) \
+    IFTHENELSEFUNC(type) \
+    TEST(BaseExtension, create ## type ## IfThenElseFunction) { \
+        typedef size_t (FuncProto)(ctype); \
+        COMPILE_FUNC(IFTHENELSEFUNCNAME(type), FuncProto, f, false); \
+        EXPECT_EQ(f(0), 0) << "IfThenElse(0) returns 0"; \
+        EXPECT_EQ(f(1), 1) << "IfThenElse(1) returns 1"; \
+        EXPECT_EQ(f(100), 1) << "IfThenElse(100) returns 1"; \
+        EXPECT_EQ(f(-15), 1) << "IfThenElse(-15) returns 1"; \
+        EXPECT_EQ(f(-127), 1) << "IfThenElse(-127) return 1"; \
+    }
+
+#define TESTIFTHENELSETYPEFUNC_Address \
+    IFTHENELSEFUNC(Address) \
+    TEST(BaseExtension, create ## Address ## IfThenElseFunction) { \
+        typedef size_t (FuncProto)(void *); \
+        COMPILE_FUNC(IFTHENELSEFUNCNAME(Address), FuncProto, f, false); \
+        EXPECT_EQ(f(0), 0) << "IfThenElse(0) returns 0"; \
+        EXPECT_EQ(f((void *)1), 1) << "IfThenElse(1) returns 1"; \
+        EXPECT_EQ(f((void *)100), 1) << "IfThenElse(100) returns 1"; \
+        EXPECT_EQ(f((void *)0xdeadbeef), 1) << "IfThenElse(100) returns 1"; \
+    }
+
+TESTIFTHENELSETYPEFUNC(Int8,int8_t)
+TESTIFTHENELSETYPEFUNC(Int16,int16_t)
+TESTIFTHENELSETYPEFUNC(Int32,int32_t)
+TESTIFTHENELSETYPEFUNC(Int64,int64_t)
+TESTIFTHENELSETYPEFUNC_Address
 
 // Test function that implements a for loop
 #define FORLOOPFUNCNAME(iterType,initialType,finalType,bumpType,suffix) iterType ## _ ## initialType ## _ ## finalType ## _ ## bumpType ## _ForLoopFunction ## suffix

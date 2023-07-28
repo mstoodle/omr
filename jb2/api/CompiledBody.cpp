@@ -40,6 +40,14 @@ CompiledBody::CompiledBody(Allocator *a, CompileUnit *unit, Context *context, St
 
 CompiledBody::~CompiledBody() {
 
+    for (auto it=_nativeEntries.iterator(); it.hasItem(); it++) {
+        NativeEntry *ne = it.item();
+        delete ne;
+    }
+    for (auto it=_debugEntries.iterator(); it.hasItem(); it++) {
+        NativeEntry *ne = it.item();
+        delete ne;
+    }
 }
 
 } // namespace JitBuilder

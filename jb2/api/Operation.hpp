@@ -33,7 +33,6 @@ namespace JitBuilder {
 
 class Builder;
 class Extension;
-class JB1MethodBuilder;
 class Literal;
 class Location;
 class Operation;
@@ -126,6 +125,8 @@ protected:
     Operation * setLocation(Location *location);
     Operation * setNext(Operation *next) { _next = next; return this; }
     Operation * setPrev(Operation *prev) { _prev = prev; return this; }
+
+    void captureBuilder(Builder *b);
 
     void registerDefinition(Value *result);
 
@@ -649,6 +650,18 @@ class OperationB1R0V2 : public OperationR0V2 {
 // Core operations
 //
 
+class Op_AppendBuilder : public OperationB1 {
+    JBALLOC_(Op_AppendBuilder)
+
+    friend class CoreExtension;
+
+public:
+    virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
+
+protected:
+    Op_AppendBuilder(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aAppendBuilder, Builder *b);
+};
+
 class Op_MergeDef : public OperationR1V1 {
     JBALLOC_(Op_MergeDef)
 
@@ -656,7 +669,6 @@ class Op_MergeDef : public OperationR1V1 {
 
 public:
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-    //virtual void jbgen(JB1MethodBuilder *j1mb) const;
 
 protected:
     Op_MergeDef(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aMergeDef, Value *existingDef, Value *newDef);

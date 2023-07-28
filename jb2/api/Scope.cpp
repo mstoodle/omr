@@ -90,7 +90,18 @@ Scope::Scope(Allocator *a, ScopeKind kind, Extension *ext, Scope *parent, String
 }
 
 Scope::~Scope() {
-
+    for (auto it = _entries.iterator();it.hasItem();it++) {
+        List<EntryPoint *> *list = it.item();
+        if (list != NULL) {
+            for (auto it2 = list->iterator();it2.hasItem();it2++) {
+                EntryPoint *ep = it2.item();
+                // NativeEntry is transferred to CompiledBody
+                if (!ep->isKind<NativeEntry>())
+                    delete ep;
+            }
+            delete list;
+        }
+    }
 }
 
 void

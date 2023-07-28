@@ -70,7 +70,7 @@ Function::buildContext(LOCATION, Compilation *comp, Scope *scope, Context *ctx) 
 bool
 Function::buildIL(LOCATION, Compilation *comp, Scope *scope, Context *ctx) {
     Builder *entryBuilder = comp->unit()->EntryBuilder(PASSLOC, comp, scope);
-    BuilderEntry *entry = new (comp->mem()) BuilderEntry(comp->mem(), comp, 0, entryBuilder);
+    BuilderEntry *entry = new (comp->mem()) BuilderEntry(comp->mem(), 0, entryBuilder);
     scope->addEntryPoint(entry);
 
     FunctionCompilation *fcomp = comp->refine<FunctionCompilation>();
