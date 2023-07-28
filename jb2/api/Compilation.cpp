@@ -77,6 +77,10 @@ Compilation::~Compilation() {
     if (_myConfig && _config != NULL)
         delete _config;
     // scope and context are typically not dynamically allocated
+    if (_scope->allocator())
+        delete _scope;
+    if (_context->allocator())
+        delete _context;
 }
 
 void

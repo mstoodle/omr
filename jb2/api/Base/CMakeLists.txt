@@ -38,10 +38,6 @@ add_library(jb2base SHARED
 	MemoryOperations.cpp
 )
 
-#	Debugger.cpp
-
 target_include_directories(jb2base PRIVATE ${JB2_CORE_DIR})
-
-target_link_libraries(jb2base jb2func jb2core jb2)
 
 add_subdirectory(test)

@@ -26,15 +26,16 @@ omr_assert(
 )
 
 add_library(jb2jb SHARED
-    BaseCodeGenerator.cpp
-    CoreCodeGenerator.cpp
-    FuncCodeGenerator.cpp
+	BaseCodeGenerator.cpp
+	CoreCodeGenerator.cpp
+	FuncCodeGenerator.cpp
 	JBExtension.cpp
-    VMCodeGenerator.cpp
+	VMCodeGenerator.cpp
 )
 
 target_include_directories(jb2jb PRIVATE ${JB2_CORE_DIR})
 
-target_link_libraries(jb2jb jb2base jb2core jb2func jb2vm jb2)
+# Need this so JB can identify VM extension
+target_link_libraries(jb2jb jb2vm jb2)
 
 #add_subdirectory(test)
