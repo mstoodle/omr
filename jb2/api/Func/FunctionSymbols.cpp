@@ -50,24 +50,75 @@ FunctionSymbol::FunctionSymbol(Allocator *a, SymbolKind kind, Extension *ext, co
 
 }
 
+FunctionSymbol::FunctionSymbol(Allocator *a, const FunctionSymbol *source, IRCloner *cloner)
+    : Symbol(a, source, cloner)
+    , _fileName(source->_fileName)
+    , _lineNumber(source->_lineNumber)
+    , _entryPoint(source->_entryPoint) {
+
+}
+
+Symbol *
+FunctionSymbol::clone(Allocator *mem, IRCloner *cloner) const {
+    assert(_kind == KIND(Symbol));
+    return new (mem) FunctionSymbol(mem, this, cloner);
+}
+
 const FunctionType *
 FunctionSymbol::functionType() const {
     return static_cast<const FunctionType *>(_type);
 }
 
+void
+FunctionSymbol::logDetails(TextLogger & lgr) const {
+   lgr << "Function";
+}
 
 INIT_JBALLOC_REUSECAT(LocalSymbol, Symbol)
 SUBCLASS_KINDSERVICE_IMPL(LocalSymbol, "LocalSymbol", Symbol, Symbol);
+
+LocalSymbol::LocalSymbol(Allocator *a, const LocalSymbol *source, IRCloner *cloner)
+    : Symbol(a, source, cloner) {
+
+}
+
+Symbol *
+LocalSymbol::clone(Allocator *mem, IRCloner *cloner) const {
+    assert(_kind == KIND(Symbol));
+    return new (mem) LocalSymbol(mem, this, cloner);
+}
 
 LocalSymbol::~LocalSymbol() {
 
 }
 
+void
+LocalSymbol::logDetails(TextLogger & lgr) const {
+   lgr << "Local";
+}
+
 INIT_JBALLOC_REUSECAT(ParameterSymbol, Symbol)
 SUBCLASS_KINDSERVICE_IMPL(ParameterSymbol, "ParameterSymbol", LocalSymbol, Symbol);
 
+ParameterSymbol::ParameterSymbol(Allocator *a, const ParameterSymbol *source, IRCloner *cloner)
+    : LocalSymbol(a, source, cloner)
+    , _index(source->_index) {
+
+}
+
+Symbol *
+ParameterSymbol::clone(Allocator *mem, IRCloner *cloner) const {
+    assert(_kind == KIND(Symbol));
+    return new (mem) ParameterSymbol(mem, this, cloner);
+}
+
 ParameterSymbol::~ParameterSymbol() {
 
+}
+
+void
+ParameterSymbol::logDetails(TextLogger & lgr) const {
+   lgr << "ParameterLocal";
 }
 
 

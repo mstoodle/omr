@@ -25,6 +25,7 @@
 #include "Compiler.hpp"
 #include "CoreExtension.hpp"
 #include "Dispatcher.hpp"
+#include "IR.hpp"
 #include "Location.hpp"
 #include "Operation.hpp"
 #include "SemanticVersion.hpp"
@@ -66,13 +67,13 @@ CoreExtension::~CoreExtension() {
 
 void
 CoreExtension::AppendBuilder(LOCATION, Builder *parent, Builder *b) {
-    Allocator *mem = parent->comp()->mem();
+    Allocator *mem = parent->ir()->mem();
     addOperation(b, new (mem) Op_AppendBuilder(MEM_PASSLOC(mem), this, b, this->aAppendBuilder, b));
 }
 
 void
 CoreExtension::MergeDef(LOCATION, Builder *b, Value *existingDef, Value *newDef) {
-    Allocator *mem = b->comp()->mem();
+    Allocator *mem = b->ir()->mem();
     addOperation(b, new (mem) Op_MergeDef(MEM_PASSLOC(mem), this, b, this->aMergeDef, existingDef, newDef));
 }
 

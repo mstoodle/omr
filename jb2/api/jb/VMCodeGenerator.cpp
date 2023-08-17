@@ -51,7 +51,7 @@ VMJBCodeGenerator::~VMJBCodeGenerator() {
 
 bool
 VMJBCodeGenerator::registerBuilder(JBMethodBuilder *jbmb, Builder *b) {
-    if (b->isKind<VM::BytecodeBuilder>()) {
+    if (b->isKind<VM::BytecodeBuilder>()) { // maybe assert?
         VM::BytecodeBuilder *bcb = b->refine<VM::BytecodeBuilder>();
         jbmb->createBytecodeBuilder(b, bcb->bcIndex(), bcb->name());
         return true;

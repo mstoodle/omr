@@ -29,10 +29,11 @@
 namespace OMR {
 namespace JitBuilder { 
 
-class Compilation;
 class Context;
 class Extension;
 class FunctionBuilder;
+class IR;
+class IRCloner;
 class Location;
 class Operation;
 class OperationBuilder;
@@ -49,39 +50,15 @@ class Builder : public Extensible {
 
     friend class CoreExtension;
     friend class Extension;
+    friend class IRCloner;
     friend class Operation;
     friend class OperationBuilder;
     friend class Transformer;
 
 public:
-    Compilation *comp() const { return _comp; }
-
-    #if 0
-    Operation * appendClone(Operation *op);
-    Operation * appendClone(Operation *op, OperationCloner *cloner);
-
-    Operation * Append(OperationBuilder *opBuilder);
-    Value * Append(OperationBuilder *opBuilder, Literal *l);
-    Value * Append(OperationBuilder *opBuilder, Value *v);
-    Value * Append(OperationBuilder *opBuilder, Value *left, Value *right);
-
-    Value * CoercePointer(Type * t, Value * v);
-
-    void AppendBuilder(Builder * b);
-    void IfThenElse(Builder * thenB, Value * cond);
-    void IfThenElse(Builder * thenB, Builder * elseB, Value * cond);
-    void ForLoopUp(String loopVar, Builder * body, Value * initial, Value * end, Value * bump);
-    void ForLoopUp(LocalSymbol *loopSym, Builder * body, Value * initial, Value * end, Value * bump);
-    void ForLoop(bool countsUp, String loopVar, Builder * body, Builder * loopContinue, Builder * loopBreak, Value * initial, Value * end, Value * bump);
-    void ForLoop(bool countsUp, LocalSymbol *loopSym, Builder * body, Builder * loopContinue, Builder * loopBreak, Value * initial, Value * end, Value * bump);
-    void Switch(Value * selector, Builder * defaultBuilder, int numCases, Case ** cases);
-
-    Value * CreateLocalArray(int32_t numElements, Type *elementType);
-    Value * CreateLocalStruct(Type *elementType);
-    #endif
-
     int64_t id() const                                  { return _id; }
     String name() const                                 { return _name; }
+    IR *ir() const                                      { return _ir; }
     Extension *ext() const                              { return _ext; }
 
     TypeDictionary * dict() const;
@@ -123,10 +100,14 @@ public:
     virtual void logSuffix(TextLogger & log) const;
 
 protected:
-    DYNAMIC_ALLOC_ONLY(Builder, Extension *ext, KINDTYPE(Extensible) kind, Compilation *comp, Scope *scope=NULL, String name="");
-    DYNAMIC_ALLOC_ONLY(Builder, Extension *ext, Compilation *comp, Scope *scope=NULL, String name="");
+    DYNAMIC_ALLOC_ONLY(Builder, Extension *ext, KINDTYPE(Extensible) kind, IR *ir, Scope *scope=NULL, String name="");
+    DYNAMIC_ALLOC_ONLY(Builder, Extension *ext, IR *ir, Scope *scope=NULL, String name="");
     DYNAMIC_ALLOC_ONLY(Builder, Extension *ext, Builder *parent, Scope *scope=NULL, String name="");
     DYNAMIC_ALLOC_ONLY(Builder, Extension *ext, Builder *parent, Operation *boundToOp, String name="");
+
+    Builder(Allocator *a, const Builder *source, IRCloner *cloner);
+
+    virtual Builder *clone(Allocator *mem, IRCloner *cloner) const;
 
     void setParent(Builder *parent);
     void addChild(Builder *child);
@@ -135,7 +116,7 @@ protected:
 
     BuilderID            _id;
     Extension          * _ext;
-    Compilation        * _comp;
+    IR                 * _ir;
     String               _name;
     Builder            * _parent;
     List<Builder *>      _children;

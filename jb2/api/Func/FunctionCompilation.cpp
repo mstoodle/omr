@@ -38,13 +38,13 @@ SUBCLASS_KINDSERVICE_IMPL(FunctionCompilation, "FunctionCompilation", Compilatio
 FunctionCompilation::FunctionCompilation(Allocator *a, Extension *ext, Function *func, StrategyID strategy, Config *localConfig)
     : Compilation(a, ext, getExtensibleClassKind(), func, strategy, localConfig) {
 
-    notifyCreation(ext, KIND(Extensible));
+    notifyCreation(KIND(Extensible));
 }
 
 FunctionCompilation::FunctionCompilation(Allocator *a, Extension *ext, KINDTYPE(Extensible) kind, Function *func, StrategyID strategy, Config *localConfig)
     : Compilation(a, ext, kind, func, strategy, localConfig) {
 
-    notifyCreation(ext, KIND(Extensible));
+    notifyCreation(KIND(Extensible));
 }
 
 FunctionCompilation::~FunctionCompilation() {
@@ -58,11 +58,28 @@ FunctionCompilation::func() const {
 
 void
 FunctionCompilation::addInitialBuildersToWorklist(BuilderList & worklist) {
-    Scope *scp = scope<Scope>();
-    for (int i=0;i < scp->numEntryPoints<BuilderEntry>();i++) {
-       Builder *b = scp->entryPoint<BuilderEntry>(i)->builder();
-       worklist.push_back(b);
+    Scope *scope = this->scope<FunctionScope>();
+    for (int i=0;i < scope->numEntryPoints<BuilderEntry>();i++) {
+        Builder *b = scope->entryPoint<BuilderEntry>(i)->builder();
+        worklist.push_back(b);
     }
+}
+
+bool
+FunctionCompilation::prepareIL(LOCATION) {
+    _ir = new (_mem) IR(_mem, _unit);
+    Allocator *irmem = _ir->mem();
+
+    // ownership of the Context and Scope objects are passed to ir during construction
+    FunctionContext *context = new (irmem) FunctionContext(irmem, ext(), _ir, "Function Context");
+    FunctionScope *scope = new (irmem) FunctionScope(irmem, ext(), _ir, "Function Scope");
+
+    if (func()->buildContext(PASSLOC, this, scope, context) == false)
+        return false;
+
+    bool rc = func()->buildIL(PASSLOC, this, scope, context);
+
+    return true;
 }
 
 
@@ -95,21 +112,21 @@ void
 FunctionCompilation::log(TextLogger &lgr) const {
     lgr << "Function" << lgr.endl();
 
-    TypeDictionary *td = typedict();
+    TypeDictionary *td = ir()->typedict();
     td->log(lgr);
 
-    SymbolDictionary *sd = symdict();
+    SymbolDictionary *sd = ir()->symdict();
     sd->log(lgr);
 
-    LiteralDictionary *ld = litdict();
+    LiteralDictionary *ld = ir()->litdict();
     ld->log(lgr);
 
-    lgr.indent() << "[ Function" /*<< _id*/ << lgr.endl();
+    lgr.indent() << "[ CompileUnit u" << unit()->id() << " Function" << lgr.endl();
     lgr.indentIn();
 
     FunctionContext *fc = context<FunctionContext>();
     lgr.indent() << "[ name " << func()->name() << " ]" << lgr.endl();
-    lgr.indent() << "[ origin " << func()->createLoc()->to_string() << " ]" << lgr.endl();
+    lgr.indent() << "[ creator " << func()->createLoc()->to_string() << " ]" << lgr.endl();
     lgr.indent() << "[ returnType " << fc->returnType() << "]" << lgr.endl();
     for (auto paramIt = fc->parameters();paramIt.hasItem(); paramIt++) {
         const ParameterSymbol *parameter = paramIt.item();
@@ -263,6 +280,7 @@ FunctionCompilation::replaceTypes(TypeReplacer *repl) {
                 assert(newType->isKind<FunctionType>() && newType != type);
                 const FunctionType *newFnType = newType->refine<FunctionType>();
                 FunctionSymbol *newSym = fc->DefineFunction(LOC,
+                                                            this,
                                                             function->name(), // maybe not right
                                                             function->fileName(), // not quite right
                                                             function->lineNumber(), // not quite right

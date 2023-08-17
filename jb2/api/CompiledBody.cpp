@@ -29,17 +29,17 @@ namespace OMR {
 namespace JitBuilder {
 
 
-CompiledBody::CompiledBody(Allocator *a, CompileUnit *unit, Context *context, StrategyID strategy)
+CompiledBody::CompiledBody(Allocator *a, CompileUnit *unit, StrategyID strategy)
     : Allocatable(a)
     , _id(unit->compiler()->getCompiledBodyID())
     , _unit(unit)
     , _strategy(strategy)
+    , _rc(unit->compiler()->CompileFail_CompilerError) // default
     , _nativeEntries(NULL, a)
     , _debugEntries(NULL, a) {
 }
 
 CompiledBody::~CompiledBody() {
-
     for (auto it=_nativeEntries.iterator(); it.hasItem(); it++) {
         NativeEntry *ne = it.item();
         delete ne;

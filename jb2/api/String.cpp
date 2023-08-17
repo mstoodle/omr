@@ -58,7 +58,6 @@ String::String(const String & s)
 }
 
 String::~String() {
-
 }
 
 void

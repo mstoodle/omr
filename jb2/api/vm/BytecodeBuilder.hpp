@@ -40,7 +40,7 @@ class BytecodeBuilder: public Builder {
     friend VMExtension;
 
 public:
-    DYNAMIC_ALLOC_ONLY(BytecodeBuilder, VMExtension *vmx, Compilation *comp, Scope *scope, int32_t bcIndex, int32_t bcLength=1, String name="");
+    DYNAMIC_ALLOC_ONLY(BytecodeBuilder, VMExtension *vmx, IR *ir, Scope *scope, int32_t bcIndex, int32_t bcLength=1, String name="");
     int32_t bcIndex() const { return _bcIndex; }
     int32_t bcLength() const { return _bcLength; }
 
@@ -54,6 +54,10 @@ public:
     virtual void logProperties(TextLogger & lgr);
 
 protected:
+    BytecodeBuilder(Allocator *a, const BytecodeBuilder *source, IRCloner *cloner);
+
+    virtual Builder *clone(Allocator *mem, IRCloner *cloner) const;
+
     // no longer need clients to call these; they are called directly by control flow operations created by VMExtension
     VMExtension *vmx() const;
 

@@ -89,7 +89,7 @@ public:
     };
     #endif
     
-    Literal *literal(LOCATION, Compilation *comp, void * functionValue);
+    //virtual Literal *literal(LOCATION, IR *ir, void * functionValue);
     virtual String to_string(bool useHeader=false) const;
 
     const Type *returnType() const { return _returnType; }
@@ -107,6 +107,9 @@ public:
 
 protected:
     DYNAMIC_ALLOC_ONLY(FunctionType, LOCATION, Extension *ext, TypeDictionary *dict, const Type *returnType, int32_t numParms, const Type ** parmTypes);
+    DYNAMIC_ALLOC_ONLY(FunctionType, const FunctionType *source, IRCloner *cloner);
+
+    virtual const Type *clone(Allocator *mem, IRCloner *cloner) const;
 
     const Type *_returnType;
     int32_t _numParms;

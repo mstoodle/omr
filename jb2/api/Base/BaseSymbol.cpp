@@ -44,6 +44,20 @@ FieldSymbol::FieldSymbol(Allocator *a, SymbolKind kind, Extension *ext, String n
 
 }
 
+// only used by clone()
+FieldSymbol::FieldSymbol(Allocator *mem, const FieldSymbol *source, IRCloner *cloner)
+    : Symbol(mem, source, cloner)
+    , _structType(cloner->clonedType(source->_structType)->refine<StructType>())
+    , _fieldType(cloner->clonedType(source->_fieldType)->refine<FieldType>()) {
+
+}
+
+Symbol *
+FieldSymbol::clone(Allocator *mem, IRCloner *cloner) const {
+    assert(_kind == KIND(Symbol));
+    return new (mem) FieldSymbol(mem, this, cloner);
+}
+
 FieldSymbol::~FieldSymbol() {
 
 }

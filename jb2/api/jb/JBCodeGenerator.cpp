@@ -59,7 +59,7 @@ JBCodeGenerator::perform(Compilation *comp) {
 
             JBMethodBuilder *jbmb = cg->jbmb();
             jbmb->setMethodBuilder(this);
-            jbmb->registerTypes(_comp->typedict());
+            jbmb->registerTypes(_comp->ir()->typedict());
             comp->ext()->extendedPass<JBCodeGenerator>()->setupbody(jbmb, comp);
         }
 
@@ -105,7 +105,7 @@ JBCodeGenerator::perform(Compilation *comp) {
 
     Allocator *mem = comp->compiler()->mem();
     EntryID eid = 0;
-    NativeEntry *entry = new (mem) NativeEntry(mem, eid, entryPoint);
+    NativeEntry *entry = new (mem) NativeEntry(mem, comp->ir(), eid, entryPoint);
     comp->scope<Scope>()->addEntryPoint(entry, eid);
 
     _compileReturnCode = comp->compiler()->CompileSuccessful;

@@ -26,6 +26,7 @@
 #include "Compiler.hpp"
 #include "Dispatcher.hpp"
 #include "Extension.hpp"
+#include "IR.hpp"
 #include "Location.hpp"
 #include "Operation.hpp"
 #include "SemanticVersion.hpp"
@@ -83,7 +84,7 @@ Extension::addPass(Pass *pass) {
 }
 
 Value *
-Extension::createValue(const Builder *parent, const Type *type) {
+Extension::createValue(Builder *parent, const Type *type) {
     return Value::create(parent, type);
 }
 
@@ -92,9 +93,9 @@ Extension::addOperation(Builder *b, Operation *op) {
     b->add(op);
 }
 
-Builder *
-Extension::internalRegisterBuilder(Compilation *comp, Builder *b) {
-    return comp->registerBuilder(b);
+void
+Extension::registerBuilder(IR *ir, Builder *b) {
+    return ir->registerBuilder(b);
 }
 
 void
@@ -109,12 +110,12 @@ Extension::registerForExtensible(ExtensibleKind kind, Extension *ext) {
 
 void
 Extension::setContext(Compilation *comp, Context *context) {
-    comp->setContext(context);
+    comp->ir()->setContext(context);
 }
 
 void
 Extension::setScope(Compilation *comp, Scope *scope) {
-    comp->setScope(scope);
+    comp->ir()->setScope(scope);
 }
 
 void
@@ -128,50 +129,57 @@ Extension::setLogger(Compilation *comp, TextLogger *logger) {
 
 Builder *
 Extension::BoundBuilder(LOCATION, Builder *parent, Operation *parentOp, String name) {
-    Compilation *comp = parent->comp();
-    Allocator *mem = comp->mem();
-    return this->registerBuilder<Builder>(comp, new (mem) Builder(mem, this, parent, parentOp, name));
+    IR *ir = parent->ir();
+    Allocator *mem = ir->mem();
+    Builder *b = new (mem) Builder(mem, this, parent, parentOp, name);
+    this->registerBuilder(ir, b);
+    return b;
 }
 
 Builder *
-Extension::EntryBuilder(LOCATION, Compilation *comp, Scope *scope, String name) {
-    Allocator *mem = comp->mem();
-    return this->registerBuilder<Builder>(comp, new (mem) Builder(mem, this, comp, scope, name));
+Extension::EntryBuilder(LOCATION, IR *ir, Scope *scope, String name) {
+    Allocator *mem = ir->mem();
+    Builder *b = new (mem) Builder(mem, this, ir, scope, name);
+    this->registerBuilder(ir, b);
+    return b;
 }
 
 Builder *
-Extension::ExitBuilder(LOCATION, Compilation *comp, Scope *scope, String name) {
-    Allocator *mem = comp->mem();
-    return this->registerBuilder<Builder>(comp, new (mem) Builder(mem, this, comp, scope, name));
+Extension::ExitBuilder(LOCATION, IR *ir, Scope *scope, String name) {
+    Allocator *mem = ir->mem();
+    Builder *b = new (mem) Builder(mem, this, ir, scope, name);
+    this->registerBuilder(ir, b);
+    return b;
 }
 
 Builder *
 Extension::OrphanBuilder(LOCATION, Builder *parent, Scope *scope, String name) {
-    Compilation *comp = parent->comp();
-    Allocator *mem = comp->mem();
-    return this->registerBuilder<Builder>(comp, new (mem) Builder(mem, this, parent, scope, name));
+    Allocator *mem = parent->ir()->mem();
+    Builder *b = new (mem) Builder(mem, this, parent, scope, name);
+    this->registerBuilder(parent->ir(), b);
+    return b;
 }
 
 Location *
 Extension::SourceLocation(LOCATION, Builder *b, String func) {
-    Allocator *mem = b->comp()->mem();
-    Location *loc = new (mem) Location(mem, b->comp(), func, "");
+    Allocator *mem = b->ir()->mem();
+    Location *loc = new (mem) Location(mem, b->ir(), func, "");
     b->setLocation(loc);
     return loc;
 }
 
 Location *
 Extension::SourceLocation(LOCATION, Builder *b, String func, String lineNumber) {
-    Allocator *mem = b->comp()->mem();
-    Location *loc = new (mem) Location(mem, b->comp(), func, lineNumber);
+    Allocator *mem = b->ir()->mem();
+    Location *loc = new (mem) Location(mem, b->ir(), func, lineNumber);
     b->setLocation(loc);
     return loc;
 }
 
 Location *
 Extension::SourceLocation(LOCATION, Builder *b, String func, String lineNumber, int32_t bcIndex) {
-    Allocator *mem = b->comp()->mem();
-    Location *loc = new (mem) Location(mem, b->comp(), func, lineNumber, bcIndex);
+    Allocator *mem = b->ir()->mem();
+    Location *loc = new (mem) Location(mem, b->ir(), func, lineNumber, bcIndex);
     b->setLocation(loc);
     return loc;
 }

@@ -73,6 +73,20 @@ VirtualMachineRegister::VirtualMachineRegister(MEM_LOCATION(a),
 
     }
 
+VirtualMachineRegister::VirtualMachineRegister(Allocator *a, const VirtualMachineRegister *source, IRCloner *cloner)
+        : VirtualMachineState(a, source, cloner)
+        , _name(source->_name)
+        , _comp(source->_comp)
+        , _addressOfRegister(cloner->clonedValue(source->_addressOfRegister))
+        , _pRegisterType(cloner->clonedType(source->_pRegisterType)->refine<Base::PointerType>()) {
+
+    }
+
+VirtualMachineState *
+VirtualMachineRegister::clone(Allocator *mem, IRCloner *cloner) const {
+    return new (mem) VirtualMachineRegister(mem, this, cloner);
+}
+
 //
 // VirtualMachineState API
 //
@@ -129,7 +143,7 @@ VirtualMachineRegister::Adjust(LOCATION, Builder *b, Value *amount) {
 void
 VirtualMachineRegister::Adjust(LOCATION, Builder *b, size_t amount) {
     Base::BaseExtension *bx = this->bx();
-    Literal *amountLiteral = bx->Word->literal(PASSLOC, b->comp(), reinterpret_cast<LiteralBytes *>(&amount));
+    Literal *amountLiteral = bx->Word->literal(PASSLOC, b->ir(), reinterpret_cast<LiteralBytes *>(&amount));
     Value *amountValue = bx->ConvertTo(LOC, b, _integerTypeForAdjustments, bx->Const(PASSLOC, b, amountLiteral));
     Adjust(PASSLOC, b, amountValue);
 }

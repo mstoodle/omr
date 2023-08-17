@@ -32,6 +32,8 @@ class Compiler;
 class DebugDictionary;
 class DynamicType;
 class Extension;
+class IR;
+class IRCloner;
 class OperationBuilder;
 
 class TypeDictionary : public Allocatable {
@@ -39,6 +41,8 @@ class TypeDictionary : public Allocatable {
 
     friend class DynamicType;
     friend class Extension;
+    friend class IR;
+    friend class IRCloner;
     friend class OperationBuilder;
     friend class Type;
 
@@ -54,7 +58,7 @@ public:
     TypeListIterator typesIterator() const { return _types.iterator(); }
     TypeListIterator modifiableTypesIterator() { return _types.iterator(true, false, false); }
 
-    const Type *LookupType(uint64_t id);
+    const Type *LookupType(uint64_t id) const;
     void RemoveType(const Type *type);
     TypeID numTypes() const { return _nextTypeID; }
 
@@ -68,8 +72,11 @@ public:
     void registerType(const Type *type);
 
 protected:
+    TypeDictionary(Allocator *a, const TypeDictionary *source, IRCloner *cloner);
+
     void internalRegisterType(const Type *type);
     TypeID getTypeID() { return _nextTypeID++; }
+    virtual TypeDictionary *clone(Allocator *mem, IRCloner *cloner) const;
 
     TypeDictionaryID _id;
     String _name;

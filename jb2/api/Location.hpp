@@ -29,12 +29,18 @@ namespace OMR {
 namespace JitBuilder {
 
 class Compilation;
+class IR;
+class IRCloner;
 
 class Location : public Allocatable {
     JBALLOC_(Location)
+
+    friend class IR;
+    friend class IRCloner;
+
 public:
-    DYNAMIC_ALLOC_ONLY(Location, Compilation *comp, String fileName, String lineNumber);
-    DYNAMIC_ALLOC_ONLY(Location, Compilation *comp, String fileName, String lineNumber, int32_t bcIndex);
+    DYNAMIC_ALLOC_ONLY(Location, IR *ir, String fileName, String lineNumber);
+    DYNAMIC_ALLOC_ONLY(Location, IR *ir, String fileName, String lineNumber, int32_t bcIndex);
 
     virtual size_t size()          { return sizeof(Location); }
     LocationID id() const          { return _id; }
@@ -43,8 +49,12 @@ public:
     String lineNumber() const      { return _lineNumber; }
 
 protected:
+    Location(Allocator *a, const Location *source, IRCloner *cloner);
+
+    virtual Location *clone(Allocator *mem, IRCloner *cloner) const;
+
     LocationID    _id;
-    Compilation * _comp;
+    IR * _ir;
     String   _fileName;
     String   _lineNumber;
     ByteCodeIndex _bcIndex;

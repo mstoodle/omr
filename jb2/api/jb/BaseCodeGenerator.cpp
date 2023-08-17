@@ -330,7 +330,7 @@ void
 BaseJBCodeGenerator::gencodeSwitch(JBMethodBuilder *jbmb, Operation *op) {
     assert(op->action() == _bx->aSwitch);
     Base::Op_Switch *opSwitch = static_cast<Base::Op_Switch *>(op);
-    Allocator *mem = op->parent()->comp()->mem();
+    Allocator *mem = op->parent()->ir()->mem();
     int numCases = opSwitch->numCases();
     Literal **lvs = new (mem) Literal *[numCases];
     Builder **builders = new (mem) Builder *[numCases];

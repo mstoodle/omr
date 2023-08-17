@@ -117,6 +117,9 @@ protected:
      */
     VirtualMachineRegister(MEM_LOCATION(a), VMExtension *vmx, String name, Compilation * comp, KINDTYPE(Extensible) kind);
 
+    VirtualMachineRegister(Allocator *a, const VirtualMachineRegister *source, IRCloner *cloner);
+    virtual VirtualMachineState *clone(Allocator *mem, IRCloner *cloner) const;
+
     String _name;
     Compilation *_comp;
     Func::LocalSymbol * _local;

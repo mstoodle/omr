@@ -33,6 +33,7 @@ class Compiler;
 class DebugDictionary;
 class DynamicType;
 class Extension;
+class IR;
 class OperationBuilder;
 class TextLogger;
 
@@ -44,6 +45,8 @@ class LiteralDictionary : public Allocatable {
     friend class DebugDictionary;
     friend class DynamicType;
     friend class Extension;
+    friend class IR;
+    friend class IRCloner;
     friend class Literal;
     friend class OperationBuilder;
 
@@ -65,9 +68,12 @@ public:
     void log(TextLogger &lgr);
 
 protected:
+    LiteralDictionary(Allocator *a, const LiteralDictionary *source, IRCloner *cloner);
+
     LiteralID getLiteralID() { return _nextLiteralID++; }
     void addNewLiteral(Literal *literal);
     Literal *registerLiteral(LOCATION, const Type *type, const LiteralBytes *value);
+    virtual LiteralDictionary *clone(Allocator *mem, IRCloner *cloner) const;
 
     LiteralDictionaryID _id;
     Compiler * _compiler;

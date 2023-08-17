@@ -21,7 +21,8 @@
 
 #include "AllocationCategoryClasses.hpp"
 #include "Builder.hpp"
-#include "Compilation.hpp"
+#include "IR.hpp"
+#include "IRCloner.hpp"
 #include "Location.hpp"
 #include "Operation.hpp"
 #include "Scope.hpp"
@@ -34,67 +35,63 @@ namespace JitBuilder {
 INIT_JBALLOC_ON(Builder, IL);
 SUBCLASS_KINDSERVICE_IMPL(Builder, "Builder", Extensible, Extensible);
 
-Builder::Builder(Allocator *a, Extension *ext, KINDTYPE(Extensible) kind, Compilation *comp, Scope *scope, String name)
+Builder::Builder(Allocator *a, Extension *ext, KINDTYPE(Extensible) kind, IR *ir, Scope *scope, String name)
     : Extensible(a, ext, kind)
-    , _id(comp->getBuilderID())
+    , _id(ir->getBuilderID())
     , _ext(ext)
-    , _comp(comp)
+    , _ir(ir)
     , _name(name)
     , _parent(NULL)
-    , _children(NULL, comp->mem())
+    , _children(NULL, ir->mem())
     , _scope(scope)
     , _successor(NULL)
-    , _operations(NULL, comp->mem())
+    , _operations(NULL, ir->mem())
     , _operationCount(0)
     , _firstOperation(NULL)
     , _lastOperation(NULL)
     , _myLocation(true)
-    , _currentLocation(new (comp->mem()) Location(comp->mem(), comp, "", "", 0) )
+    , _currentLocation(new (ir->mem()) Location(ir->mem(), ir, "", "", 0) )
     , _boundToOperation(NULL)
     , _isTarget(false)
     , _isBound(false)
     , _controlReachesEnd(true) {
 
-    if (scope == NULL)
-        _scope = comp->scope<Scope>();
 }
 
-Builder::Builder(Allocator *a, Extension *ext, Compilation * comp, Scope *scope, String name)
+Builder::Builder(Allocator *a, Extension *ext, IR * ir, Scope *scope, String name)
     : Extensible(a, ext, CLASSKIND(Builder, Extensible))
-    , _id(comp->getBuilderID())
+    , _id(ir->getBuilderID())
     , _ext(ext)
-    , _comp(comp)
+    , _ir(ir)
     , _name(name)
     , _parent(NULL)
-    , _children(NULL, comp->mem())
+    , _children(NULL, ir->mem())
     , _scope(scope)
     , _successor(NULL)
-    , _operations(NULL, comp->mem())
+    , _operations(NULL, ir->mem())
     , _operationCount(0)
     , _firstOperation(NULL)
     , _lastOperation(NULL)
     , _myLocation(true)
-    , _currentLocation(new (comp->mem()) Location(comp->mem(), comp, "", "", 0) )
+    , _currentLocation(new (ir->mem()) Location(ir->mem(), ir, "", "", 0) )
     , _boundToOperation(NULL)
     , _isTarget(false)
     , _isBound(false)
     , _controlReachesEnd(true) {
 
-    if (scope == NULL)
-        _scope = comp->scope<Scope>();
 }
 
 Builder::Builder(Allocator *a, Extension *ext, Builder *parent, Scope *scope, String name)
     : Extensible(a, ext, CLASSKIND(Builder, Extensible))
-    , _id(parent->_comp->getBuilderID())
+    , _id(parent->ir()->getBuilderID())
     , _ext(ext)
-    , _comp(parent->_comp)
+    , _ir(parent->_ir)
     , _name(name)
     , _parent(parent)
-    , _children(NULL, parent->comp()->mem())
+    , _children(NULL, parent->ir()->mem())
     , _scope(scope)
     , _successor(NULL)
-    , _operations(NULL, parent->comp()->mem())
+    , _operations(NULL, parent->ir()->mem())
     , _operationCount(0)
     , _firstOperation(NULL)
     , _lastOperation(NULL)
@@ -104,22 +101,21 @@ Builder::Builder(Allocator *a, Extension *ext, Builder *parent, Scope *scope, St
     , _isTarget(false)
     , _isBound(false)
     , _controlReachesEnd(true) {
+
     parent->addChild(this);
-    if (scope == NULL)
-        scope = parent->scope();
 }
 
 Builder::Builder(Allocator *a, Extension *ext, Builder *parent, Operation *boundToOp, String name)
     : Extensible(a, ext, CLASSKIND(Builder, Extensible))
-    , _id(parent->_comp->getBuilderID())
+    , _id(parent->ir()->getBuilderID())
     , _ext(ext)
-    , _comp(parent->_comp)
+    , _ir(parent->_ir)
     , _name(name)
     , _parent(parent)
-    , _children(NULL, parent->comp()->mem())
+    , _children(NULL, parent->ir()->mem())
     , _scope(parent->scope())
     , _successor(NULL)
-    , _operations(NULL, parent->comp()->mem())
+    , _operations(NULL, parent->ir()->mem())
     , _operationCount(0)
     , _firstOperation(NULL)
     , _lastOperation(NULL)
@@ -130,6 +126,43 @@ Builder::Builder(Allocator *a, Extension *ext, Builder *parent, Operation *bound
     , _isBound(true)
     , _controlReachesEnd(true) {
     parent->addChild(this);
+}
+
+Builder::Builder(Allocator *a, const Builder *source, IRCloner *cloner)
+    : Extensible(a, source->_ext, CLASSKIND(Builder, Extensible))
+    , _id(source->_id)
+    , _ext(source->_ext)
+    , _ir(source->_ir)
+    , _name(source->_name)
+    , _parent(cloner->clonedBuilder(source->_parent))
+    , _children(NULL, a)
+    , _scope(cloner->clonedScope(source->_scope))
+    , _successor(cloner->clonedBuilder(source->_successor))
+    , _operations(NULL, a)
+    , _operationCount(source->_operationCount)
+    , _firstOperation(cloner->clonedOperation(source->_firstOperation))
+    , _lastOperation(cloner->clonedOperation(source->_lastOperation))
+    , _myLocation(true)
+    , _currentLocation(cloner->clonedLocation(source->_currentLocation))
+    , _boundToOperation(cloner->clonedOperation(source->_boundToOperation))
+    , _isTarget(source->_isTarget)
+    , _isBound(source->_isBound)
+    , _controlReachesEnd(source->_controlReachesEnd) {
+
+    for (auto it=source->_children.iterator();it.hasItem();it++) {
+        Builder *b = it.item();
+        _children.push_back(cloner->clonedBuilder(b));
+    }
+
+    for (auto it=source->_operations.iterator();it.hasItem();it++) {
+        Operation *op = it.item();
+        _operations.push_back(cloner->clonedOperation(op));
+    }
+}
+
+Builder *
+Builder::clone(Allocator *mem, IRCloner *cloner) const {
+    return new (mem) Builder(mem, this, cloner);
 }
 
 Builder::~Builder() {

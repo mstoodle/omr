@@ -19,9 +19,10 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "Compilation.hpp"
 #include "Compiler.hpp"
 #include "Extension.hpp"
+#include "IR.hpp"
+#include "IRCloner.hpp"
 #include "TextLogger.hpp"
 #include "Type.hpp"
 #include "TypeDictionary.hpp"
@@ -37,14 +38,14 @@ Type::Type(MEM_LOCATION(a), TypeKind kind, Extension *ext, String name, size_t s
     : Allocatable(a)
     , _ext(ext)
     , _createLoc(PASSLOC)
-    , _dict(ext->compiler()->typeDict())
-    , _id(_dict->getTypeID())
+    , _dict(ext->compiler()->typedict())
+    , _id(ext->compiler()->typedict()->getTypeID())
     , _name(name)
     , _size(size)
     , _layout(layout)
     , BASECLASS_KINDINIT(kind) {
 
-    _dict->registerType(this);
+    ext->compiler()->typedict()->registerType(this);
 }
 
 Type::Type(MEM_LOCATION(a), TypeKind kind, Extension *ext, TypeDictionary *dict, String name, size_t size, const Type *layout)
@@ -61,13 +62,42 @@ Type::Type(MEM_LOCATION(a), TypeKind kind, Extension *ext, TypeDictionary *dict,
     dict->registerType(this);
 }
 
+// only used by clone
+Type::Type(Allocator *a, const Type *source, IRCloner *cloner)
+    : Allocatable(a)
+    , _ext(source->_ext)
+    , _createLoc(source->_createLoc)
+    , _dict(cloner->clonedTypeDictionary(source->_dict))
+    , _id(source->_id)
+    , _name(source->_name)
+    , _size(source->_size)
+    , _layout(NULL)
+    , BASECLASS_KINDINIT(KIND(Type)) {
+    
+    if (source->_layout)
+        _layout = cloner->clonedType(source->_layout);
+    _dict->registerType(this);
+}
+
 Type::~Type() {
 
 }
 
+const Type *
+Type::clone(Allocator *a, IRCloner *cloner) const {
+    assert(0); // Should not be any Type objets
+    assert(_kind == KIND(Type));
+    return new (a) Type(a, this, cloner);
+}
+
+const Type *
+Type::cloneType(Allocator *a, IRCloner *cloner) const {
+    return clone(a, cloner);
+}
+
 Literal *
-Type::literal(LOCATION, Compilation *comp, const LiteralBytes *value) const {
-    return comp->registerLiteral(PASSLOC, this, value);
+Type::literal(LOCATION, IR *ir, const LiteralBytes *value) const {
+    return ir->registerLiteral(PASSLOC, this, value);
 }
 
 String
@@ -75,7 +105,8 @@ Type::base_string(bool useHeader) const {
     String s;
     if (useHeader)
         s.append("type ");
-    s.append(String("t")).append(String::to_string(this->id()));
+    s.append(String("t"));
+    s.append(String::to_string(this->id()));
     s.append(String(" "));
     s.append(String::to_string(this->size()));
     s.append(String(" "));
@@ -118,8 +149,19 @@ NoTypeType::NoTypeType(MEM_LOCATION(a), Extension *ext)
 
 }
 
+NoTypeType::NoTypeType(Allocator *a, const Type *source, IRCloner *cloner)
+    : Type(a, source, cloner) {
+
+}
+
 NoTypeType::~NoTypeType() {
 
+}
+
+const Type *
+NoTypeType::clone(Allocator *a, IRCloner *cloner) const {
+    assert(_kind == KIND(Type));
+    return new (a) NoTypeType(a, this, cloner);
 }
 
 void

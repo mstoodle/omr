@@ -30,6 +30,7 @@ namespace OMR {
 namespace JitBuilder {
 
 class Compilation;
+class IR;
 class LiteralDictionary;
 class TextLogger;
 class Type;
@@ -38,9 +39,12 @@ class Literal : public Allocatable {
     JBALLOC_(Literal)
 
     friend class Compilation;
+    friend class IR;
+    friend class IRCloner;
+    friend class LiteralDictionary;
 
 public:
-    Literal(MEM_LOCATION(a), Compilation *comp, const Type *t, const LiteralBytes *v);
+    Literal(MEM_LOCATION(a), IR *ir, const Type *t, const LiteralBytes *v);
     Literal(MEM_LOCATION(a), LiteralDictionary *litDict, const Type *t, const LiteralBytes *v);
 
     LiteralID id() const { return _id; }
@@ -55,6 +59,10 @@ public:
     const double getFloatingPoint() const;
 
 protected:
+    Literal(Allocator *a, const Literal *source, IRCloner *cloner);
+
+    virtual Literal *clone(Allocator *a, IRCloner *cloner);
+
     LiteralID _id;
     CreateLocation _creator;
     LiteralDictionary *_litDict;

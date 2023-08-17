@@ -24,9 +24,8 @@
 
 #include <map>
 #include "common.hpp"
+#include "CreateLoc.hpp"
 
-#define TOSTR(x) #x
-#define LINETOSTR(x) TOSTR(x)
 
 namespace OMR {
 namespace JitBuilder {
@@ -36,6 +35,7 @@ class CompiledBody;
 class Compiler;
 class Config;
 class Debugger;
+class IR;
 class Scope;
 class Symbol;
 class TextLogger;
@@ -45,6 +45,7 @@ class CompileUnit : public Allocatable {
     JBALLOC_(CompileUnit)
 
     friend class Compilation;
+    friend class IR;
 
 public:
     // There are intentionally no public constructors. CompileUnit is meant to be subclassed.
@@ -70,7 +71,7 @@ public:
 
     virtual void notifyRecompile(CompiledBody *oldBody, CompiledBody *newBody) { }
 
-    virtual Builder *EntryBuilder(LOCATION, Compilation *comp, Scope *scope);
+    virtual Builder *EntryBuilder(LOCATION, IR *ir, Scope *scope);
     //void addLocation(Location *loc ) { _locations.push_back(loc); }
 
 protected:

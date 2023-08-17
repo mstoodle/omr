@@ -40,7 +40,8 @@ public:
 
 protected:
     Op_Load(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aLoad, Value *result, Symbol *s);
-    };
+    IRCLONER_SUPPORT(Op_Load, OperationR1S1)
+};
 
 class Op_Store : public OperationR0S1V1 {
     JBALLOC_(Op_Store)
@@ -51,6 +52,7 @@ public:
 
 protected:
     Op_Store(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aStore, Symbol *s, Value *value);
+    IRCLONER_SUPPORT(Op_Store, OperationR0S1V1)
 };
 
 class Op_Call : public OperationR1S1VN {
@@ -66,6 +68,7 @@ protected:
     Op_Call(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aCall, OperationCloner *cloner)
         : OperationR1S1VN(MEM_PASSLOC(a), aCall, ext, parent, cloner) {
     }
+    IRCLONER_SUPPORT(Op_Call, OperationR1S1VN)
 };
 
 class Op_CallVoid : public OperationR0S1VN {
@@ -81,6 +84,7 @@ protected:
     Op_CallVoid(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aCallVoid, OperationCloner *cloner)
         : OperationR0S1VN(MEM_PASSLOC(a), aCallVoid, ext, parent, cloner) {
     }
+    IRCLONER_SUPPORT(Op_CallVoid, OperationR0S1VN)
 };
 
 class Op_ReturnVoid : public Operation {
@@ -92,7 +96,8 @@ public:
 
 protected:
     Op_ReturnVoid(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aReturnVoid);
-    };
+    IRCLONER_SUPPORT(Op_ReturnVoid, Operation)
+};
 
 // eventually generalize to handle multiple return values but not needed yet
 class Op_Return : public OperationR0V1 {
@@ -104,7 +109,8 @@ public:
 
 protected:
     Op_Return(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aReturn, Value * v);
-    };
+    IRCLONER_SUPPORT(Op_Return, OperationR0V1)
+};
 
 } // namespace Func
 } // namespace JitBuilder

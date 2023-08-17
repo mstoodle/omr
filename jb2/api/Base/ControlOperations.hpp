@@ -24,6 +24,8 @@
 
 #include "JBCore.hpp"
 #include "Func/Func.hpp"
+#include "Base/BaseIRAddon.hpp"
+#include "Base/BaseIRClonerAddon.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -44,6 +46,7 @@ protected:
         : OperationB1(MEM_PASSLOC(a), aGoto, ext, parent, target) {
 
     }
+    IRCLONER_SUPPORT(Op_Goto, OperationB1)
 };
 
 class Op_IfCmpEqual : public OperationB1R0V2 {
@@ -59,6 +62,7 @@ protected:
         : OperationB1R0V2(MEM_PASSLOC(a), aIfCmpEqual, ext, parent, target, left, right) {
 
     }
+    IRCLONER_SUPPORT(Op_IfCmpEqual, OperationB1R0V2)
 };
 
 class Op_IfCmpEqualZero : public OperationB1R0V1 {
@@ -74,6 +78,7 @@ protected:
         : OperationB1R0V1(MEM_PASSLOC(a), aIfCmpEqualZero, ext, parent, target, value) {
 
     }
+    IRCLONER_SUPPORT(Op_IfCmpEqualZero, OperationB1R0V1)
 };
 
 class Op_IfCmpGreaterThan : public OperationB1R0V2 {
@@ -89,6 +94,7 @@ protected:
         : OperationB1R0V2(MEM_PASSLOC(a), aIfCmpGreaterThan, ext, parent, target, left, right) {
 
     }
+    IRCLONER_SUPPORT(Op_IfCmpGreaterThan, OperationB1R0V2)
 };
 
 class Op_IfCmpGreaterOrEqual : public OperationB1R0V2 {
@@ -104,6 +110,7 @@ protected:
         : OperationB1R0V2(MEM_PASSLOC(a), aIfCmpGreaterOrEqual, ext, parent, target, left, right) {
 
     }
+    IRCLONER_SUPPORT(Op_IfCmpGreaterOrEqual, OperationB1R0V2)
 };
 
 class Op_IfCmpLessThan : public OperationB1R0V2 {
@@ -119,6 +126,7 @@ protected:
         : OperationB1R0V2(MEM_PASSLOC(a), aIfCmpLessThan, ext, parent, target, left, right) {
 
     }
+    IRCLONER_SUPPORT(Op_IfCmpLessThan, OperationB1R0V2)
 };
 
 class Op_IfCmpLessOrEqual : public OperationB1R0V2 {
@@ -134,6 +142,7 @@ protected:
         : OperationB1R0V2(MEM_PASSLOC(a), aIfCmpLessOrEqual, ext, parent, target, left, right) {
 
     }
+    IRCLONER_SUPPORT(Op_IfCmpLessOrEqual, OperationB1R0V2)
 };
 
 class Op_IfCmpNotEqual : public OperationB1R0V2 {
@@ -149,6 +158,7 @@ protected:
         : OperationB1R0V2(MEM_PASSLOC(a), aIfCmpNotEqual, ext, parent, target, left, right) {
 
     }
+    IRCLONER_SUPPORT(Op_IfCmpNotEqual, OperationB1R0V2)
 };
 
 class Op_IfCmpNotEqualZero : public OperationB1R0V1 {
@@ -164,6 +174,7 @@ protected:
         : OperationB1R0V1(MEM_PASSLOC(a), aIfCmpNotEqualZero, ext, parent, target, value) {
 
     }
+    IRCLONER_SUPPORT(Op_IfCmpNotEqualZero, OperationB1R0V1)
 };
 
 class Op_IfCmpUnsignedGreaterThan : public OperationB1R0V2 {
@@ -179,6 +190,7 @@ protected:
         : OperationB1R0V2(MEM_PASSLOC(a), aIfCmpUnsignedGreaterThan, ext, parent, target, left, right) {
 
     }
+    IRCLONER_SUPPORT(Op_IfCmpUnsignedGreaterThan, OperationB1R0V2)
 };
 
 class Op_IfCmpUnsignedGreaterOrEqual : public OperationB1R0V2 {
@@ -194,6 +206,7 @@ protected:
         : OperationB1R0V2(MEM_PASSLOC(a), aIfCmpUnsignedGreaterOrEqual, ext, parent, target, left, right) {
 
     }
+    IRCLONER_SUPPORT(Op_IfCmpUnsignedGreaterOrEqual, OperationB1R0V2)
 };
 
 class Op_IfCmpUnsignedLessThan : public OperationB1R0V2 {
@@ -209,6 +222,7 @@ protected:
         : OperationB1R0V2(MEM_PASSLOC(a), aIfCmpUnsignedLessThan, ext, parent, target, left, right) {
 
     }
+    IRCLONER_SUPPORT(Op_IfCmpUnsignedLessThan, OperationB1R0V2)
 };
 
 class Op_IfCmpUnsignedLessOrEqual : public OperationB1R0V2 {
@@ -224,6 +238,7 @@ protected:
         : OperationB1R0V2(MEM_PASSLOC(a), aIfCmpUnsignedLessOrEqual, ext, parent, target, left, right) {
 
     }
+    IRCLONER_SUPPORT(Op_IfCmpUnsignedLessOrEqual, OperationB1R0V2)
 };
 
 class Op_ForLoopUp : public Operation {
@@ -277,6 +292,10 @@ public:
 
 protected:
     Op_ForLoopUp(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aForLoopUp, ForLoopBuilder *loopBuilder);
+    Op_ForLoopUp(Allocator *a, const Op_ForLoopUp *source, IRCloner *cloner);
+    virtual Operation *clone(Allocator *mem, IRCloner *cloner) const {
+        return new (mem) Op_ForLoopUp(mem, this, cloner);
+    }
 
     Symbol *_loopVariable;
     Value * _initial;
@@ -315,6 +334,14 @@ public:
 
 protected:
     Op_IfThenElse(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aIfThenElse, IfThenElseBuilder * bldr);
+    Op_IfThenElse(Allocator *a, const Op_IfThenElse *source, IRCloner *cloner)
+        : OperationB1R0V1(a, source, cloner)
+        , _elseBuilder(cloner->clonedBuilder(source->_elseBuilder)) {
+
+    }
+    virtual Operation *clone(Allocator *mem, IRCloner *cloner) const {
+        return new (mem) Op_IfThenElse(mem, this, cloner);
+    }
 
     Builder * _elseBuilder;
     };
@@ -323,17 +350,30 @@ class Case : Allocatable {
 public:
     Case(Allocator *a, Literal *lv, Builder *builder, bool fallsThrough)
         : Allocatable(a)
+        , _id(builder->ir()->addon<BaseIRAddon>()->getCaseID())
         , _lv(lv)
         , _builder(builder)
         , _fallsThrough(fallsThrough) {
     
-        }
+    }
+    Case(Allocator *a, const Case *source, IRCloner *cloner)
+        : Allocatable(a)
+        , _lv(cloner->clonedLiteral(source->_lv))
+        , _builder(cloner->clonedBuilder(source->_builder))
+        , _fallsThrough(source->_fallsThrough) {
 
+    }
+    virtual Case *clone(Allocator *mem, IRCloner *cloner) const {
+        return new (mem) Case(mem, this, cloner);
+    }
+
+    CaseID id() const { return _id; }
     Literal *literal() const { return _lv; }
     Builder *builder() const { return _builder; }
     bool fallsThrough() const { return _fallsThrough; }
 
 private:
+    CaseID _id;
     Literal *_lv;
     Builder *_builder;
     bool _fallsThrough;
@@ -395,6 +435,17 @@ public:
 
     protected:
     Op_Switch(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aSwitch, Value *selector, Builder *defaultBuilder, Array<Case *> *cases);
+    Op_Switch(Allocator *a, const Op_Switch *source, IRCloner *cloner)
+        : OperationR0V1(a, source, cloner)
+        , _defaultBuilder(cloner->clonedBuilder(source->_defaultBuilder))
+        , _cases(NULL, a) {
+
+        for (int i=0;i < _cases.length();i++) {
+            Case *c = source->_cases[i];
+            _cases.assign(i, cloner->addon<BaseIRClonerAddon>()->clonedCase(c));
+        }
+    }
+    virtual Operation *clone(Allocator *mem, IRCloner *cloner) const;
 
     Builder *_defaultBuilder;
     Array<Case *> _cases;

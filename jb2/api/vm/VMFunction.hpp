@@ -47,7 +47,7 @@ protected:
     ALL_ALLOC_ALLOWED(VMFunction, LOCATION, Compiler *compiler, VMExtension *vmx);
     ALL_ALLOC_ALLOWED(VMFunction, LOCATION, VMFunction *outerFunction);
 
-    virtual Builder *EntryBuilder(LOCATION, Compilation *comp, Scope *scope);
+    virtual Builder *EntryBuilder(LOCATION, IR *ir, Scope *scope);
 
     VMExtension *vmx() { return _vmx; }
 

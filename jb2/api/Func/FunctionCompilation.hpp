@@ -53,6 +53,8 @@ protected:
 
     virtual void addInitialBuildersToWorklist(BuilderList & worklist);
 
+    virtual bool prepareIL(LOCATION);
+
     SUBCLASS_KINDSERVICE_DECL(Extensible, FunctionCompilation);
 };
 

@@ -37,6 +37,8 @@ public:
 
 protected:
     Op_LoadAt(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aLoadAt, Value *result, Value *value);
+
+    IRCLONER_SUPPORT(Op_LoadAt, OperationR1V1)
 };
 
 class Op_StoreAt : public OperationR0V2 {
@@ -48,6 +50,7 @@ public:
 
 protected:
     Op_StoreAt(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aStoreAt, Value *address, Value *value);
+    IRCLONER_SUPPORT(Op_StoreAt, OperationR0V2)
 };
 
 class Op_LoadField : public OperationR1V1T1 {
@@ -58,6 +61,7 @@ public:
 
 protected:
     Op_LoadField(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aLoadField, Value *result, const FieldType *fieldType, Value *structValue);
+    IRCLONER_SUPPORT(Op_LoadField, OperationR1V1T1)
 };
 
 class Op_StoreField : public OperationR0T1V2 {
@@ -68,6 +72,7 @@ public:
 
 protected:
     Op_StoreField(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aStoreField, const FieldType *fieldType, Value *structValue, Value *value);
+    IRCLONER_SUPPORT(Op_StoreField, OperationR0T1V2)
 };
 
 class Op_LoadFieldAt : public OperationR1V1T1 {
@@ -78,6 +83,7 @@ public:
 
 protected:
     Op_LoadFieldAt(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aLoadFieldAt, Value *result, const FieldType *fieldType, Value *pStruct);
+    IRCLONER_SUPPORT(Op_LoadFieldAt, OperationR1V1T1)
 };
 
 class Op_StoreFieldAt : public OperationR0T1V2 {
@@ -88,6 +94,7 @@ public:
 
 protected:
     Op_StoreFieldAt(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aStoreFieldAt, const FieldType *fieldType, Value *pStruct, Value *value);
+    IRCLONER_SUPPORT(Op_StoreFieldAt, OperationR0T1V2)
 };
 
 class Op_CreateLocalArray : public OperationR1L1T1 {
@@ -100,6 +107,7 @@ protected:
     Op_CreateLocalArray(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aCreateLocalArray, Value *result, Literal *numElements, const PointerType *pElementType)
        : OperationR1L1T1(MEM_PASSLOC(a), aCreateLocalArray, ext, parent, result, numElements, pElementType)
        { }
+    IRCLONER_SUPPORT(Op_CreateLocalArray, OperationR1L1T1)
     };
 
 class Op_CreateLocalStruct : public OperationR1T1 {
@@ -112,6 +120,7 @@ protected:
     Op_CreateLocalStruct(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aCreateLocalStruct, Value *result, const StructType *structType)
        : OperationR1T1(MEM_PASSLOC(a), aCreateLocalStruct, ext, parent, result, structType)
        { }
+    IRCLONER_SUPPORT(Op_CreateLocalStruct, OperationR1T1)
     };
 
 class Op_IndexAt : public OperationR1V2 {
@@ -122,6 +131,7 @@ public:
 
 protected:
     Op_IndexAt(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aIndexAt, Value *result, Value *base, Value *index);
+    IRCLONER_SUPPORT(Op_IndexAt, OperationR1V2)
 };
 
 #if 0

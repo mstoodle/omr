@@ -56,9 +56,9 @@ TEST(BasicJB2, compilerCreation) {
         Compiler c("test");
         EXPECT_EQ(c.name(), "test") << "Compiler gets the name test";
         EXPECT_FALSE(c.config() == NULL) << "Compiler creates a Config";
-        EXPECT_FALSE(c.litDict() == NULL) << "Compiler creates a LiteralDictionary";
-        EXPECT_FALSE(c.symDict() == NULL) << "Compiler creates a SymbolDictionary";
-        EXPECT_FALSE(c.typeDict() == NULL) << "Compiler creates a TypeDictionary";
+        EXPECT_FALSE(c.litdict() == NULL) << "Compiler creates a LiteralDictionary";
+        EXPECT_FALSE(c.symdict() == NULL) << "Compiler creates a SymbolDictionary";
+        EXPECT_FALSE(c.typedict() == NULL) << "Compiler creates a TypeDictionary";
     }
     {
         Config cfg;
@@ -81,33 +81,33 @@ TEST(BasicJB2, multipleCompilers) {
 
                     EXPECT_EQ(c5.name(), "test5") << "Compiler c5 gets the name test";
                     EXPECT_FALSE(c5.config() == NULL) << "Compiler c5 creates a Config";
-                    EXPECT_FALSE(c5.litDict() == NULL) << "Compiler c5 creates a LiteralDictionary";
-                    EXPECT_FALSE(c5.symDict() == NULL) << "Compiler c5 creates a SymbolDictionary";
-                    EXPECT_FALSE(c5.typeDict() == NULL) << "Compiler c5 creates a TypeDictionary";
+                    EXPECT_FALSE(c5.litdict() == NULL) << "Compiler c5 creates a LiteralDictionary";
+                    EXPECT_FALSE(c5.symdict() == NULL) << "Compiler c5 creates a SymbolDictionary";
+                    EXPECT_FALSE(c5.typedict() == NULL) << "Compiler c5 creates a TypeDictionary";
 
                     EXPECT_EQ(c4.name(), "test4") << "Compiler c4 gets the name test";
                     EXPECT_FALSE(c4.config() == NULL) << "Compiler c4 creates a Config";
-                    EXPECT_FALSE(c4.litDict() == NULL) << "Compiler c4 creates a LiteralDictionary";
-                    EXPECT_FALSE(c4.symDict() == NULL) << "Compiler c4 creates a SymbolDictionary";
-                    EXPECT_FALSE(c4.typeDict() == NULL) << "Compiler c4 creates a TypeDictionary";
+                    EXPECT_FALSE(c4.litdict() == NULL) << "Compiler c4 creates a LiteralDictionary";
+                    EXPECT_FALSE(c4.symdict() == NULL) << "Compiler c4 creates a SymbolDictionary";
+                    EXPECT_FALSE(c4.typedict() == NULL) << "Compiler c4 creates a TypeDictionary";
 
                     EXPECT_EQ(c3.name(), "test3") << "Compiler c3 gets the name test";
                     EXPECT_FALSE(c3.config() == NULL) << "Compiler c3 creates a Config";
-                    EXPECT_FALSE(c3.litDict() == NULL) << "Compiler c3 creates a LiteralDictionary";
-                    EXPECT_FALSE(c3.symDict() == NULL) << "Compiler c3 creates a SymbolDictionary";
-                    EXPECT_FALSE(c3.typeDict() == NULL) << "Compiler c3 creates a TypeDictionary";
+                    EXPECT_FALSE(c3.litdict() == NULL) << "Compiler c3 creates a LiteralDictionary";
+                    EXPECT_FALSE(c3.symdict() == NULL) << "Compiler c3 creates a SymbolDictionary";
+                    EXPECT_FALSE(c3.typedict() == NULL) << "Compiler c3 creates a TypeDictionary";
 
                     EXPECT_EQ(c2.name(), "test2") << "Compiler c2 gets the name test";
                     EXPECT_FALSE(c2.config() == NULL) << "Compiler c2 creates a Config";
-                    EXPECT_FALSE(c2.litDict() == NULL) << "Compiler c2 creates a LiteralDictionary";
-                    EXPECT_FALSE(c2.symDict() == NULL) << "Compiler c2 creates a SymbolDictionary";
-                    EXPECT_FALSE(c2.typeDict() == NULL) << "Compiler c2 creates a TypeDictionary";
+                    EXPECT_FALSE(c2.litdict() == NULL) << "Compiler c2 creates a LiteralDictionary";
+                    EXPECT_FALSE(c2.symdict() == NULL) << "Compiler c2 creates a SymbolDictionary";
+                    EXPECT_FALSE(c2.typedict() == NULL) << "Compiler c2 creates a TypeDictionary";
 
                     EXPECT_EQ(c1.name(), "test1") << "Compiler c1 gets the name test";
                     EXPECT_FALSE(c1.config() == NULL) << "Compiler c1 creates a Config";
-                    EXPECT_FALSE(c1.litDict() == NULL) << "Compiler c1 creates a LiteralDictionary";
-                    EXPECT_FALSE(c1.symDict() == NULL) << "Compiler c1 creates a SymbolDictionary";
-                    EXPECT_FALSE(c1.typeDict() == NULL) << "Compiler c1 creates a TypeDictionary";
+                    EXPECT_FALSE(c1.litdict() == NULL) << "Compiler c1 creates a LiteralDictionary";
+                    EXPECT_FALSE(c1.symdict() == NULL) << "Compiler c1 creates a SymbolDictionary";
+                    EXPECT_FALSE(c1.typedict() == NULL) << "Compiler c1 creates a TypeDictionary";
                 }
             }
         }

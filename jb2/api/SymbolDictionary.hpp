@@ -32,6 +32,8 @@ class Compiler;
 class DebugDictionary;
 class DynamicType;
 class Extension;
+class IR;
+class IRCloner;
 class OperationBuilder;
 class TextLogger;
 class Type;
@@ -43,6 +45,8 @@ class SymbolDictionary : public Allocatable {
     friend class DebugDictionary;
     friend class DynamicType;
     friend class Extension;
+    friend class IR;
+    friend class IRCloner;
     friend class OperationBuilder;
 
 public:
@@ -66,7 +70,10 @@ public:
     void log(TextLogger &w);
 
 protected:
+    SymbolDictionary(Allocator *a, const SymbolDictionary *source, IRCloner *cloner);
+
     void internalRegisterSymbol(Symbol *symbol);
+    virtual SymbolDictionary *clone(Allocator *mem, IRCloner *cloner) const;
 
     SymbolDictionaryID _id;
     Compiler * _compiler;

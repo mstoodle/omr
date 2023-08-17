@@ -46,7 +46,7 @@ Op_Add::~Op_Add() {
 
 Operation *
 Op_Add::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    Allocator *mem = b->comp()->mem();
+    Allocator *mem = b->ir()->mem();
     return new (mem) Op_Add(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->result(), cloner->operand(0), cloner->operand(1));
 }
 
@@ -67,7 +67,7 @@ Op_ConvertTo::~Op_ConvertTo() {
 
 Operation *
 Op_ConvertTo::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    Allocator *mem = b->comp()->mem();
+    Allocator *mem = b->ir()->mem();
     return new (mem) Op_ConvertTo(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->result(), cloner->type(), cloner->operand());
 }
 
@@ -88,7 +88,7 @@ Op_Mul::~Op_Mul() {
 
 Operation *
 Op_Mul::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    Allocator *mem = b->comp()->mem();
+    Allocator *mem = b->ir()->mem();
     return new (mem) Op_Mul(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->result(), cloner->operand(0), cloner->operand(1));
 }
 
@@ -109,7 +109,7 @@ Op_Sub::~Op_Sub() {
 
 Operation *
 Op_Sub::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    Allocator *mem = b->comp()->mem();
+    Allocator *mem = b->ir()->mem();
     return new (mem) Op_Sub(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->result(), cloner->operand(0), cloner->operand(1));
 }
 

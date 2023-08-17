@@ -105,7 +105,7 @@ FunctionExtensionChecker::~FunctionExtensionChecker() {
 
 Value *
 FunctionExtension::Load(LOCATION, Builder *b, Symbol * sym) {
-    Allocator *mem = b->comp()->mem();
+    Allocator *mem = b->ir()->mem();
     Value * result = createValue(b, sym->type());
     addOperation(b, new (mem) Op_Load(MEM_PASSLOC(mem), this, b, this->aLoad, result, sym));
     return result;
@@ -113,7 +113,7 @@ FunctionExtension::Load(LOCATION, Builder *b, Symbol * sym) {
 
 void
 FunctionExtension::Store(LOCATION, Builder *b, Symbol * sym, Value *value) {
-    Allocator *mem = b->comp()->mem();
+    Allocator *mem = b->ir()->mem();
     addOperation(b, new (mem) Op_Store(MEM_PASSLOC(mem), this, b, this->aStore, sym, value));
 }
 
@@ -152,7 +152,7 @@ FunctionExtensionChecker::failValidateCall(LOCATION, Builder *b, FunctionSymbol 
 
 Value *
 FunctionExtension::Call(LOCATION, Builder *b, FunctionSymbol *target, ...) {
-    Allocator *mem = b->comp()->mem();
+    Allocator *mem = b->ir()->mem();
 
     const FunctionType *tgtType = target->functionType();
     for (auto it = _checkers.iterator(); it.hasItem(); it++) {
@@ -179,13 +179,13 @@ FunctionExtension::Call(LOCATION, Builder *b, FunctionSymbol *target, ...) {
 
 void
 FunctionExtension::Return(LOCATION, Builder *b) {
-    Allocator *mem = b->comp()->mem();
+    Allocator *mem = b->ir()->mem();
     addOperation(b, new (mem) Op_ReturnVoid(MEM_PASSLOC(mem), this, b, this->aReturnVoid));
 }
 
 void
 FunctionExtension::Return(LOCATION, Builder *b, Value *v) {
-    Allocator *mem = b->comp()->mem();
+    Allocator *mem = b->ir()->mem();
     addOperation(b, new (mem) Op_Return(MEM_PASSLOC(mem), this, b, this->aReturn, v));
 }
 
@@ -198,13 +198,13 @@ FunctionExtension::DefineFunctionType(LOCATION, FunctionCompilation *comp, const
         return fType;
     }
 
-    Allocator *mem = compiler()->mem();
-    const FunctionType *f = new (mem) FunctionType(MEM_PASSLOC(mem), this, comp->typedict(), returnType, numParms, parmTypes);
+    Allocator *mem = comp->ir()->mem();
+    const FunctionType *f = new (mem) FunctionType(MEM_PASSLOC(mem), this, comp->ir()->typedict(), returnType, numParms, parmTypes);
     comp->addon<FunctionCompilationAddon>()->registerFunctionType(f);
     return f;
 }
 
-CompilerReturnCode
+CompiledBody *
 FunctionExtension::compile(LOCATION, Function *func, StrategyID strategy, TextLogger *lgr) {
 
     if (strategy == NoStrategy)
@@ -212,28 +212,11 @@ FunctionExtension::compile(LOCATION, Function *func, StrategyID strategy, TextLo
 
     Allocator *mem = _compiler->mem();
     FunctionCompilation *comp = new (mem) FunctionCompilation(mem, this, func, strategy);
-
-    FunctionContext context(PASSLOC, comp);
-    comp->setContext(&context);
-
-    FunctionScope scope(this, comp);
-    comp->setScope(&scope);
-
     comp->setLogger(lgr);
 
-    CompilerReturnCode rc = _compiler->compile(PASSLOC, comp, strategy);
-    if (rc != _compiler->CompileSuccessful) {
-        delete comp;
-        return rc;
-    }
-
-    CompiledBody *body = new (mem) CompiledBody(mem, func, &context, strategy);
-    scope.saveEntries(body);
-    func->saveCompiledBody(body, strategy);
-
+    CompiledBody *body = _compiler->compile(PASSLOC, comp, strategy);
     delete comp;
-
-    return _compiler->CompileSuccessful;
+    return body;
 }
 
 } // namespace Func

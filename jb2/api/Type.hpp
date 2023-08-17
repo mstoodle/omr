@@ -32,9 +32,9 @@ namespace JitBuilder {
 
 class Allocator;
 class Builder;
-class Compilation;
 class Compiler;
 class Extension;
+class IR;
 class Location;
 class TextLogger;
 class Type;
@@ -48,14 +48,15 @@ class Type : public Allocatable {
 
     friend class Compiler;
     friend class Extension;
+    friend class IRCloner;
     friend class TypeDictionary;
 
 public:
-    Extension *ext() const                   { return _ext; }
-    TypeID id() const                        { return _id; }
-    String name() const                      { return _name; }
-    TypeDictionary *owningDictionary() const { return _dict; }
-    virtual size_t size() const              { return _size; } // some Types cannot set size at construction
+    Extension *ext() const                         { return _ext; }
+    TypeID id() const                              { return _id; }
+    String name() const                            { return _name; }
+    TypeDictionary *owningDictionary() const       { return _dict; }
+    virtual size_t size() const                    { return _size; } // some Types cannot set size at construction
 
     bool operator!=(const Type & other) const {
         return _dict != other._dict || _id != other._id;
@@ -75,11 +76,11 @@ public:
     virtual const double getFloatingPoint(const Literal *lv) const { return 0.0; }
 
     // creates a Literal of this Type from the raw LiteralBytes
-    Literal * literal(LOCATION, Compilation *comp, const LiteralBytes *value) const;
+    virtual Literal * literal(LOCATION, IR *ir, const LiteralBytes *value) const;
 
     // for Types that can, return a zero or "one" literal (NULL means it doesn't exist for this Type)
-    virtual Literal *zero(LOCATION, Compilation *comp) const { return NULL; }
-    virtual Literal *identity(LOCATION, Compilation *comp) const { return NULL; }
+    virtual Literal *zero(LOCATION, IR *comp) const { return NULL; }
+    virtual Literal *identity(LOCATION, IR *comp) const { return NULL; }
 
     // returning NULL from the next function means that values of this Type cannot be broken down further
     virtual const Type *layout() const { return _layout; }
@@ -101,8 +102,12 @@ public:
 protected:
     DYNAMIC_ALLOC_ONLY(Type, LOCATION, TypeKind kind, Extension *ext, String name, size_t size, const Type *layout=NULL);
     DYNAMIC_ALLOC_ONLY(Type, LOCATION, TypeKind kind, Extension *ext, TypeDictionary *dict, String name, size_t size, const Type *layout=NULL);
+    Type(Allocator *a, const Type *type, IRCloner *cloner); // used by clone
 
     void transformTypeIfNeeded(TypeReplacer *repl, const Type *type) const;
+
+    virtual const Type *clone(Allocator *mem, IRCloner *cloner) const;
+    const Type *cloneType(Allocator *mem, IRCloner *cloner) const;
 
     Extension *_ext;
     CreateLocation _createLoc;
@@ -125,6 +130,9 @@ class NoTypeType : public Type {
 
     protected:
     DYNAMIC_ALLOC_ONLY(NoTypeType, LOCATION, Extension *ext);
+    NoTypeType(Allocator *a, const Type *source, IRCloner *cloner); // used by clone
+
+    virtual const Type *clone(Allocator *mem, IRCloner *cloner) const;
 
     SUBCLASS_KINDSERVICE_DECL(Type, NoTypeType);
 };

@@ -32,6 +32,10 @@
 #include "Iterator.hpp"
 #include "List.hpp"
 
+#define TOSTR(x) #x
+#define LINETOSTR(x) TOSTR(x)
+
+
 namespace OMR {
 namespace JitBuilder {
 

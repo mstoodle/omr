@@ -44,6 +44,9 @@ public:
 
 protected:
     FieldSymbol(Allocator *a, SymbolKind kind, Extension *ext, String name, const StructType *structType, const FieldType *fieldType);
+    FieldSymbol(Allocator *mem, const FieldSymbol *source, IRCloner *cloner);
+
+    virtual Symbol *clone(Allocator *a, IRCloner *cloner) const;
 
     const StructType *_structType;
     const FieldType *_fieldType;

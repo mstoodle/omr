@@ -21,21 +21,23 @@
 
 #include <string.h>
 #include "Compilation.hpp"
+#include "IRCloner.hpp"
 #include "Literal.hpp"
 #include "LiteralDictionary.hpp"
 #include "TextLogger.hpp"
 #include "Type.hpp"
+#include "TypeDictionary.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 
 INIT_JBALLOC_ON(Literal, LiteralDictionary)
 
-Literal::Literal(MEM_LOCATION(a), Compilation *comp, const Type *type, const LiteralBytes *v)
+Literal::Literal(MEM_LOCATION(a), IR *ir, const Type *type, const LiteralBytes *v)
     : Allocatable(a)
-    , _id(comp->litdict()->getLiteralID())
+    , _id(ir->litdict()->getLiteralID())
     , _creator(PASSLOC)
-    , _litDict(comp->litdict())
+    , _litDict(ir->litdict())
     , _type(type) {
 
     // privatize the literal value
@@ -58,6 +60,21 @@ Literal::Literal(MEM_LOCATION(a), LiteralDictionary *litDict, const Type *type, 
     memcpy(newBytes, v, numBytes);
     _pValue = newBytes;
 }
+
+// used only by clone()
+Literal::Literal(Allocator *a, const Literal *source, IRCloner *cloner)
+    : Allocatable(a)
+    , _id(source->_id)
+    , _creator(source->_creator)
+    , _litDict(cloner->clonedLiteralDictionary(source->_litDict))
+    , _type(cloner->clonedType(source->_type)) {
+
+    size_t numBytes = (_type->size() / 8) + ((_type->size() & 7 > 0) ? 1 : 0);
+    LiteralBytes *newBytes = reinterpret_cast<LiteralBytes *>(a->allocate(numBytes, NoAllocationCategory));
+    memcpy(newBytes, source->_pValue, numBytes);
+    _pValue = newBytes;
+}
+
 
 Literal::~Literal() {
     allocator()->deallocate(const_cast<void *>(reinterpret_cast<const void *>(this->_pValue)));
@@ -89,6 +106,11 @@ Literal::getInteger() const {
 const double
 Literal::getFloatingPoint() const {
     return _type->getFloatingPoint(this);
+}
+
+Literal *
+Literal::clone(Allocator *mem, IRCloner *cloner) {
+    return new (mem) Literal(mem, this, cloner);
 }
 
 } // namespace JitBuilder
