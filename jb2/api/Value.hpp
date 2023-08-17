@@ -29,6 +29,7 @@ namespace JitBuilder {
 
 class Builder;
 class Extension;
+class IRCloner;
 class Operation;
 class OperationCloner;
 class Type;
@@ -38,6 +39,7 @@ class Value : public Allocatable {
 
     friend class Builder;
     friend class Extension;
+    friend class IRCloner;
     friend class Operation;
     friend class OperationCloner;
 
@@ -51,12 +53,16 @@ public:
     List<Operation *>::Iterator definitions() { return _definitions.iterator(); }
 
 protected:
-    static Value * create(const Builder * parent, const Type * type);
-    Value(Allocator *a, const Builder * parent, const Type * type);
+    Value(Allocator *a, Builder * parent, const Type * type);
+    Value(Allocator *a, const Value *source, IRCloner *cloner);
+
+    virtual Value *clone(Allocator *mem, IRCloner *cloner) const;
+
+    static Value * create(Builder * parent, const Type * type);
     void addDefinition(Operation *op) { _definitions.push_back(op); }
 
     ValueID   _id;
-    const Builder * _parent;
+    Builder * _parent;
     const Type * _type;
     List<Operation *> _definitions;
 };

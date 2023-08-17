@@ -40,13 +40,13 @@ class FunctionContext : public Context {
     friend class FunctionCompilation;
     friend class FunctionExtension;
 public:
-    FunctionContext(LOCATION, FunctionCompilation *comp, String name="");
-    FunctionContext(LOCATION, FunctionContext *caller, String name="");
+    DYNAMIC_ALLOC_ONLY(FunctionContext, Extension *fx, IR *ir, String name="");
+    DYNAMIC_ALLOC_ONLY(FunctionContext, FunctionContext *caller, String name="");
 
     ParameterSymbol * DefineParameter(String name, const Type * type);
     LocalSymbol * DefineLocal(String name, const Type * type);
-    FunctionSymbol * DefineFunction(LOCATION, String name, String fileName, String lineNumber, void *entryPoint, const Type *returnType, int32_t numParms, ...);
-    FunctionSymbol * DefineFunction(LOCATION, String name, String fileName, String lineNumber, void *entryPoint, const Type *returnType, int32_t numParms, const Type **parmTypes);
+    FunctionSymbol * DefineFunction(LOCATION, FunctionCompilation *comp, String name, String fileName, String lineNumber, void *entryPoint, const Type *returnType, int32_t numParms, ...);
+    FunctionSymbol * DefineFunction(LOCATION, FunctionCompilation *comp, String name, String fileName, String lineNumber, void *entryPoint, const Type *returnType, int32_t numParms, const Type **parmTypes);
     void DefineReturnType(const Type * type);
 
     LocalSymbolIterator locals() const { return this->_locals.iterator(); }
@@ -69,15 +69,18 @@ public:
     }
 
 protected:
-    FunctionContext(LOCATION, KINDTYPE(Context) kind, FunctionCompilation *comp, String name="");
-    FunctionContext(LOCATION, KINDTYPE(Context) kind, FunctionContext *caller, String name="");
+    DYNAMIC_ALLOC_ONLY(FunctionContext, Extension *ext, KINDTYPE(Extensible) kind, IR *ir, String name="");
+    DYNAMIC_ALLOC_ONLY(FunctionContext, KINDTYPE(Extensible) kind, FunctionContext *caller, String name="");
+    DYNAMIC_ALLOC_ONLY(FunctionContext, const FunctionContext *source, IRCloner *cloner);
+
+    virtual Context *clone(Allocator *mem, IRCloner *cloner) const;
 
     FunctionCompilation *fComp() const;
 
     void DefineParameter(ParameterSymbol *parm);
     void DefineLocal(LocalSymbol *local);
     void DefineFunction(FunctionSymbol *function);
-    FunctionSymbol * internalDefineFunction(LOCATION, String name, String fileName, String lineNumber, void *entryPoint, const Type *returnType, int32_t numParms, const Type **parmTypes);
+    FunctionSymbol * internalDefineFunction(LOCATION, FunctionCompilation *comp, String name, String fileName, String lineNumber, void *entryPoint, const Type *returnType, int32_t numParms, const Type **parmTypes);
 
     ParameterSymbolList _parameters;
     LocalSymbolList _locals;
@@ -85,7 +88,7 @@ protected:
 
     TypeArray _returnTypes;
 
-    SUBCLASS_KINDSERVICE_DECL(Context, FunctionContext);
+    SUBCLASS_KINDSERVICE_DECL(Extensible, FunctionContext);
 };
 
 } // namespace Func

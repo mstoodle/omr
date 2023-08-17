@@ -23,6 +23,7 @@
 #define EXTENSION_INCL
 
 #include "common.hpp"
+#include "Compilation.hpp"
 #include "CreateLoc.hpp"
 #include "Extensible.hpp"
 #include "Pass.hpp"
@@ -36,8 +37,8 @@ class Compilation;
 class Compiler;
 class CompileUnit;
 class Context;
+class IR;
 class Location;
-class NoTypeType;
 class Operation;
 class Scope;
 class SemanticVersion;
@@ -71,8 +72,14 @@ public:
     }
 
     Builder *BoundBuilder(LOCATION, Builder *parent, Operation *parentOp, String name="");
-    Builder *EntryBuilder(LOCATION, Compilation *comp, Scope *scope, String name="");
-    Builder *ExitBuilder(LOCATION, Compilation *comp, Scope *scope, String name="");
+    Builder *EntryBuilder(LOCATION, Compilation *comp, Scope *scope, String name="") {
+        return EntryBuilder(PASSLOC, comp->ir(), scope, name);
+    }
+    Builder *EntryBuilder(LOCATION, IR *ir, Scope *scope, String name="");
+    Builder *ExitBuilder(LOCATION, Compilation *comp, Scope *scope, String name="") {
+        return ExitBuilder(PASSLOC, comp->ir(), scope, name);
+    }
+    Builder *ExitBuilder(LOCATION, IR *ir, Scope *scope, String name="");
     Builder *OrphanBuilder(LOCATION, Builder *parent, Scope *scope=NULL, String name="");
     Location * SourceLocation(LOCATION, Builder *b, String func);
     Location * SourceLocation(LOCATION, Builder *b, String func, String lineNumber);
@@ -110,21 +117,15 @@ protected:
     CompilerReturnCode registerReturnCode(String name);
     PassID addPass(Pass *pass); 
 
-    Value *createValue(const Builder *parent, const Type *type);
+    Value *createValue(Builder *parent, const Type *type);
     void addOperation(Builder *b, Operation *op);
 
-    template <class T>
-    T * registerBuilder(Compilation *comp, Builder *b) {
-        return static_cast<T *>(internalRegisterBuilder(comp, b));
-    }
+    void registerBuilder(IR *ir, Builder *b);
 
     virtual uint64_t numTypes() const { return static_cast<uint64_t>(_types.length()); }
 
     static const SemanticVersion version;
 
-private:
-    Builder * internalRegisterBuilder(Compilation *comp, Builder *b);
-    
     SUBCLASS_KINDSERVICE_DECL(Extensible,Extension);
 };
 

@@ -21,6 +21,7 @@
 
 #include "AllocationCategoryClasses.hpp"
 #include "Compiler.hpp"
+#include "IRCloner.hpp"
 #include "Symbol.hpp"
 #include "SymbolDictionary.hpp"
 #include "TextLogger.hpp"
@@ -113,6 +114,24 @@ SymbolDictionary::SymbolDictionary(Compiler *compiler, String name, SymbolDictio
     _nextSymbolID = linkedDictionary->_nextSymbolID;
 }
 
+// only used by clone()
+SymbolDictionary::SymbolDictionary(Allocator *a, const SymbolDictionary * source, IRCloner *cloner)
+    : Allocatable(a)
+    , _id(source->_id)
+    , _compiler(source->_compiler)
+    , _mem(a)
+    , _name(source->_name)
+    , _symbols(NULL, a)
+    , _ownedSymbols(NULL, a)
+    , _nextSymbolID(source->_nextSymbolID)
+    , _linkedDictionary(cloner->clonedSymbolDictionary(source->_linkedDictionary)) {
+
+    for (auto it = source->symbolIterator(); it.hasItem(); it++) {
+         Symbol *sym = it.item();
+         internalRegisterSymbol(sym->clone(a, cloner));
+    }
+}
+
 SymbolDictionary::~SymbolDictionary() {
     for (auto it = _ownedSymbols.iterator(); it.hasItem(); it++) {
         Symbol *sym = it.item();
@@ -124,6 +143,11 @@ SymbolDictionary::~SymbolDictionary() {
         SymbolList *tl = it->second;
         delete tl;
     }
+}
+
+SymbolDictionary *
+SymbolDictionary::clone(Allocator *a, IRCloner *cloner) const {
+    return new (a) SymbolDictionary(a, this, cloner);
 }
 
 Symbol *

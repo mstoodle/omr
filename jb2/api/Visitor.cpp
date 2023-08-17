@@ -64,9 +64,10 @@ Visitor::start(Compilation *comp) {
     visitBegin();
 
     {
-        BuilderList worklist(NULL, comp->mem());
-        BitVector visited(_comp->mem(), _comp->maxBuilderID());
-        _comp->addInitialBuildersToWorklist(worklist);
+        Allocator *mem = comp->mem();
+        BuilderList worklist(NULL, mem);
+        BitVector visited(mem, _comp->ir()->maxBuilderID());
+        _comp->ir()->addInitialBuildersToWorklist(worklist);
 
         visitPreCompilation(_comp);
 
@@ -96,7 +97,7 @@ Visitor::abort(CompilerReturnCode code) {
 void
 Visitor::start(Builder * b) {
     BuilderList worklist(NULL, _comp->mem());
-    BitVector visited(_comp->mem(), _comp->maxBuilderID());
+    BitVector visited(_comp->mem(), _comp->ir()->maxBuilderID());
     visitBuilder(b, visited, worklist);
 }
 

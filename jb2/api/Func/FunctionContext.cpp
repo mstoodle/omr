@@ -32,42 +32,67 @@ namespace JitBuilder {
 namespace Func {
 
 INIT_JBALLOC_REUSECAT(FunctionContext, Context)
-SUBCLASS_KINDSERVICE_IMPL(FunctionContext, "FunctionContext", Context, Context)
+SUBCLASS_KINDSERVICE_IMPL(FunctionContext, "FunctionContext", Context, Extensible)
 
-FunctionContext::FunctionContext(LOCATION, FunctionCompilation *comp, String name)
-    : Context(PASSLOC, KIND(Context), comp->ext(), comp, name)
-    , _parameters(NULL, comp->mem())
-    , _locals(NULL, comp->mem())
-    , _functions(NULL, comp->mem())
-    , _returnTypes(NULL, comp->mem()) {
-
-}
-
-FunctionContext::FunctionContext(LOCATION, KINDTYPE(Context) kind, FunctionCompilation *comp, String name)
-    : Context(PASSLOC, kind, comp->ext(), comp, name)
-    , _parameters(NULL, comp->mem())
-    , _locals(NULL, comp->mem())
-    , _functions(NULL, comp->mem())
-    , _returnTypes(NULL, comp->mem()) {
+FunctionContext::FunctionContext(Allocator *a, Extension *ext, IR *ir, String name)
+    : Context(a, ext, KIND(Extensible), ir, name)
+    , _parameters(NULL, ir->mem())
+    , _locals(NULL, ir->mem())
+    , _functions(NULL, ir->mem())
+    , _returnTypes(NULL, ir->mem()) {
 
 }
 
-FunctionContext::FunctionContext(LOCATION, FunctionContext *caller, String name)
-    : Context(PASSLOC, getContextClassKind(), caller->comp()->ext(), caller, name)
-    , _parameters(NULL, caller->comp()->mem())
-    , _locals(NULL, caller->comp()->mem())
-    , _functions(NULL, caller->comp()->mem())
-    , _returnTypes(NULL, caller->comp()->mem()) {
+FunctionContext::FunctionContext(Allocator *a, Extension *ext, KINDTYPE(Extensible) kind, IR *ir, String name)
+    : Context(a, ext, kind, ir, name)
+    , _parameters(NULL, ir->mem())
+    , _locals(NULL, ir->mem())
+    , _functions(NULL, ir->mem())
+    , _returnTypes(NULL, ir->mem()) {
 
 }
 
-FunctionContext::FunctionContext(LOCATION, KINDTYPE(Context) kind, FunctionContext *caller, String name)
-    : Context(PASSLOC, kind, caller->comp()->ext(), caller, name)
-    , _parameters(NULL, caller->comp()->mem())
-    , _locals(NULL, caller->comp()->mem())
-    , _functions(NULL, caller->comp()->mem())
-    , _returnTypes(NULL, caller->comp()->mem()) {
+FunctionContext::FunctionContext(Allocator *a, FunctionContext *caller, String name)
+    : Context(a, caller->ext(), KIND(Extensible), caller, name)
+    , _parameters(NULL, caller->ir()->mem())
+    , _locals(NULL, caller->ir()->mem())
+    , _functions(NULL, caller->ir()->mem())
+    , _returnTypes(NULL, caller->ir()->mem()) {
 
+}
+
+FunctionContext::FunctionContext(Allocator *a, KINDTYPE(Extensible) kind, FunctionContext *caller, String name)
+    : Context(a, caller->ext(), kind, caller, name)
+    , _parameters(NULL, caller->ir()->mem())
+    , _locals(NULL, caller->ir()->mem())
+    , _functions(NULL, caller->ir()->mem())
+    , _returnTypes(NULL, caller->ir()->mem()) {
+
+}
+
+FunctionContext::FunctionContext(Allocator *a, const FunctionContext *source, IRCloner *cloner)
+    : Context(a, source, cloner)
+    , _parameters(NULL, a)
+    , _locals(NULL, a)
+    , _functions(NULL, a)
+    , _returnTypes(NULL, a) {
+
+    for (auto it=source->_parameters.iterator();it.hasItem(); it++) {
+        Symbol *sym = it.item();
+        _parameters.push_back(cloner->clonedSymbol(sym)->refine<ParameterSymbol>());
+    }
+    for (auto it=source->_locals.iterator();it.hasItem(); it++) {
+        Symbol *sym = it.item();
+        _locals.push_back(cloner->clonedSymbol(sym)->refine<LocalSymbol>());
+    }
+    for (auto it=source->_functions.iterator();it.hasItem(); it++) {
+        Symbol *sym = it.item();
+        _functions.push_back(cloner->clonedSymbol(sym)->refine<FunctionSymbol>());
+    }
+    for (auto i=0;i < source->_returnTypes.length();i++) {
+        const Type *type = source->_returnTypes[i];
+        _returnTypes.assign(i, cloner->clonedType(type));
+    }
 }
 
 FunctionContext::~FunctionContext() {
@@ -79,15 +104,15 @@ FunctionContext::~FunctionContext() {
     _returnTypes.erase();
 }
 
-FunctionCompilation *
-FunctionContext::fComp() const {
-    return _comp->refine<FunctionCompilation>();
+Context *
+FunctionContext::clone(Allocator *mem, IRCloner *cloner) const {
+    return new (mem) FunctionContext(mem, this, cloner);
 }
 
 ParameterSymbol *
 FunctionContext::DefineParameter(String name, const Type * type) {
-    Allocator *mem = _comp->mem();
-    ParameterSymbol *parm = new (mem) ParameterSymbol(mem, _ext, name, type, this->_parameters.length());
+    Allocator *mem = _ir->mem();
+    ParameterSymbol *parm = new (mem) ParameterSymbol(mem, ext(), name, type, this->_parameters.length());
     this->_parameters.push_back(parm);
     addSymbol(parm);
     return parm;
@@ -106,8 +131,8 @@ FunctionContext::DefineLocal(String name, const Type * type) {
     if (sym && sym->isKind<LocalSymbol>())
        return sym->refine<LocalSymbol>();
 
-    Allocator *mem = _comp->mem();
-    LocalSymbol *local = new (mem) LocalSymbol(mem, _ext, name, type);
+    Allocator *mem = _ir->mem();
+    LocalSymbol *local = new (mem) LocalSymbol(mem, ext(), name, type);
     this->_locals.push_back(local);
     addSymbol(local);
     return local;
@@ -165,6 +190,7 @@ FunctionContext::resetFunctions() {
 
 FunctionSymbol *
 FunctionContext::DefineFunction(LOCATION,
+                                FunctionCompilation *comp,
                                 String name,
                                 String fileName,
                                 String lineNumber,
@@ -181,11 +207,12 @@ FunctionContext::DefineFunction(LOCATION,
         parmTypes[p] = (const Type *) va_arg(parms, const Type *);
     va_end(parms);
 
-    return internalDefineFunction(PASSLOC, name, fileName, lineNumber, entryPoint, returnType, numParms, parmTypes);
+    return internalDefineFunction(PASSLOC, comp, name, fileName, lineNumber, entryPoint, returnType, numParms, parmTypes);
 }
 
 FunctionSymbol *
 FunctionContext::DefineFunction(LOCATION,
+                                FunctionCompilation *comp,
                                 String name,
                                 String fileName,
                                 String lineNumber,
@@ -199,7 +226,7 @@ FunctionContext::DefineFunction(LOCATION,
     for (int32_t p=0;p < numParms;p++)
         copiedParmTypes[p] = parmTypes[p];
 
-    return internalDefineFunction(PASSLOC, name, fileName, lineNumber, entryPoint, returnType, numParms, copiedParmTypes);
+    return internalDefineFunction(PASSLOC, comp, name, fileName, lineNumber, entryPoint, returnType, numParms, copiedParmTypes);
 }
 
 void
@@ -210,6 +237,7 @@ FunctionContext::DefineFunction(FunctionSymbol *function) {
 // maybe move to Compilation?
 FunctionSymbol *
 FunctionContext::internalDefineFunction(LOCATION,
+                                        FunctionCompilation *comp,
                                         String name,
                                         String fileName,
                                         String lineNumber,
@@ -218,10 +246,10 @@ FunctionContext::internalDefineFunction(LOCATION,
                                         int32_t numParms,
                                         const Type **parmTypes) {
 
-    FunctionExtension *fx = _comp->compiler()->lookupExtension<FunctionExtension>();
-    const FunctionType *type = fx->DefineFunctionType(PASSLOC, fComp(), returnType, numParms, parmTypes);
-    Allocator *mem = _comp->mem();
-    FunctionSymbol *sym = new (mem) FunctionSymbol(mem, _ext, type, name, fileName, lineNumber, entryPoint);
+    FunctionExtension *fx = ext()->refine<FunctionExtension>();
+    const FunctionType *type = fx->DefineFunctionType(PASSLOC, comp, returnType, numParms, parmTypes);
+    Allocator *mem = _ir->mem();
+    FunctionSymbol *sym = new (mem) FunctionSymbol(mem, ext(), type, name, fileName, lineNumber, entryPoint);
     _functions.push_back(sym);
     addSymbol(sym);
     return sym;

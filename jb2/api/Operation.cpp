@@ -42,7 +42,7 @@ INIT_JBALLOC(Operation)
 
 Operation::Operation(MEM_LOCATION(a), ActionID action, Extension *ext, Builder * parent, Operation *next, Operation *prev)
     : Allocatable(a)
-    , _id(parent->comp()->getOperationID())
+    , _id(parent->ir()->getOperationID())
     , _ext(ext)
     , _parent(parent)
     , _next(next)
@@ -51,6 +51,20 @@ Operation::Operation(MEM_LOCATION(a), ActionID action, Extension *ext, Builder *
     , _name(ext->actionName(action))
     , _location(parent->location())
     , _creationLocation(PASSLOC) {
+
+    } 
+
+Operation::Operation(Allocator *a, const Operation *source, IRCloner *cloner)
+    : Allocatable(a)
+    , _id(source->_id)
+    , _ext(source->_ext)
+    , _parent(cloner->clonedBuilder(source->_parent))
+    , _next(cloner->clonedOperation(source->_next))
+    , _prev(cloner->clonedOperation(source->_prev))
+    , _action(source->_action)
+    , _name(source->_name)
+    , _location(cloner->clonedLocation(source->_location))
+    , _creationLocation(source->_creationLocation) {
 
     } 
 
@@ -207,13 +221,19 @@ OperationR0S1VN::OperationR0S1VN(MEM_LOCATION(a), ActionID action, Extension *ex
     : OperationR0S1(MEM_PASSLOC(a), action, ext, parent, cloner->symbol()) {
 
     _numValues = cloner->numOperands();
-    _values = new Value *[_numValues];
-    for (auto a=0;a < cloner->numOperands(); a++)
-        _values[a] = (cloner->operand(a));
+    if (_numValues > 0) {
+        _values = new Value *[_numValues];
+        for (auto a=0;a < cloner->numOperands(); a++)
+            _values[a] = (cloner->operand(a));
+    } else {
+        _values = NULL;
     }
+}
 
 OperationR0S1VN::~OperationR0S1VN() {
-    delete[] _values;
+    if (_values != NULL) {
+        allocator()->deallocate(_values);
+    }
 }
 
 void
@@ -287,7 +307,7 @@ OperationR1L1T1::~OperationR1L1T1() {
 
 void
 OperationR1L1T1::log(TextLogger & lgr) const {
-    lgr << this->_result << " = " << this->name() << " " << this->_v << " ";
+    lgr << this->_result << " = " << this->name() << " " << this->_lv << " ";
     this->_elementType->logType(lgr);
     lgr << lgr.endl();
 }
@@ -332,13 +352,19 @@ OperationR1S1VN::OperationR1S1VN(MEM_LOCATION(a), ActionID action, Extension *ex
     : OperationR1S1(MEM_PASSLOC(a), action, ext, parent, cloner->result(), cloner->symbol()) {
 
     _numValues = cloner->numOperands();
-    _values = new Value *[_numValues];
-    for (auto a=0;a < cloner->numOperands(); a++)
-        _values[a] = (cloner->operand(a));
+    if (_numValues > 0) {
+        _values = new Value *[_numValues];
+        for (auto a=0;a < cloner->numOperands(); a++)
+            _values[a] = (cloner->operand(a));
+    } else {
+        _values = NULL;
     }
+}
 
 OperationR1S1VN::~OperationR1S1VN() {
-    delete[] _values;
+    if (_values != NULL) {
+        allocator()->deallocate(_values);
+    }
 }
 
 void
@@ -383,7 +409,7 @@ Op_AppendBuilder::Op_AppendBuilder(MEM_LOCATION(a), Extension *ext, Builder * pa
 
 Operation *
 Op_AppendBuilder::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    Allocator *mem = b->comp()->mem();
+    Allocator *mem = b->ir()->mem();
     return new (mem) Op_AppendBuilder(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->builder());
 }
 
@@ -400,7 +426,7 @@ Op_MergeDef::Op_MergeDef(MEM_LOCATION(a), Extension *ext, Builder * parent, Acti
 
 Operation *
 Op_MergeDef::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    Allocator *mem = b->comp()->mem();
+    Allocator *mem = b->ir()->mem();
     return new (mem) Op_MergeDef(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->result(), cloner->operand());
 }
 

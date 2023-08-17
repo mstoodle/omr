@@ -25,6 +25,7 @@
 #include <cstdarg>
 #include "common.hpp"
 #include "CreateLoc.hpp"
+#include "IRCloner.hpp"
 #include "Mapper.hpp"
 #include "String.hpp"
 
@@ -33,6 +34,7 @@ namespace JitBuilder {
 
 class Builder;
 class Extension;
+class IRCloner;
 class Literal;
 class Location;
 class Operation;
@@ -51,6 +53,7 @@ class Operation : public Allocatable {
 
     friend class Builder;
     friend class Extension;
+    friend class IRCloner;
     friend class Transformer;
 
 public:
@@ -120,6 +123,9 @@ public:
 
 protected:
     Operation(MEM_LOCATION(a), ActionID action, Extension *ext, Builder * parent, Operation *next=NULL, Operation *prev=NULL);
+    Operation(Allocator *a, const Operation *source, IRCloner *cloner);
+
+    virtual Operation *clone(Allocator *a, IRCloner *cloner) const = 0;
 
     Operation * setParent(Builder * newParent);
     Operation * setLocation(Location *location);
@@ -150,6 +156,7 @@ protected:
 // listed above. So the structural Operation class with one result and two operand
 // values is called OperationR1V2. Operation sub classes then derive from these
 // structural classes and can add some semantically relevant services.
+// These classes are abstract so they cannot be accidentally created directly.
 class OperationR0S1 : public Operation {
     JBALLOC_(OperationR0S1)
 
@@ -169,6 +176,11 @@ protected:
     OperationR0S1(MEM_LOCATION(a), ActionID action, Extension *ext, Builder * parent, Symbol *symbol)
         : Operation(MEM_PASSLOC(a), action, ext, parent)
         , _symbol(symbol) {
+
+    }
+    OperationR0S1(Allocator *a, const OperationR0S1 *source, IRCloner *cloner)
+        : Operation(a, source, cloner)
+        , _symbol(cloner->clonedSymbol(_symbol)) {
 
     }
 
@@ -196,6 +208,11 @@ protected:
         , _value(value) {
 
     }
+    OperationR0S1V1(Allocator *a, const OperationR0S1V1 *source, IRCloner *cloner)
+        : OperationR0S1(a, source, cloner)
+        , _value(cloner->clonedValue(source->_value)) {
+
+    }
 
     Value * _value;
 };
@@ -217,6 +234,11 @@ class OperationR0T1 : public Operation {
     OperationR0T1(MEM_LOCATION(a), ActionID action, Extension *ext, Builder *parent, const Type *type)
         : Operation(MEM_PASSLOC(a), action, ext, parent)
         , _type(type) {
+    }
+    OperationR0T1(Allocator *a, const OperationR0T1 *source, IRCloner *cloner)
+        : Operation(a, source, cloner)
+        , _type(cloner->clonedType(source->_type)) {
+
     }
 
     const Type *_type;
@@ -243,6 +265,12 @@ protected:
         , _base(base)
         , _value(value) {
     }
+    OperationR0T1V2(Allocator *a, const OperationR0T1V2 *source, IRCloner *cloner)
+        : OperationR0T1(a, source, cloner)
+        , _base(cloner->clonedValue(source->_base))
+        , _value(cloner->clonedValue(source->_value)) {
+
+    }
 
     Value *_base;
     Value *_value;
@@ -268,6 +296,11 @@ protected:
         : Operation(MEM_PASSLOC(a), action, ext, parent)
         , _value(value)
         { }
+    OperationR0V1(Allocator *a, const OperationR0V1 *source, IRCloner *cloner)
+        : Operation(a, source, cloner)
+        , _value(cloner->clonedValue(source->_value)) {
+
+    }
 
     Value * _value;
 };
@@ -296,6 +329,12 @@ protected:
         , _left(left)
         , _right(right) {
     }
+    OperationR0V2(Allocator *a, const OperationR0V2 *source, IRCloner *cloner)
+        : Operation(a, source, cloner)
+        , _left(cloner->clonedValue(source->_left))
+        , _right(cloner->clonedValue(source->_right)) {
+
+    }
 
     Value * _left;
     Value * _right;
@@ -322,12 +361,29 @@ protected:
         : OperationR0S1(MEM_PASSLOC(a), action, ext, parent, symbol) {
 
         _numValues = numArgs;
-        _values = new Value *[numArgs];
-        for (auto a=0;a < numArgs;a++) {
-            _values[a] = (va_arg(args, Value *));
+        if (_numValues > 0) {
+            _values = a->allocate<Value *>(numArgs);
+            for (auto a=0;a < numArgs;a++) {
+                _values[a] = (va_arg(args, Value *));
+            }
+        } else {
+            _values = NULL;
         }
     }
     OperationR0S1VN(MEM_LOCATION(a), ActionID action, Extension *ext, Builder * parent, OperationCloner * cloner);
+    OperationR0S1VN(Allocator *a, const OperationR0S1VN *source, IRCloner *cloner)
+        : OperationR0S1(a, source, cloner) {
+
+        _numValues = source->_numValues;
+        if (_numValues > 0) {
+            _values = a->allocate<Value *>(_numValues);
+            for (auto a=0;a < _numValues;a++) {
+                _values[a] = cloner->clonedValue(source->_values[a]);
+            }
+        } else {
+            _values = NULL;
+        }
+    }
 
     size_t _numValues;
     Value ** _values;
@@ -346,7 +402,12 @@ public:
     virtual ValueIterator results()       { return ValueIterator(allocator(), _result); }
 
 protected:
-     OperationR1(MEM_LOCATION(a), ActionID action, Extension *ext, Builder * parent, Value * result);
+    OperationR1(MEM_LOCATION(a), ActionID action, Extension *ext, Builder * parent, Value * result);
+    OperationR1(Allocator *a, const OperationR1 *source, IRCloner *cloner)
+        : Operation(a, source, cloner)
+        , _result(cloner->clonedValue(source->_result)) {
+
+    }
 
      Value * _result;
 };
@@ -357,19 +418,24 @@ class OperationR1L1 : public OperationR1 {
 public:
     virtual size_t numLiterals() const { return 1; }
     virtual Literal *literal(int i=0) const {
-        if (i == 0) return _v;
+        if (i == 0) return _lv;
         return NULL;
     }
-    virtual LiteralIterator literals() { return LiteralIterator(allocator(), _v); }
+    virtual LiteralIterator literals() { return LiteralIterator(allocator(), _lv); }
     virtual void log(TextLogger & log) const;
 
 protected:
-    OperationR1L1(MEM_LOCATION(a), ActionID action, Extension *ext, Builder * parent, Value * result, Literal *value)
+    OperationR1L1(MEM_LOCATION(a), ActionID action, Extension *ext, Builder * parent, Value * result, Literal *lv)
          : OperationR1(MEM_PASSLOC(a), action, ext, parent, result)
-         , _v(value)
+         , _lv(lv)
          { }
+    OperationR1L1(Allocator *a, const OperationR1L1 *source, IRCloner *cloner)
+        : OperationR1(a, source, cloner)
+        , _lv(cloner->clonedLiteral(source->_lv)) {
 
-    Literal *_v;
+    }
+
+    Literal *_lv;
 };
 
 class OperationR1L1T1 : public OperationR1L1 {
@@ -389,6 +455,11 @@ protected:
     OperationR1L1T1(MEM_LOCATION(a), ActionID action, Extension *ext, Builder * parent, Value * result, Literal *numElements, const Type *elementType)
         : OperationR1L1(MEM_PASSLOC(a), action, ext, parent, result, numElements)
         , _elementType(elementType) {
+
+    }
+    OperationR1L1T1(Allocator *a, const OperationR1L1T1 *source, IRCloner *cloner)
+        : OperationR1L1(a, source, cloner)
+        , _elementType(cloner->clonedType(source->_elementType)) {
 
     }
 
@@ -412,6 +483,11 @@ protected:
         : OperationR1(MEM_PASSLOC(a), action, ext, parent, result)
         , _symbol(symbol) {
     }
+    OperationR1S1(Allocator *a, const OperationR1S1 *source, IRCloner *cloner)
+        : OperationR1(a, source, cloner)
+        , _symbol(cloner->clonedSymbol(source->_symbol)) {
+
+    }
 
     Symbol *_symbol;
 };
@@ -434,6 +510,11 @@ protected:
     OperationR1T1(MEM_LOCATION(a), ActionID action, Extension *ext, Builder * parent, Value * result, const Type * t)
         : OperationR1(MEM_PASSLOC(a), action, ext, parent, result)
         , _type(t) {
+
+    }
+    OperationR1T1(Allocator *a, const OperationR1T1 *source, IRCloner *cloner)
+        : OperationR1(a, source, cloner)
+        , _type(cloner->clonedType(source->_type)) {
 
     }
 
@@ -460,6 +541,11 @@ protected:
         : OperationR1(MEM_PASSLOC(a), action, ext, parent, result)
         , _value(value) {
     }
+    OperationR1V1(Allocator *a, const OperationR1V1 *source, IRCloner *cloner)
+        : OperationR1(a, source, cloner)
+        , _value(cloner->clonedValue(source->_value)) {
+
+    }
 
     Value * _value;
 };
@@ -483,6 +569,11 @@ protected:
     OperationR1V1T1(MEM_LOCATION(a), ActionID action, Extension *ext, Builder * parent, Value * result, const Type * t, Value * v)
         : OperationR1V1(MEM_PASSLOC(a), action, ext, parent, result, v)
         , _type(t) {
+
+    }
+    OperationR1V1T1(Allocator *a, const OperationR1V1T1 *source, IRCloner *cloner)
+        : OperationR1V1(a, source, cloner)
+        , _type(cloner->clonedType(source->_type)) {
 
     }
 
@@ -514,6 +605,12 @@ protected:
         , _right(right) {
 
     }
+    OperationR1V2(Allocator *a, const OperationR1V2 *source, IRCloner *cloner)
+        : OperationR1(a, source, cloner)
+        , _left(cloner->clonedValue(source->_left))
+        , _right(cloner->clonedValue(source->_right)) {
+
+    }
 
     Value * _left;
     Value * _right;
@@ -542,6 +639,11 @@ protected:
         , _type(t) {
 
     }
+    OperationR1V2T1(Allocator *a, const OperationR1V2T1 *source, IRCloner *cloner)
+        : OperationR1V2(a, source, cloner)
+        , _type(cloner->clonedType(source->_type)) {
+
+    }
 
     const Type * _type;
 };
@@ -567,12 +669,29 @@ protected:
         : OperationR1S1(MEM_PASSLOC(a), action, ext, parent, result, symbol) {
 
         _numValues = numArgs;
-        _values = new Value *[numArgs];
-        for (auto a=0;a < numArgs;a++) {
-            _values[a] = (va_arg(args, Value *));
+        if (_numValues > 0) {
+            _values = new Value *[numArgs];
+            for (auto a=0;a < numArgs;a++) {
+                _values[a] = (va_arg(args, Value *));
+            }
+        } else {
+            _values = NULL;
         }
     }
     OperationR1S1VN(MEM_LOCATION(a), ActionID action, Extension *ext, Builder * parent, OperationCloner * cloner);
+    OperationR1S1VN(Allocator *a, const OperationR1S1VN *source, IRCloner *cloner)
+        : OperationR1S1(a, source, cloner) {
+
+        _numValues = source->_numValues;
+        if (_numValues > 0) {
+            _values = a->allocate<Value *>(_numValues);
+            for (auto a=0;a < _numValues;a++) {
+                _values[a] = cloner->clonedValue(source->_values[a]);
+            }
+        } else {
+            _values = NULL;
+        }
+    }
 
     size_t _numValues;
     Value **_values;
@@ -597,6 +716,11 @@ class OperationB1 : public Operation {
         , _builder(b) {
 
     }
+    OperationB1(Allocator *a, const OperationB1 *source, IRCloner *cloner)
+        : Operation(a, source, cloner)
+        , _builder(cloner->clonedBuilder(source->_builder)) {
+
+    }
 
     Builder * _builder;
 };
@@ -617,6 +741,11 @@ class OperationB1R0V1 : public OperationR0V1 {
     OperationB1R0V1(MEM_LOCATION(a), ActionID action, Extension *ext, Builder * parent, Builder * b, Value * value)
         : OperationR0V1(MEM_PASSLOC(a), action, ext, parent, value)
         , _builder(b) {
+
+    }
+    OperationB1R0V1(Allocator *a, const OperationB1R0V1 *source, IRCloner *cloner)
+        : OperationR0V1(a, source, cloner)
+        , _builder(cloner->clonedBuilder(source->_builder)) {
 
     }
 
@@ -641,9 +770,20 @@ class OperationB1R0V2 : public OperationR0V2 {
         , _builder(b) {
 
     }
+    OperationB1R0V2(Allocator *a, const OperationB1R0V2 *source, IRCloner *cloner)
+        : OperationR0V2(a, source, cloner)
+        , _builder(cloner->clonedBuilder(source->_builder)) {
+
+    }
 
     Builder * _builder;
 };
+
+
+#define IRCLONER_SUPPORT(C,Super) \
+protected: \
+   C(Allocator *a, const C *source, IRCloner *cloner) : Super(a, source, cloner) { }; \
+   virtual Operation *clone(Allocator *mem, IRCloner *cloner) const { return new (mem) C(mem, this, cloner); }
 
 
 //
@@ -660,6 +800,8 @@ public:
 
 protected:
     Op_AppendBuilder(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aAppendBuilder, Builder *b);
+
+    IRCLONER_SUPPORT(Op_AppendBuilder, OperationB1)
 };
 
 class Op_MergeDef : public OperationR1V1 {
@@ -672,6 +814,7 @@ public:
 
 protected:
     Op_MergeDef(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aMergeDef, Value *existingDef, Value *newDef);
+    IRCLONER_SUPPORT(Op_MergeDef, OperationR1V1)
 };
 
 #if 0

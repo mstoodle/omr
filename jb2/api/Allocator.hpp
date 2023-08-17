@@ -47,7 +47,7 @@ public:
     virtual ~Allocator();
 
     template <typename T>
-    T * allocate(size_t size, AllocationCategoryID cat=NoAllocationCategory) { return static_cast<T *>(allocate(size * sizeof(T), cat)); }
+    T * allocate(size_t num, AllocationCategoryID cat=NoAllocationCategory) { return static_cast<T *>(allocate(num * sizeof(T), cat)); }
 
     virtual void * allocate(size_t size, AllocationCategoryID cat);
 

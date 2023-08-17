@@ -79,9 +79,9 @@ public:
     Config *config() const { return _config; }
     Compiler *parent() const { return _parent; }
     Allocator *mem() const { return _mem; }
-    LiteralDictionary *litDict() const { return _litDict; }
-    SymbolDictionary *symDict() const { return _symDict; }
-    TypeDictionary *typeDict() const { return _typeDict; }
+    LiteralDictionary *litdict() const { return _litdict; }
+    SymbolDictionary *symdict() const { return _symdict; }
+    TypeDictionary *typedict() const { return _typedict; }
     TextWriter *textWriter(TextLogger & lgr);
 
     ExtensionID getExtensionID() { return _nextExtensionID++; }
@@ -100,7 +100,8 @@ public:
 
     PassID lookupPass(String name);
     Strategy * lookupStrategy(StrategyID id);
-    CompilerReturnCode compile(LOCATION, Compilation *comp, StrategyID strategyID);
+
+    CompiledBody *compile(LOCATION, Compilation *comp, StrategyID strategyID);
 
     List<Extensible *>::Iterator extensibles(KINDTYPE(Extensible) kind) const {
         auto it=_extensiblesByKind.find(kind);
@@ -215,9 +216,9 @@ protected:
     Platform *_compiler;
 
     // must come AFTER _nextTypeDictionaryID for proper initialization
-    LiteralDictionary *_litDict;
-    SymbolDictionary *_symDict;
-    TypeDictionary *_typeDict;
+    LiteralDictionary *_litdict;
+    SymbolDictionary *_symdict;
+    TypeDictionary *_typedict;
     
     List<TextWriter *> _textWriters;
 

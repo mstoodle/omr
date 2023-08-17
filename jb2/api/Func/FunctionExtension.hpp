@@ -97,7 +97,7 @@ public:
 
     void createAddon(Extensible *e);
     void registerChecker(FunctionExtensionChecker *checker);
-    CompilerReturnCode compile(LOCATION, Function *func, StrategyID strategy, TextLogger *lgr);
+    CompiledBody * compile(LOCATION, Function *func, StrategyID strategy, TextLogger *lgr);
 
 protected:
 

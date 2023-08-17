@@ -33,8 +33,9 @@ omr_assert(
 #)
 
 add_compile_options(
-	-Wplacement-new=0
+	-Wplacement-new=0 
 )
+
 
 set(JB2_CORE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/)
 set(JB2_BASE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Base/)
@@ -66,6 +67,8 @@ add_library(jb2core SHARED
     Extensible.cpp
     Extension.cpp
     InputReader.cpp
+    IR.cpp
+    IRCloner.cpp
     KindService.cpp
     Literal.cpp
     LiteralDictionary.cpp
@@ -95,10 +98,10 @@ add_library(jb2core SHARED
 add_subdirectory(test)
 
 # Extensions
-add_subdirectory(Base)
-add_subdirectory(Debug)
 add_subdirectory(Func)
+add_subdirectory(Base)
 add_subdirectory(jb)
-#add_subdirectory(Sim)
 add_subdirectory(vm)
+#add_subdirectory(Debug)
+#add_subdirectory(Sim)
 #add_subdirectory(Complex)

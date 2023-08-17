@@ -23,6 +23,7 @@
 #define SCOPE_INCL
 
 #include "common.hpp"
+#include "Context.hpp"
 #include "KindService.hpp"
 #include "List.hpp"
 #include "String.hpp"
@@ -61,6 +62,8 @@
 // "yield" operation (where the new entry point would be specifically used for
 // continuing from the "yield" as opposed to calling the Function anew).
 
+#include "EntryPoint.hpp" // for EntryPointKind
+#include "Extensible.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -69,23 +72,26 @@ class Compilation;
 class CompiledBody;
 class EntryPoint;
 class Extension;
+class IR;
 
-KINDSERVICE_CATEGORY(Scope);
-
-class Scope : public Allocatable {
+class Scope : public Extensible {
     JBALLOC_(Scope)
 
+    friend class Compilation;
+    friend class IRCloner;
+
 public:
-    ALL_ALLOC_ALLOWED(Scope, ScopeKind kind, Extension *ext, Compilation *comp, String name="");
-    ALL_ALLOC_ALLOWED(Scope, ScopeKind kind, Extension *ext, Scope *parent, String name="");
+    DYNAMIC_ALLOC_ONLY(Scope, Extension *ext, IR *ir, String name="");
+    DYNAMIC_ALLOC_ONLY(Scope, Extension *ext, Scope *parent, String name="");
 
     ScopeID id() const { return _id; }
     String name() const { return _name; }
-    Extension *ext() const { return _ext; }
-    Compilation *comp() const { return _comp; }
+    IR *ir() const { return _ir; }
 
     Context *context() const { return _context; }
     template <class T> T *context() const { return _context->refine<T>(); }
+
+    void addInitialBuildersToWorklist(BuilderList & worklist);
 
     // Entry point handling
     template <class T>
@@ -118,6 +124,12 @@ public:
     virtual void saveEntries(CompiledBody *body);
 
 protected:
+    DYNAMIC_ALLOC_ONLY(Scope, Extension *ext, KINDTYPE(Extensible) kind, IR *ir, String name="");
+    DYNAMIC_ALLOC_ONLY(Scope, Extension *ext, KINDTYPE(Extensible) kind, Scope *parent, String name="");
+    Scope(Allocator *a, const Scope *source, IRCloner *cloner);
+
+    virtual Scope *clone(Allocator *mem, IRCloner *cloner) const;
+
     EntryPoint *findEntryPoint(EntryID e, EntryPointKind kind) const;
     void addChild(Scope *child) { _children.push_back(child); }
     void addBuilder(Builder *b) { _allBuilders.push_back(b); }
@@ -133,8 +145,7 @@ protected:
     }
 
     uint64_t _id;
-    Extension *_ext;
-    Compilation *_comp;
+    IR *_ir;
     Context *_context;
     String _name;
 
@@ -143,7 +154,7 @@ protected:
     List<Builder *> _allBuilders;
     Array<List<EntryPoint *> *> _entries;
 
-    BASECLASS_KINDSERVICE_DECL(Scope);
+    SUBCLASS_KINDSERVICE_DECL(Extensible, Scope);
 };
 
 } // namespace JitBuilder

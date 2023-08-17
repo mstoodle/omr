@@ -37,6 +37,7 @@ public:
 
 protected:
     Op_Add(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aAdd, Value *result, Value *left, Value *right);
+    IRCLONER_SUPPORT(Op_Add, OperationR1V2)
     };
 
 class Op_ConvertTo : public OperationR1V1T1 {
@@ -48,6 +49,7 @@ public:
 
 protected:
     Op_ConvertTo(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aConvertTo, Value *result, const Type *type, Value *value);
+    IRCLONER_SUPPORT(Op_ConvertTo, OperationR1V1T1)
     };
 
 class Op_Mul : public OperationR1V2 {
@@ -59,6 +61,7 @@ public:
 
 protected:
     Op_Mul(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aMul, Value *result, Value *left, Value *right);
+    IRCLONER_SUPPORT(Op_Mul, OperationR1V2)
     };
 
 class Op_Sub : public OperationR1V2 {
@@ -70,6 +73,7 @@ public:
 
 protected:
     Op_Sub(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aSub, Value *result, Value *left, Value *right);
+    IRCLONER_SUPPORT(Op_Sub, OperationR1V2)
     };
 
 } // namespace Base

@@ -53,6 +53,8 @@ public:
     Func::FunctionExtension *fx() const { return _fx; }
     Base::BaseExtension *bx() const { return _bx; }
 
+    virtual void createAddon(Extensible *e);
+
     //
     // Types
     //
@@ -83,9 +85,12 @@ public:
     void IfCmpUnsignedLessThan(LOCATION, BytecodeBuilder *b, BytecodeBuilder *target, Value *left, Value *right);
     void IfCmpUnsignedGreaterOrEqual(LOCATION, BytecodeBuilder *b, BytecodeBuilder *target, Value *left, Value *right);
     void IfCmpUnsignedGreaterThan(LOCATION, BytecodeBuilder *b, BytecodeBuilder *target, Value *left, Value *right);
-    BytecodeBuilder *OrphanBytecodeBuilder(Compilation *comp, int32_t bcIndex, int32_t bcLength=1, Scope *scope=NULL, String name="");
+    BytecodeBuilder *OrphanBytecodeBuilder(Compilation *comp, int32_t bcIndex, int32_t bcLength=1, Scope *scope=NULL, String name="") {
+        return OrphanBytecodeBuilder(comp->ir(), bcIndex, bcLength, scope, name);
+    }
+    BytecodeBuilder *OrphanBytecodeBuilder(IR *ir, int32_t bcIndex, int32_t bcLength=1, Scope *scope=NULL, String name="");
 
-    CompilerReturnCode compile(LOCATION, Func::Function *func, StrategyID strategy, TextLogger *lgr);
+    CompiledBody * compile(LOCATION, Func::Function *func, StrategyID strategy, TextLogger *lgr);
 
 protected:
     Base::BaseExtension *_bx;

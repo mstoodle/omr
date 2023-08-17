@@ -19,6 +19,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#include "Func/FunctionExtension.hpp"
 #include "Func/FunctionScope.hpp"
 
 
@@ -27,30 +28,33 @@ namespace JitBuilder {
 namespace Func {
 
 INIT_JBALLOC(FunctionScope)
-SUBCLASS_KINDSERVICE_IMPL(FunctionScope,"FunctionScope",Scope,Scope)
+SUBCLASS_KINDSERVICE_IMPL(FunctionScope, "FunctionScope", Scope, Extensible)
 
-FunctionScope::FunctionScope(Allocator *a, Extension *ext, Compilation *comp, String name)
-    : Scope(a, KIND(Scope), ext, comp, name) {
+FunctionScope::FunctionScope(Allocator *a, Extension *ext, IR *ir, String name)
+    : Scope(a, ext, KIND(Extensible), ir, name) {
 
-}
-
-FunctionScope::FunctionScope(Extension *ext, Compilation *comp, String name)
-    : Scope(KIND(Scope), ext, comp, name) {
-
+    Builder *entryBuilder = ir->unit()->EntryBuilder(LOC, ir, this);
+    BuilderEntry *entry = new (a) BuilderEntry(a, 0, entryBuilder);
+    addEntryPoint(entry);
 }
 
 FunctionScope::FunctionScope(Allocator *a, Extension *ext, Scope *parent, String name)
-    : Scope(a, KIND(Scope), ext, parent, name) {
+    : Scope(a, ext, KIND(Extensible), parent, name) {
 
 }
 
-FunctionScope::FunctionScope(Extension *ext, Scope *parent, String name)
-    : Scope(KIND(Scope), ext, parent, name) {
+FunctionScope::FunctionScope(Allocator *a, const FunctionScope *source, IRCloner *cloner)
+    : Scope(a, source, cloner) {
 
 }
 
 FunctionScope::~FunctionScope() {
 
+}
+
+Scope *
+FunctionScope::clone(Allocator *mem, IRCloner *cloner) const {
+    return new (mem) FunctionScope(mem, this, cloner);
 }
 
 } // namespace Func

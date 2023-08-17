@@ -65,7 +65,7 @@ public:
     String functionName() const { return String(_functionName); }
 
     String to_string() const {
-        return String(_functionName).append(" in ").append(_fileName).append(":L").append(String::to_string(_lineNumber));
+        return String(_functionName).append(" in ").append(_fileName).append("@").append(String::to_string(_lineNumber));
     }
 
     void overrideFileName(const char *fileName) { _fileName = fileName; }

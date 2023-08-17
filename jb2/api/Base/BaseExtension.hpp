@@ -86,7 +86,10 @@ public:
     const AddressType *Address;
     const Type *Word;
 
-    const PointerType *PointerTo(LOCATION, Compilation *comp, const Type *baseType);
+    const PointerType *PointerTo(LOCATION, Compilation *comp, const Type *baseType) {
+        return PointerTo(PASSLOC, comp->ir(), baseType);
+    };
+    const PointerType *PointerTo(LOCATION, IR *ir, const Type *baseType);
 
     //
     // Actions

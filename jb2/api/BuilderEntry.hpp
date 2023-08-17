@@ -39,6 +39,10 @@ public:
     Builder *builder() const { return _builder; }
 
 protected:
+    BuilderEntry(Allocator *a, const BuilderEntry *source, IRCloner *cloner);
+
+    virtual EntryPoint *clone(Allocator *mem, IRCloner *cloner) const;
+
     Builder *_builder;
 
     SUBCLASS_KINDSERVICE_DECL(EntryPoint,BuilderEntry);

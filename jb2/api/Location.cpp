@@ -20,6 +20,7 @@
  *******************************************************************************/
 
 #include "Compilation.hpp"
+#include "IRCloner.hpp"
 #include "Location.hpp"
 
 namespace OMR {
@@ -27,25 +28,43 @@ namespace JitBuilder {
 
 INIT_JBALLOC_ON(Location, IL)
 
-Location::Location(Allocator *a, Compilation *comp, String fileName, String lineNumber)
+Location::Location(Allocator *a, IR *ir, String fileName, String lineNumber)
     : Allocatable(a)
-    , _id(comp->getLocationID())
-    , _comp(comp)
+    , _id(ir->getLocationID())
+    , _ir(ir)
     , _fileName(fileName)
     , _lineNumber(lineNumber)
     , _bcIndex(_id-1) { // LocationIDs start at 1 but bcIndex can start at 0
 
-    }
+    ir->registerLocation(this);
+}
 
-Location::Location(Allocator *a, Compilation *comp, String fileName, String lineNumber, int32_t bcIndex)
+Location::Location(Allocator *a, IR *ir, String fileName, String lineNumber, int32_t bcIndex)
     : Allocatable(a)
-    , _id(comp->getLocationID())
-    , _comp(comp)
+    , _id(ir->getLocationID())
+    , _ir(ir)
     , _fileName(fileName)
     , _lineNumber(lineNumber)
     , _bcIndex(bcIndex) {
 
-    }
+    ir->registerLocation(this);
+}
+
+Location::Location(Allocator *a, const Location *source, IRCloner *cloner)
+    : Allocatable(a)
+    , _id(source->_id)
+    , _ir(cloner->clonedIR())
+    , _fileName(source->_fileName)
+    , _lineNumber(source->_lineNumber)
+    , _bcIndex(source->_bcIndex) {
+
+    cloner->clonedIR()->registerLocation(this);
+}
+
+Location *
+Location::clone(Allocator *mem, IRCloner *cloner) const {
+    return new (mem) Location(mem, this, cloner);
+}
 
 Location::~Location() {
 

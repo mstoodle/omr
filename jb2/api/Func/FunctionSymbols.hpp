@@ -42,8 +42,12 @@ public:
     String fileName() const { return _fileName; }
     String lineNumber() const { return _lineNumber; }
     void *entryPoint() const { return _entryPoint; }
+    virtual void logDetails(TextLogger & lgr) const;
 
 protected:
+    FunctionSymbol(Allocator *a, const FunctionSymbol *source, IRCloner *cloner);
+    virtual Symbol *clone(Allocator *a, IRCloner *cloner) const;
+
     String _fileName;
     String _lineNumber;
     void *_entryPoint;
@@ -59,11 +63,14 @@ public:
     LocalSymbol(Allocator *a, Extension *ext, String name, const Type * type)
         : Symbol(a, getSymbolClassKind(), ext, name, type) {
     }
+    virtual void logDetails(TextLogger & lgr) const;
 
 protected:
     LocalSymbol(Allocator *a, SymbolKind kind, Extension *ext, String name, const Type * type)
         : Symbol(a, kind, ext, name, type) {
     }
+    LocalSymbol(Allocator *a, const LocalSymbol *source, IRCloner *cloner);
+    virtual Symbol *clone(Allocator *a, IRCloner *cloner) const;
 
     SUBCLASS_KINDSERVICE_DECL(Symbol, LocalSymbol);
 };
@@ -80,8 +87,12 @@ public:
     }
 
     int index() const { return _index; }
+    virtual void logDetails(TextLogger & lgr) const;
 
 protected:
+    ParameterSymbol(Allocator *a, const ParameterSymbol *source, IRCloner *cloner);
+    virtual Symbol *clone(Allocator *a, IRCloner *cloner) const;
+
     int _index;
 
     SUBCLASS_KINDSERVICE_DECL(Symbol, ParameterSymbol);

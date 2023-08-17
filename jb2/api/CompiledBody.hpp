@@ -37,12 +37,15 @@ class Context;
 class CompiledBody : public Allocatable {
     JBALLOC(CompiledBody, NoAllocationCategory)
 
+    friend class Compiler;
+
 public:
-    DYNAMIC_ALLOC_ONLY(CompiledBody, CompileUnit *unit, Context *context, StrategyID strategy);
+    DYNAMIC_ALLOC_ONLY(CompiledBody, CompileUnit *unit, StrategyID strategy);
 
     CompiledBodyID id() const { return _id; }
     CompileUnit *unit() const { return _unit; }
     StrategyID strategy() const { return _strategy; }
+    CompilerReturnCode rc() const { return _rc; }
 
     template<typename T>
     T *nativeEntryPoint(unsigned e=0) const {
@@ -50,9 +53,10 @@ public:
         return _nativeEntries[e]->entry<T>();
     }
     void addNativeEntry(NativeEntry *e) {
-        if (e->id() < _nativeEntries.length())
-            assert(_nativeEntries[e->id()] == NULL);
-        _nativeEntries.assign(e->id(), e);
+        EntryID id = e->entryID();
+        if (id < _nativeEntries.length())
+            assert(_nativeEntries[id] == NULL);
+        _nativeEntries.assign(id, e);
     }
 
     template<typename T>
@@ -61,14 +65,19 @@ public:
         return _debugEntries[e]->entry<T>();
     }
     void addDebugEntry(NativeEntry *e) {
-        assert(_debugEntries[e->id()] == NULL);
-        _debugEntries.assign(e->id(), e);
+        EntryID id = e->entryID();
+        if (id < _debugEntries.length())
+            assert(_debugEntries[id] == NULL);
+        _debugEntries.assign(id, e);
     }
 
 protected:
+    CompiledBody * setReturnCode(CompilerReturnCode rc) { _rc = rc; return this; }
+
     CompiledBodyID _id;
     CompileUnit *_unit;
     StrategyID _strategy;
+    CompilerReturnCode _rc;
     Array<NativeEntry *> _nativeEntries;
     Array<NativeEntry *> _debugEntries;
 };

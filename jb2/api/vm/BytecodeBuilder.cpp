@@ -22,9 +22,10 @@
 #include "JBCore.hpp"
 #include "Func/Func.hpp"
 #include "Base/Base.hpp"
-#include "BytecodeBuilder.hpp"
-#include "VirtualMachineState.hpp"
-#include "VMExtension.hpp"
+#include "vm/BytecodeBuilder.hpp"
+#include "vm/VirtualMachineState.hpp"
+#include "vm/VMExtension.hpp"
+#include "vm/VMIRClonerAddon.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -35,19 +36,39 @@ SUBCLASS_KINDSERVICE_IMPL(BytecodeBuilder,"BytecodeBuilder",Builder,Extensible);
 
 BytecodeBuilder::BytecodeBuilder(Allocator *a,
                                  VMExtension *vmx,
-                                 Compilation *comp,
+                                 IR *ir,
                                  Scope *scope,
                                  int32_t bcIndex,
                                  int32_t bcLength,
                                  String name)
-    : Builder(a, vmx, KIND(Extensible), comp, scope, name)
+    : Builder(a, vmx, KIND(Extensible), ir, scope, name)
     , _bcIndex(bcIndex)
     , _bcLength(bcLength)
     , _initialVMState(0)
     , _vmState(0)
     , _fallThroughBuilder(0)
-    , _successorBuilders(NULL, comp->mem()) {
+    , _successorBuilders(NULL, ir->mem()) {
 
+}
+
+BytecodeBuilder::BytecodeBuilder(Allocator *a, const BytecodeBuilder *source, IRCloner *cloner)
+    : Builder(a, source, cloner)
+    , _bcIndex(source->_bcIndex)
+    , _bcLength(source->_bcLength)
+    , _initialVMState(cloner->addon<VMIRClonerAddon>()->clonedState(source->_initialVMState))
+    , _vmState(cloner->addon<VMIRClonerAddon>()->clonedState(source->_vmState))
+    , _fallThroughBuilder(cloner->clonedBuilder(source->_fallThroughBuilder)->refine<BytecodeBuilder>())
+    , _successorBuilders(NULL, a) {
+
+    for (auto it=source->_successorBuilders.iterator();it.hasItem(); it++) {
+        BytecodeBuilder *b = it.item();
+        _successorBuilders.push_back(cloner->clonedBuilder(b)->refine<BytecodeBuilder>());
+    }
+}
+
+Builder *
+BytecodeBuilder::clone(Allocator *mem, IRCloner *cloner) const {
+    return new (mem) BytecodeBuilder(mem, this, cloner);
 }
 
 BytecodeBuilder::~BytecodeBuilder() {
@@ -128,7 +149,7 @@ BytecodeBuilder::transferVMState(LOCATION, BytecodeBuilder *b) {
         // for example, the local variables holding the elements on the operand stack may not match
         // create an intermediate builder object to do that work
         // TODO: Compilation needs "Kind"s too
-        BytecodeBuilder *intermediateBuilder = vx->OrphanBytecodeBuilder(_comp, b->bcIndex(), b->bcLength(), b->scope(), b->name());
+        BytecodeBuilder *intermediateBuilder = vx->OrphanBytecodeBuilder(_ir, b->bcIndex(), b->bcLength(), b->scope(), b->name());
 
         _vmState->MergeInto(PASSLOC, b->initialVMState(), intermediateBuilder);
 

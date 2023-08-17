@@ -22,6 +22,8 @@
 #include "AllocationCategoryClasses.hpp"
 #include "Builder.hpp"
 #include "Compilation.hpp"
+#include "IR.hpp"
+#include "IRCloner.hpp"
 #include "Value.hpp"
 
 namespace OMR {
@@ -30,19 +32,37 @@ namespace JitBuilder {
 INIT_JBALLOC_ON(Value, IL)
 
 Value *
-Value::create(const Builder * parent, const Type * type) {
-    Allocator *mem = parent->comp()->mem();
+Value::create(Builder * parent, const Type * type) {
+    Allocator *mem = parent->ir()->mem();
     Value *value = new (mem) Value(mem, parent, type);
     return value;
 }
 
-Value::Value(Allocator *a, const Builder * parent, const Type * type)
+Value::Value(Allocator *a, Builder * parent, const Type * type)
     : Allocatable(a)
-    , _id(parent->comp()->getValueID())
+    , _id(parent->ir()->getValueID())
     , _parent(parent)
     , _type(type)
     , _definitions(NULL, a) {
 
+}
+
+Value::Value(Allocator *a, const Value *source, IRCloner *cloner)
+    : Allocatable(a)
+    , _id(source->_id)
+    , _parent(cloner->clonedBuilder(source->_parent))
+    , _type(cloner->clonedType(source->_type))
+    , _definitions(NULL, a) {
+
+    for (auto it=source->_definitions.iterator();it.hasItem();it++) {
+        Operation *op = it.item();
+        _definitions.push_back(cloner->clonedOperation(op));
+    }
+}
+
+Value *
+Value::clone(Allocator *mem, IRCloner *cloner) const {
+    return new (mem) Value(mem, this, cloner);
 }
 
 Value::~Value() {

@@ -25,9 +25,12 @@
 #include "CompileUnit.hpp"
 #include "Config.hpp"
 #include "Context.hpp"
+#include "CoreExtension.hpp"
 #include "Extension.hpp"
+#include "IR.hpp"
 #include "Literal.hpp"
 #include "LiteralDictionary.hpp"
+#include "Scope.hpp"
 #include "SymbolDictionary.hpp"
 #include "TextLogger.hpp"
 #include "TypeDictionary.hpp"
@@ -41,51 +44,33 @@ SUBCLASS_KINDSERVICE_IMPL(Compilation,"Compilation",Extensible,Extensible)
 Compilation::Compilation(Allocator *a, Extension *ext, ExtensibleKind kind, CompileUnit *unit, StrategyID strategy, Config *config)
     : Extensible(a, ext, kind)
     , _id(ext->compiler()->getCompilationID())
-    , _nextBuilderID(NoBuilder+1) // must precede anything that might create Builders
-    , _nextContextID(NoContext+1) // must precede anything that might create Contexts
-    , _nextLiteralID(NoLiteral+1) // must precede anything that might create Literal
-    , _nextLocationID(NoLocation+1) // must precede anything that might create Locations
-    , _nextOperationID(NoOperation+1) // must precede anything that might create Operations
-    , _nextScopeID(NoScope+1) // must precede anything that might create Scopes
     , _nextTransformationID(NoTransformation) // must precede anything that might create Transformations
-    , _nextValueID(NoValue) // must precede anything that might create Values
     , _compiler(ext->compiler())
     , _ext(ext)
     , _unit(unit)
     , _strategy(strategy)
-    , _context(NULL) // expected to be created by subclass or by extension's ::compile
-    , _scope(NULL) // expected to be created by subclass or by extension's ::compile
     , _myConfig(config == NULL)
     , _config((config == NULL) ? new (_compiler->mem()) Config(_compiler->mem(), _compiler->config()) : config)
     , _mem(_config->compilationAllocator(_compiler->mem()))
+    , _ir(NULL)
     , _passMem(NULL)
-    , _literalDict(new (_mem) LiteralDictionary(_mem, _compiler, "Compilation Literal Dictionary", _compiler->litDict()))
-    , _symbolDict(new (_mem) SymbolDictionary(_mem, _compiler, "Compilation Symbol Dictionary", _compiler->symDict()))
-    , _typeDict(new (_mem) TypeDictionary(_mem, _compiler, "Compilation Type Dictionary", _compiler->typeDict()))
     , _logger(NULL)
     , _writer(NULL)
     , _builders(NULL, _mem) {
 
-    notifyCreation(ext, KIND(Extensible));
+    notifyCreation(KIND(Extensible));
 }
 
 Compilation::~Compilation() {
-    delete _typeDict;
-    delete _symbolDict;
-    delete _literalDict;
     _config->destructCompilationAllocator(_mem);
     if (_myConfig && _config != NULL)
         delete _config;
-    // scope and context are typically not dynamically allocated
-    if (_scope->allocator())
-        delete _scope;
-    if (_context->allocator())
-        delete _context;
 }
 
+#if 0
 void
 Compilation::addInitialBuildersToWorklist(BuilderList & worklist) {
-    for (auto it = _builders.iterator();it.hasItem(); it++) {
+    for (auto it = ir()->builders();it.hasItem(); it++) {
         Builder *b = it.item();
         worklist.push_back(b);
     }
@@ -93,7 +78,7 @@ Compilation::addInitialBuildersToWorklist(BuilderList & worklist) {
 
 Literal *
 Compilation::registerLiteral(LOCATION, const Type *type, const LiteralBytes *value) {
-    return _literalDict->registerLiteral(PASSLOC, type, value);
+    return _ir->registerLiteral(PASSLOC, type, value);
 }
 
 Builder *
@@ -101,36 +86,46 @@ Compilation::registerBuilder(Builder *b) {
     _builders.push_back(b);
     return b;
 }
+#endif
 
 void
 Compilation::log(TextLogger &lgr) const {
    lgr << lgr.endl();
 
    lgr.indentIn();
-   TypeDictionary *td = typedict();
+   TypeDictionary *td = ir()->typedict();
    td->log(lgr);
 
-   SymbolDictionary *sd = symdict();
+   SymbolDictionary *sd = ir()->symdict();
    sd->log(lgr);
 
-   LiteralDictionary *ld = litdict();
+   LiteralDictionary *ld = ir()->litdict();
    ld->log(lgr);
 }
 
 bool
 Compilation::prepareIL(LOCATION) {
-    if (unit()->buildContext(PASSLOC, this, _scope, _context) == false)
+    IR *ir = new (_mem) IR(_mem, _unit);
+    Allocator *irmem = ir->mem();
+
+    // ownership of the Context and Scope objects are passed to ir during construction
+    Context *context = new (irmem) Context(irmem, _compiler->coreExt(), ir, "Compilation Context");
+    Scope *scope = new (irmem) Scope(irmem, _compiler->coreExt(), ir, "Compilation Scope");
+
+    if (unit()->buildContext(PASSLOC, this, scope, context) == false)
         return false;
 
-    return unit()->buildIL(PASSLOC, this, _scope, _context);
+    bool rc = unit()->buildIL(PASSLOC, this, scope, context);
+
+    delete ir;
+
+    return rc;
 }
 
 void
 Compilation::freeIL(LOCATION) {
-    for (auto it=_builders.fwdIterator();it.hasItem(); it++) {
-        Builder *b = it.item();
-        delete b;
-    }
+    if (_ir != NULL)
+        delete _ir;
 }
 
 } // namespace JitBuilder

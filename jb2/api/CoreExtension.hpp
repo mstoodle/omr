@@ -31,6 +31,7 @@ namespace JitBuilder {
 class Compilation;
 class CompileUnit;
 class Config;
+class NoTypeType;
 
 class CoreExtension : public Extension {
     JBALLOC_(CoreExtension)

@@ -21,6 +21,7 @@
 
 #include "AllocationCategoryClasses.hpp"
 #include "Compiler.hpp"
+#include "IRCloner.hpp"
 #include "Operation.hpp"
 #include "Literal.hpp"
 #include "LiteralDictionary.hpp"
@@ -111,6 +112,24 @@ LiteralDictionary::LiteralDictionary(Compiler *compiler, String name, LiteralDic
     }
 }
 
+// only used by clone
+LiteralDictionary::LiteralDictionary(Allocator *a, const LiteralDictionary *source, IRCloner *cloner)
+    : Allocatable(a)
+    , _id(source->_id)
+    , _compiler(source->_compiler)
+    , _mem(a)
+    , _name(source->_name)
+    , _literals(NULL, _mem)
+    , _ownedLiterals(NULL, _mem)
+    , _nextLiteralID(source->_nextLiteralID)
+    , _linkedDictionary(cloner->clonedLiteralDictionary(source->_linkedDictionary)) {
+
+    for (auto it = source->literalIterator(); it.hasItem(); it++) {
+        Literal *literal = it.item();
+        addNewLiteral(cloner->clonedLiteral(literal));
+    }
+}
+    
 LiteralDictionary::~LiteralDictionary() {
     for (auto it = _ownedLiterals.iterator(); it.hasItem(); it++) {
         Literal *literal = it.item();
@@ -122,6 +141,11 @@ LiteralDictionary::~LiteralDictionary() {
         LiteralList *tl = it->second;
         delete tl;
     }
+}
+
+LiteralDictionary *
+LiteralDictionary::clone(Allocator *mem, IRCloner *cloner) const {
+    return new (mem) LiteralDictionary(mem, this, cloner);
 }
 
 Literal *

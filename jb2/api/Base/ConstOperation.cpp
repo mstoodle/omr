@@ -38,7 +38,7 @@ Op_Const::~Op_Const() {
 
 Operation *
 Op_Const::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    Allocator *mem = b->comp()->mem();
+    Allocator *mem = b->ir()->mem();
     return new (mem) Op_Const(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->result(), cloner->literal());
 }
 

@@ -60,14 +60,11 @@ protected:
     ALL_ALLOC_ALLOWED(Function, LOCATION, Compiler *compiler);
     ALL_ALLOC_ALLOWED(Function, LOCATION, Function *outerFunction);
 
-    virtual bool buildContext(LOCATION, Compilation *comp, Scope *scope, Context *ctx);
-    virtual bool buildIL(LOCATION, Compilation *comp, Scope *scope, Context *ctx);
+    CoreExtension *cx() { return _cx; }
 
-    // Next two are the API that drives user sub classes of Function
+    // Next two are the API that driving user sub classes of Function
     virtual bool buildContext(LOCATION, FunctionCompilation *comp, FunctionScope *scope, FunctionContext *ctx) { return true; }
     virtual bool buildIL(LOCATION, FunctionCompilation *comp, FunctionScope *scope, FunctionContext *ctx) { return true; }
-
-    CoreExtension *cx() { return _cx; }
 
     static FunctionCompilation *fcomp(Compilation *comp);
     static FunctionScope *fscope(Compilation *comp);
