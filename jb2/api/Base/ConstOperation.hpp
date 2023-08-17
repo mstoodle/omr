@@ -40,6 +40,7 @@ public:
 
 protected:
     Op_Const(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aConst, Value *result, Literal *lv);
+    IRCLONER_SUPPORT(Op_Const, OperationR1L1)
 };
 
 } // namespace Base

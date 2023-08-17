@@ -19,7 +19,9 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#include "Builder.hpp"
 #include "BuilderEntry.hpp"
+#include "IRCloner.hpp"
 
 
 namespace OMR {
@@ -29,9 +31,21 @@ INIT_JBALLOC(BuilderEntry)
 SUBCLASS_KINDSERVICE_IMPL(BuilderEntry,"Builder",EntryPoint,EntryPoint)
 
 BuilderEntry::BuilderEntry(Allocator *a, EntryID id, Builder *b, String name)
-    : EntryPoint(a, KIND(EntryPoint), id, name)
+    : EntryPoint(a, b->ir(), KIND(EntryPoint), id, name)
     , _builder(b) {
 
+}
+
+BuilderEntry::BuilderEntry(Allocator *a, const BuilderEntry *source, IRCloner *cloner)
+    : EntryPoint(a, source, cloner)
+    , _builder(cloner->clonedBuilder(source->_builder)) {
+
+}
+
+EntryPoint *
+BuilderEntry::clone(Allocator *mem, IRCloner *cloner) const {
+    // BuilderEntry is an EntryPoint that should be cloned
+    return new (mem) BuilderEntry(mem, this, cloner);
 }
 
 BuilderEntry::~BuilderEntry() {

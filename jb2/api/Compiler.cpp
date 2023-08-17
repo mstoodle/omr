@@ -23,6 +23,7 @@
 #include <dlfcn.h>
 #include "AllocatorTracker.hpp"
 #include "Compilation.hpp"
+#include "CompiledBody.hpp"
 #include "Compiler.hpp"
 #include "Config.hpp"
 #include "CoreExtension.hpp"
@@ -78,9 +79,9 @@ INIT_JBALLOC(Compiler);
     , _nextTypeDictionaryID(0) \
     , _target(NULL) \
     , _compiler(NULL) \
-    , _litDict(new (_mem) LiteralDictionary(_mem, this, name + " Compiler Literal Dictionary")) \
-    , _symDict(new (_mem) SymbolDictionary(_mem, this, name + " Compiler Symbol Dictionary")) \
-    , _typeDict(new (_mem) TypeDictionary(_mem, this, name + " Compiler Type Dictionary")) \
+    , _litdict(new (_mem) LiteralDictionary(_mem, this, name + " Compiler Literal Dictionary")) \
+    , _symdict(new (_mem) SymbolDictionary(_mem, this, name + " Compiler Symbol Dictionary")) \
+    , _typedict(new (_mem) TypeDictionary(_mem, this, name + " Compiler Type Dictionary")) \
     , _textWriters(NULL, _mem) \
     , _errorCondition(NULL) \
     , CompileSuccessful(assignReturnCode("CompileSuccessful")) \
@@ -169,12 +170,12 @@ Compiler::~Compiler() {
     }
     _strategies.clear();
 
-    if (_litDict != NULL)
-        delete _litDict;
-    if (_symDict != NULL)
-        delete _symDict;
-    if (_typeDict != NULL)
-        delete _typeDict;
+    if (_litdict != NULL)
+        delete _litdict;
+    if (_symdict != NULL)
+        delete _symdict;
+    if (_typedict != NULL)
+        delete _typedict;
 
     for (auto wIt = _textWriters.iterator(); wIt.hasItem(); wIt++) {
         TextWriter *w = wIt.item();
@@ -296,12 +297,11 @@ Compiler::registerForExtensible(ExtensibleKind kind, Extension *ext) {
 void
 Compiler::createAnyAddons(Extensible *e, KINDTYPE(Extensible) kind) {
     auto list = _extensionsForAddonsByKind.find(kind);
-    if (list == _extensionsForAddonsByKind.end())
-        return;
-
-    for (auto it=list->second->iterator(); it.hasItem(); it++) {
-        Extension *ext = it.item();
-        ext->createAddon(e);
+    if (list != _extensionsForAddonsByKind.end()) {
+        for (auto it=list->second->iterator(); it.hasItem(); it++) {
+            Extension *ext = it.item();
+            ext->createAddon(e);
+        }
     }
 }
 
@@ -392,45 +392,51 @@ Compiler::textWriter(TextLogger & lgr) {
     return w;
 }
 
-CompilerReturnCode
+CompiledBody *
 Compiler::compile(LOCATION, Compilation *comp, StrategyID strategyID) {
-    if (_errorCondition != NULL)
-        return CompileFail_CompilerError;
+    CompileUnit *unit = comp->unit();
+    CompiledBody *body = new (_mem) CompiledBody(_mem, unit, strategyID);
+    if (_errorCondition != NULL) // error should be clear at the start
+        return body->setReturnCode(CompileFail_CompilerError);
 
+    CompilerReturnCode rc = CompileSuccessful;
     try {
-
         bool success = comp->prepareIL(PASSLOC);
-        if (!success)
-            return CompileFail_IlGen;
 
-        if (config()->traceBuildIL()) {
-            TextWriter writer(NULL, this, *comp->logger());
-            writer.perform(comp);
+        // From this point, cannot return early without freeing the IL
+        // Below is designed to always fall through to the end where IL is freed
+
+        if (success) {
+            if (config()->traceBuildIL()) {
+                TextWriter writer(NULL, this, *comp->logger());
+                writer.perform(comp);
+            }
+
+            if (strategyID != NoStrategy) {
+                Strategy *st = lookupStrategy(strategyID);
+                if (st != NULL) {
+                    rc = st->perform(comp);
+                    if (rc == CompileSuccessful) {
+                        comp->ir()->scope<Scope>()->saveEntries(body);
+                    }
+                } else {
+                    rc = CompileFail_UnknownStrategyID;
+                }
+            }
+        } else {
+            rc = CompileFail_IlGen;
         }
-
-        if (strategyID == NoStrategy) // nothing more to do
-            return CompileSuccessful;
-
-        Strategy *st = lookupStrategy(strategyID);
-        if (!st)
-            return CompileFail_UnknownStrategyID;
-
-        CompilerReturnCode rc =  st->perform(comp);
-
-        comp->freeIL(PASSLOC);
-
-        return rc;
-
     } catch (CompilationException e) {
         if (config()->verboseErrors()) {
-           std::cerr << "Location: " << e.locationLine().c_str();
-           std::cerr << e.message().c_str();
+            std::cerr << "Location: " << e.locationLine().c_str();
+            std::cerr << e.message().c_str();
         }
-        comp->freeIL(PASSLOC);
-        return e.result();
+        rc = e.result();
     }
 
-    return CompileSuccessful;
+    comp->freeIL(PASSLOC);
+    unit->saveCompiledBody(body, strategyID); // body will be freed when unit is freed
+    return body->setReturnCode(rc);
 }
 
 void

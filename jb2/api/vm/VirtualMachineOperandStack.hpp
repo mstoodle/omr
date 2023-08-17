@@ -56,6 +56,9 @@ public:
     void UpdateStack(LOCATION, Builder * b, Value * array);
 
 protected:
+    VirtualMachineOperandStack(Allocator *a, const VirtualMachineOperandStack *source, IRCloner *cloner);
+    virtual VirtualMachineState *clone(Allocator *mem, IRCloner *cloner) const;
+
     void init(LOCATION);
     void checkSizeAndGrowIfNeeded();
     void grow(int32_t growAmount=0);

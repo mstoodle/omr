@@ -72,6 +72,9 @@ public:
     virtual void Reload(LOCATION, Builder * b);
 
 protected:
+    VirtualMachineRegisterInStruct(Allocator *a, const VirtualMachineRegisterInStruct *source, IRCloner *cloner);
+    virtual VirtualMachineState *clone(Allocator *mem, IRCloner *cloner) const;
+
     const Base::FieldType * _fieldType;
     Func::LocalSymbol * _localHoldingStructAddress;
 

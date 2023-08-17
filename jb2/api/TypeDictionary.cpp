@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include "AllocationCategoryClasses.hpp"
 #include "Compiler.hpp"
+#include "IRCloner.hpp"
 #include "Operation.hpp"
 #include "TextLogger.hpp"
 #include "Type.hpp"
@@ -109,11 +110,30 @@ TypeDictionary::TypeDictionary(Compiler *compiler, String name, TypeDictionary *
     , _ownedTypes(NULL, _mem)
     , _nextTypeID(linkedDict->_nextTypeID)
     , _linkedDictionary(linkedDict) {
+
     for (auto it = linkedDict->typesIterator(); it.hasItem(); it++) {
         const Type *type = it.item();
         internalRegisterType(type);
     }
     _nextTypeID = linkedDict->_nextTypeID;
+}
+
+// Only used by clone
+TypeDictionary::TypeDictionary(Allocator *a, const TypeDictionary *source, IRCloner *cloner)
+    : Allocatable(a)
+    , _id(source->_id)
+    , _name(source->_name)
+    , _compiler(source->_compiler)
+    , _mem(a)
+    , _types(NULL, a)
+    , _ownedTypes(NULL, a)
+    , _nextTypeID(source->_nextTypeID)
+    , _linkedDictionary(cloner->clonedTypeDictionary(source->_linkedDictionary)) {
+
+    for (auto it = source->typesIterator(); it.hasItem();it++) {
+        const Type *type = it.item();
+        internalRegisterType(cloner->clonedType(type));
+    }
 }
 
 TypeDictionary::~TypeDictionary() {
@@ -124,8 +144,13 @@ TypeDictionary::~TypeDictionary() {
     _ownedTypes.erase();
 }
 
+TypeDictionary *
+TypeDictionary::clone(Allocator *mem, IRCloner *cloner) const {
+    return new (mem) TypeDictionary(mem, this, cloner);
+}
+
 const Type *
-TypeDictionary::LookupType(TypeID id) {
+TypeDictionary::LookupType(TypeID id) const {
     for (auto it = typesIterator(); it.hasItem(); it++) {
         const Type *type = it.item();
         if (type->id() == id)

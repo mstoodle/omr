@@ -32,24 +32,35 @@ namespace OMR {
 namespace JitBuilder {
 
 class Compilation;
+class IR;
+class IRCloner;
 
 KINDSERVICE_CATEGORY(EntryPoint);
 
 class EntryPoint : public Allocatable {
     JBALLOC_(EntryPoint)
 
-public:
-    DYNAMIC_ALLOC_ONLY(EntryPoint, EntryPointKind kind, EntryID id, String name="");
+    friend class IRCloner;
 
-    EntryID id() const { return _id; }
-    bool isEntry(EntryID id) { return _id == id; }
+public:
+    DYNAMIC_ALLOC_ONLY(EntryPoint, IR *ir, EntryPointKind kind, EntryID entryID, String name="");
+
+    EntryPointID id() const { return _id; }
+    EntryID entryID() const { return _entryID; }
+    bool isEntry(EntryID entryID) { return _entryID == entryID; }
 
     String name() const { return _name; }
 
     //Compilation *comp() const { return _comp; }
 
 protected:
-    EntryID _id;
+    EntryPoint(Allocator *a, const EntryPoint *source, IRCloner *cloner);
+
+    virtual EntryPoint *clone(Allocator *mem, IRCloner *cloner) const;
+
+    EntryPointID _id;
+    EntryID _entryID;
+    IR *_ir;
     String _name;
 
     BASECLASS_KINDSERVICE_DECL(EntryPoint);

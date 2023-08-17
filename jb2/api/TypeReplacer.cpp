@@ -511,7 +511,7 @@ TypeReplacer::visitPreCompilation(Compilation * comp) {
  
     if (lgr) lgr->indent() << "TypeReplacer::look for new Types:" << lgr->endl();
     LOG_INDENT_REGION(lgr) {
-        TypeDictionary *dict = comp->typedict();
+        TypeDictionary *dict = comp->ir()->typedict();
         for (auto it = dict->typesIterator(); it.hasItem(); it++) {
             const Type *type = it.item();
             transformTypeIfNeeded(type);
@@ -572,7 +572,7 @@ TypeReplacer::transformLiteral(Literal *lv) {
 Builder *
 TypeReplacer::transformOperation(Operation * op) {
     TextLogger *lgr = comp()->logger(traceEnabled());
-    TypeDictionary *dict = comp()->typedict();
+    TypeDictionary *dict = comp()->ir()->typedict();
     Builder *b = NULL;
 
     LOG_INDENT_REGION(lgr) {
@@ -728,7 +728,7 @@ TypeReplacer::finalCleanup() {
     if (lgr) lgr->indent() << "Final stage: removing types (" << _typesToRemove.size() << " types registered for removal):" << lgr->endl();
 
     LOG_INDENT_REGION(lgr) {
-        TypeDictionary *dict = _comp->typedict();
+        TypeDictionary *dict = _comp->ir()->typedict();
         for (auto typeIt = _typesToRemove.begin(); typeIt != _typesToRemove.end(); typeIt++) {
             const Type *typeToRemove = *typeIt;
             #if 0
@@ -753,5 +753,5 @@ TypeReplacer::finalCleanup() {
     LOG_OUTDENT
 
     if (lgr) lgr->indent() << "Final dictionary:" << lgr->endl();
-    if (lgr) _comp->typedict()->log(*lgr);
+    if (lgr) _comp->ir()->typedict()->log(*lgr);
 }

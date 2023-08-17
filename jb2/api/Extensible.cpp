@@ -69,7 +69,7 @@ Extensible::attach(Addon *a) {
 }
 
 void
-Extensible::notifyCreation(Extension *ext, KINDTYPE(Extensible) kind) {
+Extensible::notifyCreation(KINDTYPE(Extensible) kind) {
     compiler()->createAnyAddons(this, kind);
 }
 

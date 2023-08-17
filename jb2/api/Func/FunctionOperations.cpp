@@ -46,7 +46,7 @@ Op_Load::~Op_Load() {
 
 Operation *
 Op_Load::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    Allocator *mem = b->comp()->mem();
+    Allocator *mem = b->ir()->mem();
     return new (mem) Op_Load(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->result(), cloner->symbol());
 }
 
@@ -67,7 +67,7 @@ Op_Store::~Op_Store() {
 
 Operation *
 Op_Store::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    Allocator *mem = b->comp()->mem();
+    Allocator *mem = b->ir()->mem();
     return new (mem) Op_Store(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->symbol(), cloner->operand());
 }
 
@@ -89,7 +89,7 @@ Op_Call::~Op_Call() {
 
 Operation *
 Op_Call::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    Allocator *mem = b->comp()->mem();
+    Allocator *mem = b->ir()->mem();
     return new (mem) Op_Call(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner);
 }
 
@@ -122,7 +122,7 @@ Op_CallVoid::~Op_CallVoid() {
 
 Operation *
 Op_CallVoid::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    Allocator *mem = b->comp()->mem();
+    Allocator *mem = b->ir()->mem();
     return new (mem) Op_CallVoid(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner);
 }
 
@@ -152,7 +152,7 @@ Op_ReturnVoid::~Op_ReturnVoid() {
 
 Operation *
 Op_ReturnVoid::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    Allocator *mem = b->comp()->mem();
+    Allocator *mem = b->ir()->mem();
     return new (mem) Op_ReturnVoid(MEM_PASSLOC(mem), this->_ext, b, this->action());
 }
 
@@ -173,7 +173,7 @@ Op_Return::~Op_Return() {
 
 Operation *
 Op_Return::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    Allocator *mem = b->comp()->mem();
+    Allocator *mem = b->ir()->mem();
     return new (mem) Op_Return(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->operand());
 }
 

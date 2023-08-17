@@ -31,22 +31,26 @@ namespace OMR {
 namespace JitBuilder {
 
 class Extension;
+class IRCloner;
 class SymbolDictionary;
 class TextLogger;
 class Type;
+class TypeDictionary;
 
 KINDSERVICE_CATEGORY(Symbol);
 
 class Symbol : public Allocatable {
     JBALLOC_(Symbol)
 
+    friend class IRCloner;
     friend class SymbolDictionary;
 
 public:
     String name() const { return _name; }
     const Type * type() const { return _type; }
     SymbolID id() const { return _id; }
-    virtual void log(TextLogger & lgr) const;
+    void log(TextLogger & lgr) const;
+    virtual void logDetails(TextLogger & lgr) const { }
 
 protected:
     Symbol(Allocator *mem, Extension *ext, String name, const Type * type)
@@ -67,6 +71,9 @@ protected:
         , BASECLASS_KINDINIT(kind) {
 
     }
+    Symbol(Allocator *mem, const Symbol *source, IRCloner *cloner);
+
+    virtual Symbol *clone(Allocator *a, IRCloner *cloner);
 
     void assignID(SymbolID id) {
         // TODO convert to CompilationException

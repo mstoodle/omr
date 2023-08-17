@@ -20,8 +20,11 @@
  *******************************************************************************/
 
 #include <cstring>
+#include "JBCore.hpp"
 #include "VirtualMachineOperandStack.hpp"
 #include "VirtualMachineRegister.hpp"
+#include "VMIRClonerAddon.hpp"
+
 
 namespace OMR {
 namespace JitBuilder {
@@ -68,6 +71,28 @@ VirtualMachineOperandStack::VirtualMachineOperandStack(MEM_LOCATION(a), VirtualM
     _stack = a->allocate<Value *>(_stackMax);
     int32_t numBytes = _stackMax * sizeof(Value *);
     memcpy(_stack, other->_stack, numBytes);
+}
+
+VirtualMachineOperandStack::VirtualMachineOperandStack(Allocator *a, const VirtualMachineOperandStack *source, IRCloner *cloner)
+    : VirtualMachineState(a, source, cloner)
+    , _comp(source->_comp)
+    , _stackTopRegister(cloner->addon<VMIRClonerAddon>()->clonedState(source->_stackTopRegister)->refine<VirtualMachineRegister>())
+    , _elementType(cloner->clonedType(source->_elementType))
+    , _stackOffset(source->_stackOffset)
+    , _stackMax(source->_stackMax)
+    , _stackTop(source->_stackTop)
+    , _stackBaseLocal(cloner->clonedSymbol(source->_stackBaseLocal)->refine<Func::LocalSymbol>())
+    , _pushAmount(source->_pushAmount)
+    , _stack(NULL) {
+
+    _stack = a->allocate<Value *>(_stackMax);
+    for (int i=0;i < _stackMax;i++)
+        _stack[i] = cloner->clonedValue(source->_stack[i]);
+}
+
+VirtualMachineState *
+VirtualMachineOperandStack::clone(Allocator *mem, IRCloner *cloner) const {
+     return new (mem) VirtualMachineOperandStack(mem, this, cloner);
 }
 
 VirtualMachineOperandStack::~VirtualMachineOperandStack() {

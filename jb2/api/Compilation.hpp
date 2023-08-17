@@ -28,6 +28,7 @@
 #include "Context.hpp"
 #include "EntryPoint.hpp"
 #include "Extensible.hpp"
+#include "IR.hpp" // temporary during refactoring
 #include "Scope.hpp"
 
 namespace OMR {
@@ -40,6 +41,7 @@ class CompileUnit;
 class Config;
 class Context;
 class CreateLocation;
+class IR;
 class Literal;
 class LiteralDictionary;
 class Location;
@@ -60,6 +62,7 @@ class Compilation : public Extensible {
     friend class Builder;
     friend class CompileUnit;
     friend class Context;
+    friend class EntryPoint;
     friend class Extension;
     friend class Literal;
     friend class LiteralDictionary;
@@ -84,22 +87,14 @@ class Compilation : public Extensible {
     Compiler *compiler() const { return _compiler; }
     Extension *ext() const { return _ext; }
     CompileUnit *unit() const { return _unit; }
-    template<class T> T *context() const { return _context->refine<T>(); }
-    template<class T> T *scope() const { return _scope->refine<T>(); }
+    template<class T> T *context() const { return _ir->context<T>(); }
+    template<class T> T *scope() const { return _ir->scope<T>(); }
     Config *config() const { return _config; }
 
     Allocator *mem() const { return _mem; }
     Allocator *passMem() const { return _passMem; }
 
-    TypeDictionary *typedict() const { return _typeDict; }
-    LiteralDictionary *litdict() const { return _literalDict; }
-    SymbolDictionary *symdict() const { return _symbolDict; }
-
-    BuilderID maxBuilderID() const { return _nextBuilderID-1; }
-    LiteralID maxLiteralID() { return _nextLiteralID-1; }
-    LocationID maxLocationID() const { return _nextLocationID-1; }
-    OperationID maxOperationID() const { return _nextOperationID-1; }
-    ValueID maxValueID() const { return _nextValueID-1; }
+    IR *ir() const { return _ir; }
 
     TextLogger * logger(bool enabled=true) const { return enabled ? _logger : NULL; }
     virtual void log(TextLogger &lgr) const;
@@ -107,7 +102,7 @@ class Compilation : public Extensible {
     void setWriter(TextWriter * w) { _writer = w; }
     TextWriter * writer(bool enabled=true) const { return enabled ? _writer : NULL; }
 
-    BuilderListIterator builders() { return _builders.iterator(); }
+    BuilderListIterator builders() { return _ir->builders(); }
 
     virtual bool prepareIL(LOCATION);
     virtual void freeIL(LOCATION);
@@ -115,57 +110,32 @@ class Compilation : public Extensible {
     virtual void replaceTypes(TypeReplacer *repl) { }
 
 protected:
-    void setContext(Context *context) { _context = context; }
-    void setScope(Scope *scope) { _scope = scope; }
     void setLogger(TextLogger * lgr) { _logger = lgr; }
-    Builder *registerBuilder(Builder *b);
+    //virtual void addInitialBuildersToWorklist(BuilderList & worklist);
 
-    virtual void addInitialBuildersToWorklist(BuilderList & worklist);
-    Literal *registerLiteral(LOCATION, const Type *type, const LiteralBytes *value);
-
-    BuilderID getBuilderID() { return _nextBuilderID++; }
-    ContextID getContextID() { return _nextContextID++; }
-    LiteralID getLiteralID() { return _nextLiteralID++; }
-    LocationID getLocationID() { return _nextLocationID++; }
-    OperationID getOperationID() { return _nextOperationID++; }
-    ScopeID getScopeID() { return this->_nextScopeID++; }
     TransformationID getTransformationID() { return _nextTransformationID++; }
-
-    ValueID getValueID() { return _nextValueID++; }
 
     void setPassAllocator(Allocator *a) { _passMem = a; }
 
     CompilationID _id;
 
-    BuilderID _nextBuilderID;
-    ContextID _nextContextID;
-    //CaseID _nextCaseID;
-    LiteralID _nextLiteralID;
-    LocationID _nextLocationID;
-    OperationID _nextOperationID;
-    ScopeID _nextScopeID;
     TransformationID _nextTransformationID;
-    ValueID _nextValueID;
 
     Compiler *_compiler;
     Extension *_ext;
     CompileUnit *_unit;
-    Context *_context;
-    Scope *_scope;
     bool _myConfig;
     Config *_config;
     StrategyID _strategy;
     Allocator *_mem;     // Compilation allocator, cannot be NULL
     Allocator *_passMem; // current Pass allocator, may be NULL
 
-    LiteralDictionary *_literalDict;
-    SymbolDictionary *_symbolDict;
-    TypeDictionary *_typeDict;
+    IR *_ir; // has to be after _mem
 
     TextLogger * _logger;
     TextWriter * _writer;
 
-    List<Builder *> _builders;
+    List<Builder *> _builders; // to remove after refactoring
 
     SUBCLASS_KINDSERVICE_DECL(Extensible,Compilation);
 };

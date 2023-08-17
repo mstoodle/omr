@@ -20,7 +20,7 @@
  *******************************************************************************/
 
 #include <cstring>
-#include "Base/BaseCompilationAddon.hpp"
+#include "Base/BaseIRAddon.hpp"
 #include "Base/BaseExtension.hpp"
 #include "Base/BaseTypes.hpp"
 
@@ -65,13 +65,23 @@ IntegerType::~IntegerType() {
 INIT_JBALLOC_REUSECAT(Int8Type, IntegerType)
 SUBCLASS_KINDSERVICE_IMPL(Int8Type, "Int8Type", IntegerType, Type);
 
+Int8Type::Int8Type(Allocator *a, const Int8Type *source, IRCloner *cloner)
+    : IntegerType(a, source, cloner) {
+
+}
+
+const Type *
+Int8Type::clone(Allocator *a, IRCloner *cloner) const {
+    return new (a) Int8Type(a, this, cloner);
+}
+
 Int8Type::~Int8Type() {
 
 }
 
 Literal *
-Int8Type::literal(LOCATION, Compilation *comp, const int8_t value) const {
-    return this->Type::literal(PASSLOC, comp, reinterpret_cast<const LiteralBytes *>(&value));
+Int8Type::literal(LOCATION, IR *ir, const int8_t value) const {
+    return this->Type::literal(PASSLOC, ir, reinterpret_cast<const LiteralBytes *>(&value));
 }
 
 bool
@@ -98,13 +108,23 @@ Int8Type::getInteger(const Literal *lv) const {
 INIT_JBALLOC_REUSECAT(Int16Type, IntegerType)
 SUBCLASS_KINDSERVICE_IMPL(Int16Type, "Int16Type", IntegerType, Type);
 
+Int16Type::Int16Type(Allocator *a, const Int16Type *source, IRCloner *cloner)
+    : IntegerType(a, source, cloner) {
+
+}
+
+const Type *
+Int16Type::clone(Allocator *a, IRCloner *cloner) const {
+    return new (a) Int16Type(a, this, cloner);
+}
+
 Int16Type::~Int16Type() {
 
 }
 
 Literal *
-Int16Type::literal(LOCATION, Compilation *comp, const int16_t value) const {
-    return this->Type::literal(PASSLOC, comp, reinterpret_cast<const LiteralBytes *>(&value));
+Int16Type::literal(LOCATION, IR *ir, const int16_t value) const {
+    return this->Type::literal(PASSLOC, ir, reinterpret_cast<const LiteralBytes *>(&value));
 }
 
 bool
@@ -131,13 +151,23 @@ Int16Type::getInteger(const Literal *lv) const {
 INIT_JBALLOC_REUSECAT(Int32Type, IntegerType)
 SUBCLASS_KINDSERVICE_IMPL(Int32Type, "Int32Type", IntegerType, Type);
 
+Int32Type::Int32Type(Allocator *a, const Int32Type *source, IRCloner *cloner)
+    : IntegerType(a, source, cloner) {
+
+}
+
+const Type *
+Int32Type::clone(Allocator *a, IRCloner *cloner) const {
+    return new (a) Int32Type(a, this, cloner);
+}
+
 Int32Type::~Int32Type() {
 
 }
 
 Literal *
-Int32Type::literal(LOCATION, Compilation *comp, const int32_t value) const {
-    return this->Type::literal(PASSLOC, comp, reinterpret_cast<const LiteralBytes *>(&value));
+Int32Type::literal(LOCATION, IR *ir, const int32_t value) const {
+    return this->Type::literal(PASSLOC, ir, reinterpret_cast<const LiteralBytes *>(&value));
 }
 
 bool
@@ -164,13 +194,23 @@ Int32Type::getInteger(const Literal *lv) const {
 INIT_JBALLOC_REUSECAT(Int64Type, IntegerType)
 SUBCLASS_KINDSERVICE_IMPL(Int64Type, "Int64Type", IntegerType, Type);
 
+Int64Type::Int64Type(Allocator *a, const Int64Type *source, IRCloner *cloner)
+    : IntegerType(a, source, cloner) {
+
+}
+
+const Type *
+Int64Type::clone(Allocator *a, IRCloner *cloner) const {
+    return new (a) Int64Type(a, this, cloner);
+}
+
 Int64Type::~Int64Type() {
 
 }
 
 Literal *
-Int64Type::literal(LOCATION, Compilation *comp, const int64_t value) const {
-    return this->Type::literal(PASSLOC, comp, reinterpret_cast<const LiteralBytes *>(&value));
+Int64Type::literal(LOCATION, IR *ir, const int64_t value) const {
+    return this->Type::literal(PASSLOC, ir, reinterpret_cast<const LiteralBytes *>(&value));
 }
 
 bool
@@ -204,13 +244,23 @@ FloatingPointType::~FloatingPointType() {
 INIT_JBALLOC_REUSECAT(Float32Type, FloatingPointType)
 SUBCLASS_KINDSERVICE_IMPL(Float32Type, "Float32Type", FloatingPointType, Type);
 
+Float32Type::Float32Type(Allocator *a, const Float32Type *source, IRCloner *cloner)
+    : FloatingPointType(a, source, cloner) {
+
+}
+
+const Type *
+Float32Type::clone(Allocator *a, IRCloner *cloner) const {
+    return new (a) Float32Type(a, this, cloner);
+}
+
 Float32Type::~Float32Type() {
 
 }
 
 Literal *
-Float32Type::literal(LOCATION, Compilation *comp, const float value) const {
-    return this->Type::literal(PASSLOC, comp, reinterpret_cast<const LiteralBytes *>(&value));
+Float32Type::literal(LOCATION, IR *ir, const float value) const {
+    return this->Type::literal(PASSLOC, ir, reinterpret_cast<const LiteralBytes *>(&value));
 }
 
 bool
@@ -237,13 +287,23 @@ Float32Type::getFloatingPoint(const Literal *lv) const {
 INIT_JBALLOC_REUSECAT(Float64Type, FloatingPointType)
 SUBCLASS_KINDSERVICE_IMPL(Float64Type, "Float64Type", FloatingPointType, Type);
 
+Float64Type::Float64Type(Allocator *a, const Float64Type *source, IRCloner *cloner)
+    : FloatingPointType(a, source, cloner) {
+
+}
+
+const Type *
+Float64Type::clone(Allocator *a, IRCloner *cloner) const {
+    return new (a) Float64Type(a, this, cloner);
+}
+
 Float64Type::~Float64Type() {
 
 }
 
 Literal *
-Float64Type::literal(LOCATION, Compilation *comp, const double value) const {
-    return this->Type::literal(PASSLOC, comp, reinterpret_cast<const LiteralBytes *>(&value));
+Float64Type::literal(LOCATION, IR *ir, const double value) const {
+    return this->Type::literal(PASSLOC, ir, reinterpret_cast<const LiteralBytes *>(&value));
 }
 
 bool
@@ -270,6 +330,16 @@ Float64Type::getFloatingPoint(const Literal *lv) const {
 INIT_JBALLOC_REUSECAT(AddressType, BaseType)
 SUBCLASS_KINDSERVICE_IMPL(AddressType, "AddressType", IntegerType, Type);
 
+AddressType::AddressType(Allocator *a, const AddressType *source, IRCloner *cloner)
+    : BaseType(a, source, cloner) {
+
+}
+
+const Type *
+AddressType::clone(Allocator *a, IRCloner *cloner) const {
+    return new (a) AddressType(a, this, cloner);
+}
+
 AddressType::~AddressType() {
 
 }
@@ -292,8 +362,8 @@ AddressType::AddressType(MEM_LOCATION(a), Extension *ext, TypeDictionary *dict, 
 }
 
 Literal *
-AddressType::literal(LOCATION, Compilation *comp, const void * value) const {
-    return this->Type::literal(PASSLOC, comp, reinterpret_cast<const LiteralBytes *>(&value));
+AddressType::literal(LOCATION, IR *ir, const void * value) const {
+    return this->Type::literal(PASSLOC, ir, reinterpret_cast<const LiteralBytes *>(&value));
 }
 bool
 AddressType::literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const {
@@ -316,8 +386,8 @@ INIT_JBALLOC(PointerTypeBuilder)
 PointerTypeBuilder::PointerTypeBuilder(Allocator *a, BaseExtension *ext, Compilation *comp)
     : Allocatable(a)
     , _ext(ext)
-    , _comp(comp)
-    , _dict(comp->typedict())
+    , _ir(comp->ir())
+    , _dict(_ir->typedict())
     , _baseType(NULL)
     , _helper(NULL) {
 
@@ -326,8 +396,28 @@ PointerTypeBuilder::PointerTypeBuilder(Allocator *a, BaseExtension *ext, Compila
 PointerTypeBuilder::PointerTypeBuilder(BaseExtension *ext, Compilation *comp)
     : Allocatable()
     ,  _ext(ext)
-    , _comp(comp)
-    , _dict(comp->typedict())
+    , _ir(comp->ir())
+    , _dict(_ir->typedict())
+    , _baseType(NULL)
+    , _helper(NULL) {
+
+}
+
+PointerTypeBuilder::PointerTypeBuilder(Allocator *a, BaseExtension *ext, IR *ir)
+    : Allocatable(a)
+    , _ext(ext)
+    , _ir(ir)
+    , _dict(ir->typedict())
+    , _baseType(NULL)
+    , _helper(NULL) {
+
+}
+
+PointerTypeBuilder::PointerTypeBuilder(BaseExtension *ext, IR *ir)
+    : Allocatable()
+    ,  _ext(ext)
+    , _ir(ir)
+    , _dict(ir->typedict())
     , _baseType(NULL)
     , _helper(NULL) {
 
@@ -339,11 +429,11 @@ PointerTypeBuilder::~PointerTypeBuilder() {
 
 const PointerType *
 PointerTypeBuilder::create(LOCATION) {
-    const PointerType *existingType = _comp->addon<BaseCompilationAddon>()->pointerTypeFromBaseType(_baseType);
+    const PointerType *existingType = _ir->addon<BaseIRAddon>()->pointerTypeFromBaseType(_baseType);
     if (existingType != NULL)
         return existingType;
 
-    Allocator *mem = _comp->compiler()->mem();
+    Allocator *mem = _ir->mem();
     const PointerType *newType = new (mem) PointerType(MEM_PASSLOC(mem), this);
     return newType;
 }
@@ -351,6 +441,17 @@ PointerTypeBuilder::create(LOCATION) {
 
 INIT_JBALLOC_REUSECAT(PointerType, BaseType)
 SUBCLASS_KINDSERVICE_IMPL(PointerType, "PointerType", IntegerType, Type);
+
+PointerType::PointerType(Allocator *a, const PointerType *source, IRCloner *cloner)
+    : AddressType(a, source, cloner)
+    , _baseType(cloner->clonedType(source->_baseType)) {
+
+}
+
+const Type *
+PointerType::clone(Allocator *a, IRCloner *cloner) const {
+    return new (a) PointerType(a, this, cloner);
+}
 
 PointerType::~PointerType() {
 
@@ -364,12 +465,12 @@ PointerType::PointerType(MEM_LOCATION(a), PointerTypeBuilder *builder)
     _baseType = builder->baseType();
     assert(_baseType);
 
-    builder->comp()->addon<BaseCompilationAddon>()->registerPointerType(this);
+    builder->ir()->addon<BaseIRAddon>()->registerPointerType(this);
 }
 
 Literal *
-PointerType::literal(LOCATION, Compilation *comp, const void * value) const {
-    return this->Type::literal(PASSLOC, comp, reinterpret_cast<const LiteralBytes *>(&value));
+PointerType::literal(LOCATION, IR *ir, const void * value) const {
+    return this->Type::literal(PASSLOC, ir, reinterpret_cast<const LiteralBytes *>(&value));
 }
 
 bool
@@ -406,8 +507,18 @@ PointerType::replace(TypeReplacer *repl) {
 INIT_JBALLOC_REUSECAT(FieldType, BaseType)
 SUBCLASS_KINDSERVICE_IMPL(FieldType, "FieldType", BaseType, Type);
 
-FieldType::~FieldType() {
+FieldType::FieldType(Allocator *a, const FieldType *source, IRCloner *cloner)
+    : BaseType(a, source, cloner)
+    , _structType(cloner->clonedType(source->_structType)->refine<StructType>())
+    , _fieldName(source->_name)
+    , _type(cloner->clonedType(source->_type))
+    , _offset(source->_offset) {
 
+}
+
+const Type *
+FieldType::clone(Allocator *a, IRCloner *cloner) const {
+    return new (a) FieldType(a, this, cloner);
 }
 
 FieldType::FieldType(MEM_LOCATION(a), BaseExtension *ext, TypeDictionary *dict, const StructType *structType, String name, const Type *type, size_t offset)
@@ -416,6 +527,10 @@ FieldType::FieldType(MEM_LOCATION(a), BaseExtension *ext, TypeDictionary *dict, 
     , _fieldName(name)
     , _type(type)
     , _offset(offset) {
+
+}
+
+FieldType::~FieldType() {
 
 }
 
@@ -444,9 +559,9 @@ INIT_JBALLOC(StructTypeBuilder)
 StructTypeBuilder::StructTypeBuilder(Allocator *a, BaseExtension *ext, Compilation *comp)
     : Allocatable(a)
     , _ext(ext)
-    , _unit(comp->unit())
-    , _comp(comp)
-    , _dict(comp->typedict())
+    , _ir(comp->ir())
+    , _unit(_ir->unit())
+    , _dict(_ir->typedict())
     , _size(0)
     , _fields(NULL, a)
     , _helper(NULL) {
@@ -456,11 +571,35 @@ StructTypeBuilder::StructTypeBuilder(Allocator *a, BaseExtension *ext, Compilati
 StructTypeBuilder::StructTypeBuilder(BaseExtension *ext, Compilation *comp)
     : Allocatable()
     , _ext(ext)
-    , _unit(comp->unit())
-    , _comp(comp)
-    , _dict(comp->typedict())
+    , _ir(comp->ir())
+    , _unit(_ir->unit())
+    , _dict(_ir->typedict())
     , _size(0)
-    , _fields(NULL, comp->mem())
+    , _fields(NULL, _ir->mem())
+    , _helper(NULL) {
+
+}
+
+StructTypeBuilder::StructTypeBuilder(Allocator *a, BaseExtension *ext, IR *ir)
+    : Allocatable(a)
+    , _ext(ext)
+    , _ir(ir)
+    , _unit(ir->unit())
+    , _dict(ir->typedict())
+    , _size(0)
+    , _fields(NULL, a)
+    , _helper(NULL) {
+
+}
+
+StructTypeBuilder::StructTypeBuilder(BaseExtension *ext, IR *ir)
+    : Allocatable()
+    , _ext(ext)
+    , _ir(ir)
+    , _unit(ir->unit())
+    , _dict(ir->typedict())
+    , _size(0)
+    , _fields(NULL, ir->mem())
     , _helper(NULL) {
 
 }
@@ -485,7 +624,7 @@ StructTypeBuilder::verifyFields(const StructType *sType) {
 
 const StructType *
 StructTypeBuilder::create(LOCATION) {
-    const StructType *existingType = _comp->addon<BaseCompilationAddon>()->structTypeFromName(_name);
+    const StructType *existingType = _ir->addon<BaseIRAddon>()->structTypeFromName(_name);
     if (existingType != NULL) {
         if (verifyFields(existingType))
             return existingType;
@@ -493,7 +632,7 @@ StructTypeBuilder::create(LOCATION) {
         return NULL;
     }
 
-    Allocator *mem = _comp->compiler()->mem();
+    Allocator *mem = _ir->mem();
     const StructType *newType = new (mem) StructType(MEM_PASSLOC(mem), this);
     return newType;
 }
@@ -510,7 +649,24 @@ StructType::StructType(MEM_LOCATION(a), StructTypeBuilder *builder)
         builder->helper()(this, builder);
     builder->setStructType(this);
     builder->createFields(MEM_PASSLOC(a));
-    builder->comp()->addon<BaseCompilationAddon>()->registerStructType(this);
+    builder->ir()->addon<BaseIRAddon>()->registerStructType(this);
+}
+
+StructType::StructType(Allocator *a, const StructType *source, IRCloner *cloner)
+    : BaseType(a, source, cloner)
+    , _structSize(source->_structSize) {
+
+    for (auto it = source->FieldsBegin(); it != source->FieldsEnd(); it++) {
+        const FieldType *ft = it->second;
+        const FieldType *cloned_ft = cloner->clonedType(ft)->refine<FieldType>();
+        _fieldsByName.insert({cloned_ft->name(), cloned_ft});
+        _fieldsByOffset.insert({cloned_ft->offset(), cloned_ft});
+    }
+}
+
+const Type *
+StructType::clone(Allocator *a, IRCloner *cloner) const {
+    return new (a) StructType(a, this, cloner);
 }
 
 StructType::~StructType() {
@@ -549,8 +705,8 @@ StructType::to_string(bool useHeader) const {
 }
 
 Literal *
-StructType::literal(LOCATION, Compilation *comp, const LiteralBytes * structValue) const {
-    return this->Type::literal(PASSLOC, comp, structValue);
+StructType::literal(LOCATION, IR *ir, const LiteralBytes * structValue) const {
+    return this->Type::literal(PASSLOC, ir, structValue);
 }
 
 bool
@@ -666,7 +822,7 @@ StructType::replace(TypeReplacer *repl) {
         return this;
 
     String newName = String("_X_::").append(name());
-    StructTypeBuilder stb(base, repl->comp());
+    StructTypeBuilder stb(base, repl->comp()->ir());
     stb.setName(newName)
        ->setSize(this->size());
 

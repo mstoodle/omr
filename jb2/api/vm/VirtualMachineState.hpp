@@ -38,12 +38,15 @@ class Builder;
 namespace VM {
 
 class BytecodeBuilder;
+class VMIRClonerAddon;
 
 typedef uint64_t VirtualMachineStateID;
 const VirtualMachineStateID NoVirtualMachineStateID=0;
 
 class VirtualMachineState : public Extensible {
     JBALLOC_(VirtualMachineState)
+
+    friend class VMIRClonerAddon;
 
 public:
     DYNAMIC_ALLOC_ONLY(VirtualMachineState, LOCATION, VMExtension *vmx, KINDTYPE(Extensible) kind)
@@ -65,6 +68,9 @@ public:
     virtual void Reload(LOCATION, Builder * b) { }
 
 protected:
+    VirtualMachineState(Allocator *a, const VirtualMachineState *source, IRCloner *cloner);
+    virtual VirtualMachineState *clone(Allocator *mem, IRCloner *cloner) const;
+
     VirtualMachineStateID _id;
     CreateLocation _createLocation;
 

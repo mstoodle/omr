@@ -67,16 +67,16 @@ main(int argc, char *argv[]) {
     
     cout << "Step 5: compile vmregister function\n";
     StrategyID codegenStrategy = cx->strategyCodegen;
-    CompilerReturnCode result = fx->compile(LOC, &vmrFunc, codegenStrategy, wrt);
+    CompiledBody * body = fx->compile(LOC, &vmrFunc, codegenStrategy, wrt);
 
-    if (result != c.CompileSuccessful) {
-        cout << "Compile failed: " << result << "\n";
+    if (body->rc() != c.CompileSuccessful) {
+        cout << "Compile failed: " << body->rc() << "\n";
         exit(-1);
     }
     
     cout << "Step 6: invoke compiled vmregister function and print results\n";
     typedef int32_t (VMRegisterMethodFunction)(int8_t **values, int32_t count);
-    VMRegisterMethodFunction *vmregister = vmrFunc.compiledBody(codegenStrategy)->nativeEntryPoint<VMRegisterMethodFunction>();
+    VMRegisterMethodFunction *vmregister = body->nativeEntryPoint<VMRegisterMethodFunction>();
 
     int8_t values[] = {7,2,9,5,3,1,6};
     int8_t *vals = values;
@@ -85,16 +85,16 @@ main(int argc, char *argv[]) {
 
     cout << "Step 7: compile vmregisterInStruct function\n";
     VMRegisterInStructFunction vmrisFunc(LOC, &c);
-    result = fx->compile(LOC, &vmrisFunc, codegenStrategy, wrt); 
+    body = fx->compile(LOC, &vmrisFunc, codegenStrategy, wrt); 
 
-    if (result != c.CompileSuccessful) {
-        cout << "Compile failed: " << result << "\n";
+    if (body->rc() != c.CompileSuccessful) {
+        cout << "Compile failed: " << body->rc() << "\n";
         exit(-2);
     }
     
     cout << "Step 8: invoke compiled vmregisterInStruct function and print results\n";
     typedef int32_t (VMRegisterInStructCFunction)(VMRegisterStruct *param);
-    VMRegisterInStructCFunction *vmregisterInStruct = vmrisFunc.compiledBody(codegenStrategy)->nativeEntryPoint<VMRegisterInStructCFunction>();
+    VMRegisterInStructCFunction *vmregisterInStruct = body->nativeEntryPoint<VMRegisterInStructCFunction>();
 
     VMRegisterStruct param;
     param.count = 7;

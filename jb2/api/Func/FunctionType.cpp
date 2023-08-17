@@ -42,6 +42,19 @@ FunctionType::FunctionType(MEM_LOCATION(a), Extension *ext, TypeDictionary *dict
 
 }
 
+FunctionType::FunctionType(Allocator *a, const FunctionType *source, IRCloner *cloner)
+    : Type(a, source, cloner)
+    , _returnType(cloner->clonedType(source->_returnType))
+    , _numParms(source->_numParms)
+    , _parmTypes(cloner->clonedTypeArray(source->_numParms, source->_parmTypes)) {
+
+}
+
+const Type *
+FunctionType::clone(Allocator *mem, IRCloner *cloner) const {
+    return new (mem) FunctionType(mem, this, cloner);
+}
+
 FunctionType::~FunctionType() {
     delete[] _parmTypes;
 }
@@ -121,7 +134,7 @@ FunctionType::replace(TypeReplacer *repl) {
     assert(parmNum == numNewParms);
 
     Allocator *mem = repl->comp()->compiler()->mem();
-    const FunctionType *newType = new (mem) FunctionType(MEM_LOC(mem) , _ext, repl->comp()->typedict(), newReturnType, numNewParms, newParmTypes);
+    const FunctionType *newType = new (mem) FunctionType(MEM_LOC(mem) , _ext, repl->comp()->ir()->typedict(), newReturnType, numNewParms, newParmTypes);
     return newType;
 }
 

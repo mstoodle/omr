@@ -45,6 +45,10 @@ class BaseType : public Type {
         : Type(MEM_PASSLOC(a), kind, ext, dict, name, size) {
 
     }
+    BaseType(Allocator *a, const BaseType *source, IRCloner *cloner)
+        : Type(a, source, cloner) {
+
+    }
 
     BaseExtension *baseExt();
     BaseExtension *baseExt() const;
@@ -62,6 +66,10 @@ protected:
         : BaseType(MEM_PASSLOC(a), kind, ext, name, size) {
 
     }
+    NumericType(Allocator *a, const NumericType *source, IRCloner *cloner)
+        : BaseType(a, source, cloner) {
+
+    }
 
     SUBCLASS_KINDSERVICE_DECL(Type, NumericType);
 };
@@ -75,7 +83,11 @@ public:
 
 protected:
     IntegerType(MEM_LOCATION(a), TypeKind kind, Extension *ext, String name, size_t size)
-        : NumericType(MEM_PASSLOC(a), getTypeClassKind(), ext, name, size) {
+        : NumericType(MEM_PASSLOC(a), kind, ext, name, size) {
+
+    }
+    IntegerType(Allocator *a, const IntegerType *source, IRCloner *cloner)
+        : NumericType(a, source, cloner) {
 
     }
 
@@ -89,9 +101,9 @@ class Int8Type : public IntegerType {
 
 public:
     virtual size_t size() const { return 8; }
-    Literal *literal(LOCATION, Compilation *comp, const int8_t value) const;
-    Literal *zero(LOCATION, Compilation *comp) const { return literal(PASSLOC, comp, 0); }
-    Literal *identity(LOCATION, Compilation *comp) const { return literal(PASSLOC, comp, 1); }
+    virtual Literal *literal(LOCATION, IR *ir, const int8_t value) const;
+    virtual Literal *zero(LOCATION, IR *ir) const { return literal(PASSLOC, ir, 0); }
+    virtual Literal *identity(LOCATION, IR *ir) const { return literal(PASSLOC, ir, 1); }
     virtual bool literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const;
     virtual void logValue(TextLogger & lgr, const void *p) const;
     virtual void logLiteral(TextLogger & lgr, const Literal *lv) const;
@@ -99,6 +111,9 @@ public:
 
 protected:
     Int8Type(MEM_LOCATION(a), Extension *ext) : IntegerType(MEM_PASSLOC(a), getTypeClassKind(), ext, "Int8", 8) { }
+    Int8Type(Allocator *a, const Int8Type *source, IRCloner *cloner);
+
+    virtual const Type *clone(Allocator *a, IRCloner *cloner) const;
 
     SUBCLASS_KINDSERVICE_DECL(Type, Int8Type);
 };
@@ -110,9 +125,9 @@ class Int16Type : public IntegerType {
 
 public:
     virtual size_t size() const { return 16; }
-    Literal *literal(LOCATION, Compilation *comp, const int16_t value) const;
-    Literal *zero(LOCATION, Compilation *comp) const { return literal(PASSLOC, comp, 0); }
-    Literal *identity(LOCATION, Compilation *comp) const { return literal(PASSLOC, comp, 1); }
+    virtual Literal *literal(LOCATION, IR *ir, const int16_t value) const;
+    virtual Literal *zero(LOCATION, IR *ir) const { return literal(PASSLOC, ir, 0); }
+    virtual Literal *identity(LOCATION, IR *ir) const { return literal(PASSLOC, ir, 1); }
     virtual bool literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const;
     virtual void logValue(TextLogger & lgr, const void *p) const;
     virtual void logLiteral(TextLogger & lgr, const Literal *lv) const;
@@ -120,6 +135,9 @@ public:
 
 protected:
     Int16Type(MEM_LOCATION(a), Extension *ext) : IntegerType(MEM_PASSLOC(a), getTypeClassKind(), ext, "Int16", 16) { }
+    Int16Type(Allocator *a, const Int16Type *source, IRCloner *cloner);
+
+    virtual const Type *clone(Allocator *a, IRCloner *cloner) const;
 
     SUBCLASS_KINDSERVICE_DECL(Type, Int16Type);
 };
@@ -131,9 +149,9 @@ class Int32Type : public IntegerType {
 
 public:
     virtual size_t size() const { return 32; }
-    Literal *literal(LOCATION, Compilation *comp, const int32_t value) const;
-    Literal *zero(LOCATION, Compilation *comp) const { return literal(PASSLOC, comp, 0); }
-    Literal *identity(LOCATION, Compilation *comp) const { return literal(PASSLOC, comp, 1); }
+    virtual Literal *literal(LOCATION, IR *ir, const int32_t value) const;
+    virtual Literal *zero(LOCATION, IR *ir) const { return literal(PASSLOC, ir, 0); }
+    virtual Literal *identity(LOCATION, IR *ir) const { return literal(PASSLOC, ir, 1); }
     virtual bool literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const;
     virtual void logValue(TextLogger & lgr, const void *p) const;
     virtual void logLiteral(TextLogger & lgr, const Literal *lv) const;
@@ -141,6 +159,9 @@ public:
 
 protected:
     Int32Type(MEM_LOCATION(a), Extension *ext) : IntegerType(MEM_PASSLOC(a), getTypeClassKind(), ext, "Int32", 32) { }
+    Int32Type(Allocator *a, const Int32Type *source, IRCloner *cloner);
+
+    virtual const Type *clone(Allocator *a, IRCloner *cloner) const;
 
     SUBCLASS_KINDSERVICE_DECL(Type, Int32Type);
 };
@@ -152,9 +173,9 @@ class Int64Type : public IntegerType {
 
 public:
     virtual size_t size() const { return 64; }
-    Literal *literal(LOCATION, Compilation *comp, const int64_t value) const;
-    Literal *zero(LOCATION, Compilation *comp) const { return literal(PASSLOC, comp, 0); }
-    Literal *identity(LOCATION, Compilation *comp) const { return literal(PASSLOC, comp, 1); }
+    virtual Literal *literal(LOCATION, IR *ir, const int64_t value) const;
+    virtual Literal *zero(LOCATION, IR *ir) const { return literal(PASSLOC, ir, 0); }
+    virtual Literal *identity(LOCATION, IR *ir) const { return literal(PASSLOC, ir, 1); }
     virtual bool literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const;
     virtual void logValue(TextLogger & lgr, const void *p) const;
     virtual void logLiteral(TextLogger & lgr, const Literal *lv) const;
@@ -162,6 +183,9 @@ public:
 
 protected:
     Int64Type(MEM_LOCATION(a), Extension *ext) : IntegerType(MEM_PASSLOC(a), getTypeClassKind(), ext, "Int64", 64) { }
+    Int64Type(Allocator *a, const Int64Type *source, IRCloner *cloner);
+
+    virtual const Type *clone(Allocator *a, IRCloner *cloner) const;
 
     SUBCLASS_KINDSERVICE_DECL(Type, Int64Type);
 };
@@ -176,6 +200,10 @@ protected:
         : NumericType(MEM_PASSLOC(a), kind, ext, name, size) {
 
     }
+    FloatingPointType(Allocator *a, const FloatingPointType *source, IRCloner *cloner)
+        : NumericType(a, source, cloner) {
+
+    }
 
     SUBCLASS_KINDSERVICE_DECL(Type, FloatingPointType);
 };
@@ -187,9 +215,9 @@ class Float32Type : public FloatingPointType {
 
 public:
     virtual size_t size() const { return 32; }
-    Literal *literal(LOCATION, Compilation *comp, const float value) const;
-    Literal *zero(LOCATION, Compilation *comp) const { return literal(PASSLOC, comp, 0.0); }
-    Literal *identity(LOCATION, Compilation *comp) const { return literal(PASSLOC, comp, 1.0); }
+    virtual Literal *literal(LOCATION, IR *ir, const float value) const;
+    virtual Literal *zero(LOCATION, IR *ir) const { return literal(PASSLOC, ir, 0.0); }
+    virtual Literal *identity(LOCATION, IR *ir) const { return literal(PASSLOC, ir, 1.0); }
     virtual bool literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const;
     virtual void logValue(TextLogger & lgr, const void *p) const;
     virtual void logLiteral(TextLogger & lgr, const Literal *lv) const;
@@ -197,6 +225,9 @@ public:
 
 protected:
     Float32Type(MEM_LOCATION(a), Extension *ext) : FloatingPointType(MEM_PASSLOC(a), getTypeClassKind(), ext, "Float32", 32) { }
+    Float32Type(Allocator *a, const Float32Type *source, IRCloner *cloner);
+
+    virtual const Type *clone(Allocator *a, IRCloner *cloner) const;
 
     SUBCLASS_KINDSERVICE_DECL(Type, Float32Type);
 };
@@ -208,9 +239,9 @@ class Float64Type : public FloatingPointType {
 
 public:
     virtual size_t size() const { return 64; }
-    Literal *literal(LOCATION, Compilation *comp, const double value) const;
-    Literal *zero(LOCATION, Compilation *comp) const { return literal(PASSLOC, comp, 0.0); }
-    Literal *identity(LOCATION, Compilation *comp) const { return literal(PASSLOC, comp, 1.0); }
+    virtual Literal *literal(LOCATION, IR *ir, const double value) const;
+    virtual Literal *zero(LOCATION, IR *ir) const { return literal(PASSLOC, ir, 0.0); }
+    virtual Literal *identity(LOCATION, IR *ir) const { return literal(PASSLOC, ir, 1.0); }
     virtual bool literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const;
     virtual void logValue(TextLogger & lgr, const void *p) const;
     virtual void logLiteral(TextLogger & lgr, const Literal *lv) const;
@@ -218,6 +249,9 @@ public:
 
 protected:
     Float64Type(MEM_LOCATION(a), Extension *ext) : FloatingPointType(MEM_PASSLOC(a), getTypeClassKind(), ext, "Float64", 64) { }
+    Float64Type(Allocator *a, const Float64Type *source, IRCloner *cloner);
+
+    virtual const Type *clone(Allocator *a, IRCloner *cloner) const;
 
     SUBCLASS_KINDSERVICE_DECL(Type, Float64Type);
 };
@@ -229,8 +263,8 @@ class AddressType : public BaseType {
 
 public:
     virtual size_t size() const { return 64; } // should be platform specific
-    Literal *literal(LOCATION, Compilation *comp, const void * value) const;
-    Literal *zero(LOCATION, Compilation *comp) const { return literal(PASSLOC, comp, NULL); }
+    virtual Literal *literal(LOCATION, IR *ir, const void * value) const;
+    virtual Literal *zero(LOCATION, IR *ir) const { return literal(PASSLOC, ir, NULL); }
     virtual bool literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const;
     virtual void logValue(TextLogger & lgr, const void *p) const;
     virtual void logLiteral(TextLogger & lgr, const Literal *lv) const;
@@ -240,6 +274,9 @@ protected:
     DYNAMIC_ALLOC_ONLY(AddressType, LOCATION, Extension *ext, String name);
     DYNAMIC_ALLOC_ONLY(AddressType, LOCATION, Extension *ext, TypeDictionary *dict, String name);
     DYNAMIC_ALLOC_ONLY(AddressType, LOCATION, Extension *ext, TypeDictionary *dict, TypeKind kind, String name);
+    AddressType(Allocator *a, const AddressType *source, IRCloner *cloner);
+
+    virtual const Type *clone(Allocator *a, IRCloner *cloner) const;
 
     SUBCLASS_KINDSERVICE_DECL(Type, AddressType);
 };
@@ -253,12 +290,13 @@ class PointerTypeBuilder : public Allocatable {
 
 public:
     ALL_ALLOC_ALLOWED(PointerTypeBuilder, BaseExtension *ext, Compilation *comp);
+    ALL_ALLOC_ALLOWED(PointerTypeBuilder, BaseExtension *ext, IR *ir);
 
     PointerTypeBuilder *setBaseType(const Type *type) { _baseType = type; return this; }
     PointerTypeBuilder *setHelper(PointerTypeHelper *helper) { _helper = helper; return this; }
 
     BaseExtension *extension() const { return _ext; }
-    Compilation *comp() const { return _comp; }
+    IR *ir() const { return _ir; }
     TypeDictionary *dict() const { return _dict; }
     const Type *baseType() const { return _baseType; }
     PointerTypeHelper *helper() const { return _helper; }
@@ -268,7 +306,7 @@ public:
 
 protected:
     BaseExtension * _ext;
-    Compilation * _comp;
+    IR * _ir;
     TypeDictionary *_dict;
     const Type * _baseType;
     PointerTypeHelper *_helper;
@@ -282,7 +320,7 @@ class PointerType : public AddressType {
 public:
     const Type * baseType() const { return _baseType; }
 
-    Literal *literal(LOCATION, Compilation *comp, const void * value) const;
+    virtual Literal *literal(LOCATION, IR *ir, const void * value) const;
     virtual bool literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const;
     virtual String to_string(bool useHeader=false) const;
     virtual void logValue(TextLogger & lgr, const void *p) const;
@@ -291,6 +329,10 @@ public:
 
 protected:
     DYNAMIC_ALLOC_ONLY(PointerType, LOCATION, PointerTypeBuilder *builder);
+    PointerType(Allocator *a, const PointerType *source, IRCloner *cloner);
+
+    virtual const Type *clone(Allocator *a, IRCloner *cloner) const;
+
     const Type * _baseType;
 
     SUBCLASS_KINDSERVICE_DECL(Type, PointerType);
@@ -312,7 +354,7 @@ public:
     const Type *type() const { return _type; }
     size_t offset() const { return _offset; }
 
-    Literal *literal(LOCATION, Compilation *comp, const LiteralBytes * structValue) const { return NULL; };
+    Literal *literal(LOCATION, IR *ir, const LiteralBytes * structValue) const { return NULL; };
     virtual bool literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const { return false; }
     virtual String to_string(bool useHeader=false) const;
     virtual void logValue(TextLogger & lgr, const void *p) const { }
@@ -321,6 +363,9 @@ public:
 protected:
     protected:
     DYNAMIC_ALLOC_ONLY(FieldType, LOCATION, BaseExtension *ext, TypeDictionary *dict, const StructType *structType, String fieldName, const Type *type, size_t offset);
+    FieldType(Allocator *a, const FieldType *source, IRCloner *cloner);
+
+    virtual const Type *clone(Allocator *a, IRCloner *cloner) const;
 
     String explodedName(TypeReplacer *repl, String & baseName) const;
 
@@ -357,6 +402,7 @@ class StructTypeBuilder : public Allocatable {
 
 public:
     ALL_ALLOC_ALLOWED(StructTypeBuilder, BaseExtension *ext, Compilation *comp);
+    ALL_ALLOC_ALLOWED(StructTypeBuilder, BaseExtension *ext, IR *ir);
 
     #if NEED_UNION
     StructTypeBuilder *setUnion(bool v=false); { _buildUnion = v; return this; }
@@ -371,7 +417,7 @@ public:
     }
 
     BaseExtension *extension() const { return _ext; }
-    Compilation *comp() const { return _comp; }
+    IR *ir() const { return _ir; }
     TypeDictionary *dict() const { return _dict; }
     String name() const { return _name; }
     size_t size() const { return _size; }
@@ -395,8 +441,8 @@ protected:
     void setStructType(StructType *structType) { _structType = structType; }
 
     BaseExtension * _ext;
+    IR * _ir;
     CompileUnit * _unit;
-    Compilation * _comp;
     TypeDictionary * _dict;
     String _name;
     size_t _size;
@@ -417,7 +463,7 @@ class StructType : public BaseType {
 public:
     virtual size_t size() const { return _structSize; }
 
-    Literal *literal(LOCATION, Compilation *comp, const LiteralBytes * structValue) const;
+    virtual Literal *literal(LOCATION, IR *ir, const LiteralBytes * structValue) const;
     virtual bool literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const;
     virtual String to_string(bool useHeader=false) const;
     virtual void logValue(TextLogger & lgr, const void *p) const;
@@ -439,6 +485,9 @@ public:
 
 protected:
     DYNAMIC_ALLOC_ONLY(StructType, LOCATION, StructTypeBuilder *builder);
+    StructType(Allocator *a, const StructType *source, IRCloner *cloner);
+
+    virtual const Type *clone(Allocator *a, IRCloner *cloner) const;
 
     virtual const FieldType * addField(MEM_LOCATION(a), Extension *ext, TypeDictionary *dict, String name, const Type *type, size_t offset);
     virtual const FieldType * addField(LOCATION, Extension *ext, TypeDictionary *dict, String name, const Type *type, size_t offset) {
@@ -461,7 +510,7 @@ class UnionType : public StructType {
     friend class StructTypeBuilder;
 
 public:
-    Literal *literal(LOCATION, Compilation *comp, void * unionValue);
+    Literal *literal(LOCATION, IR *ir, void * unionValue);
 
     virtual FieldType * addField(LOCATION, Literal *name, Type *type, size_t unused)
         {

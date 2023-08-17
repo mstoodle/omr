@@ -28,19 +28,21 @@
 namespace OMR {
 namespace JitBuilder {
 
+class Compilation;
+
 KINDSERVICE_CATEGORY(NativeEntry);
 
 class NativeEntry : public EntryPoint {
     JBALLOC_(NativeEntry)
 
 public:
-    DYNAMIC_ALLOC_ONLY(NativeEntry, EntryID id, void *entry, String name="");
+    DYNAMIC_ALLOC_ONLY(NativeEntry, IR *ir, EntryID id, void *entry, String name="");
 
     template<typename T>
     T *entry() { return reinterpret_cast<T *>(_entry); }
 
 protected:
-    DYNAMIC_ALLOC_ONLY(NativeEntry, EntryPointKind kind, EntryID id, void *entry, String name="");
+    DYNAMIC_ALLOC_ONLY(NativeEntry, IR *ir, EntryPointKind kind, EntryID id, void *entry, String name="");
 
     void *_entry;
 

@@ -95,11 +95,15 @@ class FunctionScope : public Scope {
     JBALLOC_(FunctionScope)
 
 public:
-    ALL_ALLOC_ALLOWED(FunctionScope, Extension *ext, Compilation *comp, String name="");
-    ALL_ALLOC_ALLOWED(FunctionScope, Extension *ext, Scope *parent, String name="");
+    DYNAMIC_ALLOC_ONLY(FunctionScope, Extension *ext, IR *ir, String name="");
+    DYNAMIC_ALLOC_ONLY(FunctionScope, Extension *ext, Scope *parent, String name="");
 
 protected:
-    SUBCLASS_KINDSERVICE_DECL(Scope, FunctionScope);
+    FunctionScope(Allocator *a, const FunctionScope *source, IRCloner *cloner);
+
+    virtual Scope *clone(Allocator *mem, IRCloner *cloner) const;
+
+    SUBCLASS_KINDSERVICE_DECL(Extensible, FunctionScope);
 };
 
 } // namespace Func

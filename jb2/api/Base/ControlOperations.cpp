@@ -52,6 +52,18 @@ Op_ForLoopUp::Op_ForLoopUp(MEM_LOCATION(a), Extension *ext, Builder * parent, Ac
     loopBuilder->setLoopContinue(_loopContinue);
 }
 
+Op_ForLoopUp::Op_ForLoopUp(Allocator *a, const Op_ForLoopUp *source, IRCloner *cloner)
+    : Operation(a, source, cloner)
+    , _loopVariable(cloner->clonedSymbol(source->_loopVariable))
+    , _initial(cloner->clonedValue(source->_initial))
+    , _final(cloner->clonedValue(source->_final))
+    , _bump(cloner->clonedValue(source->_bump))
+    , _loopBody(cloner->clonedBuilder(source->_loopBody))
+    , _loopBreak(cloner->clonedBuilder(source->_loopBreak))
+    , _loopContinue(cloner->clonedBuilder(source->_loopContinue)) {
+
+}
+
 Op_ForLoopUp::~Op_ForLoopUp() {
 
 }
@@ -63,7 +75,7 @@ Op_ForLoopUp::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
                .setInitialValue(cloner->operand(0))
                .setFinalValue(cloner->operand(1))
                .setBumpValue(cloner->operand(2));
-    Allocator *mem = b->comp()->mem();
+    Allocator *mem = b->ir()->mem();
     return new (mem) Op_ForLoopUp(MEM_PASSLOC(mem), this->_ext, b, this->action(), &loopBuilder);
    }
 
@@ -89,7 +101,7 @@ Op_Goto::~Op_Goto() {
 
 Operation *
 Op_Goto::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    Allocator *mem = b->comp()->mem();
+    Allocator *mem = b->ir()->mem();
     return new (mem) Op_Goto(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->builder());
 }
 
@@ -110,7 +122,7 @@ Op_IfCmpEqual::~Op_IfCmpEqual() {
 
 Operation *
 Op_IfCmpEqual::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    Allocator *mem = b->comp()->mem();
+    Allocator *mem = b->ir()->mem();
     return new (mem) Op_IfCmpEqual(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->builder(), cloner->operand(0), cloner->operand(1));
 }
 
@@ -131,7 +143,7 @@ Op_IfCmpEqualZero::~Op_IfCmpEqualZero() {
 
 Operation *
 Op_IfCmpEqualZero::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    Allocator *mem = b->comp()->mem();
+    Allocator *mem = b->ir()->mem();
     return new (mem) Op_IfCmpEqualZero(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->builder(), cloner->operand());
 }
 
@@ -152,7 +164,7 @@ Op_IfCmpGreaterThan::~Op_IfCmpGreaterThan() {
 
 Operation *
 Op_IfCmpGreaterThan::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    Allocator *mem = b->comp()->mem();
+    Allocator *mem = b->ir()->mem();
     return new (mem) Op_IfCmpGreaterThan(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->builder(), cloner->operand(0), cloner->operand(1));
 }
 
@@ -173,7 +185,7 @@ Op_IfCmpGreaterOrEqual::~Op_IfCmpGreaterOrEqual() {
 
 Operation *
 Op_IfCmpGreaterOrEqual::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    Allocator *mem = b->comp()->mem();
+    Allocator *mem = b->ir()->mem();
     return new (mem) Op_IfCmpGreaterOrEqual(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->builder(), cloner->operand(0), cloner->operand(1));
 }
 
@@ -194,7 +206,7 @@ Op_IfCmpLessThan::~Op_IfCmpLessThan() {
 
 Operation *
 Op_IfCmpLessThan::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    Allocator *mem = b->comp()->mem();
+    Allocator *mem = b->ir()->mem();
     return new (mem) Op_IfCmpLessThan(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->builder(), cloner->operand(0), cloner->operand(1));
 }
 
@@ -215,7 +227,7 @@ Op_IfCmpLessOrEqual::~Op_IfCmpLessOrEqual() {
 
 Operation *
 Op_IfCmpLessOrEqual::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    Allocator *mem = b->comp()->mem();
+    Allocator *mem = b->ir()->mem();
     return new (mem) Op_IfCmpLessOrEqual(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->builder(), cloner->operand(0), cloner->operand(1));
 }
 
@@ -236,7 +248,7 @@ Op_IfCmpNotEqual::~Op_IfCmpNotEqual() {
 
 Operation *
 Op_IfCmpNotEqual::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    Allocator *mem = b->comp()->mem();
+    Allocator *mem = b->ir()->mem();
     return new (mem) Op_IfCmpNotEqual(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->builder(), cloner->operand(0), cloner->operand(1));
 }
 
@@ -257,7 +269,7 @@ Op_IfCmpNotEqualZero::~Op_IfCmpNotEqualZero() {
 
 Operation *
 Op_IfCmpNotEqualZero::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    Allocator *mem = b->comp()->mem();
+    Allocator *mem = b->ir()->mem();
     return new (mem) Op_IfCmpNotEqualZero(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->builder(), cloner->operand());
 }
 
@@ -278,7 +290,7 @@ Op_IfCmpUnsignedGreaterThan::~Op_IfCmpUnsignedGreaterThan() {
 
 Operation *
 Op_IfCmpUnsignedGreaterThan::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    Allocator *mem = b->comp()->mem();
+    Allocator *mem = b->ir()->mem();
     return new (mem) Op_IfCmpUnsignedGreaterThan(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->builder(), cloner->operand(0), cloner->operand(1));
 }
 
@@ -299,7 +311,7 @@ Op_IfCmpUnsignedGreaterOrEqual::~Op_IfCmpUnsignedGreaterOrEqual() {
 
 Operation *
 Op_IfCmpUnsignedGreaterOrEqual::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    Allocator *mem = b->comp()->mem();
+    Allocator *mem = b->ir()->mem();
     return new (mem) Op_IfCmpUnsignedGreaterOrEqual(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->builder(), cloner->operand(0), cloner->operand(1));
 }
 
@@ -320,7 +332,7 @@ Op_IfCmpUnsignedLessThan::~Op_IfCmpUnsignedLessThan() {
 
 Operation *
 Op_IfCmpUnsignedLessThan::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    Allocator *mem = b->comp()->mem();
+    Allocator *mem = b->ir()->mem();
     return new (mem) Op_IfCmpUnsignedLessThan(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->builder(), cloner->operand(0), cloner->operand(1));
 }
 
@@ -341,7 +353,7 @@ Op_IfCmpUnsignedLessOrEqual::~Op_IfCmpUnsignedLessOrEqual() {
 
 Operation *
 Op_IfCmpUnsignedLessOrEqual::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    Allocator *mem = b->comp()->mem();
+    Allocator *mem = b->ir()->mem();
     return new (mem) Op_IfCmpUnsignedLessOrEqual(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->builder(), cloner->operand(0), cloner->operand(1));
 }
 
@@ -370,7 +382,7 @@ Op_IfThenElse::~Op_IfThenElse() {
 
 Operation *
 Op_IfThenElse::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    Allocator *mem = b->comp()->mem();
+    Allocator *mem = b->ir()->mem();
     IfThenElseBuilder bldr;
     bldr.setSelector(cloner->operand(0));
     return new (mem) Op_IfThenElse(MEM_PASSLOC(mem), this->_ext, b, this->action(), &bldr);
@@ -390,7 +402,7 @@ Op_IfThenElse::log(TextLogger & lgr) const {
 //
 SwitchBuilder *
 SwitchBuilder::addCase(Literal *lv, Builder *builder, bool fallsThrough) {
-    Allocator *mem = builder->comp()->mem();
+    Allocator *mem = builder->ir()->mem();
     Case *c = new (mem) Case(mem, lv, builder, fallsThrough);
     _cases->assign(_cases->length(), c);
     return this;
@@ -428,8 +440,13 @@ Op_Switch::Op_Switch(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID
 }
 
 Operation *
+Op_Switch::clone(Allocator *mem, IRCloner *cloner) const {
+    return new (mem) Op_Switch(mem, this, cloner);
+}
+
+Operation *
 Op_Switch::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    Allocator *mem = b->comp()->mem();
+    Allocator *mem = b->ir()->mem();
     SwitchBuilder bldr(mem);
     bldr.setSelector(cloner->operand(0));
     uint32_t index=0;

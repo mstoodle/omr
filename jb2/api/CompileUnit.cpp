@@ -80,8 +80,8 @@ CompileUnit::~CompileUnit() {
 }
 
 Builder *
-CompileUnit::EntryBuilder(LOCATION, Compilation *comp, Scope *scope) {
-    return comp->compiler()->coreExt()->EntryBuilder(PASSLOC, comp, scope, "Entry");
+CompileUnit::EntryBuilder(LOCATION, IR *ir, Scope *scope) {
+    return ir->compiler()->coreExt()->EntryBuilder(PASSLOC, ir, scope, "Entry");
 }
 
 void
@@ -90,7 +90,7 @@ CompileUnit::log(TextLogger &lgr) const {
     lgr.indentIn();
 
     lgr.indent() << "[ name " << name() << " ]" << lgr.endl();
-    lgr.indent() << "[ origin " << _createLocation.to_string() << " ]" << lgr.endl();
+    lgr.indent() << "[ creator " << _createLocation.to_string() << " ]" << lgr.endl();
 
     logSpecific(lgr);
 

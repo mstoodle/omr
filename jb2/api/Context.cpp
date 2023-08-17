@@ -24,6 +24,7 @@
 #include "Compiler.hpp"
 #include "Context.hpp"
 #include "Extension.hpp"
+#include "IRCloner.hpp"
 #include "Symbol.hpp"
 #include "SymbolDictionary.hpp"
 
@@ -32,53 +33,70 @@ namespace OMR {
 namespace JitBuilder {
 
 INIT_JBALLOC(Context)
-BASECLASS_KINDSERVICE_IMPL(Context)
+SUBCLASS_KINDSERVICE_IMPL(Context, "Context", Extensible, Extensible)
 
-Context::Context(LOCATION, ContextKind kind, Extension *ext, Compilation *comp, String name) //LiteralDictionary *useLitDict, SymbolDictionary *useSymDict, TypeDictionary *useTypeDict, uint32_t numEntryPoints, uint32_t numExitPoints, String name)
-    : Allocatable()
-    , _id(comp->getContextID())
-    , _ext(ext)
-    , _comp(comp)
+Context::Context(Allocator *a, Extension *ext, IR *ir, String name)
+    : Extensible(a, ext, CLASSKIND(Context, Extensible))
+    , _id(ir->getContextID())
+    , _ir(ir)
     , _name(name)
     , _parent(NULL)
-    , _children(NULL, comp->mem())
-    , _builders(NULL, comp->mem())
-    #if 0
-    , _litDict((useLitDict != NULL) ? useLitDict : comp->litdict())
-    , _symDict((useSymDict != NULL) ? useSymDict : comp->symdict())
-    , _typeDict((useTypeDict != NULL) ? useTypeDict : comp->typedict())
-    , _numEntryPoints(numEntryPoints)
-    , _numExitPoints(numExitPoints)
-    #endif
-    , BASECLASS_KINDINIT(kind) {
+    , _children(NULL, ir->mem()) {
 
-    #if 0
-    initEntriesAndExits(PASSLOC, comp);
-    #endif
+    ir->setContext(this);
 }
 
-Context::Context(LOCATION, ContextKind kind, Extension *ext, Context *parent, String name) //LiteralDictionary *useLitDict, SymbolDictionary *useSymDict, TypeDictionary *useTypeDict, uint32_t numEntryPoints, uint32_t numExitPoints, String name)
-    : Allocatable()
-    , _id(parent->comp()->getContextID())
-    , _ext(ext)
-    , _comp(parent->comp())
+Context::Context(Allocator *a, Extension *ext, KINDTYPE(Extensible) kind, IR *ir, String name)
+    : Extensible(a, ext, kind)
+    , _id(ir->getContextID())
+    , _ir(ir)
+    , _name(name)
+    , _parent(NULL)
+    , _children(NULL, ir->mem()) {
+
+    ir->setContext(this);
+}
+
+Context::Context(Allocator *a, Extension *ext, Context *parent, String name)
+    : Extensible(a, ext, CLASSKIND(Context, Extensible))
+    , _id(parent->ir()->getContextID())
+    , _ir(parent->ir())
     , _name(name)
     , _parent(parent)
-    , _children(NULL, _comp->mem())
-    , _builders(NULL, _comp->mem())
-    #if 0
-    , _litDict((useLitDict != NULL) ? useLitDict : parent->litDict())
-    , _symDict((useSymDict != NULL) ? useSymDict : parent->symDict())
-    , _typeDict((useTypeDict != NULL) ? useTypeDict : parent->typeDict())
-    , _numEntryPoints(numEntryPoints)
-    , _numExitPoints(numExitPoints)
-    #endif
-    , BASECLASS_KINDINIT(kind) {
+    , _children(NULL, _ir->mem()) {
 
     parent->addChild(this);
-    #if 0
-    initEntriesAndExits(PASSLOC, parent->comp());
-    #endif
+}
+
+Context::Context(Allocator *a, Extension *ext, KINDTYPE(Extensible) kind, Context *parent, String name)
+    : Extensible(a, ext, kind)
+    , _id(parent->ir()->getContextID())
+    , _ir(parent->ir())
+    , _name(name)
+    , _parent(parent)
+    , _children(NULL, _ir->mem()) {
+
+    parent->addChild(this);
+}
+
+Context::Context(Allocator *a, const Context *source, IRCloner *cloner)
+    : Extensible(a, source->ext(), source->kind())
+    , _id(source->_id)
+    , _ir(cloner->clonedIR())
+    , _name(source->_name)
+    , _parent(source->_parent)
+    , _children(NULL, a) {
+
+
+    for (auto it=_children.iterator();it.hasItem();it++) {
+        Context *child = it.item();
+        _children.push_back(cloner->clonedContext(child));
+    }
+}
+   
+Context *
+Context::clone(Allocator *a, IRCloner *cloner) const {
+    return new (a) Context(a, this, cloner);
 }
 
 #if 0
@@ -103,17 +121,11 @@ Context::initEntriesAndExits(LOCATION, Compilation *comp) {
 
 Context::~Context() {
     // actual Builders will be deleted by Compilation
-    #if 0
-    delete[] _builderExitPoints;
-    delete[] _debugEntryPoints;
-    delete[] _nativeEntryPoints;
-    delete[] _builderEntryPoints;
-    #endif
 }
 
 void
 Context::addSymbol(Symbol *sym) {
-    _comp->symdict()->registerSymbol(sym);
+    _ir->symdict()->registerSymbol(sym);
     #if 0
     if (_symDict) {
         _symDict->registerSymbol(sym);
@@ -130,7 +142,7 @@ Context::addSymbol(Symbol *sym) {
 
 Symbol *
 Context::lookupSymbol(String name) {
-    return _comp->symdict()->LookupSymbol(name);
+    return _ir->symdict()->LookupSymbol(name);
     #if 0
     if (_symDict) {
         sym = _symDict->LookupSymbol(name);

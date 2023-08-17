@@ -45,7 +45,7 @@ Op_LoadAt::~Op_LoadAt() {
 
 Operation *
 Op_LoadAt::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    Allocator *mem = b->comp()->mem();
+    Allocator *mem = b->ir()->mem();
     return new (mem) Op_LoadAt(MEM_PASSLOC(mem), this->_ext, b, this->action(), this->result(), this->operand());
 }
 
@@ -65,7 +65,7 @@ Op_StoreAt::~Op_StoreAt() {
 
 Operation *
 Op_StoreAt::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    Allocator *mem = b->comp()->mem();
+    Allocator *mem = b->ir()->mem();
     return new (mem) Op_StoreAt(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->operand(0), this->operand(1));
 }
 
@@ -85,7 +85,7 @@ Op_LoadField::~Op_LoadField() {
 
 Operation *
 Op_LoadField::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    Allocator *mem = b->comp()->mem();
+    Allocator *mem = b->ir()->mem();
     return new (mem) Op_LoadField(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->result(), cloner->type()->refine<FieldType>(), cloner->operand());
 }
 
@@ -105,7 +105,7 @@ Op_StoreField::~Op_StoreField() {
 
 Operation *
 Op_StoreField::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    Allocator *mem = b->comp()->mem();
+    Allocator *mem = b->ir()->mem();
     return new (mem) Op_StoreField(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->type()->refine<FieldType>(), cloner->operand(0), cloner->operand(1));
 }
 
@@ -125,7 +125,7 @@ Op_LoadFieldAt::~Op_LoadFieldAt() {
 
 Operation *
 Op_LoadFieldAt::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    Allocator *mem = b->comp()->mem();
+    Allocator *mem = b->ir()->mem();
     return new (mem) Op_LoadFieldAt(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->result(), cloner->type()->refine<FieldType>(), cloner->operand());
 }
 
@@ -145,7 +145,7 @@ Op_StoreFieldAt::~Op_StoreFieldAt() {
 
 Operation *
 Op_StoreFieldAt::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    Allocator *mem = b->comp()->mem();
+    Allocator *mem = b->ir()->mem();
     return new (mem) Op_StoreFieldAt(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->type()->refine<FieldType>(), cloner->operand(0), cloner->operand(1));
 }
 
@@ -161,7 +161,7 @@ Op_CreateLocalArray::~Op_CreateLocalArray() {
 
 Operation *
 Op_CreateLocalArray::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    Allocator *mem = b->comp()->mem();
+    Allocator *mem = b->ir()->mem();
     const Type *cloneType = cloner->type();
     assert(cloneType->isKind<PointerType>());
     return new (mem) Op_CreateLocalArray(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->result(), cloner->literal(), cloneType->refine<PointerType>());
@@ -179,7 +179,7 @@ Op_CreateLocalStruct::~Op_CreateLocalStruct() {
 
 Operation *
 Op_CreateLocalStruct::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    Allocator *mem = b->comp()->mem();
+    Allocator *mem = b->ir()->mem();
     const Type *cloneType = cloner->type();
     assert(cloneType->isKind<StructType>());
     return new (mem) Op_CreateLocalStruct(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->result(), cloneType->refine<StructType>());
@@ -201,7 +201,7 @@ Op_IndexAt::~Op_IndexAt() {
 
 Operation *
 Op_IndexAt::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
-    Allocator *mem = b->comp()->mem();
+    Allocator *mem = b->ir()->mem();
     return new (mem) Op_IndexAt(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->result(), cloner->operand(0), cloner->operand(1));
 }
 

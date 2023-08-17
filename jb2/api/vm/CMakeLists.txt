@@ -34,6 +34,7 @@ add_library(jb2vm SHARED
 	VirtualMachineOperandStack.cpp
 	VirtualMachineState.cpp
 	VMExtension.cpp
+	VMIRClonerAddon.cpp
 	VMFunction.cpp
 )
 

@@ -19,6 +19,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#include "JBCore.hpp"
 #include "VirtualMachineRegisterInStruct.hpp"
 
 namespace OMR {
@@ -58,6 +59,18 @@ VirtualMachineRegisterInStruct::VirtualMachineRegisterInStruct(MEM_LOCATION(a),
         for (auto e=0;e < comp->scope<Scope>()->numEntryPoints<BuilderEntry>();e++)
             Reload(PASSLOC, comp->scope<Scope>()->entryPoint<BuilderEntry>(e)->builder());
     }
+}
+
+VirtualMachineRegisterInStruct::VirtualMachineRegisterInStruct(Allocator *a, const VirtualMachineRegisterInStruct *source, IRCloner *cloner)
+    : VirtualMachineRegister(a, source, cloner)
+    , _localHoldingStructAddress(cloner->clonedSymbol(source->_localHoldingStructAddress)->refine<Func::LocalSymbol>())
+    , _fieldType(cloner->clonedType(source->_fieldType)->refine<Base::FieldType>()) {
+
+}
+
+VirtualMachineState *
+VirtualMachineRegisterInStruct::clone(Allocator *mem, IRCloner *cloner) const {
+    return new (mem) VirtualMachineRegisterInStruct(mem, this, cloner);
 }
 
 void

@@ -19,9 +19,10 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "BytecodeBuilder.hpp"
-#include "Compiler.hpp"
-#include "VMExtension.hpp"
+#include "JBCore.hpp"
+#include "vm/BytecodeBuilder.hpp"
+#include "vm/VMExtension.hpp"
+#include "vm/VMIRClonerAddon.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -53,9 +54,19 @@ VMExtension::VMExtension(MEM_LOCATION(a), Compiler *compiler, bool extended, Str
 
     _bx = compiler->lookupExtension<Base::BaseExtension>();
     _fx = compiler->lookupExtension<Func::FunctionExtension>();
+
+    registerForExtensible(CLASSKIND(IRCloner,Extensible), this);
 }
 
 VMExtension::~VMExtension() {
+}
+
+void
+VMExtension::createAddon(Extensible *e) {
+    Allocator *mem = e->allocator();
+    assert(e->isKind<IRCloner>());
+    VMIRClonerAddon *vc = new (mem) VMIRClonerAddon(mem, this, e->refine<IRCloner>());
+    e->attach(vc);
 }
 
 void
@@ -137,12 +148,16 @@ VMExtension::IfCmpUnsignedGreaterThan(LOCATION, BytecodeBuilder *b, BytecodeBuil
 }
 
 BytecodeBuilder *
-VMExtension::OrphanBytecodeBuilder(Compilation *comp, int32_t bcIndex, int32_t bcLength, Scope *scope, String name) {
-    Allocator *mem = comp->mem();
-    return registerBuilder<BytecodeBuilder>(comp, new (mem) BytecodeBuilder(mem, this, comp, scope, bcIndex, bcLength, name));
+VMExtension::OrphanBytecodeBuilder(IR *ir, int32_t bcIndex, int32_t bcLength, Scope *scope, String name) {
+    Allocator *mem = ir->mem();
+    if (scope == NULL)
+        scope = ir->scope<Scope>();
+    BytecodeBuilder *b = new (mem) BytecodeBuilder(mem, this, ir, scope, bcIndex, bcLength, name);
+    registerBuilder(ir, b);
+    return b;
 }
 
-CompilerReturnCode
+CompiledBody *
 VMExtension::compile(LOCATION, Func::Function *func, StrategyID strategy, TextLogger *lgr) {
 
     if (strategy == NoStrategy)
@@ -151,27 +166,12 @@ VMExtension::compile(LOCATION, Func::Function *func, StrategyID strategy, TextLo
     Allocator *mem = compiler()->mem();
     Func::FunctionCompilation *comp = new (mem) Func::FunctionCompilation(mem, this, func, strategy);
 
-    Func::FunctionContext context(PASSLOC, comp);
-    setContext(comp, &context);
-
-    Func::FunctionScope scope(this, comp);
-    setScope(comp, &scope);
-
     setLogger(comp, lgr);
 
-    CompilerReturnCode rc = _compiler->compile(PASSLOC, comp, strategy);
-    if (rc != _compiler->CompileSuccessful) {
-        delete comp;
-        return rc;
-    }
-
-    CompiledBody *body = new (mem) CompiledBody(mem, func, &context, strategy);
-    scope.saveEntries(body);
-    func->saveCompiledBody(body, strategy);
+    CompiledBody *body = _compiler->compile(PASSLOC, comp, strategy);
 
     delete comp;
-
-    return _compiler->CompileSuccessful;
+    return body;
 }
 
 } // namespace VM

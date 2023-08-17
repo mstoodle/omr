@@ -23,7 +23,7 @@
 #define CONTEXT_INCL
 
 #include "common.hpp"
-#include "KindService.hpp"
+#include "Extensible.hpp"
 #include "String.hpp"
 
 // Context is an extremely important concept. Every Builder B has a Context C though B
@@ -94,24 +94,22 @@ namespace JitBuilder {
 
 class Compilation;
 class Extension;
+class IR;
+class IRCloner;
 class LiteralDictionary;
 class Symbol;
 class SymbolDictionary;
 class TypeDictionary;
 
-KINDSERVICE_CATEGORY(Context);
-
-class Context : public Allocatable {
+class Context : public Extensible {
     JBALLOC_(Context)
 
+    friend class IRCloner;
+
 public:
-    //Context(LOCATION, ContextKind kind, Compilation *comp, LiteralDictionary *useLitDict=NULL, SymbolDictionary *useSymDict=NULL, TypeDictionary *useTypeDict=NULL, uint32_t numEntryPoints=1, uint32_t numExitPoints=1, String name="");
-    //Context(LOCATION, ContextKind kind, Context *parent, LiteralDictionary *useLitDict=NULL, SymbolDictionary *useSymDict=NULL, TypeDictionary *useTypeDict=NULL, uint32_t numEntryPoints=1, uint32_t numExitPoints=1, String name="");
+    DYNAMIC_ALLOC_ONLY(Context, Extension *ext, IR *ir, String name="");
+    DYNAMIC_ALLOC_ONLY(Context, Extension *ext, Context *parent, String name="");
 
-    Context(LOCATION, ContextKind kind, Extension *ext, Compilation *comp, String name="");
-    Context(LOCATION, ContextKind kind, Extension *ext, Context *parent, String name="");
-
-    Extension *ext() const { return _ext; }
     ContextID id() const { return _id; }
     String name() const { return _name; }
 
@@ -132,23 +130,25 @@ public:
     virtual Symbol *lookupSymbol(String name);
 
 protected:
-    #if 0
-    void initEntriesAndExits(LOCATION, Compilation *comp);
-    #endif
+    DYNAMIC_ALLOC_ONLY(Context, Extension *ext, KINDTYPE(Extensible) kind, IR *ir, String name="");
+    DYNAMIC_ALLOC_ONLY(Context, Extension *ext, KINDTYPE(Extensible) kind, Context *parent, String name="");
+    Context (Allocator *a, const Context *source, IRCloner *cloner);
+
+    IR *ir() const { return _ir; }
+
+    virtual Context *clone(Allocator *a, IRCloner *cloner) const;
+
     void addSymbol(Symbol *sym);
     void addChild(Context *child) { _children.push_back(child); }
-    Compilation *comp() const { return _comp; }
 
     ContextID _id;
-    Extension *_ext;
-    Compilation *_comp;
+    IR *_ir;
     String _name;
 
     Context * _parent;
     List<Context *> _children;
-    List<Builder *> _builders;
 
-    BASECLASS_KINDSERVICE_DECL(Context);
+    SUBCLASS_KINDSERVICE_DECL(Extensible, Context);
 };
 
 } // namespace JitBuilder

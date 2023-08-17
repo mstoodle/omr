@@ -62,6 +62,9 @@ const ContextID NoContext=0;
 typedef uint64_t EntryID;
 const EntryID PrimaryEntry=0;
 
+typedef uint64_t EntryPointID;
+const EntryID NoEntryPoint=0;
+
 typedef uint64_t ExecutorID;
 const ExecutorID NoExecutor=0;
 

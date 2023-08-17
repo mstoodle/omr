@@ -19,9 +19,13 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#include <assert.h>
+#include "IRCloner.hpp"
 #include "Symbol.hpp"
 #include "SymbolDictionary.hpp"
 #include "TextLogger.hpp"
+#include "Type.hpp"
+#include "TypeDictionary.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -30,13 +34,32 @@ INIT_JBALLOC_ON(Symbol, SymbolDictionary)
 
 BASECLASS_KINDSERVICE_IMPL(Symbol);
 
+// only used by clone()
+Symbol::Symbol(Allocator *mem, const Symbol *source, IRCloner *cloner)
+    : Allocatable(mem)
+    , _ext(source->_ext)
+    , _id(NoSymbol)
+    , _name(source->_name)
+    , _type(cloner->clonedType(source->_type))
+    , BASECLASS_KINDINIT(KIND(Symbol)) {
+
+}
+
+Symbol *
+Symbol::clone(Allocator *mem, IRCloner *cloner) {
+    assert(_kind == KIND(Symbol));
+    return new (mem) Symbol(mem, this, cloner);
+}
+
 Symbol::~Symbol() {
 
 }
 
 void
 Symbol::log(TextLogger &lgr) const {
-    lgr << this << lgr.endl();
+    lgr << "[ " << this << " ";
+    logDetails(lgr);
+    lgr << " ]" << lgr.endl();
 }
 
 } // namespace JitBuilder

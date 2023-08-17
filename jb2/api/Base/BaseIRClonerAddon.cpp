@@ -19,52 +19,43 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "JBCore.hpp"
-#include "Func/Func.hpp"
-#include "Base/BaseCompilationAddon.hpp"
-#include "Base/BaseTypes.hpp"
+#include "Base/BaseIRClonerAddon.hpp"
+#include "Base/ControlOperations.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 namespace Base {
 
-INIT_JBALLOC_REUSECAT(BaseCompilationAddon, Compilation)
-SUBCLASS_KINDSERVICE_IMPL(BaseCompilationAddon,"BaseCompilationAddon",Addon,Extensible)
+INIT_JBALLOC_REUSECAT(BaseIRClonerAddon, IRCloner)
+SUBCLASS_KINDSERVICE_IMPL(BaseIRClonerAddon,"BaseIRClonerAddon",Addon,Extensible)
 
-BaseCompilationAddon::BaseCompilationAddon(Allocator *a, Extension *ext, Compilation *root)
-    : Addon(a, ext, root, KIND(Extensible)) {
+BaseIRClonerAddon::BaseIRClonerAddon(Allocator *a, BaseExtension *ext, IRCloner *root)
+    : BaseAddon(a, ext, root, KIND(Extensible))
+    , _clonedCases(NULL, a) {
 
 }
 
-const PointerType *
-BaseCompilationAddon::pointerTypeFromBaseType(const Type *baseType) {
-    auto found = _pointerTypeFromBaseType.find(baseType);
-    if (found != _pointerTypeFromBaseType.end()) {
-        const PointerType *t = found->second;
-        return t;
+BaseIRClonerAddon::~BaseIRClonerAddon() {
+    for (int i=0;i < _clonedCases.length(); i++) {
+        Case *c = _clonedCases[i];
+        delete c;
     }
-    return NULL;
 }
 
-void
-BaseCompilationAddon::registerPointerType(const PointerType *pType) {
-    const Type *baseType = pType->baseType();
-    _pointerTypeFromBaseType.insert({baseType, pType});
-}
+Case *
+BaseIRClonerAddon::clonedCase(Case *c) {
+    CaseID id=c->id();
+    Case *clonedCase = NULL;
+    if (id < _clonedCases.length())
+        clonedCase = _clonedCases[id];
 
-const StructType *
-BaseCompilationAddon::structTypeFromName(String name) {
-    auto found = _structTypeFromName.find(name);
-    if (found != _structTypeFromName.end()) {
-        const StructType *t = found->second;
-        return t;
+    if (clonedCase == NULL) {
+        IRCloner *cloner = root()->refine<IRCloner>();
+        clonedCase = c->clone(cloner->allocator(), cloner);
+        _clonedCases.assign(id, clonedCase);
     }
-    return NULL;
-}
 
-void
-BaseCompilationAddon::registerStructType(const StructType *sType) {
-    _structTypeFromName.insert({sType->name(), sType});
+    return clonedCase;
 }
 
 } // namespace Base

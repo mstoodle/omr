@@ -41,6 +41,8 @@
 #include "Extensible.hpp"
 #include "Extension.hpp"
 #include "InputReader.hpp"
+#include "IR.hpp"
+#include "IRCloner.hpp"
 #include "KindService.hpp"
 #include "Literal.hpp"
 #include "LiteralDictionary.hpp"

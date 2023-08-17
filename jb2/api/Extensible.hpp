@@ -83,7 +83,7 @@ public:
     void attach(Addon *addon);
 
 protected:
-    void notifyCreation(Extension *e, KINDTYPE(Extensible) kind);
+    void notifyCreation(KINDTYPE(Extensible) kind);
 
 private:
     Extension *_ext;

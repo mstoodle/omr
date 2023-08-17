@@ -28,9 +28,10 @@ omr_assert(
 add_library(jb2base SHARED
 	ArithmeticOperations.cpp
 	BaseAddon.cpp
-	BaseCompilationAddon.cpp
 	BaseExtension.cpp
 	BaseFunctionExtensionAddon.cpp
+	BaseIRAddon.cpp
+	BaseIRClonerAddon.cpp
 	BaseSymbol.cpp
 	BaseTypes.cpp
 	ConstOperation.cpp

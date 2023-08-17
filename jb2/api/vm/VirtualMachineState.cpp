@@ -31,6 +31,18 @@ SUBCLASS_KINDSERVICE_IMPL(VirtualMachineState,"VirtualMachineState",Extensible,E
 
 VirtualMachineStateID VirtualMachineState::nextVirtualMachineStateID = NoVirtualMachineStateID+1;
 
+VirtualMachineState::VirtualMachineState(Allocator *a, const VirtualMachineState *source, IRCloner *cloner)
+    : Extensible(a, source->ext(), source->_kind)
+    , _id(source->_id)
+    , _createLocation(source->_createLocation) {
+
+}
+
+VirtualMachineState *
+VirtualMachineState::clone(Allocator *mem, IRCloner *cloner) const {
+     return new (mem) VirtualMachineState(mem, this, cloner);
+}
+
 VirtualMachineState::~VirtualMachineState() {
 
 }

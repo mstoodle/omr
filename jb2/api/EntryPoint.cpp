@@ -19,7 +19,9 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#include "Compilation.hpp"
 #include "EntryPoint.hpp"
+#include "IRCloner.hpp"
 
 
 namespace OMR {
@@ -28,12 +30,30 @@ namespace JitBuilder {
 INIT_JBALLOC(EntryPoint)
 BASECLASS_KINDSERVICE_IMPL(EntryPoint)
 
-EntryPoint::EntryPoint(Allocator *a, EntryPointKind kind, EntryID id, String name)
+EntryPoint::EntryPoint(Allocator *a, IR *ir, EntryPointKind kind, EntryID entryID, String name)
     : Allocatable(a)
-    , _id(id)
+    , _id(ir->getEntryPointID())
+    , _entryID(entryID)
+    , _ir(ir)
     , _name(name)
     , BASECLASS_KINDINIT(kind) {
 
+}
+
+EntryPoint::EntryPoint(Allocator *a, const EntryPoint *source, IRCloner *cloner)
+    : Allocatable(a)
+    , _id(source->_id)
+    , _entryID(source->_entryID)
+    , _ir(cloner->clonedIR())
+    , _name(source->_name)
+    , BASECLASS_KINDINIT(source->_kind) {
+
+}
+
+EntryPoint *
+EntryPoint::clone(Allocator *mem, IRCloner *cloner) const {
+    // EntryPoints by default will not be cloned
+    return NULL;
 }
 
 EntryPoint::~EntryPoint() {

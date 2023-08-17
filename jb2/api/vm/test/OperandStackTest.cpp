@@ -137,7 +137,7 @@ main(int argc, char *argv[]) {
     Compiler compiler("OperandStackTests");
     compiler.config()->setTraceCodeGenerator(true);
 
-    if (verbose) cout << "Step 2: lookup and load extensions (core, Base, Func, and VM)\n";
+    if (verbose) cout << "Step 2: lookup and load extensions (core, JB, Base, Func, and VM)\n";
     CoreExtension *cx = compiler.lookupExtension<CoreExtension>();
     JB::JBExtension *jx = compiler.loadExtension<JB::JBExtension>(LOC);
     Base::BaseExtension *bx = compiler.loadExtension<Base::BaseExtension>(LOC);
@@ -154,17 +154,17 @@ main(int argc, char *argv[]) {
     
     if (verbose) cout << "Step 5: compile function\n";
     const StrategyID codegenStrategy = cx->strategyCodegen; \
-    CompilerReturnCode result = fx->compile(LOC, &pointerFunction, codegenStrategy, wrt); \
+    CompiledBody * body = fx->compile(LOC, &pointerFunction, codegenStrategy, wrt); \
     
-    if (result != compiler.CompileSuccessful) {
-        cout << "Compile failed: " << compiler.returnCodeName(result).c_str() << "\n";
+    if (body->rc() != compiler.CompileSuccessful) {
+        cout << "Compile failed: " << compiler.returnCodeName(body->rc()).c_str() << "\n";
         cout << compiler.errorCondition()->message().c_str();
         exit(-1);
     }
 
     if (verbose) cout << "Step 6: invoke compiled function and print results\n";
     typedef void (OperandStackTestProto)();
-    OperandStackTestProto *ptrTest = pointerFunction.compiledBody(codegenStrategy)->nativeEntryPoint<OperandStackTestProto>();
+    OperandStackTestProto *ptrTest = body->nativeEntryPoint<OperandStackTestProto>();
     verifySP = pointerFunction.getSPPtr();
     setupResult12Equals();
     ptrTest();
@@ -173,16 +173,16 @@ main(int argc, char *argv[]) {
     OperandStackTestUsingStructFunction threadFunction(LOC, vmx);
 
     if (verbose) cout << "Step 8: compile function\n";
-    result = fx->compile(LOC, &threadFunction, codegenStrategy, wrt);
-    if (result != compiler.CompileSuccessful) {
-        cout << "Compile failed: " << compiler.returnCodeName(result).c_str() << "\n";
+    body = fx->compile(LOC, &threadFunction, codegenStrategy, wrt);
+    if (body->rc() != compiler.CompileSuccessful) {
+        cout << "Compile failed: " << compiler.returnCodeName(body->rc()).c_str() << "\n";
         cout << compiler.errorCondition()->message().c_str();
         exit(-1);
     }
 
     if (verbose) cout << "Step 9: invoke compiled code and print results\n";
     typedef void (OperandStackTestUsingStructProto)(Thread *thread);
-    OperandStackTestUsingStructProto *threadTest = threadFunction.compiledBody(codegenStrategy)->nativeEntryPoint<OperandStackTestUsingStructProto>();
+    OperandStackTestUsingStructProto *threadTest = body->nativeEntryPoint<OperandStackTestUsingStructProto>();
 
     useThreadSP = true;
     verifySP = &thread.sp;
@@ -429,24 +429,24 @@ OperandStackTestFunction::buildContext(LOCATION, Func::FunctionCompilation *comp
     _valueType = _bx->STACKVALUETYPE;
     const Type *pValueType = _bx->PointerTo(LOC, comp, _valueType);
 
-    _createStack = ctx->DefineFunction(LOC, "createStack", "0", "0", (void *)&OperandStackTestFunction::createStack, NoType, 0);
-    _moveStack = ctx->DefineFunction(LOC, "moveStack", "0", "0", (void *)&OperandStackTestFunction::moveStack, pValueType, 0);
-    _freeStack = ctx->DefineFunction(LOC, "freeStack", "0", "0", (void *)&OperandStackTestFunction::freeStack, NoType, 0);
-    _verifyResult0 = ctx->DefineFunction(LOC, "verifyResult0", "0", "0", (void *)&verifyResult0, NoType, 0);
-    _verifyResult1 = ctx->DefineFunction(LOC, "verifyResult1", "0", "0", (void *)&verifyResult1, NoType, 0);
-    _verifyResult2 = ctx->DefineFunction(LOC, "verifyResult2", "0", "0", (void *)&verifyResult2, NoType, 1, _valueType);
-    _verifyResult3 = ctx->DefineFunction(LOC, "verifyResult3", "0", "0", (void *)&verifyResult3, NoType, 1, _valueType);
-    _verifyResult4 = ctx->DefineFunction(LOC, "verifyResult4", "0", "0", (void *)&verifyResult4, NoType, 1, _valueType);
-    _verifyResult5 = ctx->DefineFunction(LOC, "verifyResult5", "0", "0", (void *)&verifyResult5, NoType, 1, _valueType);
-    _verifyResult6 = ctx->DefineFunction(LOC, "verifyResult6", "0", "0", (void *)&verifyResult6, NoType, 1, _valueType);
-    _verifyResult7 = ctx->DefineFunction(LOC, "verifyResult7", "0", "0", (void *)&verifyResult7, NoType, 0);
-    _verifyResult8 = ctx->DefineFunction(LOC, "verifyResult8", "0", "0", (void *)&verifyResult8, NoType, 1, _valueType);
-    _verifyResult9 = ctx->DefineFunction(LOC, "verifyResult9", "0", "0", (void *)&verifyResult9, NoType, 1, _valueType);
-    _verifyResult10 = ctx->DefineFunction(LOC, "verifyResult10", "0", "0", (void *)&verifyResult10, NoType, 1, _valueType);
-    _verifyResult11 = ctx->DefineFunction(LOC, "verifyResult11", "0", "0", (void *)&verifyResult11, NoType, 0);
-    _verifyResult12 = ctx->DefineFunction(LOC, "verifyResult12", "0", "0", (void *)&verifyResult12, NoType, 1, _valueType);
-    _verifyValuesEqual = ctx->DefineFunction(LOC, "verifyValuesEqual", "0", "0", (void *)&verifyValuesEqual, NoType, 2, _valueType, _valueType);
-    _modifyTop3Elements = ctx->DefineFunction(LOC, "modifyTop3Elements", "0", "0", (void *)&modifyTop3Elements, NoType, 1, _valueType);
+    _createStack = ctx->DefineFunction(LOC, comp, "createStack", "0", "0", (void *)&OperandStackTestFunction::createStack, NoType, 0);
+    _moveStack = ctx->DefineFunction(LOC, comp, "moveStack", "0", "0", (void *)&OperandStackTestFunction::moveStack, pValueType, 0);
+    _freeStack = ctx->DefineFunction(LOC, comp, "freeStack", "0", "0", (void *)&OperandStackTestFunction::freeStack, NoType, 0);
+    _verifyResult0 = ctx->DefineFunction(LOC, comp, "verifyResult0", "0", "0", (void *)&verifyResult0, NoType, 0);
+    _verifyResult1 = ctx->DefineFunction(LOC, comp, "verifyResult1", "0", "0", (void *)&verifyResult1, NoType, 0);
+    _verifyResult2 = ctx->DefineFunction(LOC, comp, "verifyResult2", "0", "0", (void *)&verifyResult2, NoType, 1, _valueType);
+    _verifyResult3 = ctx->DefineFunction(LOC, comp, "verifyResult3", "0", "0", (void *)&verifyResult3, NoType, 1, _valueType);
+    _verifyResult4 = ctx->DefineFunction(LOC, comp, "verifyResult4", "0", "0", (void *)&verifyResult4, NoType, 1, _valueType);
+    _verifyResult5 = ctx->DefineFunction(LOC, comp, "verifyResult5", "0", "0", (void *)&verifyResult5, NoType, 1, _valueType);
+    _verifyResult6 = ctx->DefineFunction(LOC, comp, "verifyResult6", "0", "0", (void *)&verifyResult6, NoType, 1, _valueType);
+    _verifyResult7 = ctx->DefineFunction(LOC, comp, "verifyResult7", "0", "0", (void *)&verifyResult7, NoType, 0);
+    _verifyResult8 = ctx->DefineFunction(LOC, comp, "verifyResult8", "0", "0", (void *)&verifyResult8, NoType, 1, _valueType);
+    _verifyResult9 = ctx->DefineFunction(LOC, comp, "verifyResult9", "0", "0", (void *)&verifyResult9, NoType, 1, _valueType);
+    _verifyResult10 = ctx->DefineFunction(LOC, comp, "verifyResult10", "0", "0", (void *)&verifyResult10, NoType, 1, _valueType);
+    _verifyResult11 = ctx->DefineFunction(LOC, comp, "verifyResult11", "0", "0", (void *)&verifyResult11, NoType, 0);
+    _verifyResult12 = ctx->DefineFunction(LOC, comp, "verifyResult12", "0", "0", (void *)&verifyResult12, NoType, 1, _valueType);
+    _verifyValuesEqual = ctx->DefineFunction(LOC, comp, "verifyValuesEqual", "0", "0", (void *)&verifyValuesEqual, NoType, 2, _valueType, _valueType);
+    _modifyTop3Elements = ctx->DefineFunction(LOC, comp, "modifyTop3Elements", "0", "0", (void *)&modifyTop3Elements, NoType, 1, _valueType);
 
     return true;
 }
@@ -465,9 +465,9 @@ OperandStackTestFunction::buildContext(LOCATION, Func::FunctionCompilation *comp
 #define PICK(b,d)          (STACK(b)->Pick(d))
 
 VM::BytecodeBuilder *
-OperandStackTestFunction::testStack(VM::BytecodeBuilder *b, Compilation *comp, bool useEqual) {
+OperandStackTestFunction::testStack(VM::BytecodeBuilder *b, IR *ir, bool useEqual) {
     STACKVALUECTYPE one=1;
-    Literal *lv1 = _valueType->literal(LOC, comp, reinterpret_cast<LiteralBytes *>(&one));
+    Literal *lv1 = _valueType->literal(LOC, ir, reinterpret_cast<LiteralBytes *>(&one));
     PUSH(b, _bx->Const(LOC, b, lv1));
     _fx->Call(LOC, b, _verifyResult0);
 
@@ -475,11 +475,11 @@ OperandStackTestFunction::testStack(VM::BytecodeBuilder *b, Compilation *comp, b
     _fx->Call(LOC, b, _verifyResult1);
 
     STACKVALUECTYPE two=2;
-    Literal *lv2 = _valueType->literal(LOC, comp, reinterpret_cast<LiteralBytes *>(&two));
+    Literal *lv2 = _valueType->literal(LOC, ir, reinterpret_cast<LiteralBytes *>(&two));
     PUSH(b, _bx->Const(LOC, b, lv2));
 
     STACKVALUECTYPE three=3;
-    Literal *lv3 = _valueType->literal(LOC, comp, reinterpret_cast<LiteralBytes *>(&three));
+    Literal *lv3 = _valueType->literal(LOC, ir, reinterpret_cast<LiteralBytes *>(&three));
     PUSH(b, _bx->Const(LOC, b, lv3));
     _fx->Call(LOC, b, _verifyResult2, TOP(b));
 
@@ -506,9 +506,9 @@ OperandStackTestFunction::testStack(VM::BytecodeBuilder *b, Compilation *comp, b
     _fx->Call(LOC, b, _verifyResult7);
 
     STACKVALUECTYPE four=4;
-    Literal *lv4 = _valueType->literal(LOC, comp, reinterpret_cast<LiteralBytes *>(&four));
+    Literal *lv4 = _valueType->literal(LOC, ir, reinterpret_cast<LiteralBytes *>(&four));
     STACKVALUECTYPE five=5;
-    Literal *lv5 = _valueType->literal(LOC, comp, reinterpret_cast<LiteralBytes *>(&five));
+    Literal *lv5 = _valueType->literal(LOC, ir, reinterpret_cast<LiteralBytes *>(&five));
 
     PUSH(b, _bx->Const(LOC, b, lv5));
     PUSH(b, _bx->Const(LOC, b, lv4));
@@ -528,9 +528,9 @@ OperandStackTestFunction::testStack(VM::BytecodeBuilder *b, Compilation *comp, b
     UPDATESTACK(b, newStack);
     _fx->Call(LOC, b, _verifyResult11);
 
-    VM::BytecodeBuilder *thenBB = _vmx->OrphanBytecodeBuilder(comp, 1, 1, NULL, String("BCI_then"));
-    VM::BytecodeBuilder *elseBB = _vmx->OrphanBytecodeBuilder(comp, 2, 1, NULL, String("BCI_else"));
-    VM::BytecodeBuilder *mergeBB = _vmx->OrphanBytecodeBuilder(comp, 3, 1, NULL, String("BCI_merge"));
+    VM::BytecodeBuilder *thenBB = _vmx->OrphanBytecodeBuilder(ir, 1, 1, NULL, String("BCI_then"));
+    VM::BytecodeBuilder *elseBB = _vmx->OrphanBytecodeBuilder(ir, 2, 1, NULL, String("BCI_else"));
+    VM::BytecodeBuilder *mergeBB = _vmx->OrphanBytecodeBuilder(ir, 3, 1, NULL, String("BCI_merge"));
 
     Value *v1 = POP(b);
     Value *v2 = POP(b);
@@ -541,12 +541,12 @@ OperandStackTestFunction::testStack(VM::BytecodeBuilder *b, Compilation *comp, b
     _vmx->Goto(LOC, b, elseBB);
 
     STACKVALUECTYPE eleven=11;
-    Literal *lv11 = _valueType->literal(LOC, comp, reinterpret_cast<LiteralBytes *>(&eleven));
+    Literal *lv11 = _valueType->literal(LOC, ir, reinterpret_cast<LiteralBytes *>(&eleven));
     PUSH(thenBB, _bx->Const(LOC, thenBB, lv11));
     _vmx->Goto(LOC, thenBB, mergeBB);
 
     STACKVALUECTYPE ninetynine=99;
-    Literal *lv99 = _valueType->literal(LOC, comp, reinterpret_cast<LiteralBytes *>(&ninetynine));
+    Literal *lv99 = _valueType->literal(LOC, ir, reinterpret_cast<LiteralBytes *>(&ninetynine));
     PUSH(elseBB, _bx->Const(LOC, elseBB, lv99));
     _vmx->Goto(LOC, elseBB, mergeBB);
 
@@ -556,7 +556,7 @@ OperandStackTestFunction::testStack(VM::BytecodeBuilder *b, Compilation *comp, b
     _fx->Call(LOC, mergeBB, _verifyResult12, TOP(mergeBB));
  
     STACKVALUECTYPE amountToAdd = 10;
-    Literal *lvAmount = _valueType->literal(LOC, comp, reinterpret_cast<LiteralBytes *>(&amountToAdd));
+    Literal *lvAmount = _valueType->literal(LOC, ir, reinterpret_cast<LiteralBytes *>(&amountToAdd));
 
     // Reload test. Call a routine that modifies stack elements passed to it. 
     // Test by reloading and test the popped values
@@ -569,19 +569,19 @@ OperandStackTestFunction::testStack(VM::BytecodeBuilder *b, Compilation *comp, b
 
     Value *modifiedStackElement = POP(mergeBB);
     STACKVALUECTYPE amountPlus3 = 3+amountToAdd;
-    Literal *lvAmountPlus3 = _valueType->literal(LOC, comp, reinterpret_cast<LiteralBytes *>(&amountPlus3));
+    Literal *lvAmountPlus3 = _valueType->literal(LOC, ir, reinterpret_cast<LiteralBytes *>(&amountPlus3));
     Value *expected =  _bx->Const(LOC, mergeBB, lvAmountPlus3); 
     _fx->Call(LOC, mergeBB, _verifyValuesEqual, modifiedStackElement, expected);  
 
     modifiedStackElement = POP(mergeBB);
     STACKVALUECTYPE amountPlus2 = 2+amountToAdd;
-    Literal *lvAmountPlus2 = _valueType->literal(LOC, comp, reinterpret_cast<LiteralBytes *>(&amountPlus2));
+    Literal *lvAmountPlus2 = _valueType->literal(LOC, ir, reinterpret_cast<LiteralBytes *>(&amountPlus2));
     expected = _bx->Const(LOC, mergeBB, lvAmountPlus2);
     _fx->Call(LOC, mergeBB, _verifyValuesEqual, modifiedStackElement, expected);  
 
     modifiedStackElement = POP(mergeBB);
     STACKVALUECTYPE amountPlus1 = 1+amountToAdd;
-    Literal *lvAmountPlus1 = _valueType->literal(LOC, comp, reinterpret_cast<LiteralBytes *>(&amountPlus1));
+    Literal *lvAmountPlus1 = _valueType->literal(LOC, ir, reinterpret_cast<LiteralBytes *>(&amountPlus1));
     expected =  _bx->Const(LOC, mergeBB, lvAmountPlus1);
     _fx->Call(LOC, mergeBB, _verifyValuesEqual, modifiedStackElement, expected);  
 
@@ -596,7 +596,7 @@ bool
 OperandStackTestFunction::buildIL(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
     const Base::PointerType *pElementType = _bx->PointerTo(LOC, comp, _bx->PointerTo(LOC, comp, _bx->STACKVALUETYPE));
 
-    Builder *entry = comp->scope<Func::FunctionScope>()->entryPoint<BuilderEntry>()->builder();
+    Builder *entry = scope->entryPoint<BuilderEntry>()->builder();
     _fx->Call(LOC, entry, _createStack);
 
     Value *realStackTopAddress = _bx->ConstPointer(LOC, entry, pElementType, &_realStackTop);
@@ -606,11 +606,11 @@ OperandStackTestFunction::buildIL(LOCATION, Func::FunctionCompilation *comp, Fun
 
     TestState *vmState = new (mem) TestState(MEM_LOC(mem), _vmx, stack, stackTop);
 
-    VM::BytecodeBuilder *bb = _vmx->OrphanBytecodeBuilder(comp, 0, 1, NULL, String("entry"));
+    VM::BytecodeBuilder *bb = _vmx->OrphanBytecodeBuilder(comp->ir(), 0, 1, scope, String("entry"));
     bb->setVMState(vmState); // ownership passed to bb so we should never delete vmState ourselves
     _bx->Goto(LOC, entry, bb);
 
-    testStack(bb, comp, true);
+    testStack(bb, comp->ir(), true);
 
     return true;
 }
@@ -642,7 +642,6 @@ OperandStackTestUsingStructFunction::buildContext(LOCATION, Func::FunctionCompil
 bool
 OperandStackTestUsingStructFunction::buildIL(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
     Builder *entry = scope->entryPoint<BuilderEntry>()->builder();
-
     _fx->Call(LOC, entry, _createStack);
 
     Allocator *mem = comp->mem();
@@ -650,11 +649,11 @@ OperandStackTestUsingStructFunction::buildIL(LOCATION, Func::FunctionCompilation
     VM::VirtualMachineOperandStack *stack = new (mem) VM::VirtualMachineOperandStack(MEM_LOC(mem), _vmx, comp, 1, stackTop, _bx->STACKVALUETYPE);
 
     TestState *vmState = new (mem) TestState(MEM_LOC(mem), _vmx, stack, stackTop);
-    VM::BytecodeBuilder *bb = _vmx->OrphanBytecodeBuilder(comp, 0, 1, NULL, String("entry"));
+    VM::BytecodeBuilder *bb = _vmx->OrphanBytecodeBuilder(comp->ir(), 0, 1, scope, String("entry"));
     bb->setVMState(vmState); // ownership transferred to bb so should never delete it ourselves
     _bx->Goto(LOC, entry, bb);
 
-    testStack(bb, comp, false);
+    testStack(bb, comp->ir(), false);
 
     return true;
 }

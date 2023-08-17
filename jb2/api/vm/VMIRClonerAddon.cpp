@@ -19,42 +19,45 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef BASECOMPILATION_INCL
-#define BASECOMPILATION_INCL
-
-#include <map>
-#include "JBCore.hpp"
+#include "vm/VirtualMachineState.hpp"
+#include "vm/VMIRClonerAddon.hpp"
 
 namespace OMR {
 namespace JitBuilder {
-namespace Base {
+namespace VM {
 
-class PointerType;
-class StructType;
+INIT_JBALLOC_REUSECAT(VMIRClonerAddon, IRCloner)
+SUBCLASS_KINDSERVICE_IMPL(VMIRClonerAddon,"VMIRClonerAddon",Addon,Extensible)
 
-class BaseCompilationAddon : public Addon {
-    JBALLOC_NO_DESTRUCTOR_(BaseCompilationAddon)
+VMIRClonerAddon::VMIRClonerAddon(Allocator *a, VMExtension *ext, IRCloner *root)
+    : Addon(a, ext, root, KIND(Extensible))
+    , _clonedStates(NULL, a) {
 
-    friend class BaseExtension;
+}
 
-public:
-    const PointerType * pointerTypeFromBaseType(const Type * baseType);
-    void registerPointerType(const PointerType * pType);
-    const StructType * structTypeFromName(String name);
-    void registerStructType(const StructType * sType);
+VMIRClonerAddon::~VMIRClonerAddon() {
+    for (int i=0;i < _clonedStates.length(); i++) {
+        VirtualMachineState *s = _clonedStates[i];
+        delete s;
+    }
+}
 
-protected:
-    BaseCompilationAddon(Allocator *a, Extension *ext, Compilation *root);
+VirtualMachineState *
+VMIRClonerAddon::clonedState(VirtualMachineState *s) {
+    VirtualMachineStateID id=s->id();
+    VirtualMachineState *clonedState = NULL;
+    if (id < _clonedStates.length())
+        clonedState = _clonedStates[id];
 
-    std::map<const Type *,const PointerType *> _pointerTypeFromBaseType;
-    std::map<String,const StructType *> _structTypeFromName;
+    if (clonedState == NULL) {
+        IRCloner *cloner = root()->refine<IRCloner>();
+        clonedState = s->clone(cloner->allocator(), cloner);
+        _clonedStates.assign(id, clonedState);
+    }
 
-    SUBCLASS_KINDSERVICE_DECL(Extensible, BaseCompilationAddon);
-};
+    return clonedState;
+}
 
-} // namespace Base
+} // namespace VM
 } // namespace JitBuilder
 } // namespace OMR
-
-#endif // !defined(BASECOMPILATION_INCL)
-
