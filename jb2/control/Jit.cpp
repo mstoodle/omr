@@ -24,6 +24,7 @@
 #include "codegen/CodeGenerator.hpp"
 #include "compile/CompilationTypes.hpp"
 #include "compile/Method.hpp"
+#include "control/CompilationController.hpp"
 #include "control/CompileMethod.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/FrontEnd.hpp"
