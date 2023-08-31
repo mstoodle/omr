@@ -47,7 +47,7 @@ set(GTEST_DIR $(omr_SOURCE_DIR)/third_party/gtest-1.8.0)
 
 	add_test(
 		NAME JB2TestSemVer
-		COMMAND valgrind --error-exitcode=1 --leak-check=full --show-leak-kinds=all $<TARGET_FILE:testsemver>
+		COMMAND ${VALGRIND} $<TARGET_FILE:testsemver>
 	)
 
 	## testcompiler
@@ -67,7 +67,7 @@ set(GTEST_DIR $(omr_SOURCE_DIR)/third_party/gtest-1.8.0)
 
 	add_test(
 		NAME JB2TestCompiler
-		COMMAND valgrind --error-exitcode=1 --leak-check=full --show-leak-kinds=all $<TARGET_FILE:testcompiler>
+		COMMAND ${VALGRIND} $<TARGET_FILE:testcompiler>
 	)
 
 	## testlist
@@ -87,7 +87,7 @@ set(GTEST_DIR $(omr_SOURCE_DIR)/third_party/gtest-1.8.0)
 
 	add_test(
 		NAME JB2TestList
-		COMMAND valgrind --error-exitcode=1 --leak-check=full --show-leak-kinds=all $<TARGET_FILE:testlist>
+		COMMAND ${VALGRIND} $<TARGET_FILE:testlist>
 	)
 
 	## testbv
@@ -107,7 +107,7 @@ set(GTEST_DIR $(omr_SOURCE_DIR)/third_party/gtest-1.8.0)
 
 	add_test(
 		NAME JB2TestBitVector
-		COMMAND valgrind --error-exitcode=1 --leak-check=full --show-leak-kinds=all $<TARGET_FILE:testbv>
+		COMMAND ${VALGRIND} $<TARGET_FILE:testbv>
 	)
 
 #endif()

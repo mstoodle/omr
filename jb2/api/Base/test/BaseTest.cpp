@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2023 IBM Corp. and others
+ * Copyright IBM Corp. and others 2022
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,7 +30,7 @@
 using namespace OMR::JitBuilder;
 
 int main(int argc, char** argv) {
-    void *handle = dlopen("libjb2core.so", RTLD_LAZY);
+    void *handle = dlopen("libjb2core.dylib", RTLD_LAZY);
     if (!handle) {
         fputs(dlerror(), stderr);
         return -1;
@@ -181,7 +181,7 @@ protected:
     CONSTFUNC(type, seq, v) \
     TEST(BaseExtension, createConst ## type ## Function ## seq) { \
         typedef ctype (FuncProto)(); \
-        COMPILE_FUNC(fl,ln,fn,Const ## type ## Function ## seq, FuncProto, f, false); \
+        COMPILE_FUNC(fl,ln,fn,Const ## type ## Function ## seq, FuncProto, f, true); \
         EXPECT_EQ(f(), v) << "Compiled f() returns " << v; \
     }
 

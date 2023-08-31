@@ -109,7 +109,7 @@ public: \
 public: \
     static const KINDTYPE(base) get ## base ## ClassKind(); \
 protected: \
-    static KINDTYPE(base) name ## ## base ## Kind; \
+    static KINDTYPE(base) name ## base ## Kind; \
     static bool kindRegistered
 
 // Use this line in the base class to add support for the new kind service category of the given name
