@@ -470,6 +470,7 @@ OMR::TypeDictionary::MemoryManager::~MemoryManager()
    ::operator delete(_segmentProvider, TR::Compiler->persistentAllocator());
    }
 
+#if 0
 // Copy constructor is private but it must be defined
 // to avoid undefined behavior, since we can't use `delete`
 OMR::TypeDictionary::TypeDictionary(const TypeDictionary &src) :
@@ -478,6 +479,7 @@ OMR::TypeDictionary::TypeDictionary(const TypeDictionary &src) :
    _structsByName(str_comparator, trMemory()->heapMemoryRegion()),
    _unionsByName(str_comparator, trMemory()->heapMemoryRegion())
    {}
+#endif
 
 OMR::TypeDictionary::TypeDictionary() :
    _client(0),
