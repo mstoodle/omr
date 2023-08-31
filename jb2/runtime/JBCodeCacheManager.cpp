@@ -30,6 +30,10 @@
 #include "runtime/CodeCacheMemorySegment.hpp"
 #include "env/FrontEnd.hpp"
 
+#if defined(OSX) && defined(AARCH64)
+#include <pthread.h> // for pthread_jit_write_protect_np
+#endif
+
 
 // Allocate and initialize a new code cache
 // If reservingCompThreadID >= -1, then the new code codecache will be reserved
@@ -94,13 +98,28 @@ JitBuilder::CodeCacheManager::allocateCodeCacheSegment(size_t segmentSize,
    auto memorySlab = reinterpret_cast<uint8_t *>(
          __malloc31(codeCacheSizeToAllocate));
 #else
+
+   int protectionFlags=PROT_READ | PROT_WRITE | PROT_EXEC;
+   int flags= MAP_ANONYMOUS | MAP_PRIVATE;
+
+#if defined(OSX) && defined(AARCH64)
+    pthread_jit_write_protect_np(0);
+    flags |= MAP_JIT;
+    protectionFlags &= ~PROT_EXEC;
+#endif
+
    auto memorySlab = reinterpret_cast<uint8_t *>(
          mmap(NULL,
               codeCacheSizeToAllocate,
-              PROT_READ | PROT_WRITE | PROT_EXEC,
-              MAP_ANONYMOUS | MAP_PRIVATE,
+              protectionFlags,
+              flags,
               -1,
               0));
+
+#if defined(OSX) && defined(AARCH64)
+      pthread_jit_write_protect_np(1);
+#endif
+
    // keep the impact of this fix localized
    #if defined(NO_MAP_ANONYMOUS)
       #undef MAP_ANONYMOUS
