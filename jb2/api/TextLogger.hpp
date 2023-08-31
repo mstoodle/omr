@@ -71,7 +71,7 @@ public:
         log._os << v;
         return log;
     }
-    #if 0
+    #if 1
     friend TextLogger &operator<<(TextLogger &log, const size_t v) {
         log._os << v;
         return log;

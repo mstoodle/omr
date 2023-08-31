@@ -19,6 +19,8 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#include <stdio.h>
+
 #include <assert.h>
 #include <dlfcn.h>
 #include "AllocatorTracker.hpp"
@@ -206,7 +208,7 @@ Compiler::internalLoadExtension(LOCATION, const SemanticVersion *version, String
         return NULL;
     }
 
-    String soname = String("lib") + name + String(".so");
+    String soname = String("lib") + name + String(".dylib");
     void *handle = dlopen(soname.c_str(), RTLD_LAZY);
     if (!handle) {
         extensionCouldNotLoad(LOC, soname, dlerror());
