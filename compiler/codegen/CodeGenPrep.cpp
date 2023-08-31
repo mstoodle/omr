@@ -820,15 +820,15 @@ OMR::CodeGenerator::insertDebugCounters()
             switch (type)
                {
                case 4:
-                  sprintf(typeName, "boolean");
+                  snprintf(typeName, 30, "boolean");
                   break;
                case 8:
-                  sprintf(typeName, "byte");
+                  snprintf(typeName, 30, "byte");
                case 5:
-                  sprintf(typeName, "char");
+                  snprintf(typeName, 30, "char");
                   break;
                default:
-                  sprintf(typeName, "non-char");
+                  snprintf(typeName, 30, "non-char");
                   break;
                }
 
