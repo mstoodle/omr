@@ -180,7 +180,7 @@ protected:
     }
     OperationR0S1(Allocator *a, const OperationR0S1 *source, IRCloner *cloner)
         : Operation(a, source, cloner)
-        , _symbol(cloner->clonedSymbol(_symbol)) {
+        , _symbol(cloner->clonedSymbol(source->_symbol)) {
 
     }
 

@@ -67,18 +67,7 @@ public:
     Extension *ext() const { return _ext; }
 
     template<class T>
-    T *addon() const {
-        if (_addons != NULL) {
-            // could be turned into a vft-like thing with an ExtensibleID but trades memory for speed
-            // just use a List for now assuming most objects will have few addons
-            for (auto it = _addons->iterator();it.hasItem();it++) {
-                Extensible *e = it.item();
-                if (e->isExactKind<T>())
-                    return e->refine<T>();
-            }
-        }
-        return NULL;
-    }
+    T *addon() const;
 
     void attach(Addon *addon);
 
@@ -97,3 +86,29 @@ private:
 
 #endif // !defined(EXTENSIBLE_INCL)
 
+#ifndef EXTENSIBLEADDON_INCL
+#define EXTENSIBLEADDON_INCL
+
+#include "Addon.hpp"
+
+namespace OMR {
+namespace JitBuilder {
+
+template<class T>
+T *Extensible::addon() const {
+    if (_addons != NULL) {
+        // could be turned into a vft-like thing with an ExtensibleID but trades memory for speed
+        // just use a List for now assuming most objects will have few addons
+        for (auto it = _addons->iterator();it.hasItem();it++) {
+            Addon *a = it.item();
+            if (a->isExactKind<T>())
+                return a->refine<T>();
+        }
+    }
+    return NULL;
+}
+
+} // namespace JitBuilder
+} // namespace OMR
+
+#endif // !defined(EXTENSIBLEADDON_INCL)

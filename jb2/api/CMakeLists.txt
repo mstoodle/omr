@@ -33,9 +33,12 @@ omr_assert(
 #)
 
 add_compile_options(
-	-Wplacement-new=0 
+	-Wplacement-new=0
 )
 
+add_link_options(
+	-undefined dynamic_lookup
+)
 
 set(JB2_CORE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/)
 set(JB2_BASE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Base/)
@@ -94,6 +97,9 @@ add_library(jb2core SHARED
     Value.cpp
     Visitor.cpp
 )
+
+#set(VALGRIND "valgrind --error-exitcode=1 --leak-check=full --show-leak-kinds=all ")
+set(VALGRIND "")
 
 add_subdirectory(test)
 

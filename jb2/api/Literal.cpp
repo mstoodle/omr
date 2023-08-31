@@ -41,7 +41,7 @@ Literal::Literal(MEM_LOCATION(a), IR *ir, const Type *type, const LiteralBytes *
     , _type(type) {
 
     // privatize the literal value
-    size_t numBytes = (type->size() / 8) + ((type->size() & 7 > 0) ? 1 : 0);
+    size_t numBytes = (type->size() / 8) + (((type->size() & 7) > 0) ? 1 : 0);
     LiteralBytes *newBytes = reinterpret_cast<LiteralBytes *>(a->allocate(numBytes, NoAllocationCategory));
     memcpy(newBytes, v, numBytes);
     _pValue = newBytes;
@@ -55,7 +55,7 @@ Literal::Literal(MEM_LOCATION(a), LiteralDictionary *litDict, const Type *type, 
     , _type(type) {
 
     // privatize the literal value
-    size_t numBytes = (type->size() / 8) + ((type->size() & 7 > 0) ? 1 : 0);
+    size_t numBytes = (type->size() / 8) + (((type->size() & 7) > 0) ? 1 : 0);
     LiteralBytes *newBytes = reinterpret_cast<LiteralBytes *>(a->allocate(numBytes, NoAllocationCategory));
     memcpy(newBytes, v, numBytes);
     _pValue = newBytes;
@@ -69,7 +69,7 @@ Literal::Literal(Allocator *a, const Literal *source, IRCloner *cloner)
     , _litDict(cloner->clonedLiteralDictionary(source->_litDict))
     , _type(cloner->clonedType(source->_type)) {
 
-    size_t numBytes = (_type->size() / 8) + ((_type->size() & 7 > 0) ? 1 : 0);
+    size_t numBytes = (_type->size() / 8) + (((_type->size() & 7) > 0) ? 1 : 0);
     LiteralBytes *newBytes = reinterpret_cast<LiteralBytes *>(a->allocate(numBytes, NoAllocationCategory));
     memcpy(newBytes, source->_pValue, numBytes);
     _pValue = newBytes;
