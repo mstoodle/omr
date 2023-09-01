@@ -83,6 +83,7 @@ JBCodeGenerator::perform(Compilation *comp) {
         TextLogger &logger = *comp->logger();
         TextWriter *wrt = new (comp->mem()) TextWriter(comp->mem(), comp->compiler(), logger);
         wrt->perform(comp);
+        delete wrt;
     }
 
     void *entryPoint=NULL;
