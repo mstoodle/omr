@@ -50,7 +50,7 @@ set(GTEST_DIR $(omr_SOURCE_DIR)/third_party/gtest-1.8.0)
 	#omr_add_test( NAME JitBuilderTest COMMAND $<TARGET_FILE:jitbuildertest> --gtest_output=xml:${CMAKE_CURRENT_BINARY_DIR}/jitbuildertest-results.xml)
 	add_test(
 		NAME JB2TestVMRegister
-		COMMAND ${VALGRIND} $<TARGET_FILE:testregister>
+		COMMAND ${VALGRIND} ${VALGRIND_A1} ${VALGRIND_A2} ${VALGRIND_A3} $<TARGET_FILE:testregister>
 
 	)
 
@@ -77,6 +77,6 @@ set(GTEST_DIR $(omr_SOURCE_DIR)/third_party/gtest-1.8.0)
 	#omr_add_test( NAME JitBuilderTest COMMAND $<TARGET_FILE:jitbuildertest> --gtest_output=xml:${CMAKE_CURRENT_BINARY_DIR}/jitbuildertest-results.xml)
 	add_test(
 		NAME JB2TestVMOperandStack
-		COMMAND ${VALGRIND} $<TARGET_FILE:testoperandstack>
+		COMMAND ${VALGRIND} ${VALGRIND_A1} ${VALGRIND_A2} ${VALGRIND_A3} $<TARGET_FILE:testoperandstack>
 	)
 #endif()
