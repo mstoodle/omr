@@ -98,36 +98,31 @@ JitBuilder::CodeCacheManager::allocateCodeCacheSegment(size_t segmentSize,
    auto memorySlab = reinterpret_cast<uint8_t *>(
          __malloc31(codeCacheSizeToAllocate));
 #else
-
-   int protectionFlags=PROT_READ | PROT_WRITE | PROT_EXEC;
-   int flags= MAP_ANONYMOUS | MAP_PRIVATE;
-
-#if defined(OSX) && defined(AARCH64)
-    pthread_jit_write_protect_np(0);
-    flags |= MAP_JIT;
-    protectionFlags &= ~PROT_EXEC;
-#endif
-
    auto memorySlab = reinterpret_cast<uint8_t *>(
          mmap(NULL,
               codeCacheSizeToAllocate,
-              protectionFlags,
-              flags,
+              PROT_READ | PROT_WRITE | PROT_EXEC,
+#if defined(OMR_ARCH_AARCH64) && defined(OSX)
+              MAP_ANONYMOUS | MAP_PRIVATE | MAP_JIT,
+#else
+              MAP_ANONYMOUS | MAP_PRIVATE,
+#endif /* OMR_ARCH_AARCH64 && OSX */
               -1,
               0));
-
-#if defined(OSX) && defined(AARCH64)
-      pthread_jit_write_protect_np(1);
-#endif
-
    // keep the impact of this fix localized
    #if defined(NO_MAP_ANONYMOUS)
       #undef MAP_ANONYMOUS
       #undef NO_MAP_ANONYMOUS
-   #endif
-#endif /* OMR_OS_WINDOWS */
+   #endif /* defined(NO_MAP_ANONYMOUS) */
+#endif /* defined(OMR_OS_WINDOWS) */
+
+   omrthread_jit_write_protect_disable();
+
    TR::CodeCacheMemorySegment *memSegment = (TR::CodeCacheMemorySegment *) ((size_t)memorySlab + codeCacheSizeToAllocate - sizeof(TR::CodeCacheMemorySegment));
    new (memSegment) TR::CodeCacheMemorySegment(memorySlab, reinterpret_cast<uint8_t *>(memSegment));
+
+   omrthread_jit_write_protect_enable();
+
    return memSegment;
    }
 
@@ -138,6 +133,8 @@ JitBuilder::CodeCacheManager::freeCodeCacheSegment(TR::CodeCacheMemorySegment * 
    VirtualFree(memSegment->_base, 0, MEM_RELEASE); // second arg must be zero when calling with MEM_RELEASE
 #elif defined(J9ZOS390)
    free(memSegment->_base);
+//#elif defined(OMR_ARCH_AARCH64) && defined(OSX)
+//   munmap(memSegment->_base, memSegment->_top - memSegment->_base);
 #else
    munmap(memSegment->_base, memSegment->_top - memSegment->_base + sizeof(TR::CodeCacheMemorySegment));
 #endif
