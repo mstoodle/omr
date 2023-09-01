@@ -34,7 +34,7 @@ add_library(jb2complex SHARED
 )
 
 target_include_directories(jb2complex PRIVATE
-       ${JB2_JBCORE_DIR}
+       ${JB2_CORE_DIR}
 )
 
 add_subdirectory(test)
