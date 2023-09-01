@@ -28,6 +28,7 @@
 #include <stdint.h>
 #include <errno.h>
 
+#include "omrcfg.h"
 #include "RegisterTest.hpp"
 
 using std::cout;
@@ -38,10 +39,16 @@ using std::cerr;
 
 #define DO_LOGGING false
 
+#if defined(OSX)
+    #define CORELIB "libjb2core.dylib"
+#else
+    #define CORELIB "libjb2core.so"
+#endif
+
 int
 main(int argc, char *argv[]) {
-    cout << "Step 0: load jb2core.so\n";
-    void *handle = dlopen("libjb2core.so", RTLD_LAZY);
+    cout << "Step 0: load " << CORELIB << "\n";
+    void *handle = dlopen(CORELIB, RTLD_LAZY);
     if (!handle) {
         fputs(dlerror(), stderr);
         return -1;

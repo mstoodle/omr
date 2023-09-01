@@ -126,6 +126,7 @@ public:
     }
 
     uint8_t platformWordSize() const { return 64; } // should test _targetPlatform!
+    const char *platformLibrarySuffix() const;
 
     bool hasErrorCondition() const { return _errorCondition != NULL; }
     CompilationException *errorCondition() const { return _errorCondition; } 
@@ -212,8 +213,9 @@ protected:
     SymbolDictionaryID _nextSymbolDictionaryID;
     TypeDictionaryID _nextTypeDictionaryID;
 
-    Platform *_target;
-    Platform *_compiler;
+    Platform *_targetPlatform;
+    Platform *_compilerPlatform;
+    Platform *_clientPlatform;
 
     // must come AFTER _nextTypeDictionaryID for proper initialization
     LiteralDictionary *_litdict;
