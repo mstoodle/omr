@@ -43,7 +43,7 @@ DebuggerFunction::DebuggerFunction(LOCATION, Debugger *dbgr, Base::FunctionCompi
 }
 
 bool
-DebuggerFunction::initContext(LOCATION, Base::FunctionCompilation *comp, Base::FunctionContext *fc) {
+DebuggerFunction::buildContext(LOCATION, Base::FunctionCompilation *comp, Base::FunctionContext *fc) {
     DebugDictionary *dict = dbgDict();
 
     _DebugValue = dict->_DebugValue;

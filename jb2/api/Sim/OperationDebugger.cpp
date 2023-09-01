@@ -45,8 +45,8 @@ OperationDebugger::OperationDebugger(LOCATION, Debugger *dbgr, Base::FunctionCom
 }
 
 bool
-OperationDebugger::initContext(LOCATION, Base::FunctionCompilation *comp, Base::FunctionContext *fc) {
-    this->DebuggerFunction::initContext(PASSLOC, comp, fc);
+OperationDebugger::buildContext(LOCATION, Base::FunctionCompilation *comp, Base::FunctionContext *fc) {
+    this->DebuggerFunction::buildContext(PASSLOC, comp, fc);
     _dbgrSym = fc->DefineLocal(_dbgrName, dbgDict()->_pDebugValue);
     _localsSym = fc->DefineLocal(_localsName, dbgDict()->_pDebugValue);
     _valuesSym = fc->DefineLocal(_valuesName, dbgDict()->_pDebugValue);
