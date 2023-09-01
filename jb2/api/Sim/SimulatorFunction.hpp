@@ -45,7 +45,7 @@ protected:
 
     void initialize(DebugDictionary *types);
 
-    virtual bool initContext(LOCATION, Base::FunctionCompilation *comp, Base::FunctionContext *fc);
+    virtual bool buildContext(LOCATION, Base::FunctionCompilation *comp, Base::FunctionContext *fc);
 
     void storeValue(LOCATION, Base::FunctionContext *fc, Builder *b, Symbol *local, Value *value);
     void storeValue(LOCATION, Base::FunctionContext *fc, Builder *b, Value *debugvalue, Value *value);
