@@ -80,10 +80,12 @@ public:
         return _string.c_str();
     }
 
+#if defined(OSX)
     static String to_string(size_t v) {
         String str(std::to_string(v).c_str());
         return str;
     }
+#endif
     static String to_string(int64_t v) {
         String str(std::to_string(v).c_str());
         return str;

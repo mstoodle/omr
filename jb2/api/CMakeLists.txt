@@ -34,12 +34,14 @@ omr_assert(
 
 add_compile_options(
 	-Wplacement-new=0
-    -I${CMAKE_BINARY_DIR}
+	-I${CMAKE_BINARY_DIR}
 )
 
-add_link_options(
-	-undefined dynamic_lookup
-)
+if (APPLE)
+	add_link_options(
+		-undefined dynamic_lookup
+	)
+endif (APPLE)
 
 set(JB2_CORE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/)
 set(JB2_BASE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Base/)
