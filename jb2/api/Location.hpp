@@ -42,11 +42,11 @@ public:
     DYNAMIC_ALLOC_ONLY(Location, IR *ir, String fileName, String lineNumber);
     DYNAMIC_ALLOC_ONLY(Location, IR *ir, String fileName, String lineNumber, int32_t bcIndex);
 
-    virtual size_t size()          { return sizeof(Location); }
-    LocationID id() const          { return _id; }
-    ByteCodeIndex bcIndex() const  { return _bcIndex; }
-    String fileName() const        { return _fileName; }
-    String lineNumber() const      { return _lineNumber; }
+    virtual size_t size()             { return sizeof(Location); }
+    LocationID id() const             { return _id; }
+    ByteCodeIndex bcIndex() const     { return _bcIndex; }
+    const String & fileName() const   { return _fileName; }
+    const String & lineNumber() const { return _lineNumber; }
 
 protected:
     Location(Allocator *a, const Location *source, IRCloner *cloner);
@@ -55,8 +55,8 @@ protected:
 
     LocationID    _id;
     IR * _ir;
-    String   _fileName;
-    String   _lineNumber;
+    String _fileName;
+    String _lineNumber;
     ByteCodeIndex _bcIndex;
 };
 

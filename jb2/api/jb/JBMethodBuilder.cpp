@@ -46,8 +46,8 @@ JBMethodBuilder::JBMethodBuilder(Compilation *comp)
 
 JBMethodBuilder::~JBMethodBuilder() {
     for (auto it=_strings.begin();it != _strings.end(); it++) {
-        char *s = it->second;
-        delete[] s;
+        const char *s = it->second;
+        _comp->mem()->deallocate(const_cast<char *>(s));
     }
 }
 
@@ -160,13 +160,13 @@ JBMethodBuilder::registerStruct(const Type * type) {
 }
 
 void
-JBMethodBuilder::registerField(String structName, String fieldName, const Type *type, size_t offset) {
+JBMethodBuilder::registerField(const String & structName, const String & fieldName, const Type *type, size_t offset) {
     TR::TypeDictionary *dict = _mb->typeDictionary();
     dict->DefineField(findOrCreateString(structName), findOrCreateString(fieldName), map(type), offset/8); // JB uses byte offsets
 }
 
 void
-JBMethodBuilder::closeStruct(String structName) {
+JBMethodBuilder::closeStruct(const String & structName) {
     TR::TypeDictionary *dict = _mb->typeDictionary();
     dict->CloseStruct(findOrCreateString(structName));
 }
@@ -204,7 +204,7 @@ JBMethodBuilder::createBuilder(const Builder * b) {
 }
 
 void
-JBMethodBuilder::createBytecodeBuilder(const Builder * bcb, int32_t bcIndex, String name) {
+JBMethodBuilder::createBytecodeBuilder(const Builder * bcb, int32_t bcIndex, const String & name) {
     if (_bytecodeBuilders.find(bcb->id()) != _bytecodeBuilders.end())
         return;
 
@@ -241,17 +241,17 @@ JBMethodBuilder::addSuccessorBuilder(const Builder *bcb, const Builder * sbcb) {
 }
 
 void
-JBMethodBuilder::FunctionName(String name) {
+JBMethodBuilder::FunctionName(const String & name) {
     _mb->DefineName(findOrCreateString(name));
 }
 
 void
-JBMethodBuilder::FunctionFile(String file) {
+JBMethodBuilder::FunctionFile(const String & file) {
     _mb->DefineFile(findOrCreateString(file));
 }
 
 void
-JBMethodBuilder::FunctionLine(String line) {
+JBMethodBuilder::FunctionLine(const String & line) {
     _mb->DefineLine(findOrCreateString(line));
 }
 
@@ -261,19 +261,19 @@ JBMethodBuilder::FunctionReturnType(const Type *type) {
 }
 
 void
-JBMethodBuilder::Parameter(String name, const Type * type) {
+JBMethodBuilder::Parameter(const String & name, const Type * type) {
     _mb->DefineParameter(findOrCreateString(name), map(type));
 }
 
 void
-JBMethodBuilder::Local(String name, const Type * type) {
+JBMethodBuilder::Local(const String & name, const Type * type) {
     _mb->DefineLocal(findOrCreateString(name), map(type));
 }
 
 void
-JBMethodBuilder::DefineFunction(String name,
-                                String fileName,
-                                String lineNumber,
+JBMethodBuilder::DefineFunction(const String & name,
+                                const String & fileName,
+                                const String & lineNumber,
                                 void *entryPoint,
                                 const Type * returnType,
                                 int32_t numParms,
@@ -386,7 +386,7 @@ JBMethodBuilder::AppendBuilder(Location *loc, Builder *b, Builder *toAppend) {
 }
 
 void
-JBMethodBuilder::Call(Location *loc, Builder *b, Value *result, String targetName, size_t numArgs, ValueIterator argIt) {
+JBMethodBuilder::Call(Location *loc, Builder *b, Value *result, const String & targetName, size_t numArgs, ValueIterator argIt) {
     TR::IlBuilder *omr_b = map(b);
     omr_b->setBCIndex(loc->bcIndex())->SetCurrentIlGenerator();
     const char *function = findOrCreateString(targetName);
@@ -398,7 +398,7 @@ JBMethodBuilder::Call(Location *loc, Builder *b, Value *result, String targetNam
 }
 
 void
-JBMethodBuilder::Call(Location *loc, Builder *b, String targetName, size_t numArgs, ValueIterator argIt) {
+JBMethodBuilder::Call(Location *loc, Builder *b, const String & targetName, size_t numArgs, ValueIterator argIt) {
     TR::IlBuilder *omr_b = map(b);
     omr_b->setBCIndex(loc->bcIndex())->SetCurrentIlGenerator();
     const char *function = findOrCreateString(targetName);
@@ -642,14 +642,14 @@ JBMethodBuilder::StoreAt(Location *loc, Builder *b, Value *ptrValue, Value *valu
 }
 
 void
-JBMethodBuilder::LoadIndirect(Location *loc, Builder *b, Value *result, String structName, String fieldName, Value *pStruct) {
+JBMethodBuilder::LoadIndirect(Location *loc, Builder *b, Value *result, const String & structName, const String & fieldName, Value *pStruct) {
     TR::IlBuilder *omr_b = map(b);
     omr_b->setBCIndex(loc->bcIndex())->SetCurrentIlGenerator();
     registerValue(result, omr_b->LoadIndirect(findOrCreateString(structName), findOrCreateString(fieldName), map(pStruct)));
 }
 
 void
-JBMethodBuilder::StoreIndirect(Location *loc, Builder *b, String structName, String fieldName, Value *pStruct, Value *value) {
+JBMethodBuilder::StoreIndirect(Location *loc, Builder *b, const String & structName, const String & fieldName, Value *pStruct, Value *value) {
     TR::IlBuilder *omr_b = map(b);
     omr_b->setBCIndex(loc->bcIndex())->SetCurrentIlGenerator();
     omr_b->StoreIndirect(findOrCreateString(structName), findOrCreateString(fieldName), map(pStruct), map(value));
@@ -690,14 +690,28 @@ JBMethodBuilder::IndexAt(Location *loc, Builder *b, Value *result, Value *base, 
 // internal functions
 //
 
-char *
-JBMethodBuilder::findOrCreateString(String str) {
-    if (_strings.find(str) != _strings.end())
-        return _strings[str];
+// Very important that a reference to the String from the IR is passed all the way in here
+// Too easy to get a stack copy that allocates a C string, then frees it, then another
+// String can allocate that memory to store a different C string and then the mapping is
+// messed up. Should really do the strcmp below under a Config "pedantic" option...
+const char *
+JBMethodBuilder::findOrCreateString(const String & str) {
+    const char *cstr = str.c_str();
+    //std::cout << "Looking for " << (intptr_t) cstr << " " << cstr << "\n";
+    if (_strings.find(cstr) != _strings.end()) {
+        const char *s = _strings[cstr];
+        //std::cout << "    Found " << s << "\n";
+        assert(strncmp(cstr, s, strlen(cstr)) == 0);
+        return s;
+    }
 
-    char *s = new char[str.length()+1];
-    strcpy(s, str.c_str());
-    _strings[str] = s;
+    if (str.length() == 0)
+        return "";
+
+    char *s = _comp->mem()->allocate<char>(str.length()+1);
+    strcpy(s, cstr);
+    _strings[cstr] = s;
+    //std::cout << "    Allocated " << s << " for " << str.c_str() << "\n";
     return s;
 }
 

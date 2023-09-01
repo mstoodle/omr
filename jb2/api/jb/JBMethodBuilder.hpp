@@ -56,7 +56,7 @@ public:
     bool typeRegistered(const Type *t);
 
     void createBuilder(const Builder * b);
-    void createBytecodeBuilder(const Builder * b, int32_t bcIndex, String name);
+    void createBytecodeBuilder(const Builder * b, int32_t bcIndex, const String & name);
     void addFallThroughBuilder(const Builder * b, const Builder * ftb);
     void addSuccessorBuilder(const Builder * b, const Builder * sb);
 
@@ -72,18 +72,18 @@ public:
     void registerBytecodeBuilder(const Builder * bcb, TR::BytecodeBuilder *omr_bcb = NULL);
     void registerPointer(const Type *ptrType, const Type *baseType);
     void registerStruct(const Type *type);
-    void registerField(String structName, String fieldName, const Type *type, size_t offset);
-    void closeStruct(String structName);
+    void registerField(const String & structName, const String & fieldName, const Type *type, size_t offset);
+    void closeStruct(const String & structName);
 
-    void FunctionName(String name);
-    void FunctionFile(String file);
-    void FunctionLine(String line);
+    void FunctionName(const String & name);
+    void FunctionFile(const String & file);
+    void FunctionLine(const String & line);
     void FunctionReturnType(const Type *type);
-    void Parameter(String name, const Type * type);
-    void Local(String name, const Type * type);
-    void DefineFunction(String name,
-                        String fileName,
-                        String lineNumber,
+    void Parameter(const String & name, const Type * type);
+    void Local(const String & name, const Type * type);
+    void DefineFunction(const String & name,
+                        const String & fileName,
+                        const String & lineNumber,
                         void *entryPoint,
                         const Type * returnType,
                         int32_t numParms,
@@ -104,8 +104,8 @@ public:
     void Sub(Location *loc, Builder *b, Value *result, Value *left, Value *right);
 
     void AppendBuilder(Location *loc, Builder *parent, Builder *b);
-    void Call(Location *loc, Builder *b, Value *result, String targetName, size_t numArgs, ValueIterator argIt);
-    void Call(Location *loc, Builder *b, String targetName, size_t numArgs, ValueIterator argIt);
+    void Call(Location *loc, Builder *b, Value *result, const String & targetName, size_t numArgs, ValueIterator argIt);
+    void Call(Location *loc, Builder *b, const String & targetName, size_t numArgs, ValueIterator argIt);
     void EntryPoint(Builder *entryBuilder);
     void ForLoopUp(Location *loc, Builder *b, Symbol *loopVariable, Value *initial, Value *final, Value *bump, Builder *loopBody, Builder *loopBreak, Builder *loopContinue);
     void Goto(Location *loc, Builder *b, Builder *target);
@@ -131,8 +131,8 @@ public:
     void Store(Location *loc, Builder *b, Symbol *sym, Value *value);
     void LoadAt(Location *loc, Builder *b, Value *result, Value *ptrValue);
     void StoreAt(Location *loc, Builder *b, Value *ptrValue, Value *value);
-    void LoadIndirect(Location *loc, Builder *b, Value *result, String structName, String fieldName, Value *pStruct);
-    void StoreIndirect(Location *loc, Builder *b, String structName, String fieldName, Value *pStruct, Value *value);
+    void LoadIndirect(Location *loc, Builder *b, Value *result, const String & structName, const String & fieldName, Value *pStruct);
+    void StoreIndirect(Location *loc, Builder *b, const String & structName, const String & fieldName, Value *pStruct, Value *value);
     void StoreOver(Location *loc, Builder *b, Value *target, Value *source);
     void CreateLocalArray(Location *loc, Builder *b, Value *result, Literal *numElements, const Type *elementType);
     void CreateLocalStruct(Location *loc, Builder *b, Value *result, const Type * structType);
@@ -147,7 +147,7 @@ protected:
     virtual FunctionBuilder * transformFunctionBuilderAtEnd(FunctionBuilder * fb);
 #endif
 
-    char * findOrCreateString(String str);
+    const char * findOrCreateString(const String & str);
     void registerValue(const Value * v, TR::IlValue *omr_v);
 
     TR::IlBuilder *map(const Builder * b, bool checkNull=true);
@@ -169,7 +169,7 @@ protected:
     std::map<ValueID,TR::IlValue *> _values;
     //std::map<FunctionID,TR::MethodBuilder *> _methodBuilders;
     //std::map<TypeDictionaryID,TR::TypeDictionary *> _typeDictionaries;
-    std::map<String,char *> _strings;
+    std::map<const char *,const char *> _strings;
 
     Compilation *_comp;
     TR::MethodBuilder *_mb;

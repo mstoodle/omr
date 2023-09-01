@@ -57,7 +57,7 @@ class Builder : public Extensible {
 
 public:
     int64_t id() const                                  { return _id; }
-    String name() const                                 { return _name; }
+    const String & name() const                         { return _name; }
     IR *ir() const                                      { return _ir; }
     Extension *ext() const                              { return _ext; }
 
@@ -90,11 +90,8 @@ public:
         _currentLocation = loc;
     }
 
-    virtual String to_string() const {
-        return String("B").append(String::to_string(_id));
-    }
-
-    virtual String logName() const { return String("Builder"); }
+    virtual String to_string() const;
+    virtual String logName() const { return String(allocator(), "Builder"); }
     virtual void logProperties(TextLogger & log) const;
     virtual void logPrefix(TextLogger & log) const;
     virtual void logSuffix(TextLogger & log) const;

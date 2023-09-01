@@ -110,7 +110,7 @@ SUBCLASS_KINDSERVICE_IMPL(TypeReplacer,"TypeReplacer",Transformer,Extensible);
 
 
 TypeReplacer::TypeReplacer(Allocator *a, Compiler * compiler)
-    : Transformer(a, CLASSKIND(TypeReplacer, Extensible), compiler->coreExt(), String("TypeReplacer"))
+    : Transformer(a, CLASSKIND(TypeReplacer, Extensible), compiler->coreExt(), String(a, "TypeReplacer"))
     , _typesTransformed(false) {
 
 }

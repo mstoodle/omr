@@ -35,7 +35,7 @@ TypeKind FunctionType::TYPEKIND = KindService::NoKind;
 bool FunctionType::kindRegistered = false;
 
 FunctionType::FunctionType(MEM_LOCATION(a), Extension *ext, TypeDictionary *dict, const Type *returnType, int32_t numParms, const Type ** parmTypes)
-    : Type(MEM_PASSLOC(a), getTypeClassKind(), ext, dict, typeName(returnType, numParms, parmTypes), 0)
+    : Type(MEM_PASSLOC(a), getTypeClassKind(), ext, dict, typeName(dict->mem(), returnType, numParms, parmTypes), 0)
     , _returnType(returnType)
     , _numParms(numParms)
     , _parmTypes(parmTypes) {
@@ -80,22 +80,22 @@ FunctionType::getTypeClassKind() {
 
 
 String
-FunctionType::typeName(const Type * returnType, int32_t numParms, const Type **parmTypes) {
-    String s(String("t").append(String::to_string(returnType->id())).append(String(" <- (")));
+FunctionType::typeName(Allocator *mem, const Type * returnType, int32_t numParms, const Type **parmTypes) {
+    String s(mem, String(mem, "t").append(String::to_string(mem, returnType->id())).append(String(mem, " <- (")));
     if (numParms > 0)
-        s.append(String("0:t")).append(String::to_string(parmTypes[0]->id()));
+        s.append(String(mem, "0:t")).append(String::to_string(mem, parmTypes[0]->id()));
     for (auto p = 1; p < numParms; p++) {
         const Type *type = parmTypes[p];
-        s.append(String(" ")).append(String::to_string(p)).append(String(":t")).append(String::to_string(type->id()));
+        s.append(String(mem, " ")).append(String::to_string(mem, p)).append(String(mem, ":t")).append(String::to_string(mem, type->id()));
     }
-    s.append(String(")"));
+    s.append(String(mem, ")"));
     return s;
 }
 
 String
-FunctionType::to_string(bool useHeader) const {
-    String s(Type::base_string(useHeader));
-    s.append(String("functionType"));
+FunctionType::to_string(Allocator *mem, bool useHeader) const {
+    String s(Type::base_string(mem, useHeader));
+    s.append(String(mem, "functionType"));
     return s;
 }
 

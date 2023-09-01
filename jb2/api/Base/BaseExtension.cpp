@@ -67,59 +67,59 @@ BaseExtension::BaseExtension(MEM_LOCATION(a), Compiler *compiler, bool extended,
     , Float64(new (a) Float64Type(MEM_PASSLOC(a), this))
     , Address(new (a) AddressType(MEM_PASSLOC(a), this))
     , Word(compiler->platformWordSize() == 64 ? static_cast<const Type *>(this->Int64) : static_cast<const Type *>(this->Int32))
-    , aConst(registerAction(String("Const")))
-    , aAdd(registerAction(String("Add")))
-    , aConvertTo(registerAction(String("ConvertTo")))
-    , aMul(registerAction(String("Mul")))
-    , aSub(registerAction(String("Sub")))
-    , aLoadAt(registerAction(String("LoadAt")))
-    , aStoreAt(registerAction(String("StoreAt")))
-    , aLoadField(registerAction(String("LoadField")))
-    , aStoreField(registerAction(String("StoreField")))
-    , aLoadFieldAt(registerAction(String("LoadFieldAt")))
-    , aStoreFieldAt(registerAction(String("StoreFieldAt")))
-    , aCreateLocalArray(registerAction(String("CreateLocalArray")))
-    , aCreateLocalStruct(registerAction(String("CreateLocalStruct")))
-    , aIndexAt(registerAction(String("IndexAt")))
-    , aCall(registerAction(String("Call")))
-    , aCallVoid(registerAction(String("CallVoid")))
-    , aForLoopUp(registerAction(String("ForLoopUp")))
-    , aGoto(registerAction(String("Goto")))
-    , aIfCmpEqual(registerAction(String("IfCmpEqual")))
-    , aIfCmpEqualZero(registerAction(String("IfCmpEqualZero")))
-    , aIfCmpGreaterThan(registerAction(String("IfCmpGreaterThan")))
-    , aIfCmpGreaterOrEqual(registerAction(String("IfCmpGreaterOrEqual")))
-    , aIfCmpLessThan(registerAction(String("IfCmpLessThan")))
-    , aIfCmpLessOrEqual(registerAction(String("IfCmpLessOrEqual")))
-    , aIfCmpNotEqual(registerAction(String("IfCmpNotEqual")))
-    , aIfCmpNotEqualZero(registerAction(String("IfCmpNotEqualZero")))
-    , aIfCmpUnsignedGreaterThan(registerAction(String("IfCmpUnsignedGreaterThan")))
-    , aIfCmpUnsignedGreaterOrEqual(registerAction(String("IfCmpUnsignedGreaterOrEqual")))
-    , aIfCmpUnsignedLessThan(registerAction(String("IfCmpUnsignedLessThan")))
-    , aIfCmpUnsignedLessOrEqual(registerAction(String("IfCmpUnsignedLessOrEqual")))
-    , aIfThenElse(registerAction(String("IfThenElse")))
-    , aSwitch(registerAction(String("Switch")))
-    , CompileFail_BadInputTypes_Add(registerReturnCode("CompileFail_BadInputTypes_Add"))
-    , CompileFail_BadInputTypes_ConvertTo(registerReturnCode("CompileFail_BadInputTypes_ConvertTo"))
-    , CompileFail_BadInputTypes_Mul(registerReturnCode("CompileFail_BadInputTypes_Mul"))
-    , CompileFail_BadInputTypes_Sub(registerReturnCode("CompileFail_BadInputTypes_Sub"))
-    , CompileFail_BadInputTypes_IfCmpEqual(registerReturnCode("CompileFail_BadInputTypes_IfCmpEqual"))
-    , CompileFail_BadInputTypes_IfCmpEqualZero(registerReturnCode("CompileFail_BadInputTypes_IfCmpEqualZero"))
-    , CompileFail_BadInputTypes_IfCmpGreaterThan(registerReturnCode("CompileFail_BadInputTypes_IfCmpGreaterThan"))
-    , CompileFail_BadInputTypes_IfCmpGreaterOrEqual(registerReturnCode("CompileFail_BadInputTypes_IfCmpGreaterOrEqual"))
-    , CompileFail_BadInputTypes_IfCmpLessThan(registerReturnCode("CompileFail_BadInputTypes_IfCmpLessThan"))
-    , CompileFail_BadInputTypes_IfCmpLessOrEqual(registerReturnCode("CompileFail_BadInputTypes_IfCmpLessOrEqual"))
-    , CompileFail_BadInputTypes_IfCmpNotEqual(registerReturnCode("CompileFail_BadInputTypes_IfCmpNotEqual"))
-    , CompileFail_BadInputTypes_IfCmpNotEqualZero(registerReturnCode("CompileFail_BadInputTypes_IfCmpNotEqualZero"))
-    , CompileFail_BadInputTypes_IfCmpUnsignedGreaterThan(registerReturnCode("CompileFail_BadInputTypes_IfCmpUnsignedGreaterThan"))
-    , CompileFail_BadInputTypes_IfCmpUnsignedGreaterOrEqual(registerReturnCode("CompileFail_BadInputTypes_IfCmpUnsignedGreaterOrEqual"))
-    , CompileFail_BadInputTypes_IfCmpUnsignedLessThan(registerReturnCode("CompileFail_BadInputTypes_IfCmpUnsignedLessThan"))
-    , CompileFail_BadInputTypes_IfCmpUnsignedLessOrEqual(registerReturnCode("CompileFail_BadInputTypes_IfCmpUnsignedLessOrEqual"))
-    , CompileFail_BadInputTypes_ForLoopUp(registerReturnCode("CompileFail_BadInputTypes_ForLoopUp"))
-    , CompileFail_BadInputTypes_IfThenElse(registerReturnCode("CompileFail_BadInputTypes_IfThenElse"))
-    , CompileFail_BadInputTypes_Switch(registerReturnCode("CompileFail_BadInputTypes_Switch"))
-    , CompileFail_BadInputArray_OffsetAt(registerReturnCode("CompileFail_BadInputArray_OffsetAt"))
-    , CompileFail_MismatchedArgumentTypes_Call(registerReturnCode("CompileFail_MismatchedArgumentTypes_Call"))
+    , aConst(registerAction(String(a, "Const")))
+    , aAdd(registerAction(String(a, "Add")))
+    , aConvertTo(registerAction(String(a, "ConvertTo")))
+    , aMul(registerAction(String(a, "Mul")))
+    , aSub(registerAction(String(a, "Sub")))
+    , aLoadAt(registerAction(String(a, "LoadAt")))
+    , aStoreAt(registerAction(String(a, "StoreAt")))
+    , aLoadField(registerAction(String(a, "LoadField")))
+    , aStoreField(registerAction(String(a, "StoreField")))
+    , aLoadFieldAt(registerAction(String(a, "LoadFieldAt")))
+    , aStoreFieldAt(registerAction(String(a, "StoreFieldAt")))
+    , aCreateLocalArray(registerAction(String(a, "CreateLocalArray")))
+    , aCreateLocalStruct(registerAction(String(a, "CreateLocalStruct")))
+    , aIndexAt(registerAction(String(a, "IndexAt")))
+    , aCall(registerAction(String(a, "Call")))
+    , aCallVoid(registerAction(String(a, "CallVoid")))
+    , aForLoopUp(registerAction(String(a, "ForLoopUp")))
+    , aGoto(registerAction(String(a, "Goto")))
+    , aIfCmpEqual(registerAction(String(a, "IfCmpEqual")))
+    , aIfCmpEqualZero(registerAction(String(a, "IfCmpEqualZero")))
+    , aIfCmpGreaterThan(registerAction(String(a, "IfCmpGreaterThan")))
+    , aIfCmpGreaterOrEqual(registerAction(String(a, "IfCmpGreaterOrEqual")))
+    , aIfCmpLessThan(registerAction(String(a, "IfCmpLessThan")))
+    , aIfCmpLessOrEqual(registerAction(String(a, "IfCmpLessOrEqual")))
+    , aIfCmpNotEqual(registerAction(String(a, "IfCmpNotEqual")))
+    , aIfCmpNotEqualZero(registerAction(String(a, "IfCmpNotEqualZero")))
+    , aIfCmpUnsignedGreaterThan(registerAction(String(a, "IfCmpUnsignedGreaterThan")))
+    , aIfCmpUnsignedGreaterOrEqual(registerAction(String(a, "IfCmpUnsignedGreaterOrEqual")))
+    , aIfCmpUnsignedLessThan(registerAction(String(a, "IfCmpUnsignedLessThan")))
+    , aIfCmpUnsignedLessOrEqual(registerAction(String(a, "IfCmpUnsignedLessOrEqual")))
+    , aIfThenElse(registerAction(String(a, "IfThenElse")))
+    , aSwitch(registerAction(String(a, "Switch")))
+    , CompileFail_BadInputTypes_Add(registerReturnCode(String(a, "CompileFail_BadInputTypes_Add")))
+    , CompileFail_BadInputTypes_ConvertTo(registerReturnCode(String(a, "CompileFail_BadInputTypes_ConvertTo")))
+    , CompileFail_BadInputTypes_Mul(registerReturnCode(String(a, "CompileFail_BadInputTypes_Mul")))
+    , CompileFail_BadInputTypes_Sub(registerReturnCode(String(a, "CompileFail_BadInputTypes_Sub")))
+    , CompileFail_BadInputTypes_IfCmpEqual(registerReturnCode(String(a, "CompileFail_BadInputTypes_IfCmpEqual")))
+    , CompileFail_BadInputTypes_IfCmpEqualZero(registerReturnCode(String(a, "CompileFail_BadInputTypes_IfCmpEqualZero")))
+    , CompileFail_BadInputTypes_IfCmpGreaterThan(registerReturnCode(String(a, "CompileFail_BadInputTypes_IfCmpGreaterThan")))
+    , CompileFail_BadInputTypes_IfCmpGreaterOrEqual(registerReturnCode(String(a, "CompileFail_BadInputTypes_IfCmpGreaterOrEqual")))
+    , CompileFail_BadInputTypes_IfCmpLessThan(registerReturnCode(String(a, "CompileFail_BadInputTypes_IfCmpLessThan")))
+    , CompileFail_BadInputTypes_IfCmpLessOrEqual(registerReturnCode(String(a, "CompileFail_BadInputTypes_IfCmpLessOrEqual")))
+    , CompileFail_BadInputTypes_IfCmpNotEqual(registerReturnCode(String(a, "CompileFail_BadInputTypes_IfCmpNotEqual")))
+    , CompileFail_BadInputTypes_IfCmpNotEqualZero(registerReturnCode(String(a, "CompileFail_BadInputTypes_IfCmpNotEqualZero")))
+    , CompileFail_BadInputTypes_IfCmpUnsignedGreaterThan(registerReturnCode(String(a, "CompileFail_BadInputTypes_IfCmpUnsignedGreaterThan")))
+    , CompileFail_BadInputTypes_IfCmpUnsignedGreaterOrEqual(registerReturnCode(String(a, "CompileFail_BadInputTypes_IfCmpUnsignedGreaterOrEqual")))
+    , CompileFail_BadInputTypes_IfCmpUnsignedLessThan(registerReturnCode(String(a, "CompileFail_BadInputTypes_IfCmpUnsignedLessThan")))
+    , CompileFail_BadInputTypes_IfCmpUnsignedLessOrEqual(registerReturnCode(String(a, "CompileFail_BadInputTypes_IfCmpUnsignedLessOrEqual")))
+    , CompileFail_BadInputTypes_ForLoopUp(registerReturnCode(String(a, "CompileFail_BadInputTypes_ForLoopUp")))
+    , CompileFail_BadInputTypes_IfThenElse(registerReturnCode(String(a, "CompileFail_BadInputTypes_IfThenElse")))
+    , CompileFail_BadInputTypes_Switch(registerReturnCode(String(a, "CompileFail_BadInputTypes_Switch")))
+    , CompileFail_BadInputArray_OffsetAt(registerReturnCode(String(a, "CompileFail_BadInputArray_OffsetAt")))
+    , CompileFail_MismatchedArgumentTypes_Call(registerReturnCode(String(a, "CompileFail_MismatchedArgumentTypes_Call")))
     , _checkers(NULL, a) {
 
     if (!extended) {
@@ -227,11 +227,12 @@ BaseExtensionChecker::failValidateAdd(LOCATION, Builder *b, Value *left, Value *
     CompilationException e(PASSLOC, _base->compiler(), _base->CompileFail_BadInputTypes_Add);
     const Type *lType = left->type();
     const Type *rType = right->type();
-    e.setMessageLine(String("Add: invalid input types"))
-     .appendMessageLine(String("    left ").append(lType->to_string()))
-     .appendMessageLine(String("   right ").append(rType->to_string()))
-     .appendMessageLine(String("Left and right types are expected to be the same for integer types (Int8,Int16,Int32,Int64,Float32,Float64)"))
-     .appendMessageLine(String("If left/right type is Address then the right/left (respectively) type must be Word"));
+    Allocator *mem = _base->compiler()->mem();
+    e.setMessageLine(String(mem, "Add: invalid input types"))
+     .appendMessageLine(String(mem, "    left ").append(lType->to_string(mem)))
+     .appendMessageLine(String(mem, "   right ").append(rType->to_string(mem)))
+     .appendMessageLine(String(mem, "Left and right types are expected to be the same for integer types (Int8,Int16,Int32,Int64,Float32,Float64)"))
+     .appendMessageLine(String(mem, "If left/right type is Address then the right/left (respectively) type must be Word"));
     throw e;
 }
 
@@ -287,10 +288,11 @@ void
 BaseExtensionChecker::failValidateConvertTo(LOCATION, Builder *b, const Type *type, Value *value) {
     CompilationException e(PASSLOC, _base->compiler(), _base->CompileFail_BadInputTypes_ConvertTo);
     const Type *vType = value->type();
-    e.setMessageLine(String("ConvertTo: invalid input types"))
-     .appendMessageLine(String("    type ").append(type->to_string()))
-     .appendMessageLine(String("   value ").append(vType->to_string()))
-     .appendMessageLine(String("Source value and destination types must be a primitive type (Int8,Int16,Int32,Int64,Float32,Float64,Address)"));
+    Allocator *mem = _base->compiler()->mem();
+    e.setMessageLine(String(mem, "ConvertTo: invalid input types"))
+     .appendMessageLine(String(mem, "    type ").append(type->to_string(mem)))
+     .appendMessageLine(String(mem, "   value ").append(vType->to_string(mem)))
+     .appendMessageLine(String(mem, "Source value and destination types must be a primitive type (Int8,Int16,Int32,Int64,Float32,Float64,Address)"));
     throw e;
 }
 
@@ -338,11 +340,12 @@ BaseExtensionChecker::failValidateMul(LOCATION, Builder *b, Value *left, Value *
     CompilationException e(PASSLOC, _base->compiler(), _base->CompileFail_BadInputTypes_Mul);
     const Type *lType = left->type();
     const Type *rType = right->type();
-    e.setMessageLine(String("Mul: invalid input types"))
-     .appendMessageLine(String("    left ").append(lType->to_string()))
-     .appendMessageLine(String("   right ").append(rType->to_string()))
-     .appendMessageLine(String("Left and right types are expected to be the same for integer types (Int8,Int16,Int32,Int64,Float32,Float64)"))
-     .appendMessageLine(String("Address types cannot be used"));
+    Allocator *mem = _base->compiler()->mem();
+    e.setMessageLine(String(mem, "Mul: invalid input types"))
+     .appendMessageLine(String(mem, "    left ").append(lType->to_string(mem)))
+     .appendMessageLine(String(mem, "   right ").append(rType->to_string(mem)))
+     .appendMessageLine(String(mem, "Left and right types are expected to be the same for integer types (Int8,Int16,Int32,Int64,Float32,Float64)"))
+     .appendMessageLine(String(mem, "Address types cannot be used"));
     throw e;
 }
 
@@ -396,11 +399,12 @@ BaseExtensionChecker::failValidateSub(LOCATION, Builder *b, Value *left, Value *
     CompilationException e(PASSLOC, _base->compiler(), _base->CompileFail_BadInputTypes_Sub);
     const Type *lType = left->type();
     const Type *rType = right->type();
-    e.setMessageLine(String("Sub: invalid input types"))
-     .appendMessageLine(String("    left ").append(lType->to_string()))
-     .appendMessageLine(String("   right ").append(rType->to_string()))
-     .appendMessageLine(String("Left and right types are expected to be the same for integer types (Int8,Int16,Int32,Int64,Float32,Float64)"))
-     .appendMessageLine(String("If left type is Address then the right type must be either Address or Word"));
+    Allocator *mem = _base->compiler()->mem();
+    e.setMessageLine(String(mem, "Sub: invalid input types"))
+     .appendMessageLine(String(mem, "    left ").append(lType->to_string(mem)))
+     .appendMessageLine(String(mem, "   right ").append(rType->to_string(mem)))
+     .appendMessageLine(String(mem, "Left and right types are expected to be the same for integer types (Int8,Int16,Int32,Int64,Float32,Float64)"))
+     .appendMessageLine(String(mem, "If left type is Address then the right type must be either Address or Word"));
     throw e;
 }
 
@@ -446,12 +450,13 @@ BaseExtensionChecker::validateForLoopUp(LOCATION, Builder *b, Symbol *loopVariab
 void
 BaseExtensionChecker::failValidateForLoopUp(LOCATION, Builder *b, Symbol *loopVariable, Value *initial, Value *final, Value *bump) {
     CompilationException e(PASSLOC, _base->compiler(), _base->CompileFail_BadInputTypes_ForLoopUp);
-    e.setMessageLine(String("ForLoopUp: invalid input types"))
-     .appendMessageLine(String("  loop var s").append(String::to_string(loopVariable->id())).append(" ").append(loopVariable->name()).append(" ").append(loopVariable->type()->to_string()))
-     .appendMessageLine(String("   initial v").append(String::to_string(initial->id())).append(" ").append(initial->type()->to_string()))
-     .appendMessageLine(String("     final v").append(String::to_string(final->id())).append(" ").append(final->type()->to_string()))
-     .appendMessageLine(String("      bump v").append(String::to_string(final->id())).append(" ").append(bump->type()->to_string()))
-     .appendMessageLine(String("Loop variable must be one of Int8, Int16, Int32, or Int64, and the types of initial, final, and bump must be same as the loop variable's type"));
+    Allocator *mem = _base->compiler()->mem();
+    e.setMessageLine(String(mem, "ForLoopUp: invalid input types"))
+     .appendMessageLine(String(mem, "  loop var s").append(String::to_string(mem, loopVariable->id())).append(" ").append(loopVariable->name()).append(" ").append(loopVariable->type()->to_string(mem)))
+     .appendMessageLine(String(mem, "   initial v").append(String::to_string(mem, initial->id())).append(" ").append(initial->type()->to_string(mem)))
+     .appendMessageLine(String(mem, "     final v").append(String::to_string(mem, final->id())).append(" ").append(final->type()->to_string(mem)))
+     .appendMessageLine(String(mem, "      bump v").append(String::to_string(mem, final->id())).append(" ").append(bump->type()->to_string(mem)))
+     .appendMessageLine(String(mem, "Loop variable must be one of Int8, Int16, Int32, or Int64, and the types of initial, final, and bump must be same as the loop variable's type"));
     throw e;
 }
 
@@ -509,11 +514,12 @@ BaseExtensionChecker::failValidateIfCmp(LOCATION, Builder *b, Builder *target, V
     CompilationException e(PASSLOC, _base->compiler(), failCode);
     const Type *lType = left->type();
     const Type *rType = right->type();
-    e.setMessageLine(opCodeName.append(String(": invalid input types")))
-     .appendMessageLine(String("    left ").append(lType->to_string()))
-     .appendMessageLine(String("   right ").append(rType->to_string()))
-     .appendMessageLine(String("  target ").append(target->to_string()))
-     .appendMessageLine(String("Left and right types are expected to be the same type (Int8,Int16,Int32,Int64,Float32,Float64,Address)"));
+    Allocator *mem = _base->compiler()->mem();
+    e.setMessageLine(opCodeName.append(String(mem, ": invalid input types")))
+     .appendMessageLine(String(mem, "    left ").append(lType->to_string(mem)))
+     .appendMessageLine(String(mem, "   right ").append(rType->to_string(mem)))
+     .appendMessageLine(String(mem, "  target ").append(target->to_string()))
+     .appendMessageLine(String(mem, "Left and right types are expected to be the same type (Int8,Int16,Int32,Int64,Float32,Float64,Address)"));
     throw e;
 }
 
@@ -540,10 +546,11 @@ void
 BaseExtensionChecker::failValidateIfCmpZero(LOCATION, Builder *b, Builder *target, Value *value, CompilerReturnCode failCode, String opCodeName) {
     CompilationException e(PASSLOC, _base->compiler(), failCode);
     const Type *type = value->type();
-    e.setMessageLine(opCodeName.append(String(": invalid input types")))
-     .appendMessageLine(String("   value ").append(type->to_string()))
-     .appendMessageLine(String("  target ").append(target->to_string()))
-     .appendMessageLine(String("Value type is expected to be a primitive type (Int8,Int16,Int32,Int64,Float32,Float64,Address)"));
+    Allocator *mem = _base->compiler()->mem();
+    e.setMessageLine(opCodeName.append(String(mem, ": invalid input types")))
+     .appendMessageLine(String(mem, "   value ").append(type->to_string(mem)))
+     .appendMessageLine(String(mem, "  target ").append(target->to_string()))
+     .appendMessageLine(String(mem, "Value type is expected to be a primitive type (Int8,Int16,Int32,Int64,Float32,Float64,Address)"));
     throw e;
 }
 
@@ -903,9 +910,10 @@ void
 BaseExtension::failValidateOffsetAt(LOCATION, Builder *b, Value *array) {
     CompilationException e(PASSLOC, _compiler, CompileFail_BadInputArray_OffsetAt);
     const Type *arrayType = array->type();
-    e.setMessageLine(String("OffsetAt: invalid array type"))
-     .appendMessageLine(String("   array ").append(arrayType->to_string()))
-     .appendMessageLine(String("Array type must be a PointerType"));
+    Allocator *mem = compiler()->mem();
+    e.setMessageLine(String(mem, "OffsetAt: invalid array type"))
+     .appendMessageLine(String(mem, "   array ").append(arrayType->to_string(mem)))
+     .appendMessageLine(String(mem, "Array type must be a PointerType"));
     throw e;
 }
 

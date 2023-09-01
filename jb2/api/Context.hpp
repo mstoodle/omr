@@ -111,7 +111,7 @@ public:
     DYNAMIC_ALLOC_ONLY(Context, Extension *ext, Context *parent, String name="");
 
     ContextID id() const { return _id; }
-    String name() const { return _name; }
+    const String & name() const { return _name; }
 
     virtual Value *readValue(Builder *b, Value *readFrom) {
         return readFrom; // by default, no mapping of Values

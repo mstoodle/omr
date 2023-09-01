@@ -63,6 +63,7 @@ public:
         ForwardIterator operator=(const ForwardIterator & other) {
             _array = other._array;
             _changeAtCreation = other._changeAtCreation;
+            return *this;
         }
 
         // rule of 5
@@ -74,6 +75,7 @@ public:
         ForwardIterator & operator=(const ForwardIterator && other) {
             _array = other._array;
             _changeAtCreation = other._changeAtCreation;
+            return *this;
         }
 
         void reset() {

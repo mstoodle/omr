@@ -27,42 +27,290 @@ namespace JitBuilder {
 
 INIT_JBALLOC(String)
 
-String::String(Allocator *a)
-    : Allocatable(a)
-    , _string("") {
-}
-
 String::String()
     : Allocatable()
-    , _string("") {
-}
+    , _dataAllocator(NULL)
+    , _bytes(NULL)
+    , _length(0) {
 
-String::String(Allocator *a, const char *s) 
-    : Allocatable(a)
-    , _string(s) {
 }
 
 String::String(const char *s) 
     : Allocatable()
-    , _string(s) {
+    , _dataAllocator(NULL)
+    , _bytes(s)
+    , _length(strlen(s)) {
+
 }
 
-String::String(Allocator *a, const String & s)
-    : Allocatable(a)
-    , _string(s._string) {
-}
-
-String::String(const String & s)
+String::String(Allocator *dataAllocator)
     : Allocatable()
-    , _string(s._string) {
+    , _dataAllocator(dataAllocator)
+    , _bytes(NULL)
+    , _length(0) {
+
+}
+
+String::String(Allocator *a, Allocator *dataAllocator, const char *s) 
+    : Allocatable(a)
+    , _dataAllocator(dataAllocator)
+    , _bytes(NULL)
+    , _length(0) {
+
+    if (s != NULL)
+        initializeBytes(strlen(s), s);
+}
+
+String::String(Allocator *dataAllocator, const char *s) 
+    : Allocatable()
+    , _dataAllocator(dataAllocator)
+    , _bytes(NULL)
+    , _length(0) {
+
+    if (s != NULL)
+        initializeBytes(strlen(s), s);
+}
+
+String::String(Allocator *a, Allocator *dataAllocator, const String & s)
+    : Allocatable(a)
+    , _dataAllocator(dataAllocator)
+    , _bytes(NULL)
+    , _length(0) {
+
+    initializeBytes(s._length, s._bytes);
+}
+
+String::String(Allocator *dataAllocator, const String & s)
+    : Allocatable()
+    , _dataAllocator(dataAllocator)
+    , _bytes(NULL)
+    , _length(0) {
+
+    initializeBytes(s._length, s._bytes);
+}
+
+// rule of 3
+String::String(const String & other)
+    : Allocatable(other)
+    , _dataAllocator(other._dataAllocator)
+    , _bytes(NULL)
+    , _length(0) {
+
+    if (_dataAllocator == NULL) {
+        _bytes = other._bytes;
+        _length = other._length;
+    } else {
+        initializeBytes(other._length, other._bytes);
+    }
+}
+
+String
+String::operator=(const String & other) {
+    if (_dataAllocator != NULL) {
+        if (_bytes != NULL)
+            _dataAllocator->deallocate(const_cast<char *>(_bytes));
+    } else {
+        _dataAllocator = other._dataAllocator;
+    }
+
+    if (_dataAllocator != NULL) {
+        initializeBytes(other._length, other._bytes);
+    } else {
+        _bytes = other._bytes;
+        _length = other._length;
+    }
+    return *this;
+}
+
+// rule of 5
+String::String(String && other)
+    : Allocatable(other)
+    , _dataAllocator(other._dataAllocator)
+    , _length(other._length) {
+
+    if (_dataAllocator != NULL) {
+        initializeBytes(other._length, other._bytes);
+    } else {
+        _bytes = other._bytes;
+        _length = other._length;
+    }
+}
+
+String &
+String::operator=(const String && other) {
+    if (_dataAllocator != NULL) {
+        if (_bytes != NULL)
+            _dataAllocator->deallocate(const_cast<char *>(_bytes));
+    } else {
+        _dataAllocator = other._dataAllocator;
+    }
+
+    if (_dataAllocator != NULL) {
+        initializeBytes(other._length, other._bytes);
+    } else {
+        _bytes = other._bytes;
+        _length = other._length;
+    }
+    return *this;
 }
 
 String::~String() {
+    if (_bytes != NULL && _dataAllocator != NULL)
+        _dataAllocator->deallocate(const_cast<char *>(_bytes));
+}
+
+String &
+String::operator=(const char *s) {
+    if (_dataAllocator != NULL) {
+        if (_bytes != NULL)
+            _dataAllocator->deallocate(const_cast<char *>(_bytes));
+        initializeBytes(strlen(s), s);
+    } else {
+        _bytes = s;
+        _length = strlen(s);
+    }
+    return *this;
+}
+
+String &
+String::append(const String & other) {
+    if (_dataAllocator == NULL) {
+        if (other._dataAllocator == NULL) {
+            assert(0); // need some allocator to append
+        } else {
+            _dataAllocator = other._dataAllocator;
+        }
+    }
+    grow(other._bytes, other._length);
+    return *this;
+}
+
+String
+String::operator+(const String & other) {
+    String concat(*this);
+    concat.append(other);
+    return concat;
+}
+
+String
+String::operator+(const char * other) {
+    String concat(*this);
+    String appender(_dataAllocator, other);
+    concat.append(appender);
+    return concat;
+}
+
+bool
+String::operator==(const char * other) const {
+    return strncmp(_bytes, other, _length+1) == 0;
+}
+
+bool
+String::operator<(const char * other) const {
+    return strncmp(_bytes, other, _length+1) < 0;
+}
+
+bool
+String::operator==(const String & other) const {
+    return strncmp(_bytes, other._bytes, _length+1) == 0;
+}
+
+bool
+String::operator<(const String & other) const {
+    return strncmp(_bytes, other._bytes, _length+1) < 0;
+}
+
+#if defined(OSX)
+String
+String::to_string(Allocator *dataAllocator, size_t v) {
+    char digits[25];
+    snprintf(digits, 25, "%ld", v);
+    String str(dataAllocator, digits);
+    return str;
+}
+#endif
+
+String
+String::to_string(Allocator *dataAllocator, int64_t v) {
+    char digits[25];
+    snprintf(digits, 25, "%ld", v);
+    String str(dataAllocator, digits);
+    return str;
+}
+
+String
+String::to_string(Allocator *dataAllocator, uint64_t v) {
+    char digits[25];
+    snprintf(digits, 25, "%lu", v);
+    String str(dataAllocator, digits);
+    return str;
+}
+
+String
+String::to_string(Allocator *dataAllocator, int32_t v) {
+    char digits[15];
+    snprintf(digits, 15, "%d", v);
+    String str(dataAllocator, digits);
+    return str;
+}
+
+String
+String::to_string(Allocator *dataAllocator, uint32_t v) {
+    char digits[15];
+    snprintf(digits, 15, "%u", v);
+    String str(dataAllocator, digits);
+    return str;
+}
+
+String
+String::to_string(Allocator *dataAllocator, int16_t v) {
+    char digits[8];
+    snprintf(digits, 8, "%d", v);
+    String str(dataAllocator, digits);
+    return str;
+}
+
+String
+String::to_string(Allocator *dataAllocator, uint16_t v) {
+    char digits[8];
+    snprintf(digits, 8, "%u", v);
+    String str(dataAllocator, digits);
+    return str;
+}
+
+void
+String::initializeBytes(size_t len, const char *source) {
+    assert(_dataAllocator != NULL);
+    if (len > 0) {
+        size_t copyLen = len+1;
+        char *buffer = _dataAllocator->allocate<char>(copyLen);
+        memcpy(buffer, source, copyLen);
+        _length = len;
+        _bytes = buffer;
+    } else {
+        _bytes = NULL;
+        _length = 0;
+    }
+}
+
+void
+String::grow(const char *suffix, size_t suffixLen) {
+    assert(_dataAllocator != NULL);
+    assert(suffixLen > 0);
+    size_t newLength = _length + suffixLen;
+    char *newBytes = _dataAllocator->allocate<char>(newLength+1);
+    if (_length > 0)
+        memcpy(newBytes, _bytes, _length);
+    memcpy(newBytes+_length, suffix, suffixLen+1);
+    if (_bytes != NULL)
+        _dataAllocator->deallocate(const_cast<char *>(_bytes));
+    _bytes = newBytes;
+    _length = newLength;
 }
 
 void
 String::log(TextLogger & log) const {
-    log << _string.c_str();
+    log << _bytes;
 }
 
 } // namespace JitBuilder

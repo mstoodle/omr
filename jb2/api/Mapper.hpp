@@ -131,7 +131,7 @@ public:
     String name() {
         // must be called *before* next() to get correct name
         if (!_current)
-            return String("");
+            return String(allocator(), "");
         return _current->_name;
     }
     size_t offset() {

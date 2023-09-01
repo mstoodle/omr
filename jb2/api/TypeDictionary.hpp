@@ -52,6 +52,7 @@ public:
     ALL_ALLOC_ALLOWED(TypeDictionary, Compiler *compiler, String name, TypeDictionary *linkedDict);
 
     Compiler *compiler() const { return _compiler; }
+    Allocator *mem() const { return _mem; }
 
     //TypeIterator TypesBegin() const { return TypeIterator(_types); }
     //TypeIterator TypesEnd() const { return TypeIterator(); }
