@@ -2596,7 +2596,15 @@ OMR::IlBuilder::ifCmpCondition(TR_ComparisonTypes ct, bool isUnsignedCmp, TR::Il
    integerizeAddresses(&left, &right);
    TR::Node *leftNode = loadValue(left);
    TR::Node *rightNode = loadValue(right);
-   TR::ILOpCode cmpOpCode(TR::ILOpCode::compareOpCode(leftNode->getDataType(), ct, isUnsignedCmp));
+   TR::DataType dt = leftNode->getDataType();
+   TR::ILOpCode cmpOpCode(TR::ILOpCode::compareOpCode(dt, ct, isUnsignedCmp));
+
+   // some unpleasantness because aarch64 doesn't currently implement all(any?) 8 or 16 bit ifcmp opcodes
+   if (comp()->target().cpu.isARM64() && (dt == TR::Int8 || dt == TR::Int16))
+      {
+      cmpOpCode = TR::ILOpCode::compareOpCode(TR::Int32, ct, isUnsignedCmp);
+      }
+
    ifjump(cmpOpCode.convertCmpToIfCmp(),
           leftNode,
           rightNode,
