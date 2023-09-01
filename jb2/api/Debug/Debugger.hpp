@@ -24,36 +24,34 @@
 
 #include <map>
 #include "JBCore.hpp"
+#include "Func/Func.hpp"
+#include "Base/Base.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 namespace Debug {
 
-class DebugDictionary;
-class Debugger;
 class DebuggerFrame;
 class DebuggerFunction;
 class DebuggerThunk;
 class DebugValue;
-class Function;
 class FunctionDebugInfo;
 
-class DebugREPL {
+class Debugger {
     friend class DebugExtension;
     friend class DebuggerFunction;
     friend class DebuggerThunk;
 
 public:
-    DebugREPL(DebugExtension *dbg, Debugger *debugger, InputReader *reader, TextWriter *writer);
+    //Debugger(DebugExtension *dbg, Debugger *debugger, InputReader *reader, TextWriter *writer);
+    Debugger(Allocator *a, DebugExtension *dbx, InputReader *reader, TextLogger *writer);
 
     uint64_t time() { return _time; }
 
-    DebugDictionary *getDictionary(Function *func);
-
     void singleStep();
     void run();
-    void call(Function *func);
-    void passParameter(ParameterSymbol *sym, DebugValue *value);
+    void call(Func::Function *func);
+    void passParameter(Symbol *sym, DebugValue *value);
     DebugValue *getValue(Value *value);
     DebugValue *getValue(Symbol *symbol);
     void breakBefore(Operation *op);
@@ -65,7 +63,7 @@ protected:
 
     Compiler *compiler() const { return _compiler; }
 
-    virtual void debug(Base::FunctionCompilation *comp, DebugValue *returnValues, DebugValue *locals);
+    virtual void debug(Func::FunctionCompilation *comp, DebugValue *returnValues, DebugValue *locals);
     virtual void debug(Builder *b);
     virtual bool debug(Operation *op);
 
@@ -74,7 +72,7 @@ protected:
     virtual void printDebugValue(DebugValue *val);
     virtual void printTypeName(const Type *type);
     virtual void printType(const Type *type);
-    virtual void printValue(uint64_t idx);
+    virtual void printValue(ValueID id);
     virtual void printSymbol(String name);
     virtual void printHelp();
     virtual void acceptCommands(Operation *op, Operation *nextOp=NULL);
@@ -83,10 +81,6 @@ protected:
     virtual void beforeOp(Operation *op, Operation *nextOp);
     virtual void afterOp(Operation *op, Operation *nextOp);
 
-    virtual bool breakBefore(Builder *b);
-    virtual bool breakBefore(Operation *op);
-    virtual bool breakAfter(Operation *op);
-
     void setup();
 
     void recordReentryPoint(Builder *b, Operation * reentryOperation);
@@ -94,13 +88,14 @@ protected:
     void removeReentryPoint(Builder *b);
 
     // static so it can be called by generated DebuggerThunk
-    static void debugFunction(Debugger *dbgr, Base::FunctionCompilation *func, DebugValue *returnValues, DebugValue *locals);
+    static void debugFunction(Debugger *dbgr, Func::FunctionCompilation *func, DebugValue *returnValues, DebugValue *locals);
 
-    DebugExtension *_dbg;
-    Compiler *_compiler;
+    Allocator *_mem;
+    DebugExtension *_dbx;
+    Compiler *_compiler; // still need this?
     Compiler *_dbgCompiler;
     Debugger *_parent;
-    TextWriter *_writer;
+    TextLogger *_writer;
     InputReader *_reader;
     List<String> _commandHistory;
     uint64_t _time;
@@ -109,7 +104,7 @@ protected:
     bool _firstEntry;
 };
 
-} // namespace Base
+} // namespace Debug
 } // namespace JitBuilder
 } // namespace OMR
 

@@ -22,83 +22,92 @@
 #ifndef DEBUGGERTHUNK_INCL
 #define DEBUGGERTHUNK_INCL
 
-#include "Debug/DebuggerFunction.hpp"
+#include "JBCore.hpp"
+#include "Func/Func.hpp"
+#include "Base/Base.hpp"
+
 
 namespace OMR {
 namespace JitBuilder {
-
-namespace Base { class FunctionSymbol; }
-namespace Base { class LocalSymbol; }
-namespace Base { class ParameterSymbol; }
-
 namespace Debug {
 
-class DebuggerThunk : public DebuggerFunction {
+class DebuggerThunk : public Func::Function {
 public:
-    DebuggerThunk(Debugger *dbgr, Base::Function *debugFunc)
-        : DebuggerFunction(LOC, dbgr, debugFunc)
-        , _debugger(dbgr) {
+    DebuggerThunk(MEM_LOCATION(a), Debugger *jbdb, IR *ir)
+        : Func::Function(MEMLOC(a), jbdb->compiler())
+        , _jbdb(jbdb)
+        , _contextToDebug(ir->context<Func::FunctionContext>()) {
 
-        DefineName(String("jbdb_") + debugFunc->name());
-        DefineFile(debugFunc->fileName());
-        DefineLine(debugFunc->lineNumber());
+        Func::Function *funcToDebug=ir->unit()->refine<Func::Function>();
+        DefineName(String(a, "Debug::") + funcToDebug->name());
+        DefineFile(funcToDebug->fileName());
+        DefineLine(funcToDebug->lineNumber());
     }
 
-    virtual bool initContext(Base::FunctionCompilation *comp, Base::FunctionContext *fc) {
-        Base::FunctionContext *debugfc = comp->funcContext();
-        for (auto pIt = debugfc->ParametersBegin(); pIt != debugfc->ParametersEnd(); pIt++) {
-            const Base::ParameterSymbol *param = *pIt;
+    virtual bool buildContext(DebugCompilation *comp, Func::FunctionScope *scope, DebugContext *ctx) {
+        // signature should match the original function's
+        for (auto pIt = _contextToDebug->parameters(); pIt.hasItem(); pIt++) {
+            const Func::ParameterSymbol *param = pIt.item();
             fc->DefineParameter(param->name(), param->type());
         }
-        fc->DefineReturnType(debugfc->returnType());
+        ctx->DefineReturnType(_contextToDebug->returnType());
 
+        // entry point to the Debugger
         _debugFuncSym = fc->DefineFunction(LOC, "debugFunction()", __FILE__, DEBUGFUNCTION_LINENUMBER, reinterpret_cast<void *>(&Debugger::debugFunction),
-                                           _base->NoType, 4, _base->Address, _base->Address, _pDebugValue, _pDebugValue);
+                                           _bx->NoType, 4, _bx->Address, _bx->Address, comp->_pDebugValue, comp->_pDebugValue);
     }
 
-    virtual bool buildIL(Base::FunctionCompilation *comp, Base::FunctionContext *fc) {
-        Base::FunctionContext *debugfc = comp->funcContext();
-        Builder *entry = fc->builderEntryPoint();
+    virtual bool buildIL(DebugCompilation *comp, Func::FunctionScope *scope, DebugContext *ctx) {
+        Builder *entry = ctx->entryPoint<BuilderEntry>()->builder();
 
-        Base::LocalSymbol *returnValuesSym = fc->DefineLocal("returnValues", dbgDict()->_pDebugValue);
-        int32_t numReturnValues = fc->numReturnTypes();
+        // allocate debug return values array
+        Func::LocalSymbol *returnValuesSym = ctx->DefineLocal("returnValues", comp->_pDebugValue);
+        int32_t numReturnValues = ctx->numReturnTypes();
         Value *rvPtr = NULL;
         if (numReturnValues > 0)
-            rvPtr = _base->CreateLocalArray(LOC, entry, new Literal(LOC, comp, _base->Int32, (LiteralBytes *)&numReturnValues), dbgDict()->_DebugValue);
+            rvPtr = _bx->CreateLocalArray(LOC, entry, new Literal(LOC, comp, _bx->Int32, (LiteralBytes *)&numReturnValues), comp->_DebugValue);
         else
-            rvPtr = _base->ConstAddress(LOC, entry, 0);
-        _base->Store(LOC, entry, returnValuesSym, _base->CoercePointer(LOC, entry, _pDebugValue, rvPtr));
+            rvPtr = _bx->ConstAddress(LOC, entry, 0);
+        _fx->Store(LOC, entry, returnValuesSym, _bx->CoercePointer(LOC, entry, comp->_pDebugValue, rvPtr));
 
-        Base::LocalSymbol *localsSym = fc->DefineLocal("locals", dbgDict()->_pDebugValue);
-        int32_t numLocals = comp->numLocals();
+        // allocate the debug locals array
+        Func::LocalSymbol *localsSym = ctx->DefineLocal("locals", comp->_pDebugValue);
+        int32_t numLocals = ctx->numLocals();
         Value *lPtr = NULL;
         if (numLocals > 0)
-            lPtr = _base->CreateLocalArray(LOC, entry, numLocals, dbgDict()->_DebugValue);
+            lPtr = _bx->CreateLocalArray(LOC, entry, numLocals, comp->_DebugValue);
         else
-            lPtr = _base->ConstAddress(LOC, entry, 0);
-        _base->Store(LOC, entry, localsSym, _base->CoercePointer(LOC, entry, _pDebugValue, lPtr));
+            lPtr = _bx->ConstAddress(LOC, entry, 0);
+        _fx->Store(LOC, entry, localsSym, _bx->CoercePointer(LOC, entry, comp->_pDebugValue, lPtr));
 
-        for (auto pIt = debugfc->ParametersBegin(); pIt != debugfc->ParametersEnd(); pIt++) {
-            Base::ParameterSymbol *parm = *pIt;
-            storeValue(LOC, entry, parm, _base->Load(LOC, entry, parm));
+        // store arguments we were passed into the debug locals
+        for (auto pIt = ctx->parameters(); pIt.hasItem(); pIt++) {
+            Func::ParameterSymbol *parm = pIt.item();
+            ctx->storeValue(LOC, entry, parm, _fx->Load(LOC, entry, parm));
         }
-        _base->Call(LOC, entry, _debugFuncSym, 4,
-                    _base->ConstAddress(LOC, entry, _debugger),
-                    _base->ConstAddress(LOC, entry, _func),
-                    _base->Load(LOC, entry, returnValuesSym),
-                    _base->Load(LOC, entry, localsSym));
+        
+        // enter the debugger
+        _bx->Call(LOC, entry, _debugFuncSym, 4,
+                  _bx->ConstAddress(LOC, entry, _jbdb),
+                  _bx->ConstAddress(LOC, entry, _func),
+                  _fx->Load(LOC, entry, returnValuesSym),
+                  _fx->Load(LOC, entry, localsSym));
+
+        // read the return value(s), if there are any, from the debug locals and return them to the caller
+        // only handles no or single return value for now
         if (numReturnValues > 0) {
             assert(numReturnValues == 1); // only supporting one return value ffor now
-            _base->Return(LOC, entry, loadFromDebugValue(LOC, entry, _base->Load(LOC, entry, returnValuesSym), _func->getReturnType()));
+            _fx->Return(LOC, entry, ctx->loadFromDebugValue(LOC, entry, _fx->Load(LOC, entry, returnValuesSym), ctx->getReturnType()));
         } else {
-            _base->Return(LOC, entry);
+            _fx->Return(LOC, entry);
         }
   
         return true;
     }
 
 protected:
-    Debugger *_debugger;
+    Debugger *_jbdb;
+    Func::FunctionContext *_contextToDebug;
     Base::FunctionSymbol *_debugFuncSym;
 };
 

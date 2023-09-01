@@ -23,73 +23,37 @@
 #define DEBUGGERFUNCTION_INCL
 
 #include <map>
-#include "CreateLoc.hpp"
-#include "Base/Function.hpp"
+#include "JBCore.hpp"
+#include "Base/Base.hpp"
+#include "Func/Func.hpp"
 
 namespace OMR {
 namespace JitBuilder {
-
-class Builder;
-class Symbol;
-class Type;
-class Value;
-
-namespace Base { class FunctionCompilation; }
-namespace Base { class FunctionContext; }
-namespace Base { class FieldType; }
-namespace Base { class PointerType; }
-namespace Base { class StructType; }
-
 namespace Debug {
 
-class DebugDictionary
 class Debugger;
 
-class DebuggerFunction : public Base::Function {
+class DebugFunction : public Func::Function {
 public:
-
-    DebuggerFunction(LOCATION, Debugger *dbgr, Base::FunctionCompilation *compToDebug);
-    DebuggerFunction(LOCATION, Debugger *dbgr, Base::FunctionCompilation *compToDebug, DebugDictionary *types);
+    ALL_ALLOC_ALLOWED(DebugFunction, LOCATION, Compiler *compiler, Compilation *compToDebug, Operation *opToDebug);
 
 protected:
-    DebugDictionary *dbgDict() { return _debugDictionary; }
-
-    void initialize(DebugDictionary *types);
-
-    virtual bool initContext(LOCATION, Base::FunctionCompilation *comp, Base::FunctionContext *fc);
-
-    void storeValue(LOCATION, Base::FunctionContext *fc, Builder *b, Symbol *local, Value *value);
-    void storeValue(LOCATION, Base::FunctionContext *fc, Builder *b, Value *debugvalue, Value *value);
-    void storeReturnValue(LOCATION, Base::FunctionContext *fc, Builder *b, int32_t resultIdx, Value *value);
-    Value *loadValue(LOCATION, Base::FunctionContext *fc, Builder *b, Symbol *local);
-    Value *loadValue(LOCATION, Base::FunctionContext *fc, Builder *b, Value *value);
-    void storeToDebugValue(LOCATION, Builder *b, Value *debugValue, Value *value);
-    Value *loadFromDebugValue(LOCATION, Builder *b, Value *debugValue, const Type *type);
-
-    const Base::FieldType *lookupTypeField(const Type *type);
-
-    void transferToBoundBuilder(Builder *b, Builder *bound);
-    void transferToUnboundBuilder(Builder *b, Builder *target);
+    virtual bool buildContext(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx);
+    virtual bool buildIL(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx);
 
     Debugger *_debugger;
-    Base::BaseExtension *_base;
-    DebugDictionary *_debugDictionary;
-    Base::FunctionCompilation *_comp;
-    const Base::StructType *_DebugValue;
-    const Base::PointerType *_pDebugValue;
-    const Base::FieldType *_DebugValue_type;
-    std::map<const Type *, const Base::FieldType *> *_DebugValue_fields;
+    CoreExtension *_cx;
+    Func::FunctionExtension *_fx;
+    Base::BaseExtension *_bx;
 
-    const Base::StructType *_DebugFrame;
-    const Base::PointerType *_pDebugFrame;
-    const Base::FieldType *_DebugFrame_info;
-    const Base::FieldType *_DebugFrame_debugger;
-    const Base::FieldType *_DebugFrame_locals;
-    const Base::FieldType *_DebugFrame_values;
-    const Base::FieldType *_DebugFrame_returnValues;
-    const Base::FieldType *_DebugFrame_fromBuilder;
-    const Base::FieldType *_DebugFrame_returning;
-    const Base::FieldType *_DebugFrame_builderToDebug;
+    String _dbgrName;
+    String _localsName;
+    String _valuesName;
+    String _frameName;
+    String _fromBuilderIDName;
+
+    Compilation *_compToDebug;
+    Operation *_opToDebug;
 };
 
 } // namespace Debug

@@ -28,16 +28,14 @@ omr_assert(
 )
 
 add_library(jb2dbg SHARED
+	DebugCompilation.cpp
+	DebugContext.cpp
 	DebugExtension.cpp
-	DebuggerFrame.cpp
 	DebuggerFunction.cpp
-	OperationDebugger.cpp
 	Debugger.cpp
 )
 
 target_include_directories(jb2dbg PRIVATE
-       ${JB2_JBCORE_DIR}
-       ${JB2_JBBASE_DIR}
+       ${JB2_CORE_DIR}
 )
 
-#add_subdirectory(test)

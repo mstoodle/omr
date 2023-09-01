@@ -25,26 +25,20 @@
 #include <stdint.h>
 #include <map>
 #include "JBCore.hpp"
-
+#include "Func/Func.hpp"
+#include "Base/Base.hpp"
 
 namespace OMR {
 namespace JitBuilder {
-
-class Compilation;
-class Context;
-class Location;
-class Value;
-
-namespace Base { class BaseExtension; }
-
 namespace Debug {
 
+class DebugEntry;
 class Debugger;
 
 class DebugExtension : public Extension {
 
 public:
-    DebugExtension(LOCATION, Compiler *compiler, bool extended=false, String extensionName="vm");
+    DebugExtension(MEM_LOCATION(a), Compiler *compiler, bool extended=false, String extensionName="vm");
     virtual ~DebugExtension();
 
     static const String NAME;
@@ -53,8 +47,13 @@ public:
         return &version;
     }
 
-    Base::BaseExtension *base() const { return _base; }
+    Func::FunctionExtension *fx() const { return _fx; }
+    Base::BaseExtension *bx() const { return _bx; }
 
+    DebugEntry *debugEntry(LOCATION, Compilation *comp); // uses IL in whatever current state
+
+    Debugger * createDebugger(MEM_LOCATION(a), InputReader *reader=NULL, TextLogger *logger=NULL);
+ 
     //
     // Types
     //
@@ -72,15 +71,22 @@ public:
     //
 
     // Pseudo operations
-    Debugger *createDebugger(LOCATION, Debugger *caller=NULL);
 
 protected:
-    Base::BaseExtension *_base;
+
+    CoreExtension *_cx;
+    Func::FunctionExtension *_fx;
+    Base::BaseExtension *_bx;
 
     static const MajorID DEBUGEXT_MAJOR=0;
     static const MinorID DEBUGEXT_MINOR=1;
     static const PatchID DEBUGEXT_PATCH=0;
     static const SemanticVersion version;
+
+    static const MajorID REQUIRED_FUNCEXT_MAJOR=0;
+    static const MinorID REQUIRED_FUNCEXT_MINOR=1;
+    static const PatchID REQUIRED_FUNCEXT_PATCH=0;
+    static const SemanticVersion requiredFuncVersion;
 
     static const MajorID REQUIRED_BASEEXT_MAJOR=0;
     static const MinorID REQUIRED_BASEEXT_MINOR=1;
