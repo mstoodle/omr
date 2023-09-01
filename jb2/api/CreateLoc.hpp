@@ -60,12 +60,12 @@ public:
     }
     virtual ~CreateLocation() { }
 
-    String fileName() const { return String(_fileName); }
-    String lineNumber() const { return String::to_string(_lineNumber); }
-    String functionName() const { return String(_functionName); }
+    String fileName(Allocator *dataAllocator) const { return String(dataAllocator, _fileName); }
+    String lineNumber(Allocator *dataAllocator) const { return String::to_string(dataAllocator, _lineNumber); }
+    String functionName(Allocator *dataAllocator) const { return String(dataAllocator, _functionName); }
 
-    String to_string() const {
-        return String(_functionName).append(" in ").append(_fileName).append("@").append(String::to_string(_lineNumber));
+    String to_string(Allocator *dataAllocator) const {
+        return String(dataAllocator, _functionName).append(" in ").append(_fileName).append("@").append(String::to_string(dataAllocator, _lineNumber));
     }
 
     void overrideFileName(const char *fileName) { _fileName = fileName; }

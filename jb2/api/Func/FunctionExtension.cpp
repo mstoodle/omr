@@ -49,13 +49,13 @@ extern "C" {
 
 FunctionExtension::FunctionExtension(MEM_LOCATION(a), Compiler *compiler, bool extended, String extensionName)
     : Extension(MEM_PASSLOC(a), CLASSKIND(FunctionExtension,Extensible), compiler, (extended ? extensionName : NAME))
-    , aLoad(registerAction(String("Load")))
-    , aStore(registerAction(String("Store")))
-    , aCall(registerAction(String("Call")))
-    , aCallVoid(registerAction(String("CallVoid")))
-    , aReturn(registerAction(String("Return")))
-    , aReturnVoid(registerAction(String("ReturnVoid")))
-    , CompileFail_MismatchedArgumentTypes_Call(registerReturnCode("CompileFail_MismatchedArgumentTypes_Call"))
+    , aLoad(registerAction(String(a, "Load")))
+    , aStore(registerAction(String(a, "Store")))
+    , aCall(registerAction(String(a, "Call")))
+    , aCallVoid(registerAction(String(a, "CallVoid")))
+    , aReturn(registerAction(String(a, "Return")))
+    , aReturnVoid(registerAction(String(a, "ReturnVoid")))
+    , CompileFail_MismatchedArgumentTypes_Call(registerReturnCode(String(a, "CompileFail_MismatchedArgumentTypes_Call")))
     , _checkers(NULL, a) {
 
     if (!extended) {
@@ -136,19 +136,20 @@ void
 FunctionExtensionChecker::failValidateCall(LOCATION, Builder *b, FunctionSymbol *target, std::va_list & args) {
     const FunctionType *tgtType = target->functionType();
     CompilationException e(PASSLOC, _func->compiler(), _func->CompileFail_MismatchedArgumentTypes_Call);
-    e.setMessageLine(String("Call: mismatched argument types"));
+    Allocator *mem = _func->compiler()->mem();
+    e.setMessageLine(String(mem, "Call: mismatched argument types"));
     for (int32_t a=0;a < tgtType->numParms();a++) {
         Value *arg = va_arg(args, Value *);
         if (arg->type() != tgtType->parmTypes()[a])
-            e.appendMessageLine(String("  X  "));
+            e.appendMessageLine(String(mem, "  X  "));
         else
-            e.appendMessageLine(String("     "));
-        e.appendMessage(String(" p").append(String::to_string(a)).append(String(" ")).append(tgtType->parmTypes()[a]->to_string())
-         .append(String(" : a")).append(String::to_string(a))
-         .append(String(" v")).append(String::to_string(arg->id()))
-         .append(String(" ")).append(arg->type()->to_string()));
+            e.appendMessageLine(String(mem, "     "));
+        e.appendMessage(String(mem, " p").append(String::to_string(mem, a)).append(String(mem, " ")).append(tgtType->parmTypes()[a]->to_string(mem))
+         .append(String(mem, " : a")).append(String::to_string(mem, a))
+         .append(String(mem, " v")).append(String::to_string(mem, arg->id()))
+         .append(String(mem, " ")).append(arg->type()->to_string(mem)));
     }
-    e.appendMessageLine(String("Argument types must match corresponding parameter types (currently exact, should be assignable to)"));
+    e.appendMessageLine(String(mem, "Argument types must match corresponding parameter types (currently exact, should be assignable to)"));
     throw e;
 }
 

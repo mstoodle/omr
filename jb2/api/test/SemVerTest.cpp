@@ -20,6 +20,7 @@
  *******************************************************************************/
 
 #include "gtest/gtest.h"
+#include "AllocatorRaw.hpp"
 #include "SemanticVersion.hpp"
 
 using namespace OMR::JitBuilder;
@@ -106,26 +107,46 @@ TEST(SemVerTest, CreationTests) {
 
 #define EXPECT_CORE3(ma,mi,pa ) \
     do { \
+        AllocatorRaw mem; \
         SemanticVersion v((MajorID)ma,mi,pa); \
-        EXPECT_EQ(v.coreVersion(), #ma "." #mi "." #pa) << "SemanticVersion(" #ma "," #mi "," #pa ")"; \
+        String core = v.coreVersion(&mem); \
+        const char *string = core.c_str(); \
+        const char *expectedString = #ma "." #mi "." #pa; \
+        int comparison=strcmp(string,expectedString); \
+        EXPECT_EQ(comparison, 0) << "SemanticVersion(" #ma "," #mi "," #pa ")"; \
     } while (0)
 
 #define EXPECT_CORE4(ma,mi,pa,pr ) \
     do { \
+        AllocatorRaw mem; \
         SemanticVersion v((MajorID)ma,mi,pa,String(pr),String("")); \
-        EXPECT_EQ(v.coreVersion(), #ma "." #mi "." #pa) ; \
+        String core = v.coreVersion(&mem); \
+        const char *string = core.c_str(); \
+        const char *expectedString = #ma "." #mi "." #pa; \
+        int comparison=strcmp(string,expectedString); \
+        EXPECT_EQ(comparison, 0) << "SemanticVersion(" #ma "," #mi "," #pa ")"; \
     } while (0)
 
 #define EXPECT_CORE4bm(ma,mi,pa,bm ) \
     do { \
+        AllocatorRaw mem; \
         SemanticVersion v((MajorID)ma,mi,pa,String(""),String(bm)); \
-        EXPECT_EQ(v.coreVersion(), #ma "." #mi "." #pa); \
+        String core = v.coreVersion(&mem); \
+        const char *string = core.c_str(); \
+        const char *expectedString = #ma "." #mi "." #pa; \
+        int comparison=strcmp(string,expectedString); \
+        EXPECT_EQ(comparison, 0) << "SemanticVersion(" #ma "," #mi "," #pa ")"; \
     } while (0)
 
 #define EXPECT_CORE5(ma,mi,pa,pr,bm ) \
     do { \
+        AllocatorRaw mem; \
         SemanticVersion v((MajorID)ma,mi,pa,String(pr),String(bm)); \
-        EXPECT_EQ(v.coreVersion(), #ma "." #mi "." #pa); \
+        String core = v.coreVersion(&mem); \
+        const char *string = core.c_str(); \
+        const char *expectedString = #ma "." #mi "." #pa; \
+        int comparison=strcmp(string,expectedString); \
+        EXPECT_EQ(comparison, 0) << "SemanticVersion(" #ma "," #mi "," #pa ")"; \
     } while (0)
 
 TEST(SemVerTest, CoreNaming) {
@@ -143,26 +164,30 @@ TEST(SemVerTest, CoreNaming) {
 
 #define EXPECT_NAME3(ma,mi,pa,m) \
     do { \
+        AllocatorRaw mem; \
         SemanticVersion v((MajorID)ma,mi,pa); \
-        EXPECT_EQ(v.semver(), #ma "." #mi "." #pa) << m; \
+        EXPECT_EQ(v.semver(&mem), #ma "." #mi "." #pa) << m; \
     } while (0)
 
 #define EXPECT_NAME4(ma,mi,pa,pr,m) \
     do { \
+        AllocatorRaw mem; \
         SemanticVersion v((MajorID)ma,mi,pa,String(pr),String("")); \
-        EXPECT_EQ(v.semver(), #ma "." #mi "." #pa "-" pr)  << m; \
+        EXPECT_EQ(v.semver(&mem), #ma "." #mi "." #pa "-" pr)  << m; \
     } while (0)
 
 #define EXPECT_NAME4bm(ma,mi,pa,bm,m) \
     do { \
+        AllocatorRaw mem; \
         SemanticVersion v((MajorID)ma,mi,pa,String(""),String(bm)); \
-        EXPECT_EQ(v.semver(), #ma "." #mi "." #pa "+" bm) << m; \
+        EXPECT_EQ(v.semver(&mem), #ma "." #mi "." #pa "+" bm) << m; \
     } while (0)
 
 #define EXPECT_NAME5(ma,mi,pa,pr,bm,m) \
     do { \
+        AllocatorRaw mem; \
         SemanticVersion v((MajorID)ma,mi,pa,String(pr),String(bm)); \
-        EXPECT_EQ(v.semver(), #ma "." #mi "." #pa "-" pr "+" bm) << m; \
+        EXPECT_EQ(v.semver(&mem), #ma "." #mi "." #pa "-" pr "+" bm) << m; \
     } while (0)
 
 TEST(SemVerTest, FullNaming) {

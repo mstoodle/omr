@@ -75,7 +75,7 @@ public:
     ALL_ALLOC_ALLOWED(Compiler, Compiler *parent, String name, Config *config=NULL);
 
     CompilerID id() const { return _id; }
-    String name() const { return _name; }
+    const String & name() const { return _name; }
     Config *config() const { return _config; }
     Compiler *parent() const { return _parent; }
     Allocator *mem() const { return _mem; }
@@ -162,9 +162,9 @@ protected:
 
     uint64_t _eyeCatcher;
     CompilerID _id;
-    String _name;
     AllocatorRaw _mallocAllocator;
     Allocator *_baseAllocator; // must come after _mallocAllocator
+    String _name; // must come after _baseAllocator
     bool _myConfig;
     Config *_config; // must come after _baseAllocator and before _mem
     Allocator *_mem; // must come after _config;
@@ -253,8 +253,8 @@ public:
     CompilerReturnCode result() const { return _result; }
     String resultString() const { return _compiler->returnCodeName(_result); }
 
-    String location() const     { return            String(_location.to_string()) ; }
-    String locationLine() const { return String(addNewLine(_location.to_string())); }
+    String location() const     { return            String(_location.to_string(_compiler->mem())) ; }
+    String locationLine() const { return String(addNewLine(_location.to_string(_compiler->mem()))); }
 
     String message() const { return _message; }
 

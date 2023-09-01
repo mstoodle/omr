@@ -49,7 +49,7 @@ public:
     EntryID entryID() const { return _entryID; }
     bool isEntry(EntryID entryID) { return _entryID == entryID; }
 
-    String name() const { return _name; }
+    const String & name() const { return _name; }
 
     //Compilation *comp() const { return _comp; }
 

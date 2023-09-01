@@ -363,7 +363,7 @@ TEST(BaseExtension, createStorePointerAddressFunction) {
         Func::ParameterSymbol *_parm; const Base::StructType *_structType; const Base::PointerType *_pStructType;, b, \
         { }, \
         { Base::StructTypeBuilder stb(_bx, comp); \
-          stb.setName(",Struct") \
+          stb.setName("Struct") \
              ->addField("field", _bx->type, 0); \
           _structType = stb.create(LOC); \
           _pStructType = _bx->PointerTo(LOC, comp, _structType); \
@@ -601,9 +601,9 @@ typedef struct MyRecursiveStruct {
 
 void
 MyRecursiveStructHelper(const Base::StructType *sType, Base::StructTypeBuilder *builder) {
-    Base::BaseExtension *ext = builder->extension();
-    builder->addField("x", ext->Int32, 8*offsetof(MyRecursiveStruct, x))
-           ->addField("next", ext->PointerTo(LOC, builder->ir(), sType), 8*offsetof(MyRecursiveStruct, next));
+    Base::BaseExtension *bx = builder->extension();
+    builder->addField("x", bx->Int32, 8*offsetof(MyRecursiveStruct, x))
+           ->addField("next", bx->PointerTo(LOC, builder->ir(), sType), 8*offsetof(MyRecursiveStruct, next));
 }
 
 BASE_FUNC(CreateRecursiveStructFunction, "0", "CreateRecursiveStruct.cpp", \
@@ -1063,7 +1063,7 @@ TESTIFTHENELSETYPEFUNC_Address(__FILE__, __LINE__, __func__)
     FORLOOPTYPEFUNC(Int32) \
     TEST(BaseExtension, create ## type ## ForLoopFunction) { \
         typedef size_t (FuncProto)(ctype, ctype, ctype); \
-        COMPILE_FUNC(fl,ln,fn, type ## _ ## type ## _ ## type ## _ ## type ## _ForLoopFunction, FuncProto, f, true); \
+        COMPILE_FUNC(fl,ln,fn, type ## _ ## type ## _ ## type ## _ ## type ## _ForLoopFunction, FuncProto, f, false); \
         EXPECT_EQ(f(0,100,1), 100) << "ForLoopUp(0,100,1) counts 100 iterations"; \
         EXPECT_EQ(f(0,100,2), 50) << "ForLoopUp(0,100,2) counts 50 iterations"; \
         EXPECT_EQ(f(0,100,3), 34) << "ForLoopUp(0,100,3) counts 34 iterations"; \

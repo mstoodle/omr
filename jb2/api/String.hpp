@@ -22,7 +22,6 @@
 #ifndef STRING_INCL
 #define STRING_INCL
 
-#include <string>
 #include "Allocatable.hpp"
 
 namespace OMR {
@@ -36,87 +35,64 @@ class String : public Allocatable {
     friend class TextLogger;
 
 public:
-    ALL_ALLOC_ALLOWED_NOARGS(String);
-    ALL_ALLOC_ALLOWED(String, const char *s);
-    ALL_ALLOC_ALLOWED(String, const String & s);
+    // Explicit Allocator parameter is for the underlying characters, not for the String object itself
+    ALL_ALLOC_ALLOWED(String, Allocator *dataAllocator);
+    ALL_ALLOC_ALLOWED(String, Allocator *dataAllocator, const char *s);
+    ALL_ALLOC_ALLOWED(String, Allocator *dataAllocator, const String & s);
 
-    String operator=(const char *s) {
-        _string = std::string(s);
-        return *this;
-    }
-    String operator=(const String other) {
-        _string = other._string;
-        return *this;
-    }
-    operator std::string() const { return _string; }
+    // If explicit Allocator isn't provided, then some operations will fail unless an Allocator is provided (provideAllocator)
+    // Commonly used to provide default values for String parameters
+    String();
+    String(const char *s);
 
-    size_t length() const {
-        return _string.length();
+    // rule of 3
+    String(const String & other);
+    String operator=(const String & other);
+        
+    // rule of 5
+    String(String && other);
+    String & operator=(const String && other);
+    String & operator=(const char *s);
+
+    size_t length()    const { return _length; }
+    const char *c_str() const {
+        if (_length == 0)
+            return "";
+        return _bytes;
     }
+
+    void provideAllocator(Allocator *mem) { _dataAllocator = mem; }
 
     void log(TextLogger & log) const;
 
-    String append(const String & other) {
-        _string = _string.append(other._string);
-        return *this;
-    }
-
-    String operator+(String other) {
-        String concat((_string + other._string).c_str());
-        return concat;
-    }
-    String operator+(const char * other) {
-        String concat((_string + other).c_str());
-        return concat;
-    }
-    bool operator==(const String other) const {
-        return _string == other._string;
-    }
-    bool operator<(const String other) const {
-        return _string < other._string;
-    }
-
-    const char *c_str() const {
-        return _string.c_str();
-    }
+    String & append(const String & other);
+    String operator+(const String & other);
+    String operator+(const char * other);
+    bool operator==(const char * other) const;
+    bool operator<(const char * other) const;
+    bool operator==(const String & other) const;
+    bool operator<(const String & other) const;
 
 #if defined(OSX)
-    static String to_string(size_t v) {
-        String str(std::to_string(v).c_str());
-        return str;
-    }
+    static String to_string(Allocator *dataAllocator, size_t v);
 #endif
-    static String to_string(int64_t v) {
-        String str(std::to_string(v).c_str());
-        return str;
-    }
-    static String to_string(uint64_t v) {
-        String str(std::to_string(v).c_str());
-        return str;
-    }
-    static String to_string(int32_t v) {
-        String str(std::to_string(v).c_str());
-        return str;
-    }
-    static String to_string(uint32_t v) {
-        String str(std::to_string(v).c_str());
-        return str;
-    }
-    static String to_string(int16_t v) {
-        String str(std::to_string(v).c_str());
-        return str;
-    }
-    static String to_string(uint16_t v) {
-        String str(std::to_string(v).c_str());
-        return str;
-    }
+    static String to_string(Allocator *dataAllocator, int64_t v);
+    static String to_string(Allocator *dataAllocator, uint64_t v);
+    static String to_string(Allocator *dataAllocator, int32_t v);
+    static String to_string(Allocator *dataAllocator, uint32_t v);
+    static String to_string(Allocator *dataAllocator, int16_t v);
+    static String to_string(Allocator *dataAllocator, uint16_t v);
 
 protected:
-    std::string _string;
+    void initializeBytes(size_t len, const char *source);
+    void grow(const char *suffix, size_t suffixLen);
+
+    Allocator *_dataAllocator;
+    const char *_bytes;
+    size_t _length;
 };
 
 } // namespace JitBuilder
 } // namespace OMR
 
 #endif // defined(STRING_INCL)
-

@@ -61,7 +61,7 @@ public:
     void RemoveLiteral(Literal *literal);
 
     LiteralDictionaryID id() const { return _id; }
-    String name() const { return _name; }
+    const String & name() const { return _name; }
     bool hasLinkedDictionary() const { return _linkedDictionary != NULL; }
     LiteralDictionary *linkedDictionary() { return _linkedDictionary; }
 

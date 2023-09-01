@@ -58,7 +58,7 @@ public:
     static const String NAME;
 
     Compiler *compiler() const { return _compiler; }
-    String name() const { return _name; }
+    const String & name() const { return _name; }
 
     const String actionName(ActionID a) const;
 

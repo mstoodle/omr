@@ -54,7 +54,7 @@ BaseIRAddon::registerPointerType(const PointerType *pType) {
 }
 
 const StructType *
-BaseIRAddon::structTypeFromName(String name) {
+BaseIRAddon::structTypeFromName(const String & name) {
     auto found = _structTypeFromName.find(name);
     if (found != _structTypeFromName.end()) {
         const StructType *t = found->second;

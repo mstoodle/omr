@@ -300,7 +300,7 @@ public:
     TypeDictionary *dict() const { return _dict; }
     const Type *baseType() const { return _baseType; }
     PointerTypeHelper *helper() const { return _helper; }
-    String name() const { return String("PointerTo(") + _baseType->name() + String(")"); }
+    String name() const { return String(_ir->mem(), "PointerTo(") + _baseType->name() + String(_ir->mem(), ")"); }
 
     const PointerType *create(LOCATION);
 
@@ -322,7 +322,7 @@ public:
 
     virtual Literal *literal(LOCATION, IR *ir, const void * value) const;
     virtual bool literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const;
-    virtual String to_string(bool useHeader=false) const;
+    virtual String to_string(Allocator *mem, bool useHeader=false) const;
     virtual void logValue(TextLogger & lgr, const void *p) const;
     virtual void logLiteral(TextLogger & lgr, const Literal *lv) const;
     virtual const Type * replace(TypeReplacer *repl);
@@ -356,7 +356,7 @@ public:
 
     Literal *literal(LOCATION, IR *ir, const LiteralBytes * structValue) const { return NULL; };
     virtual bool literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const { return false; }
-    virtual String to_string(bool useHeader=false) const;
+    virtual String to_string(Allocator *mem, bool useHeader=false) const;
     virtual void logValue(TextLogger & lgr, const void *p) const { }
     virtual void logLiteral(TextLogger & lgr, const Literal *lv) const { }
 
@@ -465,7 +465,7 @@ public:
 
     virtual Literal *literal(LOCATION, IR *ir, const LiteralBytes * structValue) const;
     virtual bool literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const;
-    virtual String to_string(bool useHeader=false) const;
+    virtual String to_string(Allocator *mem, bool useHeader=false) const;
     virtual void logValue(TextLogger & lgr, const void *p) const;
     virtual void logLiteral(TextLogger & lgr, const Literal *lv) const;
 

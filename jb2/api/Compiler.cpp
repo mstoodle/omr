@@ -51,9 +51,9 @@ INIT_JBALLOC(Compiler);
 #define CTOR_FIELDS(p,n,cfg,m) \
     , _eyeCatcher(EYE_CATCHER_COMPILER) \
     , _id(nextCompilerID++) \
-    , _name(n) \
     , _mallocAllocator() \
     , _baseAllocator(((m) != NULL) ? (m) : (&_mallocAllocator)) \
+    , _name(_baseAllocator, n) \
     , _myConfig((cfg) == NULL) \
     , _config(_myConfig ? new (_baseAllocator) Config(_baseAllocator) : (cfg)) \
     , _mem(_config->compilerAllocator(_baseAllocator)) \
@@ -83,9 +83,9 @@ INIT_JBALLOC(Compiler);
     , _targetPlatform(NULL) \
     , _compilerPlatform(NULL) \
     , _clientPlatform(NULL) \
-    , _litdict(new (_mem) LiteralDictionary(_mem, this, name + " Compiler Literal Dictionary")) \
-    , _symdict(new (_mem) SymbolDictionary(_mem, this, name + " Compiler Symbol Dictionary")) \
-    , _typedict(new (_mem) TypeDictionary(_mem, this, name + " Compiler Type Dictionary")) \
+    , _litdict(new (_mem) LiteralDictionary(_mem, this, _name + " Compiler Literal Dictionary")) \
+    , _symdict(new (_mem) SymbolDictionary(_mem, this, _name + " Compiler Symbol Dictionary")) \
+    , _typedict(new (_mem) TypeDictionary(_mem, this, _name + " Compiler Type Dictionary")) \
     , _textWriters(NULL, _mem) \
     , _errorCondition(NULL) \
     , CompileSuccessful(assignReturnCode("CompileSuccessful")) \
@@ -224,7 +224,7 @@ Compiler::internalLoadExtension(LOCATION, const SemanticVersion *version, String
         return NULL;
     }
 
-    String soname = String("lib") + name + String(platformLibrarySuffix());
+    String soname = String(mem(), "lib") + name + String(mem(), platformLibrarySuffix());
     void *handle = dlopen(soname.c_str(), RTLD_LAZY);
     if (!handle) {
         extensionCouldNotLoad(LOC, soname, dlerror());
@@ -468,39 +468,39 @@ Compiler::clearErrorCondition() {
 void
 Compiler::extensionCouldNotLoad(LOCATION, String name, char *dlerrorMsg) {
     CompilationException *e = new (_mem) CompilationException(MEM_PASSLOC(_mem), this, this->CompilerError_Extension_CouldNotLoad);
-    (*e).setMessageLine(String("Extension could not be loaded"))
-        .appendMessageLine(String("Library name: ").append(name))
-        .appendMessageLine(String("dlerror() reports ").append(String(dlerrorMsg)));
+    (*e).setMessageLine(String(_mem, "Extension could not be loaded"))
+        .appendMessageLine(String(_mem, "Library name: ").append(name))
+        .appendMessageLine(String(_mem, "dlerror() reports ").append(String(dlerrorMsg)));
     _errorCondition = e;
 }
 
 void
 Compiler::extensionHasNoCreateFunction(LOCATION, Extension *ext, String name, char *dlerrorMsg) {
     CompilationException *e = new (_mem) CompilationException(MEM_PASSLOC(_mem), this, this->CompilerError_Extension_HasNoCreateFunction);
-    (*e).setMessageLine(String("Extension does not have a create() function"))
-        .appendMessageLine(String("Library loaded: ").append(name))
-        .appendMessageLine(String("dlerror() reports ").append(String(dlerrorMsg)));
+    (*e).setMessageLine(String(_mem, "Extension does not have a create() function"))
+        .appendMessageLine(String(_mem, "Library loaded: ").append(name))
+        .appendMessageLine(String(_mem, "dlerror() reports ").append(String(dlerrorMsg)));
     _errorCondition = e;
 }
 
 void
 Compiler::extensionCouldNotCreate(LOCATION, String name) {
     CompilationException *e = new (_mem) CompilationException(MEM_PASSLOC(_mem), this, this->CompilerError_Extension_CouldNotCreate);
-    (*e).setMessageLine(String("Extension create() function returned NULL"))
-        .appendMessageLine(String("Library loaded: ").append(name));
+    (*e).setMessageLine(String(_mem, "Extension create() function returned NULL"))
+        .appendMessageLine(String(_mem, "Library loaded: ").append(name));
     _errorCondition = e;
 }
 
 void
 Compiler::extensionVersionMismatch(LOCATION, String name, const SemanticVersion * version, const SemanticVersion * extensionVersion) {
     CompilationException *e = new (_mem) CompilationException(MEM_PASSLOC(_mem), this, this->CompilerError_Extension_VersionMismatch);
-    (*e).setMessageLine(String("Extension version mismatch"))
-        .appendMessageLine(String("Requested: major ").append(String::to_string(version->major())))
-        .appendMessageLine(String("           minor ").append(String::to_string(version->minor())))
-        .appendMessageLine(String("           patch ").append(String::to_string(version->patch())))
-        .appendMessageLine(String("Loaded:    major ").append(String::to_string(extensionVersion->major())))
-        .appendMessageLine(String("           minor ").append(String::to_string(extensionVersion->minor())))
-        .appendMessageLine(String("           patch ").append(String::to_string(extensionVersion->patch())));
+    (*e).setMessageLine(String(_mem, "Extension version mismatch"))
+        .appendMessageLine(String(_mem, "Requested: major ").append(String::to_string(_mem, version->major())))
+        .appendMessageLine(String(_mem, "           minor ").append(String::to_string(_mem, version->minor())))
+        .appendMessageLine(String(_mem, "           patch ").append(String::to_string(_mem, version->patch())))
+        .appendMessageLine(String(_mem, "Loaded:    major ").append(String::to_string(_mem, extensionVersion->major())))
+        .appendMessageLine(String(_mem, "           minor ").append(String::to_string(_mem, extensionVersion->minor())))
+        .appendMessageLine(String(_mem, "           patch ").append(String::to_string(_mem, extensionVersion->patch())));
     _errorCondition = e;
 }
 
@@ -517,7 +517,7 @@ CompilationException::CompilationException(Allocator *a,
     , _compiler(compiler)
     , _result(result)
     , _location(PASSLOC)
-    , _message(String("CompilationException")) {
+    , _message(String(compiler->mem(), "CompilationException")) {
 }
 
 CompilationException::CompilationException(LOCATION,
@@ -527,7 +527,7 @@ CompilationException::CompilationException(LOCATION,
     , _compiler(compiler)
     , _result(result)
     , _location(PASSLOC)
-    , _message(String("CompilationException")) {
+    , _message(String(compiler->mem(), "CompilationException")) {
 }
 
 CompilationException::~CompilationException() {

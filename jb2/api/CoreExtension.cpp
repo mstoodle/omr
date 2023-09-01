@@ -48,8 +48,8 @@ CoreExtension::CoreExtension(Allocator *a, LOCATION, Compiler *compiler)
     : Extension(MEM_PASSLOC(a), CLASSKIND(CoreExtension,Extensible), compiler, NAME)
     , _codegenStrategy(new (a) Strategy(a, compiler, "CodeGen"))
     , NoType(new (a) NoTypeType(MEM_LOC(a), this))
-    , aAppendBuilder(registerAction(String("AppendBuilder")))
-    , aMergeDef(registerAction(String("MergeDef")))
+    , aAppendBuilder(registerAction(String(a, "AppendBuilder")))
+    , aMergeDef(registerAction(String(a, "MergeDef")))
     , strategyCodegen(_codegenStrategy->id()) {
 
     _dispatcher = new (a) Dispatcher<CodeGenerator>(a, this, "CodeGenDispatcher");

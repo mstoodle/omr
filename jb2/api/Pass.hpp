@@ -42,7 +42,7 @@ class Pass : public Extensible {
 public:
     DYNAMIC_ALLOC_ONLY(Pass, KINDTYPE(Extensible) kind, Extension *ext, String name);
 
-    String name() const { return _name; }
+    const String & name() const { return _name; }
     PassID id() const { return _id; }
 
     virtual CompilerReturnCode perform(Compilation *comp);

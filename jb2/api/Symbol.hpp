@@ -46,7 +46,7 @@ class Symbol : public Allocatable {
     friend class SymbolDictionary;
 
 public:
-    String name() const { return _name; }
+    const String & name() const { return _name; }
     const Type * type() const { return _type; }
     SymbolID id() const { return _id; }
     void log(TextLogger & lgr) const;

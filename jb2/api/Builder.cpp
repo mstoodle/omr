@@ -197,6 +197,11 @@ Builder::add(Operation *op) {
     return this;
 }
 
+String
+Builder::to_string() const {
+    return String(_ir->mem(), "B").append(String::to_string(_ir->mem(), _id));
+}
+
 void
 Builder::logProperties(TextLogger & lgr) const {
     if (parent())

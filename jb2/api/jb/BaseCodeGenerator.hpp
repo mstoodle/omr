@@ -46,7 +46,9 @@ public:
 protected:
     virtual void visitPreCompilation(Compilation * comp) { }
 
-    void registerAllStructFields(JBMethodBuilder *jbmb, const Base::StructType *sType, String structName, String fNamePrefix, size_t baseOffset) const;
+    const String & registerFieldString(const Base::StructType * sType, const Base::FieldType *fType, const String & name);
+    const String & lookupFieldString(const Base::StructType * sType, const Base::FieldType *fType);
+    void registerAllStructFields(JBMethodBuilder *jbmb, const Base::StructType *sType, const Base::StructType * baseStructType, const String & fNamePrefix, size_t baseOffset);
 
     typedef void (BaseJBCodeGenerator::*gencodeFunction)(JBMethodBuilder *jbmb, Operation *op);
     void gencodeConst(JBMethodBuilder *jbmb, Operation *op);
@@ -103,6 +105,9 @@ protected:
     Array<gencodeFunction> _gencodeVFT;
     Array<genconstFunction> _genconstVFT;
     Array<regtypeFunction> _regtypeVFT;
+
+    typedef std::map<const Base::FieldType *, String *> FieldMapType;
+    std::map<const Base::StructType *, FieldMapType> _structFieldNameMap;
 
     SUBCLASS_KINDSERVICE_DECL(Extensible,BaseJBCodeGenerator);
 };

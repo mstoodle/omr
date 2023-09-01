@@ -94,7 +94,7 @@ FunctionCompilationAddon::FunctionCompilationAddon(Allocator *a, Extension *ext,
 
 const FunctionType *
 FunctionCompilationAddon::lookupFunctionType(const Type *returnType, int32_t numParms, const Type **parmTypes) {
-    String name = FunctionType::typeName(returnType, numParms, parmTypes);
+    String name = FunctionType::typeName(root()->refine<FunctionCompilation>()->mem(), returnType, numParms, parmTypes);
     auto it = _functionTypesFromName.find(name);
     if (it != _functionTypesFromName.end()) {
         const FunctionType *fType = it->second;
@@ -126,7 +126,7 @@ FunctionCompilation::log(TextLogger &lgr) const {
 
     FunctionContext *fc = context<FunctionContext>();
     lgr.indent() << "[ name " << func()->name() << " ]" << lgr.endl();
-    lgr.indent() << "[ creator " << func()->createLoc()->to_string() << " ]" << lgr.endl();
+    lgr.indent() << "[ creator " << func()->createLoc()->to_string(mem()) << " ]" << lgr.endl();
     lgr.indent() << "[ returnType " << fc->returnType() << "]" << lgr.endl();
     for (auto paramIt = fc->parameters();paramIt.hasItem(); paramIt++) {
         const ParameterSymbol *parameter = paramIt.item();
@@ -178,9 +178,11 @@ FunctionCompilation::replaceTypes(TypeReplacer *repl) {
             SymbolMapper *parmSymMapper = new (mem()) SymbolMapper(mem());
             if (repl->isModified(type)) {
                 TypeMapper *parmTypeMapper = repl->mapperForType(type);
-                String baseName("");
-                if (parmTypeMapper->size() > 1)
-                    baseName = parm->name() + ".";
+                String baseName(mem(), "");
+                if (parmTypeMapper->size() > 1) {
+                    baseName = parm->name();
+                    baseName.append(".");
+                }
 
                 LOG_INDENT_REGION(lgr) {
                     for (int i=0;i < parmTypeMapper->size();i++) {
@@ -231,8 +233,10 @@ FunctionCompilation::replaceTypes(TypeReplacer *repl) {
             if (repl->isModified(type)) {
                 TypeMapper *typeMapper = repl->mapperForType(type);
                 String baseName("");
-                if (typeMapper->size() > 1)
-                    baseName = local->name() + ".";
+                if (typeMapper->size() > 1) {
+                    baseName = local->name();
+                    baseName.append(".");
+                }
 
                 LOG_INDENT_REGION(lgr) {
                     for (int i=0;i < typeMapper->size();i++) {

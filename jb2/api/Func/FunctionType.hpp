@@ -90,7 +90,7 @@ public:
     #endif
     
     //virtual Literal *literal(LOCATION, IR *ir, void * functionValue);
-    virtual String to_string(bool useHeader=false) const;
+    virtual String to_string(Allocator *mem, bool useHeader=false) const;
 
     const Type *returnType() const { return _returnType; }
     int32_t numParms() const { return _numParms; }
@@ -101,7 +101,7 @@ public:
 
     virtual const Type * replace(TypeReplacer *repl);
 
-    static String typeName(const Type *returnType, int32_t numParms, const Type **parmTypes);
+    static String typeName(Allocator *mem, const Type *returnType, int32_t numParms, const Type **parmTypes);
 
     static const TypeKind getTypeClassKind();
 

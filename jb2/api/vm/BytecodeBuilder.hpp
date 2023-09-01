@@ -50,7 +50,7 @@ public:
 
     void propagateVMState(LOCATION, VirtualMachineState *fromState);
 
-    virtual String logName() const { return String("BytecodeBuilder"); }
+    virtual String logName() const { return String(allocator(), "BytecodeBuilder"); }
     virtual void logProperties(TextLogger & lgr);
 
 protected:

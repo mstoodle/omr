@@ -104,7 +104,9 @@ operator<< (TextLogger &log, const Scope *s) {
 
 TextLogger &
 operator<< (TextLogger &log, const Symbol *s) {
-    log << "[ s" << s->id() << "_" << s->type() << " \"" << s->name() << "\" ]";
+    log << "[ s" << s->id() << "_" << s->type() << " \"" << s->name() << "\"";
+    s->logDetails(log);
+    log << "]";
     return log;
 }
 

@@ -71,7 +71,7 @@ FunctionSymbol::functionType() const {
 
 void
 FunctionSymbol::logDetails(TextLogger & lgr) const {
-   lgr << "Function";
+   lgr << " Function";
 }
 
 INIT_JBALLOC_REUSECAT(LocalSymbol, Symbol)
@@ -94,7 +94,7 @@ LocalSymbol::~LocalSymbol() {
 
 void
 LocalSymbol::logDetails(TextLogger & lgr) const {
-   lgr << "Local";
+   lgr << " Local";
 }
 
 INIT_JBALLOC_REUSECAT(ParameterSymbol, Symbol)
@@ -118,7 +118,7 @@ ParameterSymbol::~ParameterSymbol() {
 
 void
 ParameterSymbol::logDetails(TextLogger & lgr) const {
-   lgr << "ParameterLocal";
+   lgr << " Parameter";
 }
 
 
