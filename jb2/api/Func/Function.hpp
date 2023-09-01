@@ -52,9 +52,9 @@ public:
     void DefineFile(String file);
     void DefineLine(String line);
 
-    String name() const { return _givenName; }
-    String fileName() const { return _fileName; }
-    String lineNumber() const { return _lineNumber; }
+    const String & name() const { return _givenName; }
+    const String & fileName() const { return _fileName; }
+    const String & lineNumber() const { return _lineNumber; }
 
 protected:
     ALL_ALLOC_ALLOWED(Function, LOCATION, Compiler *compiler);

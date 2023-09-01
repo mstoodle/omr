@@ -85,7 +85,7 @@ public:
     DYNAMIC_ALLOC_ONLY(Scope, Extension *ext, Scope *parent, String name="");
 
     ScopeID id() const { return _id; }
-    String name() const { return _name; }
+    const String & name() const { return _name; }
     IR *ir() const { return _ir; }
 
     Context *context() const { return _context; }

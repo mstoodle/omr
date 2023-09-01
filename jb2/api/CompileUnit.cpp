@@ -40,35 +40,35 @@ INIT_JBALLOC_ON(CompileUnit, Compiler)
 
 CompileUnit::CompileUnit(MEM_LOCATION(a), Compiler *compiler, String name)
     : Allocatable(a)
+    , _compiler(compiler)
     , _id(compiler->getCompileUnitID())
     , _createLocation(PASSLOC)
-    , _name(name)
-    , _compiler(compiler)
+    , _name(compiler->mem(), name)
     , _outerUnit(NULL) {
 }
 CompileUnit::CompileUnit(LOCATION, Compiler *compiler, String name)
     : Allocatable()
+    , _compiler(compiler)
     , _id(compiler->getCompileUnitID())
     , _createLocation(PASSLOC)
-    , _name(name)
-    , _compiler(compiler)
+    , _name(compiler->mem(), name)
     , _outerUnit(NULL) {
 }
 
 CompileUnit::CompileUnit(MEM_LOCATION(a), CompileUnit *outerUnit, String name)
     : Allocatable(a)
+    , _compiler(outerUnit->_compiler)
     , _id(outerUnit->_compiler->getCompileUnitID())
     , _createLocation(PASSLOC)
-    , _name(name)
-    , _compiler(outerUnit->_compiler)
+    , _name(_compiler->mem(), name)
     , _outerUnit(outerUnit) {
 }
 CompileUnit::CompileUnit(LOCATION, CompileUnit *outerUnit, String name)
     : Allocatable()
+    , _compiler(outerUnit->_compiler)
     , _id(outerUnit->_compiler->getCompileUnitID())
     , _createLocation(PASSLOC)
-    , _name(name)
-    , _compiler(outerUnit->_compiler)
+    , _name(_compiler->mem(), name)
     , _outerUnit(outerUnit) {
 }
 
@@ -90,7 +90,7 @@ CompileUnit::log(TextLogger &lgr) const {
     lgr.indentIn();
 
     lgr.indent() << "[ name " << name() << " ]" << lgr.endl();
-    lgr.indent() << "[ creator " << _createLocation.to_string() << " ]" << lgr.endl();
+    lgr.indent() << "[ creator " << _createLocation.to_string(_compiler->mem()) << " ]" << lgr.endl();
 
     logSpecific(lgr);
 

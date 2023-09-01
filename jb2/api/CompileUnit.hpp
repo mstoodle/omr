@@ -56,7 +56,7 @@ public:
     Compiler *compiler() const { return _compiler; }
     const CreateLocation *createLoc() const { return &_createLocation; }
 
-    String name() const { return _name; }
+    const String & name() const { return _name; }
 
     CompileUnit *outerUnit() const { return _outerUnit; }
 
@@ -84,10 +84,10 @@ protected:
     virtual bool buildContext(LOCATION, Compilation *comp, Scope *scope, Context *ctx) { return true; }
     virtual bool buildIL(LOCATION, Compilation *comp, Scope *scope, Context *ctx) { return true; }
 
-    CompileUnitID                         _id;
+    Compiler                            * _compiler;
+    CompileUnitID                         _id; // must come after _compiler
     CreateLocation                        _createLocation;
     String                                _name;
-    Compiler                            * _compiler;
     CompileUnit                         * _outerUnit;
     std::map<StrategyID,CompiledBody *>   _bodies;
 

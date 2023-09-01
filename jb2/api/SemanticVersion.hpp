@@ -87,8 +87,8 @@ public:
             validate();
         }
 
-    String coreVersion() const;
-    String semver() const;
+    String coreVersion(Allocator *mem) const;
+    String semver(Allocator *mem) const;
 
     bool isValid() const { return this->_valid; }
     bool isStable() const { return (this->_major > 0); }

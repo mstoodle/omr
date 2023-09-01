@@ -101,34 +101,34 @@ Type::literal(LOCATION, IR *ir, const LiteralBytes *value) const {
 }
 
 String
-Type::base_string(bool useHeader) const {
-    String s;
+Type::base_string(Allocator *mem, bool useHeader) const {
+    String s(mem);
     if (useHeader)
         s.append("type ");
-    s.append(String("t"));
-    s.append(String::to_string(this->id()));
-    s.append(String(" "));
-    s.append(String::to_string(this->size()));
-    s.append(String(" "));
+    s.append(String(mem, "t"));
+    s.append(String::to_string(mem, this->id()));
+    s.append(String(mem, " "));
+    s.append(String::to_string(mem, this->size()));
+    s.append(String(mem, " "));
     s.append(this->name());
-    s.append(String(" "));
+    s.append(String(mem, " "));
     return s;
 }
 
 void
 Type::logType(TextLogger &lgr, bool useHeader) const {
     lgr << "[ ";
-    lgr << this->to_string(useHeader);
+    lgr << this->to_string(_ext->compiler()->mem(), useHeader);
     lgr << " ]";
 }
 
 String
-Type::to_string(bool useHeader) const {
-    String s;
-    s.append(base_string(useHeader));
+Type::to_string(Allocator *mem, bool useHeader) const {
+    String s(mem);
+    s.append(base_string(mem, useHeader));
     s.append("primitiveType");
     if (_layout)
-        s.append(" layout t").append(String::to_string(_layout->id())).append(String(" ")).append(_layout->name());
+        s.append(" layout t").append(String::to_string(mem, _layout->id())).append(String(mem, " ")).append(_layout->name());
     return s;
 }
 

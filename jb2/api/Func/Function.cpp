@@ -76,17 +76,17 @@ Function::fctx(Compilation *comp) {
 
 void
 Function::DefineName(String name) {
-    _givenName = name;
+    _givenName = String(compiler()->mem(), name);
 }
 
 void
 Function::DefineFile(String file) {
-    //_createLocation.overrideFileName(file.c_str());
+    _fileName = String(compiler()->mem(), file);
 }
 
 void
 Function::DefineLine(String line) {
-    //_createLocation.overrideLineNumber(static_cast<uint32_t>(std::stoul(line)));
+    _lineNumber = String(compiler()->mem(), line);
 }
 
 } // namespace Function

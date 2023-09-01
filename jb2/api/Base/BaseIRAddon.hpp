@@ -41,7 +41,7 @@ class BaseIRAddon : public BaseAddon {
 public:
     const PointerType * pointerTypeFromBaseType(const Type * baseType);
     void registerPointerType(const PointerType * pType);
-    const StructType * structTypeFromName(String name);
+    const StructType * structTypeFromName(const String & name);
     void registerStructType(const StructType * sType);
 
     CaseID getCaseID() { return _nextCaseID++; }

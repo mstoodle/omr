@@ -99,6 +99,13 @@ BaseJBCodeGenerator::BaseJBCodeGenerator(Allocator *a, Base::BaseExtension *bx)
 }
 
 BaseJBCodeGenerator::~BaseJBCodeGenerator() {
+    for (auto it = _structFieldNameMap.begin();it != _structFieldNameMap.end(); it++) {
+        FieldMapType & mapper = it->second;
+        for (auto it2 = mapper.begin(); it2 != mapper.end(); it2++) {
+            const String *s = it2->second;
+            delete s;
+        }
+    }
 }
 
 
@@ -140,22 +147,44 @@ BaseJBCodeGenerator::regtypeAddress(JBMethodBuilder *jbmb, const Type *Address) 
     jbmb->registerAddress(Address);
 }
 
+const String &
+BaseJBCodeGenerator::registerFieldString(const Base::StructType * baseStructType, const Base::FieldType *fType, const String & name) {
+    FieldMapType & mapper = _structFieldNameMap[baseStructType];
+    auto it = mapper.find(fType);
+    if (it != mapper.end())
+        return *(it->second);
+
+    String * s = new (allocator()) String(allocator(), allocator(), name);
+    mapper.insert({fType, s}); // ownership passes to _structFieldNameMap
+    return *s;
+}
+
+const String &
+BaseJBCodeGenerator::lookupFieldString(const Base::StructType * baseStructType, const Base::FieldType *fType) {
+    const String & name = *_structFieldNameMap[baseStructType][fType];
+    return name;
+}
+
 void
-BaseJBCodeGenerator::registerAllStructFields(JBMethodBuilder *jbmb, const Base::StructType *sType, String structName, String fNamePrefix, size_t baseOffset) const {
+BaseJBCodeGenerator::registerAllStructFields(JBMethodBuilder *jbmb, const Base::StructType *sType, const Base::StructType * baseStructType, const String & fNamePrefix, size_t baseOffset) {
     for (auto fIt = sType->FieldsBegin(); fIt != sType->FieldsEnd(); fIt++) {
         const Base::FieldType *fType = fIt->second;
-        String fieldName = fNamePrefix + fType->name();
+        String fieldName = fNamePrefix;
+        fieldName.append(fType->name());
         size_t fieldOffset = baseOffset + fType->offset();
 
+        const String & name = registerFieldString(baseStructType, fType, fieldName);
         if (fType->isKind<const Base::StructType>()) {
             // define a "dummy" field corresponding to the struct field itself, so we can ask for its address easily
             // in case this field's struct needs to be passed to anything
-            jbmb->registerField(structName, fieldName, _bx->NoType, fieldOffset);
+            jbmb->registerField(baseStructType->name(), name, _bx->NoType, fieldOffset);
             const Base::StructType *innerStructType = fType->type()->refine<const Base::StructType>();
-            registerAllStructFields(jbmb, sType, structName, fieldName + ".", fieldOffset);
+            String newPrefix = fieldName;
+            fieldName.append(".");
+            registerAllStructFields(jbmb, innerStructType, baseStructType, newPrefix, fieldOffset);
         }
         else {
-            jbmb->registerField(structName, fieldName, fType->type(), fieldOffset);
+            jbmb->registerField(baseStructType->name(), name, fType->type(), fieldOffset);
         }
     }
 }
@@ -174,7 +203,8 @@ BaseJBCodeGenerator::registerType(JBMethodBuilder *jbmb, const Type *t) {
             return false; // first pass just creates struct types
         }
 
-        registerAllStructFields(jbmb, t->refine<const Base::StructType>(), t->name(), String(""), 0); // second pass defines the fields
+        const Base::StructType *structType = t->refine<const Base::StructType>();
+        registerAllStructFields(jbmb, structType, structType, String(allocator(), ""), 0); // second pass defines the fields
         jbmb->closeStruct(t->name());
     }
     else if (t->isKind<const Base::FieldType>()) {
@@ -379,14 +409,18 @@ void
 BaseJBCodeGenerator::gencodeLoadFieldAt(JBMethodBuilder *jbmb, Operation *op) {
     assert(op->action() == _bx->aLoadFieldAt);
     const Base::FieldType *ft = op->type()->refine<Base::FieldType>();
-    jbmb->LoadIndirect(op->location(), op->parent(), op->result(), ft->owningStruct()->name(), ft->name(), op->operand());
+    const Base::StructType *owningStruct = ft->owningStruct();
+    const String & structName = owningStruct->name();
+    jbmb->LoadIndirect(op->location(), op->parent(), op->result(), structName, lookupFieldString(owningStruct, ft), op->operand());
 }
 
 void
 BaseJBCodeGenerator::gencodeStoreFieldAt(JBMethodBuilder *jbmb, Operation *op) {
     assert(op->action() == _bx->aStoreFieldAt);
     const Base::FieldType *ft = op->type()->refine<Base::FieldType>();
-    jbmb->StoreIndirect(op->location(), op->parent(), ft->owningStruct()->name(), ft->name(), op->operand(0), op->operand(1));
+    const Base::StructType *owningStruct = ft->owningStruct();
+    const String & structName = owningStruct->name();
+    jbmb->StoreIndirect(op->location(), op->parent(), structName, lookupFieldString(owningStruct, ft), op->operand(0), op->operand(1));
 }
 
 void

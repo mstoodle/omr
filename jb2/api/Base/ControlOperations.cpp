@@ -43,9 +43,9 @@ Op_ForLoopUp::Op_ForLoopUp(MEM_LOCATION(a), Extension *ext, Builder * parent, Ac
     , _initial(loopBuilder->initialValue())
     , _final(loopBuilder->finalValue())
     , _bump(loopBuilder->bumpValue())
-    , _loopBody(ext->BoundBuilder(PASSLOC, parent, this, String("loopBody")))
-    , _loopBreak(ext->BoundBuilder(PASSLOC, parent, this, String("loopBreak")))
-    , _loopContinue(ext->BoundBuilder(PASSLOC, parent, this, String("loopContinue"))) {
+    , _loopBody(ext->BoundBuilder(PASSLOC, parent, this, String(a, "loopBody")))
+    , _loopBreak(ext->BoundBuilder(PASSLOC, parent, this, String(a, "loopBreak")))
+    , _loopContinue(ext->BoundBuilder(PASSLOC, parent, this, String(a, "loopContinue"))) {
 
     loopBuilder->setLoopBody(_loopBody);
     loopBuilder->setLoopBreak(_loopBreak);
@@ -369,8 +369,8 @@ Op_IfCmpUnsignedLessOrEqual::log(TextLogger & lgr) const {
 INIT_JBALLOC_REUSECAT(Op_IfThenElse, Operation)
 
 Op_IfThenElse::Op_IfThenElse(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aIfThenElse, IfThenElseBuilder *bldr)
-    : OperationB1R0V1(MEM_PASSLOC(a), aIfThenElse, ext, parent, ext->BoundBuilder(PASSLOC, parent, this, String("thenPath")), bldr->selector())
-    , _elseBuilder(ext->BoundBuilder(PASSLOC, parent, this, String("elsePath"))) {
+    : OperationB1R0V1(MEM_PASSLOC(a), aIfThenElse, ext, parent, ext->BoundBuilder(PASSLOC, parent, this, String(a, "thenPath")), bldr->selector())
+    , _elseBuilder(ext->BoundBuilder(PASSLOC, parent, this, String(a, "elsePath"))) {
 
     bldr->setThenPath(thenPath());
     bldr->setElsePath(elsePath());

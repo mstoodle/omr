@@ -130,17 +130,18 @@ SemanticVersion::compare(const SemanticVersion & other) const {
 }
 
 String
-SemanticVersion::coreVersion() const {
+SemanticVersion::coreVersion(Allocator *mem) const {
     if (!_valid)
         return invalidString;
-    return String::to_string(this->_major) + "." + String::to_string(this->_minor) + "." + String::to_string(this->_patch);
+    String s = String::to_string(mem, this->_major) + "." + String::to_string(mem, this->_minor) + "." + String::to_string(mem, this->_patch);
+    return s;
 }
 
 String
-SemanticVersion::semver() const {
+SemanticVersion::semver(Allocator *mem) const {
     if (!this->_valid)
         return invalidString;
-    String sv = this->coreVersion();
+    String sv = this->coreVersion(mem);
     if (this->_preRelease.length() > 0)
         sv = sv + "-" + this->_preRelease;
     if (this->_buildMetadata.length() > 0)

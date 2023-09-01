@@ -479,9 +479,9 @@ PointerType::literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) co
 }
 
 String
-PointerType::to_string(bool useHeader) const {
-    String s(Type::base_string(useHeader));
-    return s.append(String(" pointerType base t")).append(String::to_string(_baseType->id()));
+PointerType::to_string(Allocator *mem, bool useHeader) const {
+    String s(Type::base_string(mem, useHeader));
+    return s.append(String(mem, " pointerType base t")).append(String::to_string(mem, _baseType->id()));
 }
 
 void
@@ -535,12 +535,12 @@ FieldType::~FieldType() {
 }
 
 String
-FieldType::to_string(bool useHeader) const {
-    String s(Type::base_string(useHeader));
-    s.append(String(" fieldType ")).append(_fieldName);
-    s.append(String(" size ")).append(String::to_string(_type->size()));
-    s.append(String(" t")).append(String::to_string(_type->id()));
-    s.append(String("@")).append(String::to_string(_offset));
+FieldType::to_string(Allocator *mem, bool useHeader) const {
+    String s(Type::base_string(mem, useHeader));
+    s.append(String(mem, " fieldType ")).append(_fieldName);
+    s.append(String(mem, " size ")).append(String::to_string(mem, _type->size()));
+    s.append(String(mem, " t")).append(String::to_string(mem, _type->id()));
+    s.append(String(mem, "@")).append(String::to_string(mem, _offset));
     return s;
 }
 
@@ -693,13 +693,13 @@ StructType::addField(MEM_LOCATION(a), Extension *ext, TypeDictionary *dict, Stri
 }
 
 String
-StructType::to_string(bool useHeader) const {
-    String s(Type::base_string(useHeader));
-    s.append(String(" structType size ")).append(String::to_string(size()));
+StructType::to_string(Allocator *mem, bool useHeader) const {
+    String s(Type::base_string(mem, useHeader));
+    s.append(String(mem, " structType size ")).append(String::to_string(mem, size()));
     for (auto it = FieldsBegin(); it != FieldsEnd(); it++) {
         auto field = it->second;
-        s.append(String(" t")).append(String::to_string(field->id()));
-        s.append(String("@")).append(String::to_string(field->offset()));
+        s.append(String(mem, " t")).append(String::to_string(mem, field->id()));
+        s.append(String(mem, "@")).append(String::to_string(mem, field->offset()));
     }
     return s;
 }
@@ -821,14 +821,14 @@ StructType::replace(TypeReplacer *repl) {
     if (!needToReplace) 
         return this;
 
-    String newName = String("_X_::").append(name());
+    String newName = String(allocator(), "_X_::").append(name());
     StructTypeBuilder stb(base, repl->comp()->ir());
     stb.setName(newName)
        ->setSize(this->size());
 
     // TODO: don't believe this works for recursive Types...need to move this work into the Helper function
 
-    String baseName("");
+    String baseName(allocator(), "");
     transformFields(repl, &stb, this, baseName, 0);
 
     const StructType *newType = stb.create(LOC);

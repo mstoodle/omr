@@ -52,7 +52,7 @@ public:
     Strategy *addPass(Pass *pass);
 
     StrategyID id() const { return _id; }
-    String name() const { return _name; }
+    const String & name() const { return _name; }
 
     virtual CompilerReturnCode perform(Compilation *comp);
     virtual void allocateData() { }

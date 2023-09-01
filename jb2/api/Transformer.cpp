@@ -78,7 +78,7 @@ Transformer::performTransformation(Operation * op, Builder * transformed, String
             }
         }
         else
-            trace(String("Transformation not applied: ") + msg.c_str());
+            trace(String(allocator(), "Transformation not applied: ") + msg.c_str());
     }
 
     return succeed;

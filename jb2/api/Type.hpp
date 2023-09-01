@@ -54,7 +54,7 @@ class Type : public Allocatable {
 public:
     Extension *ext() const                         { return _ext; }
     TypeID id() const                              { return _id; }
-    String name() const                            { return _name; }
+    const String & name() const                    { return _name; }
     TypeDictionary *owningDictionary() const       { return _dict; }
     virtual size_t size() const                    { return _size; } // some Types cannot set size at construction
 
@@ -65,8 +65,8 @@ public:
         return _dict == other._dict && _id == other._id;
     }
 
-    String base_string(bool useHeader=false) const;
-    virtual String to_string(bool useHeader=false) const;
+    String base_string(Allocator *mem, bool useHeader=false) const;
+    virtual String to_string(Allocator *mem, bool useHeader=false) const;
     void logType(TextLogger & lgr, bool useHeader=false) const;
     virtual void logValue(TextLogger & lgr, const void *p) const { }
     virtual void logLiteral(TextLogger & lgr, const Literal *lv) const { }
