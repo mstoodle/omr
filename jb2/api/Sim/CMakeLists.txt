@@ -36,8 +36,6 @@ add_library(jb2sim SHARED
 #	SimContext.cpp
 #	Simulator.cpp
 
-target_include_directories(jb2sim PRIVATE ${JB2_JBCORE_DIR})
-
-target_link_libraries(jb2sim jb2core jb2)
+target_include_directories(jb2sim PRIVATE ${JB2_CORE_DIR})
 
 #add_subdirectory(test)
