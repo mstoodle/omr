@@ -44,7 +44,7 @@ ComplexMatMult::ComplexMatMult(LOCATION, Compiler * compiler, Complex::ComplexEx
 }
 
 bool
-ComplexMatMult::initContext(LOCATION, Base::FunctionCompilation *comp, Base::FunctionContext *fc) {
+ComplexMatMult::buildContext(LOCATION, Base::FunctionCompilation *comp, Base::FunctionContext *fc) {
     pComplex = _base->PointerTo(PASSLOC, comp, _xc->ComplexFloat64);
 
     _sumVar = fc->DefineLocal("sum", _xc->ComplexFloat64);
