@@ -20,43 +20,66 @@
  *******************************************************************************/
 
 #include <assert.h>
-#include "JBCore.hpp"
-#include "Base/Base.hpp"
 #include "Debug/DebugExtension.hpp"
 #include "Debug/Debugger.hpp"
+#include "Debug/DebuggerThunk.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 namespace Debug {
 
-const SemanticVersion DebugExtension::version(DEBUGEXT_MAJOR,DEBUGEXT_MINOR,DEBUGEXT_PATCH);
 const SemanticVersion DebugExtension::requiredBaseVersion(REQUIRED_BASEEXT_MAJOR,REQUIRED_BASEEXT_MINOR,REQUIRED_BASEEXT_PATCH);
+const SemanticVersion DebugExtension::requiredFuncVersion(REQUIRED_FUNCEXT_MAJOR,REQUIRED_FUNCEXT_MINOR,REQUIRED_FUNCEXT_PATCH);
+const SemanticVersion DebugExtension::version(DEBUGEXT_MAJOR,DEBUGEXT_MINOR,DEBUGEXT_PATCH);
 const String DebugExtension::NAME("jb2debug");
 
 extern "C" {
     Extension *create(LOCATION, Compiler *compiler) {
-        return new DebugExtension(PASSLOC, compiler);
+        return new (compiler->mem()) DebugExtension(MEM_PASSLOC(compiler->mem()), compiler);
     }
 }
 
-DebugExtension::DebugExtension(LOCATION, Compiler *compiler, bool extended, String extensionName)
-    : Extension(compiler, (extended ? extensionName : NAME)) {
+DebugExtension::DebugExtension(MEM_LOCATION(a), Compiler *compiler, bool extended, String extensionName)
+    : Extension(MEM_PASSLOC(a), CLASSKIND(DebugExtension,Extensible), compiler, (extended ? extensionName : NAME))
+    , _cx(compiler->coreExt())
+    , _fx(compiler->loadExtension<Func::FunctionExtension>(PASSLOC, &requiredFuncVersion))
+    , _bx(compiler->loadExtension<Base::BaseExtension>(PASSLOC, &requiredBaseVersion)) {
 
-    _base = compiler->loadExtension<Base::BaseExtension>(PASSLOC, &requiredBaseVersion);
 }
 
 DebugExtension::~DebugExtension() {
 }
 
-Debugger *
-DebugExtension::createDebugger(LOCATION, Debugger *caller) {
-    assert(caller == NULL || (caller->compiler() == compiler()));
-    Debugger *jbdb = new Debugger(PASSLOC, this, caller);
+DebugEntry *
+DebugExtension::debugEntry(LOCATION, Compilation *comp) {
+    //rememberCompilation(comp);
+    Allocator *mem = _compiler->mem();
+    IR *debugIR = comp->ir()->clone(mem);
 
-#if 0
+    //prepareDebugger
+    Debugger *jbdb = createDebugger(PASSLOC, mem);
+
+    //compileEntryThunk
+    DebuggerThunk *thunk = new (mem) DebuggerThunk(MEM_LOC(mem), jbdb, debugIR);
+
+}
+
+Debugger *
+DebugExtension::createDebugger(MEM_LOCATION(a), InputReader *reader, TextLogger *logger) {
+    if (reader == NULL) {
+        reader = new (a) InputReader(a, stdin); // default reads commands from stdin
+    }
+    if (logger == NULL) {
+        logger = new (a) TextLogger(a, std::cout, "    "); // default writes output to std::cout
+    }
+
+    return new (a) Debugger(a, this, reader, logger);
+}
+
+#if
     DebuggerThunk *thunk = new DebuggerThunk(this, _func);
 
-#ifdef TRACE_DEBUGTHUNK
+#ifdef TRACE_DEBUGTHU
     std::cout.setf(std::ios_base::skipws);
     OMR::JitBuilder::TextWriter printer(thunk, std::cout, String("    "));
     thunk->setLogger(&printer);
@@ -74,9 +97,6 @@ DebugExtension::createDebugger(LOCATION, Debugger *caller) {
     *returnCode = thunk->Compile(logger, strategy);
     return thunk->nativeEntry<void *>();
 #endif
-
-    return jbdb;
-}
 
 } // namespace Debug
 } // namespace JitBuilder

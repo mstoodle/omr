@@ -28,8 +28,6 @@
 #include <unistd.h>
 #include "JBCore.hpp"
 #include "Base/Base.hpp"
-#include "Sim/Sim.hpp"
-#include "Debug/DebugDictionary.hpp"
 #include "Debug/DebugExtension.hpp"
 #include "Debug/Debugger.hpp"
 #include "Debug/DebuggerFrame.hpp"
@@ -37,7 +35,6 @@
 #include "Debug/DebuggerThunk.hpp"
 #include "Debug/DebugValue.hpp"
 #include "Debug/FunctionDebugInfo.hpp"
-#include "Debug/OperationDebugger.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -46,9 +43,9 @@ namespace Debug {
 //#define TRACE_DEBUGTHUNK
 //#define TRACE_OPDEBUGGERS
 
-Debugger::Debugger(DebugExtension *dbg, Simulator::Simulator *sim, InputReader *reader, TextWriter *writer)
-    : _dbg(dbg)
-    , _sim(sim)
+Debugger::Debugger(Alllocator *a, DebugExtension *dbx, InputReader *reader, TextLogger *writer)
+    : _mem(a)
+    , _dbx(dbx)
     , _reader(reader)
     , _writer(writer) {
 
@@ -56,39 +53,40 @@ Debugger::Debugger(DebugExtension *dbg, Simulator::Simulator *sim, InputReader *
 
 void
 Debugger::printDebugValue(DebugValue *val) {
-    TextWriter &w = (*_writer);
+    TextLogger &w = (*_writer);
     if (val->_type)
-        val->_type->printValue(w, &(val->_firstValueData));
+        val->_type->logValue(w, &(val->_firstValueData));
     else {
         w << "Undefined";
     }
 }
 
 void
-Debugger::printValue(Value *value) {
-    TextWriter &w = (*_writer);
-    DebugValue *val = _debugger->getValue(value);
-    w << "v" << idx << ": ";
-    printDebugValue(val);
+Debugger::printValue(ValueID id) {
+    TextLogger &w = (*_writer);
+    DebugValue *value = _frame->getValue(id);
+    w << "v" << id << ": ";
+    printDebugValue(value);
     w << " ]" << w.endl();
 }
 
 void
 Debugger::printTypeName(const Type *type) {
-    TextWriter &w = (*_writer);
+    TextLogger &w = (*_writer);
     w << "t" << type->id() << " : [ " << type->name() << " ]";
 }
 
 void
 Debugger::printType(const Type * type) {
-    TextWriter &w = (*_writer);
+    TextLogger &w = (*_writer);
     printTypeName(type);
     w << w.endl();
 }
 
 void
-Debugger::printSymbol(Symbol *sym) {
-    DebugValue *val = _debugger->getValue(sym);
+Debugger::printSymbol(SymbolID sym) {
+    Symbol *sym = _frame->compToDebug()->context<Func::FunctionContext>()->getSymbol(expr)) {
+    DebugValue *val = _frame->getLocal(id);
     w << sym->name() << " : ";
     printDebugValue(val);
     w << w.endl();
@@ -97,7 +95,7 @@ Debugger::printSymbol(Symbol *sym) {
 
 void
 Debugger::printHelp() {
-    TextWriter &w = *_writer;
+    TextLogger &w = *_writer;
     w << "JBDB Command reference" << w.endl();
     w << "   h,  help          display this help summary" << w.endl();
     w << "   l,  list          print the current IL" << w.endl();
@@ -123,16 +121,16 @@ static const char *SEP=" \n\r";
 
 void
 Debugger::acceptCommands(Operation *op, Operation *nextOp) {
-    TextWriter &w = *_writer;
-    Debugger *d = _debugger;
+    TextLogger &w = *_writer;
+    Compilation *comp = op->parent()->comp();
 
     bool done = false;
     while (!done) {
 
-        w << "[T=" << d->time() << "] (jbdb) ";
+        w << "[T=" << time() << "] (jbdb) ";
    
         char *line=NULL;
-        if (line = _reader.getLine()) {
+        if (line = _reader->getLine()) {
             if (line[0] == '\n') {
                 if (_commandHistory.length() > 0) { // repeat last
                     strcpy(line, _commandHistory.back().c_str());
@@ -150,13 +148,13 @@ Debugger::acceptCommands(Operation *op, Operation *nextOp) {
             }
             if (strcmp(command, "n") == 0 || strcmp(command, "next") == 0) {
                 Breakpoint *brkpt = (new BreakpointStepOver(op, nextOp))->setRemoveAfterFiring();
-                d->addBreakpoint(brkpt);
+                addBreakpoint(brkpt);
                 done = true;
                 break;
             }
             if (strcmp(command, "s") == 0 || strcmp(command, "step") == 0) {
                 Breakpoint *brkpt = (new BreakpointStepInto(_time+1))->setRemoveAfterFiring();
-                d->addBreakpoint(brkpt);
+                addBreakpoint(brkpt);
                 done = true;
                 break;
             } else if (strcmp(command, "c") == 0 || strcmp(command, "cont") == 0 || strcmp(command, "continue") == 0) {
@@ -168,9 +166,9 @@ Debugger::acceptCommands(Operation *op, Operation *nextOp) {
                 if (expr[0] == 't')
                     id = strtoul(expr+1, NULL, 10);
          
-                TypeDictionary *dict = _comp->typedict();
+                TypeDictionary *dict = comp->typedict();
                 if (id < dict->numTypes()) {
-                    printType(_comp->typedict()->LookupType(id));
+                    printType(dict->LookupType(id));
                 } else {
                     w << "Unrecognized type: should be t# (max id:" << dict->numTypes() << ")" << w.endl();
                 }
@@ -180,20 +178,20 @@ Debugger::acceptCommands(Operation *op, Operation *nextOp) {
                 if (expr[0] == 'v')
                     id = strtoul(expr+1, NULL, 10);
 
-                if (id < _comp->maxValueID) {
+                if (id < comp->maxValueID()) {
                     printValue(id);
                 } else {
-                    w << "Unrecognized value: should be v# (max id:" << _comp->maxValueID() << ")" << w.endl();
+                    w << "Unrecognized value: should be v# (max id:" << comp->maxValueID() << ")" << w.endl();
                 }
             } else if (strcmp(command, "p") == 0 || strcmp(command, "print") == 0) {
                 char *expr = strtok(NULL, SEP);
-                if (expr && _comp->funcContext()->getSymbol(expr)) {
+                if (expr && comp->context<Func::FunctionContext>()->getSymbol(expr)) {
                     printSymbol(expr);
                 } else {
                    w << "Unrecognized symbol name" << w.endl();
                 }
             } else if (strcmp(command, "l") == 0 || strcmp(command, "list") == 0) {
-                w.print(op);
+                w.logOperation(op);
             #if 0
             } else if (strcmp(command, "bb") == 0 || strcmp(command, "breakbefore") == 0) {
                 char *bp = strtok(NULL, SEP);
@@ -244,19 +242,19 @@ Debugger::acceptCommands(Operation *op, Operation *nextOp) {
 
 void
 Debugger::showOp(Operation *op, String msg) {
-    TextWriter &w = *_writer;
+    TextLogger &w = *_writer;
     w << msg;
-    w.writeOperation(op);
+    w.logOperation(op);
 }
 
 bool
 Debugger::breakBefore(Operation *op) {
-    for (auto it=_debugger->breakpoints().begin(); it != _debugger->breakpoints().end(); it++) {
+    for (auto it=breakpoints().begin(); it != breakpoints().end(); it++) {
         Breakpoint *bp=*it;
         if (bp->breakBefore(op) || bp->breakAt(_time)) {
             bp->print(_writer);
             if (bp->removeAfterFiring())
-                _debugger->breakpoints().erase(it);
+                breakpoints().erase(it);
             return true;
         }
     }
@@ -265,12 +263,12 @@ Debugger::breakBefore(Operation *op) {
 
 bool
 Debugger::breakAfter(Operation *op) {
-    for (auto it=_debugger->breakpoints().begin(); it != _debugger->breakpoints().end(); it++) {
+    for (auto it=breakpoints().begin(); it != breakpoints().end(); it++) {
         Breakpoint *bp=*it;
         if (bp->breakAfter(op)) {
             bp->print(_writer);
             if (bp->removeAfterFiring())
-                _debugger->breakpoints().erase(it);
+                breakpoints().erase(it);
             return true;
         }
     }
@@ -279,11 +277,11 @@ Debugger::breakAfter(Operation *op) {
 
 bool
 Debugger::breakBefore(Builder *b) {
-    for (auto it=_debugger->breakpoints().begin(); it != _debugger->breakpoints().end(); it++) {
+    for (auto it=breakpoints().begin(); it != breakpoints().end(); it++) {
         Breakpoint *bp=*it;
         if (bp->breakBefore(b)) {
             if (bp->removeAfterFiring())
-                _debugger->breakpoints().erase(it);
+                breakpoints().erase(it);
 
             if (bp->silent()) {
                 Operation * op = b->firstOperation();
@@ -293,7 +291,7 @@ Debugger::breakBefore(Builder *b) {
                
                 Breakpoint *newBP = new BreakpointBeforeOperation(op->id());
                 newBP->setSilent();
-                _debugger->breakpoints().push_front(newBP);
+                breakpoints().push_front(newBP);
 
                 return false;
             }
@@ -322,21 +320,14 @@ Debugger::afterOp(Operation *op, Operation *nextOp) {
     }
 }
 
-DebugDictionary *
-Debugger::getDictionary(Base::Function *func) {
-    FunctionDebugInfo *info = _functionDebugInfos[func->id()];
-    assert(info);
-    return &info->_dbgDict;
-}
-
 void
-Debugger::debug(Base::FunctionCompilation *comp, DebugValue *returnValues, DebugValue *locals) {
-    Base::FunctionCompilation *savedComp = _comp;
+Debugger::debug(Func::FunctionCompilation *comp, DebugValue *returnValues, DebugValue *locals) {
+    Func::FunctionCompilation *savedComp = _compToDebug;
     DebuggerFrame *savedFrame = _frame;
 
-    Base::Function *func = comp->func();
-    Base::FunctionContext *fc = comp->funcContext();
-    Builder *entry = fc->builderEntryPoint();
+    Func::Function *func = comp->unit()->refine<Func::Function>();
+    Func::FunctionContext *fc = comp->context<Func::FunctionContext>();
+    Builder *entry = comp->scope<Func::FunctionScope>()->entryPoint<BuilderEntry>()->builder();
 
     DebuggerFrame frame;
     frame._debugger = this;
@@ -349,16 +340,16 @@ Debugger::debug(Base::FunctionCompilation *comp, DebugValue *returnValues, Debug
     frame._returning = false;
     frame._builderToDebug = entry;
     _frame = &frame;
-    _comp = comp;
+    _compToDebug = comp;
 
     if (_firstEntry) {
-        TextWriter &w = (*_writer);
-        w << "JitBuilder Debugger (JBDB)" << w.endl();
+        TextLogger &w = (*_writer);
+        w << "JB Debugger (JBDB)" << w.endl();
         w << "Happy debugging!" << w.endl() << w.endl();
         w << "Type h or help for a list of jbdb commands" << w.endl() << w.endl();
         w << "Entering function " << func->name() << " with arguments:" << w.endl();
-        for (auto pIt = fc->ParametersBegin(); pIt != fc->ParametersEnd(); pIt++) {
-            const ParameterSymbol *param = *pIt;
+        for (auto pIt = fc->parameters(); pIt.hasItem(); pIt++) {
+            const Func::ParameterSymbol *param = pIt.item();
             w << "    ";
             printSymbol(param->name());
         }
@@ -378,12 +369,13 @@ Debugger::debug(Base::FunctionCompilation *comp, DebugValue *returnValues, Debug
         debug(b);
     }
 
-    _comp = savedComp;
+    _compToDebug = savedComp;
     _frame = savedFrame;
 
     //if (savedFB != fb)
     //   (*_writer) << "Returning from FB" << fb->id() << _writer->endl();
 }
+
 void
 Debugger::debug(Builder *b) {
     auto op = b->firstOperation();
@@ -403,8 +395,8 @@ Debugger::debug(Builder *b) {
         while (op != b->lastOperation()) {
             Operation *possibleOwnerOp = op;
             foundFromBuilder = false;
-            for (BuilderIterator bIt = possibleOwnerOp->BuildersBegin(); bIt != possibleOwnerOp->BuildersEnd(); bIt++) {
-                Builder *bTgt = *bIt;
+            for (BuilderIterator bIt = possibleOwnerOp->builders(); bIt.hasItem(); bIt++) {
+                Builder *bTgt = bIt.item();
                 if (bTgt == _frame->_fromBuilder) {
                     foundFromBuilder = true;
                     break;
@@ -419,7 +411,7 @@ Debugger::debug(Builder *b) {
 
         // something wrong if we didn't find the fromBuilderTarget
         if (!foundFromBuilder) {
-            TextWriter &w = (*_writer);
+            TextLogger &w = (*_writer);
             uint64_t fromBuilderID = _frame->_fromBuilder->id();
 
             w << "Internal debugger error:" << w.endl();
@@ -492,10 +484,10 @@ extern "C"
 {
 #define DEBUGFUNCTION_LINENUMBER LINETOSTR(__LINE__)
 void
-Debugger::debugFunction(Debugger *dbgr, Base::FunctionCompilation *comp, DebugValue *returnValues, DebugValue *locals) {
-    Base::Function *func = comp->func();
-    Base::FunctionContext *fc = comp->funcContext();
-    TextWriter &w = *(dbgr->_writer);
+Debugger::debugFunction(Debugger *dbgr, Func::FunctionCompilation *comp, DebugValue *returnValues, DebugValue *locals) {
+    Func::Function *func = comp->unit()->refine<Func::FunctionCompilation>();
+    Func::FunctionContext *fc = comp->context<Func::FunctionContext>();
+    TextLogger &w = *(dbgr->_writer);
     w << "Calling " << func->name() << " with debugger" << w.endl();
     dbgr->debug(comp, returnValues, locals);
     w << "Debugger returning from " << func->name() << w.endl();
