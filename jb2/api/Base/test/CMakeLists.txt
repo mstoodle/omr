@@ -50,6 +50,6 @@ set(GTEST_DIR $(omr_SOURCE_DIR)/third_party/gtest-1.8.0)
 	#omr_add_test( NAME JitBuilderTest COMMAND $<TARGET_FILE:jitbuildertest> --gtest_output=xml:${CMAKE_CURRENT_BINARY_DIR}/jitbuildertest-results.xml)
 	add_test(
 		NAME JB2TestBase
-		COMMAND ${VALGRIND} $<TARGET_FILE:testbase>
+		COMMAND ${VALGRIND} ${VALGRIND_A1} ${VALGRIND_A2} ${VALGRIND_A3} $<TARGET_FILE:testbase>
 	)
 #endif()

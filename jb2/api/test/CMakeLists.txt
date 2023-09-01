@@ -47,7 +47,7 @@ set(GTEST_DIR $(omr_SOURCE_DIR)/third_party/gtest-1.8.0)
 
 	add_test(
 		NAME JB2TestSemVer
-		COMMAND ${VALGRIND} $<TARGET_FILE:testsemver>
+		COMMAND ${VALGRIND} ${VALGRIND_A1} ${VALGRIND_A2} ${VALGRIND_A3} $<TARGET_FILE:testsemver>
 	)
 
 	## testcompiler
@@ -67,7 +67,7 @@ set(GTEST_DIR $(omr_SOURCE_DIR)/third_party/gtest-1.8.0)
 
 	add_test(
 		NAME JB2TestCompiler
-		COMMAND ${VALGRIND} $<TARGET_FILE:testcompiler>
+		COMMAND ${VALGRIND} ${VALGRIND_A1} ${VALGRIND_A2} ${VALGRIND_A3}  $<TARGET_FILE:testcompiler>
 	)
 
 	## testlist
@@ -87,7 +87,7 @@ set(GTEST_DIR $(omr_SOURCE_DIR)/third_party/gtest-1.8.0)
 
 	add_test(
 		NAME JB2TestList
-		COMMAND ${VALGRIND} $<TARGET_FILE:testlist>
+		COMMAND ${VALGRIND} ${VALGRIND_A1} ${VALGRIND_A2} ${VALGRIND_A3} $<TARGET_FILE:testlist>
 	)
 
 	## testbv
@@ -107,7 +107,7 @@ set(GTEST_DIR $(omr_SOURCE_DIR)/third_party/gtest-1.8.0)
 
 	add_test(
 		NAME JB2TestBitVector
-		COMMAND ${VALGRIND} $<TARGET_FILE:testbv>
+		COMMAND ${VALGRIND} ${VALGRIND_A1} ${VALGRIND_A2} ${VALGRIND_A3} $<TARGET_FILE:testbv>
 	)
 
 #endif()
