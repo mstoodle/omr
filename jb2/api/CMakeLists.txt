@@ -101,8 +101,17 @@ add_library(jb2core SHARED
     Visitor.cpp
 )
 
-#set(VALGRIND "valgrind --error-exitcode=1 --leak-check=full --show-leak-kinds=all ")
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+set(VALGRIND "valgrind")
+set(VALGRIND_A1 "--error-exitcode=1")
+set(VALGRIND_A2 "--leak-check=full")
+set(VALGRIND_A3 "--show-leak-kinds=all")
+else()
 set(VALGRIND "")
+set(VALGRIND_A1 "")
+set(VALGRIND_A2 "")
+set(VALGRIND_A3 "")
+endif()
 
 add_subdirectory(test)
 
