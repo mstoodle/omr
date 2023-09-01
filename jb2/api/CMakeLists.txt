@@ -34,6 +34,7 @@ omr_assert(
 
 add_compile_options(
 	-Wplacement-new=0
+    -I${CMAKE_BINARY_DIR}
 )
 
 add_link_options(

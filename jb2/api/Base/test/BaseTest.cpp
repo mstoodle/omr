@@ -29,8 +29,14 @@
 
 using namespace OMR::JitBuilder;
 
+#if defined(OSX)
+    #define CORELIB "libjb2core.dylib"
+#else
+    #define CORELIB "libjb2core.so"
+#endif
+
 int main(int argc, char** argv) {
-    void *handle = dlopen("libjb2core.dylib", RTLD_LAZY);
+    void *handle = dlopen(CORELIB, RTLD_LAZY);
     if (!handle) {
         fputs(dlerror(), stderr);
         return -1;
@@ -966,6 +972,7 @@ TESTBADSUBTYPES(__FILE__, __LINE__, __func__,Float64,Float64,Int8,Int16,Int32,In
         EXPECT_EQ(f(-127), 1) << "IfThen(-127) return 1"; \
     }
 
+// ifbcmpne/ifscmpne not implemented on AArch64: need better way to handle this kind of thing
 TESTIFTHENTYPEFUNC(__FILE__, __LINE__, __func__,Int8,int8_t)
 TESTIFTHENTYPEFUNC(__FILE__, __LINE__, __func__,Int16,int16_t)
 TESTIFTHENTYPEFUNC(__FILE__, __LINE__, __func__,Int32,int32_t)
@@ -1018,6 +1025,7 @@ TESTIFTHENTYPEFUNC(__FILE__, __LINE__, __func__,Address,size_t)
         EXPECT_EQ(f((void *)0xdeadbeef), 1) << "IfThenElse(100) returns 1"; \
     }
 
+// ifbcmpne/ifscmpne not implemented on AArch64: need better way to handle this kind of thing
 TESTIFTHENELSETYPEFUNC(__FILE__, __LINE__, __func__,Int8,int8_t)
 TESTIFTHENELSETYPEFUNC(__FILE__, __LINE__, __func__,Int16,int16_t)
 TESTIFTHENELSETYPEFUNC(__FILE__, __LINE__, __func__,Int32,int32_t)

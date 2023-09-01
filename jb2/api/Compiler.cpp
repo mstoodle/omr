@@ -23,6 +23,7 @@
 
 #include <assert.h>
 #include <dlfcn.h>
+#include "omrcfg.h"
 #include "AllocatorTracker.hpp"
 #include "Compilation.hpp"
 #include "CompiledBody.hpp"
@@ -79,8 +80,9 @@ INIT_JBALLOC(Compiler);
     , _nextLiteralDictionaryID(0) \
     , _nextSymbolDictionaryID(0) \
     , _nextTypeDictionaryID(0) \
-    , _target(NULL) \
-    , _compiler(NULL) \
+    , _targetPlatform(NULL) \
+    , _compilerPlatform(NULL) \
+    , _clientPlatform(NULL) \
     , _litdict(new (_mem) LiteralDictionary(_mem, this, name + " Compiler Literal Dictionary")) \
     , _symdict(new (_mem) SymbolDictionary(_mem, this, name + " Compiler Symbol Dictionary")) \
     , _typedict(new (_mem) TypeDictionary(_mem, this, name + " Compiler Type Dictionary")) \
@@ -198,6 +200,20 @@ Compiler::~Compiler() {
 
 }
 
+const char *
+Compiler::platformLibrarySuffix() const {
+    #if defined(OSX)
+    return ".dylib";
+    #elif defined(__WINDOWS__)
+    return ".dll";
+    #else
+    return ".so";
+    #endif
+    
+    // ideally, this never happens
+    return "";
+}
+
 Extension *
 Compiler::internalLoadExtension(LOCATION, const SemanticVersion *version, String name) {
     Extension *ext = internalLookupExtension(name);
@@ -208,7 +224,7 @@ Compiler::internalLoadExtension(LOCATION, const SemanticVersion *version, String
         return NULL;
     }
 
-    String soname = String("lib") + name + String(".dylib");
+    String soname = String("lib") + name + String(platformLibrarySuffix());
     void *handle = dlopen(soname.c_str(), RTLD_LAZY);
     if (!handle) {
         extensionCouldNotLoad(LOC, soname, dlerror());
