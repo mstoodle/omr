@@ -33,7 +33,9 @@ OMR::CodeCacheMemorySegment::self()
 void
 OMR::CodeCacheMemorySegment::adjustAlloc(int64_t adjust)
    {
+   omrthread_jit_write_protect_disable();
    self()->setSegmentAlloc(self()->segmentAlloc() + adjust);
+   omrthread_jit_write_protect_enable();
    }
 
 
