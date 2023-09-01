@@ -40,7 +40,7 @@ set(GTEST_DIR $(omr_SOURCE_DIR)/third_party/gtest-1.8.0)
 		${CMAKE_DL_LIBS}
 	)
 	target_include_directories(testcomplex PRIVATE
-		${JB2_JBCORE_DIR}
+		${JB2_CORE_DIR}
 	       	${GTEST_DIR}/include
 	)
 

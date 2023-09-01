@@ -53,7 +53,7 @@ class ComplexMatMult : public Base::Function
 
    public:
    ComplexMatMult(LOCATION, Compiler *compiler, Complex::ComplexExtension *xc);
-   virtual bool initContext(LOCATION, Base::FunctionCompilation *comp, Base::FunctionContext *fc);
+   virtual bool buildContext(LOCATION, Base::FunctionCompilation *comp, Base::FunctionContext *fc);
    virtual bool buildIL(LOCATION, Base::FunctionCompilation *comp, Base::FunctionContext *fc);
    };
 
