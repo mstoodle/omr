@@ -32,16 +32,21 @@ omr_assert(
 #		${OMR_PORT_LIB}
 #)
 
+if (NOT APPLE)
+    add_compile_options(
+	    -Wplacement-new=0
+    )
+endif()
+
 add_compile_options(
-	-Wplacement-new=0
-	-I${CMAKE_BINARY_DIR}
+    -I${CMAKE_BINARY_DIR}
 )
 
 if (APPLE)
-	add_link_options(
-		-undefined dynamic_lookup
-	)
-endif (APPLE)
+    add_link_options(
+        -undefined dynamic_lookup
+    )
+endif()
 
 set(JB2_CORE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/)
 set(JB2_BASE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Base/)
@@ -101,17 +106,8 @@ add_library(jb2core SHARED
     Visitor.cpp
 )
 
-if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
-set(VALGRIND "valgrind")
-set(VALGRIND_A1 "--error-exitcode=1")
-set(VALGRIND_A2 "--leak-check=full")
-set(VALGRIND_A3 "--show-leak-kinds=all")
-else()
+#set(VALGRIND "valgrind --error-exitcode=1 --leak-check=full --show-leak-kinds=all ")
 set(VALGRIND "")
-set(VALGRIND_A1 "")
-set(VALGRIND_A2 "")
-set(VALGRIND_A3 "")
-endif()
 
 add_subdirectory(test)
 
@@ -120,6 +116,6 @@ add_subdirectory(Func)
 add_subdirectory(Base)
 add_subdirectory(jb)
 add_subdirectory(vm)
-#add_subdirectory(Debug)
+add_subdirectory(Debug)
 #add_subdirectory(Sim)
 #add_subdirectory(Complex)
