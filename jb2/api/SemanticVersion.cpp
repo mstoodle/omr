@@ -20,7 +20,6 @@
  *******************************************************************************/
 
 #include <cassert>
-#include <string.h>
 #include "SemanticVersion.hpp"
 
 namespace OMR {
