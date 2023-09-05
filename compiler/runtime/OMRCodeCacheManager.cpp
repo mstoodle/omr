@@ -247,12 +247,6 @@ OMR::CodeCacheManager::destroy()
          self()->freeMemory(_repositoryCodeCache);
       }
 
-   if (_symbolContainer)
-      {
-      self()->freeMemory(_symbolContainer);
-      _symbolContainer = NULL;
-      }
-
    TR::Monitor::destroy(_usageMonitor);
    TR::Monitor::destroy(_codeCacheList._mutex);
    TR::Monitor::destroy(_codeCacheRepositoryMonitor);
