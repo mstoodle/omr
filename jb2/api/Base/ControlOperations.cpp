@@ -429,7 +429,7 @@ Op_Switch::Op_Switch(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID
     Allocator *mem = allocator();
     Array<Case *> *myCases = new (mem) Array<Case*>(mem);
     myCases->assign(cases->length()-1, NULL); // grow it to right size immediately
-    int index = 0;
+    uint32_t index = 0;
     for (auto caseIt = _cases.iterator(); caseIt.hasItem(); caseIt++) {
         Case *c = caseIt.item();
         assert(!c->builder()->isBound());
@@ -477,7 +477,7 @@ BuilderIterator
 Op_Switch::builders() {
     Allocator *mem = allocator();
     Builder **array = mem->allocate<Builder *>(_cases.length() + 1);
-    int index = 0;
+    uint32_t index = 0;
     for (auto caseIt = _cases.iterator(); caseIt.hasItem(); caseIt++) {
         Case *c = caseIt.item();
         array[index++] = c->builder();
@@ -537,7 +537,7 @@ Call::cloneTo(Builder *b, ValueMapper **resultMappers, ValueMapper **operandMapp
    {
    Value **arguments = new Value *[_numArgs];
    Value *function = operandMappers[0]->next();
-   for (int a=0;a < _numArgs;a++)
+   for (uint32_t a=0;a < _numArgs;a++)
       arguments[a] = operandMappers[a+1]->next();
    Value *result = b->Call(function, _numArgs, arguments);
    if (NULL != result)
@@ -549,7 +549,7 @@ Call::clone(Builder *b, OperationCloner *cloner) const
    {
    Value **arguments = new Value *[_numArgs];
    Value *function = cloner->operand(0);
-   for (int a=0;a < _numArgs;a++)
+   for (uint32_t a=0;a < _numArgs;a++)
       arguments[a] = cloner->operand(a+1);
    return create(b, function, cloner->result(), _numArgs, arguments);
    }
@@ -871,12 +871,12 @@ IfThenElse::initializeTypeProductions(TypeDictionary * types, TypeGraph * graph)
    graph->registerValidOperation(types->NoType, aIfThenElse, types->Int64);
    }
 
-Switch::Switch(Builder * parent, Value * selector, Builder *defaultTarget, int numCases, Case ** cases)
+Switch::Switch(Builder * parent, Value * selector, Builder *defaultTarget, uint32_t numCases, Case ** cases)
    : OperationR0V1(aSwitch, parent, selector)
    , _defaultTarget(defaultTarget)
    , _cases(numCases)
    {
-   for (int c=0;c < numCases;c++)
+   for (uint32_t c=0;c < numCases;c++)
       _cases[c] = cases[c];
    }
 

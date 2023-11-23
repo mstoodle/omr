@@ -235,7 +235,7 @@ public:
         setBit(three);
     }
 
-    uint32_t length() const { return _length; }
+    BitIndex length() const { return _length; }
 
     bool getBit(BitIndex index) const {
         if (index >= _length || _length == 0)
@@ -293,23 +293,23 @@ protected:
         return mem;
     }
 
-    void grow(int indexNeeded) {
+    void grow(BitIndex indexNeeded) {
         if (indexNeeded < _length)
             return;
 
-        int newLength = indexNeeded+1;
+        BitIndex newLength = indexNeeded+1;
         bool needDeallocate = _length > 0;
 
         WordType *newWords = _mem->allocate<WordType>(TOTALWORDS(newLength));
         assert(newWords != NULL);
 
         WordType *zeroStart = newWords;
-        int oldWords = TOTALWORDS(_length);
+        size_t oldWords = TOTALWORDS(_length);
         if (oldWords > 0) {
             memcpy(newWords, _words, sizeof(WordType) * oldWords);
             zeroStart += oldWords;
         }
-        int zeroWords = TOTALWORDS(newLength) - oldWords;
+        size_t zeroWords = TOTALWORDS(newLength) - oldWords;
         memset(zeroStart, 0, sizeof(WordType) * zeroWords);
         if (needDeallocate)
             _mem->deallocate(_words);
@@ -321,7 +321,7 @@ protected:
 
     Allocator *_mem;
     ChangeID _changeID;
-    size_t _length;
+    BitIndex _length;
     WordType *_words;
     bool _ownWords;
 };

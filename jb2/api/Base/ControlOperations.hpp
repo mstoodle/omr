@@ -250,7 +250,7 @@ public:
     virtual void log(TextLogger & lgr) const;
 
     virtual size_t numSymbols() const { return 1; }
-    virtual Symbol * symbol(int i=0) const {
+    virtual Symbol * symbol(uint32_t i=0) const {
         if (i == 0) return _loopVariable;
         return NULL;
     }
@@ -259,7 +259,7 @@ public:
     }
 
     virtual size_t numOperands() const { return 3; }
-    virtual Value * operand(int i=0) const {
+    virtual Value * operand(uint32_t i=0) const {
         if (i == 0) return _initial;
         else if (i == 1) return _final;
         else if (i == 2) return _bump;
@@ -272,7 +272,7 @@ public:
     virtual size_t numBuilders() const {
         return 3;
     }
-    virtual Builder * builder(int i=0) const {
+    virtual Builder * builder(uint32_t i=0) const {
         if (i == 0) return _loopBody;
         else if (i == 1) return _loopBreak;
         else if (i == 2) return _loopContinue;
@@ -321,7 +321,7 @@ public:
     virtual Builder * elsePath() const { return _elseBuilder; }
 
     virtual size_t numBuilders() const { return 2; }
-    virtual Builder * builder(int i=0) const {
+    virtual Builder * builder(uint32_t i=0) const {
         if (i == 0)
             return _builder;
         else if (i == 1)
@@ -440,7 +440,7 @@ public:
         , _defaultBuilder(cloner->clonedBuilder(source->_defaultBuilder))
         , _cases(NULL, a) {
 
-        for (int i=0;i < _cases.length();i++) {
+        for (uint32_t i=0;i < _cases.length();i++) {
             Case *c = source->_cases[i];
             _cases.assign(i, cloner->addon<BaseIRClonerAddon>()->clonedCase(c));
         }
@@ -514,7 +514,7 @@ class Call : public Operation
         }
 
     virtual size_t numOperands() const    { return _numArgs+1; }
-    virtual Value * operand(int i=0) const
+    virtual Value * operand(uint32_t i=0) const
         {
         if (i == 0)
             return _function;
@@ -531,7 +531,7 @@ class Call : public Operation
         }
 
     virtual size_t numResults() const             { return (_result != NULL) ? 1 : 0; }
-    virtual Value * result(int i=0) const
+    virtual Value * result(uint32_t i=0) const
         {
         if (i == 0) return _result; // may return NULL if there is no result
         return NULL;
@@ -633,7 +633,7 @@ class ForLoop : public Operation
     virtual Value * getBump() const                            { return _bump; }
 
     virtual size_t numLiterals() const                      { return 1; }
-    virtual Literal *literal(int i=0) const
+    virtual Literal *literal(uint32_t i=0) const
         {
         if (i == 0) return _countsUp;
         return NULL;
@@ -641,7 +641,7 @@ class ForLoop : public Operation
     virtual LiteralIterator litIterator()                 { return LiteralIterator(_countsUp); }
 
     virtual size_t numSymbols() const                        { return 1; }
-    virtual Symbol *symbol(int i=0) const
+    virtual Symbol *symbol(uint32_t i=0) const
         {
         if (i == 0) return _loopSym;
         return NULL;
@@ -649,7 +649,7 @@ class ForLoop : public Operation
     virtual SymbolIterator SymbolsBegin()                    { return SymbolIterator(_loopSym); }
 
     virtual size_t numOperands() const                      { return 3; }
-    virtual Value * operand(int i=0) const
+    virtual Value * operand(uint32_t i=0) const
         {
         if (i == 0) return _initial;
         if (i == 1) return _end;
@@ -663,7 +663,7 @@ class ForLoop : public Operation
     virtual Builder * getContinue() const                    { return _loopContinue; }
     virtual size_t numBuilders() const                      { return 1 + (_loopBreak ? 1 : 0) + (_loopContinue ? 1 : 0); }
 
-    virtual Builder * builder(int i=0) const
+    virtual Builder * builder(uint32_t i=0) const
         {
         if (i == 0) return _loopBody;
         if (i == 1) return _loopBreak;
@@ -832,7 +832,7 @@ class IfThenElse : public OperationB1R0V1
     virtual Builder * getElseBuilder() const { return _elseBuilder; }
 
     virtual size_t numBuilders() const { return _elseBuilder ? 2 : 1; }
-    virtual Builder * builder(int i=0) const
+    virtual Builder * builder(uint32_t i=0) const
         {
         if (i == 0)
             return _builder;
@@ -872,7 +872,7 @@ class Switch : public OperationR0V1
     {
     public:
     virtual size_t size() const { return sizeof(Switch); }
-    static Switch * create(Builder * parent, Value *selector, Builder *defaultTarget, int numCases, Case ** cases)
+    static Switch * create(Builder * parent, Value *selector, Builder *defaultTarget, uint32_t numCases, Case ** cases)
         { return new Switch(parent, selector, defaultTarget, numCases, cases); }
 
     virtual Value * getSelector() const { return _value; }
@@ -906,7 +906,7 @@ class Switch : public OperationR0V1
     virtual Operation * clone(Builder *b, OperationCloner *cloner) const;
 
     protected:
-    Switch(Builder * parent, Value *selector, Builder *defaultCase, int numCases, Case ** cases);
+    Switch(Builder * parent, Value *selector, Builder *defaultCase, uint32_t numCases, Case ** cases);
 
     Builder *_defaultTarget;
     Array<Case *> _cases;

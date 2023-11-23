@@ -265,7 +265,7 @@ public:
         push_back(three);
     }
 
-    List(Allocator *a, int numArgs, ...)
+    List(Allocator *a, size_t numArgs, ...)
         : Allocatable(a)
         , _head(NULL)
         , _tail(NULL)
@@ -275,11 +275,11 @@ public:
 
         va_list(args);
         va_start(args, numArgs);
-        for (int a=0;a < numArgs;a++)
+        for (size_t a=0;a < numArgs;a++)
             push_back(va_arg(args, T));
         va_end(args);
     }
-    List(Allocator *a, Allocator *itemAllocator, int numArgs, ...)
+    List(Allocator *a, Allocator *itemAllocator, size_t numArgs, ...)
         : Allocatable(a)
         , _head(NULL)
         , _tail(NULL)
@@ -289,12 +289,12 @@ public:
 
         va_list(args);
         va_start(args, numArgs);
-        for (int a=0;a < numArgs;a++)
+        for (size_t a=0;a < numArgs;a++)
             push_back(va_arg(args, T));
         va_end(args);
     }
 
-    List(Allocator *a, T *array, int arraySize)
+    List(Allocator *a, T *array, size_t arraySize)
         : Allocatable(a)
         , _head(NULL)
         , _tail(NULL)
@@ -302,10 +302,10 @@ public:
         , _changeID(0)
         , _length(0) {
 
-        for (int a=0;a < arraySize;a++)
+        for (size_t a=0;a < arraySize;a++)
             push_back(va_arg(array, T));
     }
-    List(Allocator *a, Allocator *itemAllocator, T *array, int arraySize)
+    List(Allocator *a, Allocator *itemAllocator, T *array, size_t arraySize)
         : Allocatable(a)
         , _head(NULL)
         , _tail(NULL)
@@ -313,7 +313,7 @@ public:
         , _changeID(0)
         , _length(0) {
 
-        for (int a=0;a < arraySize;a++)
+        for (size_t a=0;a < arraySize;a++)
             push_back(va_arg(array, T));
     }
 
@@ -360,7 +360,7 @@ public:
         change(-_length);
     }
 
-    uint32_t length() const { return _length; }
+    size_t length() const { return _length; }
     bool empty() const { return _length == 0; }
 
     T back() const {
@@ -470,13 +470,13 @@ public:
     }
 
 protected:
-    void change(int32_t i) { _changeID++; assert(_length + i >= 0); _length += i; }
+    void change(size_t i) { _changeID++; assert(_length + i >= 0); _length += i; }
 
     List<T>::Item *_head;
     List<T>::Item *_tail;
     Allocator * _itemAllocator;
     List<T>::ChangeID _changeID;
-    int32_t _length;
+    size_t _length;
 };
 
 } // namespace JitBuilder

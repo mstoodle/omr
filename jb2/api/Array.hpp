@@ -88,7 +88,7 @@ public:
             assert(_changeAtCreation == _array->_changeID);
             return ForwardSimpleIterator<T>::hasItem();
         }
-        void operator++(int32_t i) {
+        void operator++(int i) {
             assert(_array != NULL && _changeAtCreation == _array->_changeID);
             return ForwardSimpleIterator<T>::operator++(i);
         }
@@ -161,7 +161,7 @@ public:
         , _items(initialize(3, one, two, three)) {
     }
 
-    Array(Allocator *a, T *array, int arraySize)
+    Array(Allocator *a, T *array, size_t arraySize)
         : Allocatable(a)
         , _arrayAllocator(a)
         , _changeID(0)
@@ -169,7 +169,7 @@ public:
         , _length(arraySize)
         , _items(array, arraySize) {
     }
-    Array(Allocator *a, Allocator *arrayAllocator, T *array, int arraySize)
+    Array(Allocator *a, Allocator *arrayAllocator, T *array, size_t arraySize)
         : Allocatable(a)
         , _arrayAllocator(arrayAllocator)
         , _changeID(0)
@@ -183,17 +183,17 @@ public:
             deallocate(_items);
     }
 
-    uint32_t length() const { return _length; }
+    size_t length() const { return _length; }
     bool empty() const { return _length == 0; }
-    const T operator[] (int index) const {
+    const T operator[] (size_t index) const {
         assert(index >= 0 && index < _length);
         return _items[index];
     }
-    T operator[](int index) {
+    T operator[](size_t index) {
         assert(index >= 0 && index < _length);
         return _items[index];
     }
-    void assign(int index, T v) {
+    void assign(size_t index, T v) {
         assert(index >= 0);
         if (index >= _length)
             grow(index);
@@ -225,18 +225,18 @@ public:
     #endif
 
 protected:
-    void grow(int indexNeeded) {
+    void grow(size_t indexNeeded) {
         if (indexNeeded < _length)
             return;
 
-        int newLength = indexNeeded + 1;
+        size_t newLength = indexNeeded + 1;
         bool needDeallocate = _ownItems && _items != NULL;
 
         T *newItems = allocate(newLength);
         assert(newItems != NULL);
 
         T *zeroStart = newItems;
-        int oldItemsBytes = _length * sizeof(T);
+        size_t oldItemsBytes = _length * sizeof(T);
         if (oldItemsBytes > 0) {
             memcpy(newItems, _items, oldItemsBytes);
             zeroStart += _length;
@@ -250,15 +250,15 @@ protected:
         _ownItems = true;
     }
 
-    T *initialize(int32_t numArgs, ...) { 
+    T *initialize(size_t numArgs, ...) { 
         va_list(args);
         va_start(args, numArgs);
         return initialize(args, numArgs);
     }
 
-    T *initialize(va_list args, int32_t numArgs) {
+    T *initialize(va_list args, size_t numArgs) {
         T *array = allocate(numArgs);
-        for (int32_t a=0;a < numArgs;a++)
+        for (size_t a=0;a < numArgs;a++)
             array[a] = va_arg(args, T);
         va_end(args);
         _items = array;
@@ -266,9 +266,9 @@ protected:
         _length = numArgs;
         return array;
     }
-    T *initialize(T *oldArray, int32_t arraySize) {
+    T *initialize(T *oldArray, size_t arraySize) {
         T *newArray = allocate(arraySize);
-        for (int32_t a=0;a < arraySize;a++)
+        for (size_t a=0;a < arraySize;a++)
             newArray[a] = oldArray[a];
         _items = newArray;
         _ownItems = true;
