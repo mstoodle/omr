@@ -312,13 +312,13 @@ OperationR1L1T1::log(TextLogger & lgr) const {
     lgr << lgr.endl();
 }
 
-INIT_JBALLOC_REUSECAT(OperationR1V1T1, Operation)
+INIT_JBALLOC_REUSECAT(OperationR1T1V1, Operation)
 
-OperationR1V1T1::~OperationR1V1T1() {
+OperationR1T1V1::~OperationR1T1V1() {
 }
 
 void
-OperationR1V1T1::log(TextLogger & lgr) const {
+OperationR1T1V1::log(TextLogger & lgr) const {
     lgr << this->_result << " = " << this->name() << " ";
     this->_type->logType(lgr);
     lgr << " " << this->_value << lgr.endl();

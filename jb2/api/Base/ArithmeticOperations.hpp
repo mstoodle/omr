@@ -28,53 +28,21 @@ namespace OMR {
 namespace JitBuilder {
 namespace Base {
 
-class Op_Add : public OperationR1V2 {
-    JBALLOC_(Op_Add)
-
-    friend class BaseExtension;
-public:
-    virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-
-protected:
+DECL_OPERATION_CLASS(Op_Add, OperationR1V2, BaseExtension,
     Op_Add(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aAdd, Value *result, Value *left, Value *right);
-    IRCLONER_SUPPORT(Op_Add, OperationR1V2)
-    };
+)
 
-class Op_ConvertTo : public OperationR1V1T1 {
-    JBALLOC_(Op_ConvertTo)
-
-    friend class BaseExtension;
-public:
-    virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-
-protected:
+DECL_OPERATION_CLASS(Op_ConvertTo, OperationR1T1V1, BaseExtension,
     Op_ConvertTo(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aConvertTo, Value *result, const Type *type, Value *value);
-    IRCLONER_SUPPORT(Op_ConvertTo, OperationR1V1T1)
-    };
+)
 
-class Op_Mul : public OperationR1V2 {
-    JBALLOC_(Op_Mul)
-
-    friend class BaseExtension;
-public:
-    virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-
-protected:
+DECL_OPERATION_CLASS(Op_Mul, OperationR1V2, BaseExtension,
     Op_Mul(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aMul, Value *result, Value *left, Value *right);
-    IRCLONER_SUPPORT(Op_Mul, OperationR1V2)
-    };
+)
 
-class Op_Sub : public OperationR1V2 {
-    JBALLOC_(Op_Sub)
-
-    friend class BaseExtension;
-public:
-    virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-
-protected:
+DECL_OPERATION_CLASS(Op_Sub, OperationR1V2, BaseExtension,
     Op_Sub(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aSub, Value *result, Value *left, Value *right);
-    IRCLONER_SUPPORT(Op_Sub, OperationR1V2)
-    };
+)
 
 } // namespace Base
 } // namespace JitBuilder

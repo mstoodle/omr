@@ -57,7 +57,7 @@ Op_Add::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
 INIT_JBALLOC_REUSECAT(Op_ConvertTo, Operation)
 
 Op_ConvertTo::Op_ConvertTo(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aConvertTo, Value *result, const Type *type, Value *value)
-    : OperationR1V1T1(MEM_PASSLOC(a), aConvertTo, ext, parent, result, type, value) {
+    : OperationR1T1V1(MEM_PASSLOC(a), aConvertTo, ext, parent, result, type, value) {
 
 }
 
