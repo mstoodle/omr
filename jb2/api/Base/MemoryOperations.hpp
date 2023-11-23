@@ -28,111 +28,42 @@ namespace OMR {
 namespace JitBuilder {
 namespace Base {
 
-class Op_LoadAt : public OperationR1V1 {
-    JBALLOC_(Op_LoadAt)
-
-    friend class BaseExtension;
-public:
-    virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-
-protected:
+DECL_OPERATION_CLASS(Op_LoadAt, OperationR1V1, BaseExtension,
     Op_LoadAt(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aLoadAt, Value *result, Value *value);
+)
 
-    IRCLONER_SUPPORT(Op_LoadAt, OperationR1V1)
-};
-
-class Op_StoreAt : public OperationR0V2 {
-    JBALLOC_(Op_StoreAt)
-
-    friend class BaseExtension;
-public:
-    virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-
-protected:
+DECL_OPERATION_CLASS(Op_StoreAt, OperationR0V2, BaseExtension,
     Op_StoreAt(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aStoreAt, Value *address, Value *value);
-    IRCLONER_SUPPORT(Op_StoreAt, OperationR0V2)
-};
+)
 
-class Op_LoadField : public OperationR1V1T1 {
-    JBALLOC_(Op_LoadField)
-    friend class BaseExtension;
-public:
-    virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-
-protected:
+DECL_OPERATION_CLASS(Op_LoadField, OperationR1T1V1, BaseExtension,
     Op_LoadField(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aLoadField, Value *result, const FieldType *fieldType, Value *structValue);
-    IRCLONER_SUPPORT(Op_LoadField, OperationR1V1T1)
-};
+)
 
-class Op_StoreField : public OperationR0T1V2 {
-    JBALLOC_(Op_StoreField)
-    friend class BaseExtension;
-public:
-    virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-
-protected:
+DECL_OPERATION_CLASS(Op_StoreField, OperationR0T1V2, BaseExtension,
     Op_StoreField(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aStoreField, const FieldType *fieldType, Value *structValue, Value *value);
-    IRCLONER_SUPPORT(Op_StoreField, OperationR0T1V2)
-};
+)
 
-class Op_LoadFieldAt : public OperationR1V1T1 {
-    JBALLOC_(Op_LoadFieldAt)
-    friend class BaseExtension;
-public:
-    virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-
-protected:
+DECL_OPERATION_CLASS(Op_LoadFieldAt, OperationR1T1V1, BaseExtension,
     Op_LoadFieldAt(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aLoadFieldAt, Value *result, const FieldType *fieldType, Value *pStruct);
-    IRCLONER_SUPPORT(Op_LoadFieldAt, OperationR1V1T1)
-};
+)
 
-class Op_StoreFieldAt : public OperationR0T1V2 {
-    JBALLOC_(Op_StoreFieldAt)
-    friend class BaseExtension;
-public:
-    virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-
-protected:
+DECL_OPERATION_CLASS(Op_StoreFieldAt, OperationR0T1V2, BaseExtension,
     Op_StoreFieldAt(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aStoreFieldAt, const FieldType *fieldType, Value *pStruct, Value *value);
-    IRCLONER_SUPPORT(Op_StoreFieldAt, OperationR0T1V2)
-};
+)
 
-class Op_CreateLocalArray : public OperationR1L1T1 {
-    JBALLOC_(Op_CreateLocalArray)
-    friend class BaseExtension;
-public:
-    virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-
+DECL_OPERATION_CLASS(Op_CreateLocalArray, OperationR1L1T1, BaseExtension,
 protected:
-    Op_CreateLocalArray(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aCreateLocalArray, Value *result, Literal *numElements, const PointerType *pElementType)
-       : OperationR1L1T1(MEM_PASSLOC(a), aCreateLocalArray, ext, parent, result, numElements, pElementType)
-       { }
-    IRCLONER_SUPPORT(Op_CreateLocalArray, OperationR1L1T1)
-    };
+    Op_CreateLocalArray(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aCreateLocalArray, Value *result, Literal *numElements, const PointerType *pElementType);
+)
 
-class Op_CreateLocalStruct : public OperationR1T1 {
-    JBALLOC_(Op_CreateLocalStruct)
-    friend class BaseExtension;
-public:
-    virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
+DECL_OPERATION_CLASS(Op_CreateLocalStruct, OperationR1T1, BaseExtension,
+    Op_CreateLocalStruct(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aCreateLocalStruct, Value *result, const StructType *structType);
+)
 
-protected:
-    Op_CreateLocalStruct(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aCreateLocalStruct, Value *result, const StructType *structType)
-       : OperationR1T1(MEM_PASSLOC(a), aCreateLocalStruct, ext, parent, result, structType)
-       { }
-    IRCLONER_SUPPORT(Op_CreateLocalStruct, OperationR1T1)
-    };
-
-class Op_IndexAt : public OperationR1V2 {
-    JBALLOC_(Op_IndexAt)
-    friend class BaseExtension;
-public:
-    virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-
-protected:
+DECL_OPERATION_CLASS(Op_IndexAt, OperationR1V2, BaseExtension,
     Op_IndexAt(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aIndexAt, Value *result, Value *base, Value *index);
-    IRCLONER_SUPPORT(Op_IndexAt, OperationR1V2)
-};
+)
 
 #if 0
 class LoadField : public OperationR1V1T1

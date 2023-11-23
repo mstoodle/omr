@@ -31,17 +31,9 @@ namespace Base {
 
 class BaseExtension;
 
-class Op_Const : public OperationR1L1 {
-    JBALLOC_(Op_Const)
-
-    friend class BaseExtension;
-public:
-    virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-
-protected:
+DECL_OPERATION_CLASS(Op_Const, OperationR1L1, BaseExtension,
     Op_Const(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aConst, Value *result, Literal *lv);
-    IRCLONER_SUPPORT(Op_Const, OperationR1L1)
-};
+)
 
 } // namespace Base
 } // namespace JitBuilder

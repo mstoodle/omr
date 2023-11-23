@@ -76,7 +76,7 @@ Op_StoreAt::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
 INIT_JBALLOC_REUSECAT(Op_LoadField, Operation)
 
 Op_LoadField::Op_LoadField(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aLoadField, Value *result, const FieldType *fieldType, Value *structValue)
-    : OperationR1V1T1(MEM_PASSLOC(a), aLoadField, ext, parent, result, fieldType, structValue) {
+    : OperationR1T1V1(MEM_PASSLOC(a), aLoadField, ext, parent, result, fieldType, structValue) {
 }
 
 Op_LoadField::~Op_LoadField() {
@@ -116,7 +116,7 @@ Op_StoreField::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
 INIT_JBALLOC_REUSECAT(Op_LoadFieldAt, Operation)
 
 Op_LoadFieldAt::Op_LoadFieldAt(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aLoadFieldAt, Value *result, const FieldType *fieldType, Value *pStruct)
-    : OperationR1V1T1(MEM_PASSLOC(a), aLoadFieldAt, ext, parent, result, fieldType, pStruct) {
+    : OperationR1T1V1(MEM_PASSLOC(a), aLoadFieldAt, ext, parent, result, fieldType, pStruct) {
 }
 
 Op_LoadFieldAt::~Op_LoadFieldAt() {
@@ -159,6 +159,17 @@ Op_CreateLocalArray::~Op_CreateLocalArray() {
 
 }
 
+Op_CreateLocalArray::Op_CreateLocalArray(MEM_LOCATION(a),
+                                         Extension *ext,
+                                         Builder * parent,
+                                         ActionID aCreateLocalArray,
+                                         Value *result,
+                                         Literal *numElements,
+                                         const PointerType *pElementType)
+   : OperationR1L1T1(MEM_PASSLOC(a), aCreateLocalArray, ext, parent, result, numElements, pElementType) {
+
+}
+
 Operation *
 Op_CreateLocalArray::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
     Allocator *mem = b->ir()->mem();
@@ -174,6 +185,16 @@ Op_CreateLocalArray::clone(LOCATION, Builder *b, OperationCloner *cloner) const 
 INIT_JBALLOC_REUSECAT(Op_CreateLocalStruct, Operation)
 
 Op_CreateLocalStruct::~Op_CreateLocalStruct() {
+
+}
+
+Op_CreateLocalStruct::Op_CreateLocalStruct(MEM_LOCATION(a),
+                                           Extension *ext,
+                                           Builder * parent,
+                                           ActionID aCreateLocalStruct,
+                                           Value *result,
+                                           const StructType *structType)
+   : OperationR1T1(MEM_PASSLOC(a), aCreateLocalStruct, ext, parent, result, structType) {
 
 }
 

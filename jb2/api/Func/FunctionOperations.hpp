@@ -31,86 +31,40 @@ namespace Func {
 class FunctionExtension;
 class FunctionSymbol;
 
-class Op_Load : public OperationR1S1 {
-    JBALLOC_(Op_Load)
-
-    friend class FunctionExtension;
-public:
-    virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-
-protected:
+DECL_OPERATION_CLASS(Op_Load, OperationR1S1, FunctionExtension,
     Op_Load(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aLoad, Value *result, Symbol *s);
-    IRCLONER_SUPPORT(Op_Load, OperationR1S1)
-};
+)
 
-class Op_Store : public OperationR0S1V1 {
-    JBALLOC_(Op_Store)
-
-    friend class FunctionExtension;
-public:
-    virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-
-protected:
+DECL_OPERATION_CLASS(Op_Store, OperationR0S1V1, FunctionExtension,
     Op_Store(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aStore, Symbol *s, Value *value);
-    IRCLONER_SUPPORT(Op_Store, OperationR0S1V1)
-};
+)
 
-class Op_Call : public OperationR1S1VN {
-    JBALLOC_(Op_Call)
-
-    friend class FunctionExtension;
-public:
-    virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-    virtual void log(TextLogger &lgr) const;
-
-protected:
+DECL_OPERATION_CLASS(Op_Call, OperationR1S1VN, FunctionExtension,
     Op_Call(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aCall, Value *result, FunctionSymbol *target, std::va_list & args);
     Op_Call(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aCall, OperationCloner *cloner)
         : OperationR1S1VN(MEM_PASSLOC(a), aCall, ext, parent, cloner) {
     }
-    IRCLONER_SUPPORT(Op_Call, OperationR1S1VN)
-};
-
-class Op_CallVoid : public OperationR0S1VN {
-    JBALLOC_(Op_CallVoid)
-
-    friend class FunctionExtension;
 public:
-    virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
     virtual void log(TextLogger &lgr) const;
+)
 
-protected:
+DECL_OPERATION_CLASS(Op_CallVoid, OperationR0S1VN, FunctionExtension,
     Op_CallVoid(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aCallVoid, FunctionSymbol *target, std::va_list & args);
     Op_CallVoid(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aCallVoid, OperationCloner *cloner)
         : OperationR0S1VN(MEM_PASSLOC(a), aCallVoid, ext, parent, cloner) {
     }
-    IRCLONER_SUPPORT(Op_CallVoid, OperationR0S1VN)
-};
-
-class Op_ReturnVoid : public Operation {
-    JBALLOC_(Op_ReturnVoid)
-
-    friend class FunctionExtension;
 public:
-    virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
+    virtual void log(TextLogger &lgr) const;
+)
 
-protected:
+DECL_OPERATION_CLASS(Op_ReturnVoid, Operation, FunctionExtension,
     Op_ReturnVoid(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aReturnVoid);
-    IRCLONER_SUPPORT(Op_ReturnVoid, Operation)
-};
+)
 
 // eventually generalize to handle multiple return values but not needed yet
-class Op_Return : public OperationR0V1 {
-    JBALLOC_(Op_Return)
-
-    friend class FunctionExtension;
-public:
-    virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-
-protected:
+DECL_OPERATION_CLASS(Op_Return, OperationR0V1, FunctionExtension,
     Op_Return(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aReturn, Value * v);
-    IRCLONER_SUPPORT(Op_Return, OperationR0V1)
-};
+)
 
 } // namespace Func
 } // namespace JitBuilder

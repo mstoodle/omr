@@ -368,6 +368,12 @@ Op_IfCmpUnsignedLessOrEqual::log(TextLogger & lgr) const {
 //
 INIT_JBALLOC_REUSECAT(Op_IfThenElse, Operation)
 
+Op_IfThenElse::Op_IfThenElse(Allocator *a, const Op_IfThenElse *source, IRCloner *cloner)
+    : OperationB1R0V1(a, source, cloner)
+    , _elseBuilder(cloner->clonedBuilder(source->_elseBuilder)) {
+
+}
+
 Op_IfThenElse::Op_IfThenElse(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aIfThenElse, IfThenElseBuilder *bldr)
     : OperationB1R0V1(MEM_PASSLOC(a), aIfThenElse, ext, parent, ext->BoundBuilder(PASSLOC, parent, this, String(a, "thenPath")), bldr->selector())
     , _elseBuilder(ext->BoundBuilder(PASSLOC, parent, this, String(a, "elsePath"))) {
@@ -398,7 +404,7 @@ Op_IfThenElse::log(TextLogger & lgr) const {
 
 
 //
-// SwitchBuilde3r
+// SwitchBuilder
 //
 SwitchBuilder *
 SwitchBuilder::addCase(Literal *lv, Builder *builder, bool fallsThrough) {
@@ -439,9 +445,15 @@ Op_Switch::Op_Switch(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID
     }
 }
 
-Operation *
-Op_Switch::clone(Allocator *mem, IRCloner *cloner) const {
-    return new (mem) Op_Switch(mem, this, cloner);
+Op_Switch::Op_Switch(Allocator *a, const Op_Switch *source, IRCloner *cloner)
+    : OperationR0V1(a, source, cloner)
+    , _defaultBuilder(cloner->clonedBuilder(source->_defaultBuilder))
+    , _cases(NULL, a) {
+
+    for (uint32_t i=0;i < _cases.length();i++) {
+        Case *c = source->_cases[i];
+        _cases.assign(i, cloner->addon<BaseIRClonerAddon>()->clonedCase(c));
+    }
 }
 
 Operation *
