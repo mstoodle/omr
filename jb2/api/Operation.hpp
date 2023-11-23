@@ -46,7 +46,10 @@ class TypeDictionary;
 class Value;
 
 // Operation defines an interface to all kinds of operations, it cannot itself be instantiated
-// Operation classes defined for specific templates (which can be instantiated) follow
+// Structural Operation classes for specific templates (e.g. an Operation that has two Value
+// operands and returns a Value, called OperationR1V2) follow, but these classes also cannot
+// be instantiated directly. Specific concrete operations (e.g. Op_MergeDef) can leverage
+// structural classes or inherit directly from the Operation base class to add specific elements.
 
 class Operation : public Allocatable {
     JBALLOC_(Operation)
@@ -101,13 +104,6 @@ public:
     virtual size_t numWrittenSymbols() const           { return 0; }
     virtual Symbol * writtenSymbol(uint32_t i=0) const { return NULL; }
 
-#ifdef CASES_BECOME_CORE
-    virtual CaseIterator CasesBegin()          { return CaseIterator(); }
-    virtual CaseIterator CasesEnd()            { return caseEndIterator; }
-    virtual size_t numCases() const            { return 0; }
-    virtual Case * getCase(uint32_t i=0) const { return NULL; }
-#endif
-
     virtual TypeIterator types()                  { return TypeIterator(); }
     virtual size_t numTypes() const               { return 0; }
     virtual const Type * type(uint32_t i=0) const { return NULL; }
@@ -138,25 +134,28 @@ protected:
 
     static void addToBuilder(Extension *ext, Builder *b, Operation *op);
 
-    OperationID _id;
-    Extension * _ext;
-    Builder * _parent;
-    Operation *_next;
-    Operation *_prev;
-    ActionID _action;
-    const String _name;
-    Location * _location;
-    CreateLocation _creationLocation;
+    OperationID _id;                  // every Operation in a Compilation has a unique identifier
+    Extension * _ext;                 // the Extension object that created this Operation object
+    Builder * _parent;                // the Builder object that directly holds this Operation object
+    Operation *_next;                 // pointer to the next operation in _parent (or NULL if it's the last)
+    Operation *_prev;                 // pointer to the previous operation in _parent (or NULL if it's the first)
+    ActionID _action;                 // what is the action of this Operation
+    const String _name;               // name for this operation: this should be by action and probably moved to Extension
+    Location * _location;             // the source program location responsible for creation of this operation
+    CreateLocation _creationLocation; // the compiler code location that caused this operation to be created
 };
 
 
-// Following are "structural" classes that are used to hold results(R), literals(L),
-// operand values (V), Symbols(S), and builders (B) for different kinds
+// Following are "structural" classes that are used to hold results(R), builders(B),
+// literals(L), operand values (V), Symbols(S), and Types(T) for different kinds
 // of Operations. The name signifies the structure using the designator letters
 // listed above. So the structural Operation class with one result and two operand
-// values is called OperationR1V2. Operation sub classes then derive from these
-// structural classes and can add some semantically relevant services.
-// These classes are abstract so they cannot be accidentally created directly.
+// values is called OperationR1V2. Concrete operation sub classes (e.g. MergeDef
+// which follows these structural class definitions) can then derive from these
+// structural classes and can add any semantically relevant services. These classes
+// are intentionally abstract (the virtual clone() function is not implemented) so
+// they cannot be accidentally created directly.
+
 class OperationR0S1 : public Operation {
     JBALLOC_(OperationR0S1)
 
@@ -780,6 +779,9 @@ class OperationB1R0V2 : public OperationR0V2 {
 };
 
 
+// This macro helps Extensions to create new Operation classes that properly support IRCloner.
+// It should be used inside the class definition for a concrete Operation. There are examples
+// shown below in the Op_AppendBuilder and Op_MergeDef classes.
 #define IRCLONER_SUPPORT(C,Super) \
 protected: \
    C(Allocator *a, const C *source, IRCloner *cloner) : Super(a, source, cloner) { }; \
@@ -787,7 +789,8 @@ protected: \
 
 
 //
-// Core operations
+// Core operations available to all Extensions because they're defined here and can be created by the
+// Compiler's CoreExtension
 //
 
 class Op_AppendBuilder : public OperationB1 {
@@ -814,12 +817,12 @@ public:
 
 protected:
     Op_MergeDef(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aMergeDef, Value *existingDef, Value *newDef);
+
     IRCLONER_SUPPORT(Op_MergeDef, OperationR1V1)
 };
 
 
 } // namespace JitBuilder
-
 } // namespace OMR
 
 #endif // defined(OPERATION_INCL)
