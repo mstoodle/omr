@@ -114,8 +114,8 @@ public:
 
     // Exit handling
     virtual uint32_t numExits() const { return 0; }
-    virtual Builder *exit(int x=0) const { return NULL; }
-    virtual void addExit(Builder *b, int x=0) { assert(0); }
+    virtual Builder *exit(uint32_t x=0) const { return NULL; }
+    virtual void addExit(Builder *b, uint32_t x=0) { assert(0); }
 
     virtual BuilderListIterator builderIterator() const { return _allBuilders.fwdIterator(); }
 

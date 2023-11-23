@@ -62,7 +62,7 @@ public:
     Symbol * getSymbol(String name);
 
     int32_t numReturnTypes() const { return _returnTypes.length(); }
-    const Type * returnType(int i=0) const {
+    const Type * returnType(uint32_t i=0) const {
         if (_returnTypes.length() > i)
             return this->_returnTypes[i];
         return NULL;

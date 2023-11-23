@@ -98,17 +98,17 @@ OperationCloner::init() {
 
 void
 OperationCloner::reset() {
-    for (int i=0;i < _numResults;i++)
+    for (uint32_t i=0;i < _numResults;i++)
         _results[i] = _op->result(i);
-    for (int i=0;i < _numOperands;i++)
+    for (uint32_t i=0;i < _numOperands;i++)
         _operands[i] = _op->operand(i);
-    for (int i=0;i < _numTypes;i++)
+    for (uint32_t i=0;i < _numTypes;i++)
         _types[i] = _op->type(i);
-    for (int i=0;i < _numLiterals;i++)
+    for (uint32_t i=0;i < _numLiterals;i++)
         _literals[i] = _op->literal(i);
-    for (int i=0;i < _numSymbols;i++)
+    for (uint32_t i=0;i < _numSymbols;i++)
         _symbols[i] = _op->symbol(i);
-    for (int i=0;i < _numBuilders;i++)
+    for (uint32_t i=0;i < _numBuilders;i++)
         _builders[i] = _op->builder(i);
 }
 

@@ -59,7 +59,7 @@ FunctionCompilation::func() const {
 void
 FunctionCompilation::addInitialBuildersToWorklist(BuilderList & worklist) {
     Scope *scope = this->scope<FunctionScope>();
-    for (int i=0;i < scope->numEntryPoints<BuilderEntry>();i++) {
+    for (uint32_t i=0;i < scope->numEntryPoints<BuilderEntry>();i++) {
         Builder *b = scope->entryPoint<BuilderEntry>(i)->builder();
         worklist.push_back(b);
     }
@@ -185,7 +185,7 @@ FunctionCompilation::replaceTypes(TypeReplacer *repl) {
                 }
 
                 LOG_INDENT_REGION(lgr) {
-                    for (int i=0;i < parmTypeMapper->size();i++) {
+                    for (uint32_t i=0;i < parmTypeMapper->size();i++) {
                         String newName(baseName + parmTypeMapper->name());
                         const Type *newType = parmTypeMapper->next();
                         ParameterSymbol *newSym = fc->DefineParameter(newName, newType);
@@ -239,7 +239,7 @@ FunctionCompilation::replaceTypes(TypeReplacer *repl) {
                 }
 
                 LOG_INDENT_REGION(lgr) {
-                    for (int i=0;i < typeMapper->size();i++) {
+                    for (uint32_t i=0;i < typeMapper->size();i++) {
                         String newName = baseName + typeMapper->name();
                         const Type *newType = typeMapper->next();
                         Symbol *newSym = fc->DefineLocal(newName, newType);

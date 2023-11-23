@@ -73,44 +73,44 @@ public:
 
     virtual BuilderIterator builders()                  { return BuilderIterator(); }
     virtual size_t numBuilders() const                 { return 0; }
-    virtual Builder *builder(int i=0) const             { return NULL; }
+    virtual Builder *builder(uint32_t i=0) const             { return NULL; }
 
     virtual LiteralIterator literals()                  { return LiteralIterator(); }
     virtual size_t numLiterals() const                 { return 0; }
-    virtual Literal * literal(int i=0) const            { assert(0); return 0; }
+    virtual Literal * literal(uint32_t i=0) const            { assert(0); return 0; }
 
     virtual SymbolIterator symbols()                    { return SymbolIterator(); }
     virtual size_t numSymbols() const                  { return 0; }
-    virtual Symbol *symbol(int i=0) const               { assert(0); return 0; }
+    virtual Symbol *symbol(uint32_t i=0) const               { assert(0); return 0; }
 
     virtual ValueIterator operands()                    { return ValueIterator(); }
     virtual size_t numOperands() const                  { return 0; }
-    virtual Value * operand(int i=0) const              { return NULL; }
+    virtual Value * operand(uint32_t i=0) const              { return NULL; }
 
     virtual ValueIterator results()                     { return ValueIterator(); }
     virtual size_t numResults() const                  { return 0; }
-    virtual Value * result(int i=0) const               { return NULL; }
+    virtual Value * result(uint32_t i=0) const               { return NULL; }
  
     // Change to mayReadShadow() and mustReadShadow
     virtual SymbolIterator readSymbols()                { return SymbolIterator(); }
     virtual size_t numReadSymbols() const              { return 0; }
-    virtual Symbol * readSymbol(int i=0) const          { return NULL; }
+    virtual Symbol * readSymbol(uint32_t i=0) const          { return NULL; }
 
     // Change to mayWriteShadow() and mustWriteShadow
     virtual SymbolIterator writtenSymbols()             { return SymbolIterator(); }
     virtual size_t numWrittenSymbols() const           { return 0; }
-    virtual Symbol * writtenSymbol(int i=0) const       { return NULL; }
+    virtual Symbol * writtenSymbol(uint32_t i=0) const       { return NULL; }
 
 #ifdef CASES_BECOME_CORE
     virtual CaseIterator CasesBegin()                   { return CaseIterator(); }
     virtual CaseIterator CasesEnd()                     { return caseEndIterator; }
     virtual size_t numCases() const                    { return 0; }
-    virtual Case * getCase(int i=0) const               { return NULL; }
+    virtual Case * getCase(uint32_t i=0) const               { return NULL; }
 #endif
 
     virtual TypeIterator types()                        { return TypeIterator(); }
     virtual size_t numTypes() const                    { return 0; }
-    virtual const Type * type(int i=0) const            { return NULL; }
+    virtual const Type * type(uint32_t i=0) const            { return NULL; }
 
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const = 0;
 
@@ -164,7 +164,7 @@ public:
     virtual size_t size() const { return sizeof(OperationR0S1); }
 
     virtual size_t numSymbols() const { return 1; }
-    virtual Symbol *symbol(int i=0) const {
+    virtual Symbol *symbol(uint32_t i=0) const {
         if (i == 0) return _symbol;
         return NULL;
     }
@@ -194,7 +194,7 @@ public:
     virtual size_t size() const { return sizeof(OperationR0S1V1); }
 
     virtual size_t numOperands() const { return 1; }
-    virtual Value * operand(int i=0) const {
+    virtual Value * operand(uint32_t i=0) const {
         if (i == 0) return _value;
         return NULL;
     }
@@ -224,7 +224,7 @@ class OperationR0T1 : public Operation {
     virtual size_t size() const { return sizeof(OperationR0T1); }
 
     virtual size_t numTypes() const { return 1; }
-    virtual const Type *type(int i=0) const {
+    virtual const Type *type(uint32_t i=0) const {
         if (i == 0) return _type;
         return NULL;
     }
@@ -250,7 +250,7 @@ class OperationR0T1V2 : public OperationR0T1 {
 public:
     virtual size_t size() const            { return sizeof(OperationR0T1V2); }
     virtual size_t numOperands() const     { return 2; }
-    virtual Value * operand(int i=0) const {
+    virtual Value * operand(uint32_t i=0) const {
         if (i == 0) return _base;
         if (i == 1) return _value;
         return NULL;
@@ -282,7 +282,7 @@ class OperationR0V1 : public Operation {
 public:
     virtual size_t size() const            { return sizeof(OperationR0V1); }
     virtual size_t numOperands() const     { return 1; }
-    virtual Value * operand(int i=0) const {
+    virtual Value * operand(uint32_t i=0) const {
         if (i == 0) return _value;
         return NULL;
     }
@@ -311,7 +311,7 @@ class OperationR0V2 : public Operation {
 public:
     virtual size_t size() const            { return sizeof(OperationR0V2); }
     virtual size_t numOperands() const     { return 2; }
-    virtual Value * operand(int i=0) const {
+    virtual Value * operand(uint32_t i=0) const {
         if (i == 0) return _left;
         if (i == 1) return _right;
         return NULL;
@@ -347,7 +347,7 @@ public:
     virtual size_t size() const            { return sizeof(OperationR0S1VN); }
 
     virtual size_t numOperands() const     { return _numValues; }
-    virtual Value * operand(int i=0) const {
+    virtual Value * operand(uint32_t i=0) const {
         if (i < _numValues) return _values[i];
         return NULL;
     }
@@ -395,7 +395,7 @@ class OperationR1 : public Operation {
 public:
     virtual size_t size() const           { return sizeof(OperationR1); }
     virtual size_t numResults() const    { return 1; }
-    virtual Value * result(int i=0) const {
+    virtual Value * result(uint32_t i=0) const {
         if (i == 0) return _result;
         return NULL;
     }
@@ -417,7 +417,7 @@ class OperationR1L1 : public OperationR1 {
 
 public:
     virtual size_t numLiterals() const { return 1; }
-    virtual Literal *literal(int i=0) const {
+    virtual Literal *literal(uint32_t i=0) const {
         if (i == 0) return _lv;
         return NULL;
     }
@@ -444,7 +444,7 @@ class OperationR1L1T1 : public OperationR1L1 {
 public:
     virtual size_t size() const      { return sizeof(OperationR1L1T1); }
     virtual size_t numTypes() const { return 1; }
-    virtual const Type * type(int i=0) const {
+    virtual const Type * type(uint32_t i=0) const {
         if (i == 0) return _elementType;
         return NULL;
     }
@@ -471,7 +471,7 @@ class OperationR1S1 : public OperationR1 {
 
 public:
     virtual size_t numSymbols() const { return 1; }
-    virtual Symbol *symbol(int i=0) const {
+    virtual Symbol *symbol(uint32_t i=0) const {
         if (i == 0) return _symbol;
         return NULL;
     }
@@ -498,7 +498,7 @@ class OperationR1T1 : public OperationR1 {
 public:
     virtual size_t size() const         { return sizeof(OperationR1T1); }
     virtual size_t numTypes() const { return 1; }
-    virtual const Type * type(int i=0) const {
+    virtual const Type * type(uint32_t i=0) const {
         if (i == 0) return _type;
         return NULL;
     }
@@ -527,7 +527,7 @@ class OperationR1V1 : public OperationR1 {
 public:
     virtual size_t size() const         { return sizeof(OperationR1V1); }
     virtual size_t numOperands() const  { return 1; }
-    virtual Value * operand(int i=0) const {
+    virtual Value * operand(uint32_t i=0) const {
         if (i == 0) return _value;
         return NULL;
     }
@@ -556,7 +556,7 @@ class OperationR1V1T1 : public OperationR1V1 {
 public:
     virtual size_t size() const         { return sizeof(OperationR1V1T1); }
     virtual size_t numTypes() const { return 1; }
-    virtual const Type * type(int i=0) const {
+    virtual const Type * type(uint32_t i=0) const {
         if (i == 0) return _type;
         return NULL;
     }
@@ -586,7 +586,7 @@ class OperationR1V2 : public OperationR1 {
 public:
     virtual size_t size() const         { return sizeof(OperationR1V2); }
     virtual size_t numOperands() const  { return 2; }
-    virtual Value * operand(int i=0) const {
+    virtual Value * operand(uint32_t i=0) const {
         if (i == 0) return _left;
         if (i == 1) return _right;
         return NULL;
@@ -622,7 +622,7 @@ class OperationR1V2T1 : public OperationR1V2 {
 public:
     virtual size_t size() const         { return sizeof(OperationR1V2T1); }
     virtual size_t numTypes() const { return 1; }
-    virtual const Type * type(int i=0) const {
+    virtual const Type * type(uint32_t i=0) const {
         if (i == 0) return _type;
         return NULL;
     }
@@ -655,7 +655,7 @@ public:
     virtual size_t size() const { return sizeof(OperationR1S1VN); }
 
     virtual size_t numOperands() const { return _numValues; }
-    virtual Value * operand(int i=0) const {
+    virtual Value * operand(uint32_t i=0) const {
         if (i < _numValues) return _values[i];
         return NULL;
     }
@@ -703,7 +703,7 @@ class OperationB1 : public Operation {
     public:
     virtual size_t size() const              { return sizeof(OperationB1); }
     virtual size_t numBuilders() const      { return 1; }
-    virtual Builder * builder(int i=0) const {
+    virtual Builder * builder(uint32_t i=0) const {
         if (i == 0) return _builder;
         return NULL;
     }
@@ -731,7 +731,7 @@ class OperationB1R0V1 : public OperationR0V1 {
     public:
     virtual size_t size() const { return sizeof(OperationB1R0V1); }
     virtual size_t numBuilders() const { return 1; }
-    virtual Builder * builder(int i=0) const {
+    virtual Builder * builder(uint32_t i=0) const {
         if (i == 0) return _builder;
         return NULL;
     }
@@ -758,7 +758,7 @@ class OperationB1R0V2 : public OperationR0V2 {
     public:
     virtual size_t size() const              { return sizeof(OperationB1R0V2); }
     virtual size_t numBuilders() const      { return 1; }
-    virtual Builder * builder(int i=0) const {
+    virtual Builder * builder(uint32_t i=0) const {
         if (i == 0) return _builder;
         return NULL;
     }

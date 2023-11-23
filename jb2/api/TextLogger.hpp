@@ -67,6 +67,10 @@ public:
         log._os << v;
         return log;
     }
+    friend TextLogger &operator<<(TextLogger &log, const uint32_t v) {
+        log._os << v;
+        return log;
+    }
     friend TextLogger &operator<<(TextLogger &log, const uint64_t v) {
         log._os << v;
         return log;
