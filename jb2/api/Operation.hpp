@@ -549,11 +549,11 @@ protected:
     Value * _value;
 };
 
-class OperationR1V1T1 : public OperationR1V1 {
-    JBALLOC_(OperationR1V1T1)
+class OperationR1T1V1 : public OperationR1V1 {
+    JBALLOC_(OperationR1T1V1)
 
 public:
-    virtual size_t size() const     { return sizeof(OperationR1V1T1); }
+    virtual size_t size() const     { return sizeof(OperationR1T1V1); }
     virtual size_t numTypes() const { return 1; }
     virtual const Type * type(uint32_t i=0) const {
         if (i == 0) return _type;
@@ -565,12 +565,12 @@ public:
     virtual void log(TextLogger & log) const;
 
 protected:
-    OperationR1V1T1(MEM_LOCATION(a), ActionID action, Extension *ext, Builder * parent, Value * result, const Type * t, Value * v)
+    OperationR1T1V1(MEM_LOCATION(a), ActionID action, Extension *ext, Builder * parent, Value * result, const Type * t, Value * v)
         : OperationR1V1(MEM_PASSLOC(a), action, ext, parent, result, v)
         , _type(t) {
 
     }
-    OperationR1V1T1(Allocator *a, const OperationR1V1T1 *source, IRCloner *cloner)
+    OperationR1T1V1(Allocator *a, const OperationR1T1V1 *source, IRCloner *cloner)
         : OperationR1V1(a, source, cloner)
         , _type(cloner->clonedType(source->_type)) {
 
@@ -779,47 +779,62 @@ class OperationB1R0V2 : public OperationR0V2 {
 };
 
 
-// This macro helps Extensions to create new Operation classes that properly support IRCloner.
-// It should be used inside the class definition for a concrete Operation. There are examples
-// shown below in the Op_AppendBuilder and Op_MergeDef classes.
 #define IRCLONER_SUPPORT(C,Super) \
 protected: \
-   C(Allocator *a, const C *source, IRCloner *cloner) : Super(a, source, cloner) { }; \
-   virtual Operation *clone(Allocator *mem, IRCloner *cloner) const { return new (mem) C(mem, this, cloner); }
+    C(Allocator *a, const C *source, IRCloner *cloner) : Super(a, source, cloner) { }; \
+    virtual Operation *clone(Allocator *mem, IRCloner *cloner) const { return new (mem) C(mem, this, cloner); }
 
+// This DECL_OPERATION_CLASS macro helps Extensions to create new Operation classes, leaving only the constructors and
+// any Operation-specific APIs to be declared. The parameters are the name of the concrete operation class to create,
+// the name of the concrete operation class's super class, and the name of the Extension class that is responsible
+// for this kind of operation. See examples below for the Op_AppendBuilder and Op_MergeDef classes. This macro
+// takes care of inserting the allocation category support, the OperationCloner and IRCloner support, as well as
+// ensuring the operation class considers the managing Extension class to be a friend.
+//
+// The "_WITH_STATE" variant recognizes that the concrete class may define its own state and therefore the
+// default (empty) IRCloner constructor isn't appropriate. In this case, the constructor is declared but
+// will need to be defined elsewhere.
+
+#define DECL_OPERATION_CLASS(C,Super,Ext,userDecls) \
+class C : public Super { \
+    JBALLOC_(C); \
+    friend class Ext; \
+public: \
+    virtual size_t size() const { return sizeof(C); } \
+    virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const; \
+protected: \
+    C(Allocator *a, const C *source, IRCloner *cloner) : Super(a, source, cloner) { }; \
+    virtual Operation *clone(Allocator *mem, IRCloner *cloner) const { return new (mem) C(mem, this, cloner); } \
+    userDecls \
+};
+
+#define DECL_OPERATION_CLASS_WITH_STATE(C,Super,Ext,userDecls) \
+class C : public Super { \
+    JBALLOC_(C); \
+    friend class Ext; \
+public: \
+    virtual size_t size() const { return sizeof(C); } \
+    virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const; \
+protected: \
+    C(Allocator *a, const C *source, IRCloner *cloner); \
+    virtual Operation *clone(Allocator *mem, IRCloner *cloner) const { return new (mem) C(mem, this, cloner); } \
+    userDecls \
+};
+
+    
 
 //
-// Core operations available to all Extensions because they're defined here and can be created by the
+// Core operations available to all Extensions because they're defined here and are managed by the
 // Compiler's CoreExtension
 //
 
-class Op_AppendBuilder : public OperationB1 {
-    JBALLOC_(Op_AppendBuilder)
-
-    friend class CoreExtension;
-
-public:
-    virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-
-protected:
+DECL_OPERATION_CLASS(Op_AppendBuilder, OperationB1, CoreExtension,
     Op_AppendBuilder(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aAppendBuilder, Builder *b);
+)
 
-    IRCLONER_SUPPORT(Op_AppendBuilder, OperationB1)
-};
-
-class Op_MergeDef : public OperationR1V1 {
-    JBALLOC_(Op_MergeDef)
-
-    friend class CoreExtension;
-
-public:
-    virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const;
-
-protected:
+DECL_OPERATION_CLASS(Op_MergeDef, OperationR1V1, CoreExtension,
     Op_MergeDef(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aMergeDef, Value *existingDef, Value *newDef);
-
-    IRCLONER_SUPPORT(Op_MergeDef, OperationR1V1)
-};
+)
 
 
 } // namespace JitBuilder
