@@ -138,7 +138,7 @@ public:
         , _items(copyItems(3, one, two, three)) {
     }
 
-    ForwardSimpleIterator(Allocator *a, int32_t numArgs, ...)
+    ForwardSimpleIterator(Allocator *a, size_t numArgs, ...)
         : Iterator<T>(a)
         , _index(0) {
 
@@ -147,7 +147,7 @@ public:
         _items = copyItems(args, numArgs);
     }
 
-    ForwardSimpleIterator(Allocator *a, T *array, int arraySize)
+    ForwardSimpleIterator(Allocator *a, T *array, size_t arraySize)
         : Iterator<T>(a)
         , _index(0)
         , _length(arraySize)
@@ -161,17 +161,17 @@ public:
     T item() const             { assert(hasItem()); return _items[_index]; }
 
 protected:
-    T *copyItems(int32_t numArgs, ...) { 
+    T *copyItems(size_t numArgs, ...) { 
         va_list(args);
         va_start(args, numArgs);
         return copyItems(args, numArgs);
     }
 
-    T *copyItems(va_list args, int32_t numArgs) {
+    T *copyItems(va_list args, size_t numArgs) {
         T *array = NULL;
         if (numArgs > 0) {
             array = this->allocate(numArgs);
-            for (int32_t a=0;a < numArgs;a++)
+            for (size_t a=0;a < numArgs;a++)
                 array[a] = va_arg(args, T);
             va_end(args);
         }
@@ -180,17 +180,17 @@ protected:
         _length = numArgs;
         return array;
     }
-    T *copyItems(T *oldArray, int32_t arraySize) {
+    T *copyItems(T *oldArray, size_t arraySize) {
         T *newArray = this->allocate(arraySize);
-        for (int32_t a=0;a < arraySize;a++)
+        for (size_t a=0;a < arraySize;a++)
             newArray[a] = oldArray[a]; _items = newArray;
         _ownItems = (_items != NULL);
         _length = arraySize;
         return newArray;
     }
 
-    int32_t _index;
-    int32_t _length;
+    size_t _index;
+    size_t _length;
     bool    _ownItems;
     T     * _items;
 };
@@ -216,13 +216,13 @@ public:
         : ForwardSimpleIterator<T>(a, three, two, one) {
     }
 
-    BackwardArrayIterator<T>(Allocator *a, int32_t numArgs, ...)
+    BackwardArrayIterator<T>(Allocator *a, size_t numArgs, ...)
         : ForwardSimpleIterator<T>(a) {
         va_list(args);
         va_start(args, numArgs);
         ForwardSimpleIterator<T>::copyItems(numArgs, args);
         // now reverse _items
-        for (int32_t a=0;a < numArgs/2;a++) {
+        for (size_t a=0;a < numArgs/2;a++) {
             T swap = this->_items[a];
             this->_items[numArgs-1 - a] = this->_items[a];
             this->_items[a] = swap;
@@ -230,14 +230,14 @@ public:
         va_end(args);
     }
 
-    BackwardArrayIterator<T>(Allocator *a, T *array, int arraySize)
+    BackwardArrayIterator<T>(Allocator *a, T *array, size_t arraySize)
         : ForwardSimpleIterator<T>(a, array, arraySize) {
         
         if (!this->_ownItems) // base class constructor doesn't copy
             this->_items = copyItems(arraySize, array);
 
         // reverse _items now we own _items
-        for (int32_t a=0;a < arraySize/2;a++) {
+        for (size_t a=0;a < arraySize/2;a++) {
             T swap = this->_items[a];
             this->_items[arraySize-1 - a] = this->_items[a];
             this->_items[a] = swap;

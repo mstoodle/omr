@@ -122,12 +122,12 @@ FunctionType::replace(TypeReplacer *repl) {
 
     // allocate array and then assign the mapped parameter types
     const Type **newParmTypes = new const Type *[numNewParms];
-    int parmNum = 0;
-    for (int32_t p=0;p < numParms;p++) {
+    uint32_t parmNum = 0;
+    for (uint32_t p=0;p < numParms;p++) {
         const Type *parmType = _parmTypes[p];
         TypeMapper *parmMapper = repl->mapperForType(parmType);
         assert(parmMapper != NULL);
-        for (int i=0;i < parmMapper->size();i++)
+        for (uint32_t i=0;i < parmMapper->size();i++)
             newParmTypes[parmNum++] = parmMapper->next();
     }
 

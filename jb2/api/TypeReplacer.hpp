@@ -88,7 +88,7 @@ protected:
     virtual void visitPostCompilation(Compilation * comp);
 
     // overrideable functions
-    virtual void cloneOperation(Builder *b, OperationReplacer *r, int numMaps);
+    virtual void cloneOperation(Builder *b, OperationReplacer *r, uint32_t numMaps);
 
     // helper functions
     const Type * mappedLayout(const Type *t);

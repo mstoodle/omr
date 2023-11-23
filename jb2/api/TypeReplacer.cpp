@@ -142,7 +142,7 @@ TypeReplacer::recordMapper(const Type *type, TypeMapper *mapper) {
     if (lgr) {
         lgr->indent() << "type t" << type->id() << " mapper registered:" << lgr->endl();
         LOG_INDENT_REGION(lgr) {
-            for (int i=0;i < mapper->size();i++) {
+            for (uint32_t i=0;i < mapper->size();i++) {
                 const Type *newType = mapper->current();
                 if (lgr) lgr->indent() << i << " : " << "\"" << mapper->name() << "\"" << " offset " << mapper->offset() << " : ";
                 if (lgr) newType->logType(*lgr, false);
@@ -576,14 +576,14 @@ TypeReplacer::transformOperation(Operation * op) {
     Builder *b = NULL;
 
     LOG_INDENT_REGION(lgr) {
-        int numMaps = 0;
+        uint32_t numMaps = 0;
         bool cloneNeeded = false;
 
         Allocator *mem = comp()->passMem();
         OperationReplacer r(mem, op);
 
         // fill in appropriate mappers based on this operation's operand Values
-        for (int o=0;o < op->numOperands();o++) {
+        for (uint32_t o=0;o < op->numOperands();o++) {
             Value *v = op->operand(o);
             auto it = _valueMappers.find(v);
             assert(it != _valueMappers.end()); // must have been produced earlier
@@ -592,13 +592,13 @@ TypeReplacer::transformOperation(Operation * op) {
             valueMapper->start();
             if (valueMapper->size() != 1 || valueMapper->current()->id() != v->id())
                 cloneNeeded = true;
-            int sz = valueMapper->size();
+            uint32_t sz = valueMapper->size();
             if (sz > numMaps)
                 numMaps = sz;
         }
 
         // transform literals as needed and fill in appropriate mappers for this operation's Literal
-        for (int l=0;l < op->numLiterals();l++) {
+        for (uint32_t l=0;l < op->numLiterals();l++) {
             Literal *lv = op->literal(l);
             if (_literalMappers.find(lv) == _literalMappers.end())
                 transformLiteral(lv);
@@ -613,13 +613,13 @@ TypeReplacer::transformOperation(Operation * op) {
                 || (literalMapper->current()->type() != NULL && literalMapper->current()->type()->id() != lv->type()->id()))
                 cloneNeeded = true;
 
-            int sz = _mappedLiterals[l]->size();
+            uint32_t sz = _mappedLiterals[l]->size();
             if (sz > numMaps)
                 numMaps = sz;
         }
 
         // fill in appropriate mappers for this operations Symbols
-        for (int s=0;s < op->numSymbols();s++) {
+        for (uint32_t s=0;s < op->numSymbols();s++) {
             Symbol *sym = op->symbol(s);
             if (_modifiedType.find(sym->type()) != _modifiedType.end())
                 cloneNeeded = true;
@@ -633,13 +633,13 @@ TypeReplacer::transformOperation(Operation * op) {
             if (symbolMapper->size() != 1 || symbolMapper->current()->id() != sym->id())
                 cloneNeeded = true;
 
-            int sz = it->second->size();
+            uint32_t sz = it->second->size();
             if (sz > numMaps)
                 numMaps = sz;
         }
 
         // fill in appropriate mappers for this operation's Types
-        for (int t=0;t < op->numTypes();t++) {
+        for (uint32_t t=0;t < op->numTypes();t++) {
             const Type *type = op->type(t);
             auto it = _typeMappers.find(type);
             assert(it != _typeMappers.end());
@@ -650,14 +650,14 @@ TypeReplacer::transformOperation(Operation * op) {
             if (typeMapper->size() != 1 || typeMapper->current()->id() != type->id())
                 cloneNeeded = true;
 
-            int sz = it->second->size();
+            uint32_t sz = it->second->size();
             if (sz > numMaps)
                 numMaps = sz;
         }
 
         // no Builder mappings are done at this time, so just create a mapper for each Builder
         //   initialized with the operation's original Builder
-        for (int b=0;b < op->numBuilders();b++) {
+        for (uint32_t b=0;b < op->numBuilders();b++) {
             r.setBuilderMapper(new (mem) BuilderMapper(mem, op->builder(b)), b);
             if (numMaps < 1)
                 numMaps = 1;
@@ -667,7 +667,7 @@ TypeReplacer::transformOperation(Operation * op) {
             if (lgr) lgr->indent() << "No clone needed, using original operation result(s) if any" << lgr->endl();
 
             // just map results to themselves and we're done
-            for (int i=0;i < op->numResults();i++) {
+            for (uint32_t i=0;i < op->numResults();i++) {
                 Value *result = op->result(i);
                 r.setResultMapper(new (mem) ValueMapper(mem, result), i);
             }
@@ -680,7 +680,7 @@ TypeReplacer::transformOperation(Operation * op) {
         cloneOperation(b, &r, numMaps);
 
         // store any new result mappings
-        for (int i=0;i < op->numResults();i++) {
+        for (uint32_t i=0;i < op->numResults();i++) {
             Value *result = op->result(i);
             assert(_valueMappers.find(result) == _valueMappers.end());
             _valueMappers[result] = r.resultMapper(i);
@@ -691,7 +691,7 @@ TypeReplacer::transformOperation(Operation * op) {
 }
 
 void
-TypeReplacer::cloneOperation(Builder *b, OperationReplacer *r, int numMaps) {
+TypeReplacer::cloneOperation(Builder *b, OperationReplacer *r, uint32_t numMaps) {
     TextLogger *lgr = _comp->logger(traceEnabled());
 
     Operation *origOp = r->operation();
@@ -712,7 +712,7 @@ TypeReplacer::cloneOperation(Builder *b, OperationReplacer *r, int numMaps) {
     #endif
 
     // otherwise, map the operation generically
-    for (int i=0;i < numMaps;i++)
+    for (uint32_t i=0;i < numMaps;i++)
         r->clone(b);
 }
 

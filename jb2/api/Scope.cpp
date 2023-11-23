@@ -102,7 +102,7 @@ Scope::Scope(Allocator *a, const Scope *source, IRCloner *cloner)
     }
 
     // entries
-    for (int i=0; i < source->_entries.length();i++) {
+    for (uint32_t i=0; i < source->_entries.length();i++) {
         List<EntryPoint *> *list = source->_entries[i];
         if (list != NULL) {
             List<EntryPoint *> *cloned_list = new (a) List<EntryPoint *>(a, a);
@@ -148,7 +148,7 @@ Scope::~Scope() {
 
 void
 Scope::addInitialBuildersToWorklist(BuilderList & worklist) {
-    for (int e=0;e < _entries.length();e++) {
+    for (uint32_t e=0;e < _entries.length();e++) {
         Builder *b = entryPoint<BuilderEntry>(e)->builder();
         worklist.push_back(b);
     }
