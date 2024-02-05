@@ -59,6 +59,7 @@ public:
     FunctionSymbolIterator functions() const { return this->_functions.iterator(); }
     FunctionSymbolList resetFunctions();
     FunctionSymbol *LookupFunction(String name);
+
     Symbol * getSymbol(String name);
 
     int32_t numReturnTypes() const { return _returnTypes.length(); }
@@ -79,8 +80,10 @@ protected:
 
     void DefineParameter(ParameterSymbol *parm);
     void DefineLocal(LocalSymbol *local);
+
     void DefineFunction(FunctionSymbol *function);
     FunctionSymbol * internalDefineFunction(LOCATION, FunctionCompilation *comp, String name, String fileName, String lineNumber, void *entryPoint, const Type *returnType, int32_t numParms, const Type **parmTypes);
+
 
     ParameterSymbolList _parameters;
     LocalSymbolList _locals;

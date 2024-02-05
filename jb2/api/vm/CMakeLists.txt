@@ -28,11 +28,13 @@ omr_assert(
 )
 
 add_library(jb2vm SHARED
-	BytecodeBuilder.cpp
+	#BytecodeBuilder.cpp
 	VirtualMachineRegister.cpp
 	VirtualMachineRegisterInStruct.cpp
 	VirtualMachineOperandStack.cpp
 	VirtualMachineState.cpp
+	VMAddon.cpp
+	VMBuilderAddon.cpp
 	VMExtension.cpp
 	VMIRClonerAddon.cpp
 	VMFunction.cpp

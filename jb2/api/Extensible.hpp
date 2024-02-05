@@ -54,6 +54,7 @@ namespace JitBuilder {
 
 class Addon;
 class Extension;
+class IRCloner;
 
 KINDSERVICE_CATEGORY(Extensible);
 
@@ -73,6 +74,8 @@ public:
 
 protected:
     void notifyCreation(KINDTYPE(Extensible) kind);
+    Extensible(Allocator *a, const Extensible *source, IRCloner *cloner);
+    const List<Addon *> *addons() const;
 
 private:
     Extension *_ext;

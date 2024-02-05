@@ -25,7 +25,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "common.hpp"
-#include "Extensible.hpp"
+#include "ExtensibleIR.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -46,7 +46,7 @@ class Type;
 class TypeDictionary;
 class Value;
 
-class IRCloner : public Extensible {
+class IRCloner : public ExtensibleIR {
     friend class IR;
 
 public:

@@ -22,13 +22,14 @@
 #ifndef OMR_JITBUILDER_VM_INCL
 #define OMR_JITBUILDER_VM_INCL
 
-#include "vm/BytecodeBuilder.hpp"
 #include "vm/VirtualMachineOperandStack.hpp"
 #include "vm/VirtualMachineRegister.hpp"
 #include "vm/VirtualMachineRegisterInStruct.hpp"
 #include "vm/VirtualMachineState.hpp"
+#include "vm/VMBuilderAddon.hpp"
 #include "vm/VMExtension.hpp"
 #include "vm/VMFunction.hpp"
+#include "vm/VMIRClonerAddon.hpp"
 
 #endif // defined(OMR_JITBUILDER_VM_INCL)
 

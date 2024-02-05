@@ -26,16 +26,16 @@ namespace OMR {
 namespace JitBuilder {
 
 INIT_JBALLOC(NativeEntry)
-SUBCLASS_KINDSERVICE_IMPL(NativeEntry,"NativeEntry",EntryPoint,EntryPoint)
+SUBCLASS_KINDSERVICE_IMPL(NativeEntry,"NativeEntry",ExtensibleIR,Extensible)
 
 NativeEntry::NativeEntry(Allocator *a, IR *ir, EntryID id, void *entry, String name)
-    : EntryPoint(a, ir, KIND(EntryPoint), id, name)
+    : EntryPoint(a, ir, KIND(Extensible), id, name)
     , _entry(entry) {
 
 }
 
 // for subclasses only
-NativeEntry::NativeEntry(Allocator *a, IR *ir, EntryPointKind kind, EntryID id, void *entry, String name)
+NativeEntry::NativeEntry(Allocator *a, IR *ir, ExtensibleKind kind, EntryID id, void *entry, String name)
     : EntryPoint(a, ir, kind, id, name)
     , _entry(entry) {
 

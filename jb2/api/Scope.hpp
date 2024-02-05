@@ -22,9 +22,7 @@
 #ifndef SCOPE_INCL
 #define SCOPE_INCL
 
-#include "common.hpp"
-#include "Context.hpp"
-#include "KindService.hpp"
+#include "ExtensibleIR.hpp"
 #include "List.hpp"
 #include "String.hpp"
 
@@ -62,19 +60,18 @@
 // "yield" operation (where the new entry point would be specifically used for
 // continuing from the "yield" as opposed to calling the Function anew).
 
-#include "EntryPoint.hpp" // for EntryPointKind
-#include "Extensible.hpp"
+#include "Context.hpp"
+#include "EntryPoint.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 
 class Compilation;
 class CompiledBody;
-class EntryPoint;
 class Extension;
 class IR;
 
-class Scope : public Extensible {
+class Scope : public ExtensibleIR {
     JBALLOC_(Scope)
 
     friend class Compilation;
@@ -96,7 +93,7 @@ public:
     // Entry point handling
     template <class T>
     T *entryPoint(EntryID e=0) const {
-        EntryPoint *ep = findEntryPoint(e, CLASSKIND(T,EntryPoint));
+        EntryPoint *ep = findEntryPoint(e, CLASSKIND(T,Extensible));
         return ep->refine<T>();
     }
     template <class T>
@@ -130,7 +127,7 @@ protected:
 
     virtual Scope *clone(Allocator *mem, IRCloner *cloner) const;
 
-    EntryPoint *findEntryPoint(EntryID e, EntryPointKind kind) const;
+    EntryPoint *findEntryPoint(EntryID e, ExtensibleKind kind) const;
     void addChild(Scope *child) { _children.push_back(child); }
     void addBuilder(Builder *b) { _allBuilders.push_back(b); }
 

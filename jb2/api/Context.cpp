@@ -33,10 +33,10 @@ namespace OMR {
 namespace JitBuilder {
 
 INIT_JBALLOC(Context)
-SUBCLASS_KINDSERVICE_IMPL(Context, "Context", Extensible, Extensible)
+SUBCLASS_KINDSERVICE_IMPL(Context, "Context", ExtensibleIR, Extensible)
 
 Context::Context(Allocator *a, Extension *ext, IR *ir, String name)
-    : Extensible(a, ext, CLASSKIND(Context, Extensible))
+    : ExtensibleIR(a, ext, CLASSKIND(Context, Extensible))
     , _id(ir->getContextID())
     , _ir(ir)
     , _name(name)
@@ -47,7 +47,7 @@ Context::Context(Allocator *a, Extension *ext, IR *ir, String name)
 }
 
 Context::Context(Allocator *a, Extension *ext, KINDTYPE(Extensible) kind, IR *ir, String name)
-    : Extensible(a, ext, kind)
+    : ExtensibleIR(a, ext, kind)
     , _id(ir->getContextID())
     , _ir(ir)
     , _name(name)
@@ -58,7 +58,7 @@ Context::Context(Allocator *a, Extension *ext, KINDTYPE(Extensible) kind, IR *ir
 }
 
 Context::Context(Allocator *a, Extension *ext, Context *parent, String name)
-    : Extensible(a, ext, CLASSKIND(Context, Extensible))
+    : ExtensibleIR(a, ext, CLASSKIND(Context, Extensible))
     , _id(parent->ir()->getContextID())
     , _ir(parent->ir())
     , _name(name)
@@ -69,7 +69,7 @@ Context::Context(Allocator *a, Extension *ext, Context *parent, String name)
 }
 
 Context::Context(Allocator *a, Extension *ext, KINDTYPE(Extensible) kind, Context *parent, String name)
-    : Extensible(a, ext, kind)
+    : ExtensibleIR(a, ext, kind)
     , _id(parent->ir()->getContextID())
     , _ir(parent->ir())
     , _name(name)
@@ -80,7 +80,7 @@ Context::Context(Allocator *a, Extension *ext, KINDTYPE(Extensible) kind, Contex
 }
 
 Context::Context(Allocator *a, const Context *source, IRCloner *cloner)
-    : Extensible(a, source->ext(), source->kind())
+    : ExtensibleIR(a, source->ext(), source->kind())
     , _id(source->_id)
     , _ir(cloner->clonedIR())
     , _name(source->_name)

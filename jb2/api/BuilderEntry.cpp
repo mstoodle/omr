@@ -28,10 +28,10 @@ namespace OMR {
 namespace JitBuilder {
 
 INIT_JBALLOC(BuilderEntry)
-SUBCLASS_KINDSERVICE_IMPL(BuilderEntry,"Builder",EntryPoint,EntryPoint)
+SUBCLASS_KINDSERVICE_IMPL(BuilderEntry,"Builder",EntryPoint,Extensible)
 
 BuilderEntry::BuilderEntry(Allocator *a, EntryID id, Builder *b, String name)
-    : EntryPoint(a, b->ir(), KIND(EntryPoint), id, name)
+    : EntryPoint(a, b->ir(), KIND(Extensible), id, name)
     , _builder(b) {
 
 }

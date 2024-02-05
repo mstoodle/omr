@@ -28,25 +28,23 @@ namespace OMR {
 namespace JitBuilder {
 
 INIT_JBALLOC(EntryPoint)
-BASECLASS_KINDSERVICE_IMPL(EntryPoint)
+SUBCLASS_KINDSERVICE_IMPL(EntryPoint,"EntryPoint",ExtensibleIR,Extensible)
 
-EntryPoint::EntryPoint(Allocator *a, IR *ir, EntryPointKind kind, EntryID entryID, String name)
-    : Allocatable(a)
+EntryPoint::EntryPoint(Allocator *a, IR *ir, ExtensibleKind kind, EntryID entryID, String name)
+    : ExtensibleIR(a, ir->ext(), kind)
     , _id(ir->getEntryPointID())
     , _entryID(entryID)
     , _ir(ir)
-    , _name(name)
-    , BASECLASS_KINDINIT(kind) {
+    , _name(name) {
 
 }
 
 EntryPoint::EntryPoint(Allocator *a, const EntryPoint *source, IRCloner *cloner)
-    : Allocatable(a)
+    : ExtensibleIR(a, source->ext(), source->kind())
     , _id(source->_id)
     , _entryID(source->_entryID)
     , _ir(cloner->clonedIR())
-    , _name(source->_name)
-    , BASECLASS_KINDINIT(source->_kind) {
+    , _name(source->_name) {
 
 }
 

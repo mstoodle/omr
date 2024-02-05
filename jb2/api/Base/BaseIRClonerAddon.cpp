@@ -27,7 +27,7 @@ namespace JitBuilder {
 namespace Base {
 
 INIT_JBALLOC_REUSECAT(BaseIRClonerAddon, IRCloner)
-SUBCLASS_KINDSERVICE_IMPL(BaseIRClonerAddon,"BaseIRClonerAddon",Addon,Extensible)
+SUBCLASS_KINDSERVICE_IMPL(BaseIRClonerAddon,"BaseIRClonerAddon",BaseAddon,Extensible)
 
 BaseIRClonerAddon::BaseIRClonerAddon(Allocator *a, BaseExtension *ext, IRCloner *root)
     : BaseAddon(a, ext, root, KIND(Extensible))
@@ -41,6 +41,7 @@ BaseIRClonerAddon::~BaseIRClonerAddon() {
         delete c;
     }
 }
+
 
 Case *
 BaseIRClonerAddon::clonedCase(Case *c) {

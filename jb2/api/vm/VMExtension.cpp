@@ -20,7 +20,7 @@
  *******************************************************************************/
 
 #include "JBCore.hpp"
-#include "vm/BytecodeBuilder.hpp"
+#include "vm/VMBuilderAddon.hpp"
 #include "vm/VMExtension.hpp"
 #include "vm/VMIRClonerAddon.hpp"
 
@@ -56,6 +56,7 @@ VMExtension::VMExtension(MEM_LOCATION(a), Compiler *compiler, bool extended, Str
     _fx = compiler->lookupExtension<Func::FunctionExtension>();
 
     registerForExtensible(CLASSKIND(IRCloner,Extensible), this);
+    registerForExtensible(CLASSKIND(Builder,Extensible), this);
 }
 
 VMExtension::~VMExtension() {
@@ -64,96 +65,110 @@ VMExtension::~VMExtension() {
 void
 VMExtension::createAddon(Extensible *e) {
     Allocator *mem = e->allocator();
-    assert(e->isKind<IRCloner>());
-    VMIRClonerAddon *vc = new (mem) VMIRClonerAddon(mem, this, e->refine<IRCloner>());
-    e->attach(vc);
+    if (e->isKind<Builder>()) {
+        VMBuilderAddon *vmba = new (mem) VMBuilderAddon(mem, this, e->refine<Builder>());
+        e->attach(vmba);
+    } else {
+        assert(e->isKind<IRCloner>());
+        VMIRClonerAddon *vc = new (mem) VMIRClonerAddon(mem, this, e->refine<IRCloner>());
+        e->attach(vc);
+    }
 }
 
 void
-VMExtension::Goto(LOCATION, BytecodeBuilder *b, BytecodeBuilder *target) {
-    target = b->AddSuccessorBuilder(PASSLOC, target);
+VMExtension::Goto(LOCATION, Builder *b, Builder *target) {
+    target = b->addon<VMBuilderAddon>()->AddSuccessorBuilder(PASSLOC, target);
     bx()->Goto(PASSLOC, b, target);
 }
 
 void
-VMExtension::IfCmpEqual(LOCATION, BytecodeBuilder *b, BytecodeBuilder *target, Value *left, Value *right) {
-    target = b->AddSuccessorBuilder(PASSLOC, target);
+VMExtension::IfCmpEqual(LOCATION, Builder *b, Builder *target, Value *left, Value *right) {
+    target = b->addon<VMBuilderAddon>()->AddSuccessorBuilder(PASSLOC, target);
     bx()->IfCmpEqual(PASSLOC, b, target, left, right);
 }
 
 void
-VMExtension::IfCmpEqualZero(LOCATION, BytecodeBuilder *b, BytecodeBuilder *target, Value *condition) {
-    target = b->AddSuccessorBuilder(PASSLOC, target);
+VMExtension::IfCmpEqualZero(LOCATION, Builder *b, Builder *target, Value *condition) {
+    target = b->addon<VMBuilderAddon>()->AddSuccessorBuilder(PASSLOC, target);
     bx()->IfCmpEqualZero(PASSLOC, b, target, condition);
 }
 
 void
-VMExtension::IfCmpLessOrEqual(LOCATION, BytecodeBuilder *b, BytecodeBuilder *target, Value *left, Value *right) {
-    target = b->AddSuccessorBuilder(PASSLOC, target);
+VMExtension::IfCmpLessOrEqual(LOCATION, Builder *b, Builder *target, Value *left, Value *right) {
+    target = b->addon<VMBuilderAddon>()->AddSuccessorBuilder(PASSLOC, target);
     bx()->IfCmpLessOrEqual(PASSLOC, b, target, left, right);
 }
 
 void
-VMExtension::IfCmpLessThan(LOCATION, BytecodeBuilder *b, BytecodeBuilder *target, Value *left, Value *right) {
-    target = b->AddSuccessorBuilder(PASSLOC, target);
+VMExtension::IfCmpLessThan(LOCATION, Builder *b, Builder *target, Value *left, Value *right) {
+    target = b->addon<VMBuilderAddon>()->AddSuccessorBuilder(PASSLOC, target);
     bx()->IfCmpLessThan(PASSLOC, b, target, left, right);
 }
 
 void
-VMExtension::IfCmpGreaterOrEqual(LOCATION, BytecodeBuilder *b, BytecodeBuilder *target, Value *left, Value *right) {
-    target = b->AddSuccessorBuilder(PASSLOC, target);
+VMExtension::IfCmpGreaterOrEqual(LOCATION, Builder *b, Builder *target, Value *left, Value *right) {
+    target = b->addon<VMBuilderAddon>()->AddSuccessorBuilder(PASSLOC, target);
     bx()->IfCmpGreaterOrEqual(PASSLOC, b, target, left, right);
 }
 
 void
-VMExtension::IfCmpGreaterThan(LOCATION, BytecodeBuilder *b, BytecodeBuilder *target, Value *left, Value *right) {
-    target = b->AddSuccessorBuilder(PASSLOC, target);
+VMExtension::IfCmpGreaterThan(LOCATION, Builder *b, Builder *target, Value *left, Value *right) {
+    target = b->addon<VMBuilderAddon>()->AddSuccessorBuilder(PASSLOC, target);
     bx()->IfCmpGreaterThan(PASSLOC, b, target, left, right);
 }
 
 void
-VMExtension::IfCmpNotEqual(LOCATION, BytecodeBuilder *b, BytecodeBuilder *target, Value *left, Value *right) {
-    target = b->AddSuccessorBuilder(PASSLOC, target);
+VMExtension::IfCmpNotEqual(LOCATION, Builder *b, Builder *target, Value *left, Value *right) {
+    target = b->addon<VMBuilderAddon>()->AddSuccessorBuilder(PASSLOC, target);
     bx()->IfCmpNotEqual(PASSLOC, b, target, left, right);
 }
 
 void
-VMExtension::IfCmpNotEqualZero(LOCATION, BytecodeBuilder *b, BytecodeBuilder *target, Value *condition) {
-    target = b->AddSuccessorBuilder(PASSLOC, target);
+VMExtension::IfCmpNotEqualZero(LOCATION, Builder *b, Builder *target, Value *condition) {
+    target = b->addon<VMBuilderAddon>()->AddSuccessorBuilder(PASSLOC, target);
     bx()->IfCmpNotEqualZero(PASSLOC, b, target, condition);
 }
 
 void
-VMExtension::IfCmpUnsignedLessOrEqual(LOCATION, BytecodeBuilder *b, BytecodeBuilder *target, Value *left, Value *right) {
-    target = b->AddSuccessorBuilder(PASSLOC, target);
+VMExtension::IfCmpUnsignedLessOrEqual(LOCATION, Builder *b, Builder *target, Value *left, Value *right) {
+    target = b->addon<VMBuilderAddon>()->AddSuccessorBuilder(PASSLOC, target);
     bx()->IfCmpUnsignedLessOrEqual(PASSLOC, b, target, left, right);
 }
 
 void
-VMExtension::IfCmpUnsignedLessThan(LOCATION, BytecodeBuilder *b, BytecodeBuilder *target, Value *left, Value *right) {
-    target = b->AddSuccessorBuilder(PASSLOC, target);
+VMExtension::IfCmpUnsignedLessThan(LOCATION, Builder *b, Builder *target, Value *left, Value *right) {
+    target = b->addon<VMBuilderAddon>()->AddSuccessorBuilder(PASSLOC, target);
     bx()->IfCmpUnsignedLessThan(PASSLOC, b, target, left, right);
 }
 
 void
-VMExtension::IfCmpUnsignedGreaterOrEqual(LOCATION, BytecodeBuilder *b, BytecodeBuilder *target, Value *left, Value *right) {
-    target = b->AddSuccessorBuilder(PASSLOC, target);
+VMExtension::IfCmpUnsignedGreaterOrEqual(LOCATION, Builder *b, Builder *target, Value *left, Value *right) {
+    target = b->addon<VMBuilderAddon>()->AddSuccessorBuilder(PASSLOC, target);
     bx()->IfCmpUnsignedGreaterOrEqual(PASSLOC, b, target, left, right);
 }
 
 void
-VMExtension::IfCmpUnsignedGreaterThan(LOCATION, BytecodeBuilder *b, BytecodeBuilder *target, Value *left, Value *right) {
-    target = b->AddSuccessorBuilder(PASSLOC, target);
+VMExtension::IfCmpUnsignedGreaterThan(LOCATION, Builder *b, Builder *target, Value *left, Value *right) {
+    target = b->addon<VMBuilderAddon>()->AddSuccessorBuilder(PASSLOC, target);
     bx()->IfCmpUnsignedGreaterThan(PASSLOC, b, target, left, right);
 }
 
-BytecodeBuilder *
-VMExtension::OrphanBytecodeBuilder(IR *ir, int32_t bcIndex, int32_t bcLength, Scope *scope, String name) {
-    Allocator *mem = ir->mem();
-    if (scope == NULL)
-        scope = ir->scope<Scope>();
-    BytecodeBuilder *b = new (mem) BytecodeBuilder(mem, this, ir, scope, bcIndex, bcLength, name);
-    registerBuilder(ir, b);
+Builder *
+VMExtension::EntryBuilder(LOCATION, IR *ir, Scope *scope, String name) {
+    Builder *b = this->Extension::EntryBuilder(PASSLOC, ir, scope, name);
+    VMBuilderAddon *vmba = b->addon<VMBuilderAddon>();
+    vmba->setBCIndex(-1);
+    vmba->setBCLength(-1);
+    vmba->setVMState(NULL); // expected to be either unused or updated later by caller
+    return b;
+}
+
+Builder *
+VMExtension::OrphanBuilder(LOCATION, Builder *parent, int32_t bcIndex, int32_t bcLength, Scope *scope, String name) {
+    Builder *b = this->Extension::OrphanBuilder(PASSLOC, parent, scope, name);
+    VMBuilderAddon *vmba = b->addon<VMBuilderAddon>();
+    vmba->setBCIndex(bcIndex);
+    vmba->setBCLength(bcLength);
     return b;
 }
 
