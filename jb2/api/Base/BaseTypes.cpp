@@ -28,358 +28,169 @@ namespace OMR {
 namespace JitBuilder {
 namespace Base {
 
-INIT_JBALLOC_REUSECAT(BaseType, Type)
-SUBCLASS_KINDSERVICE_IMPL(BaseType, "BaseType", Type, Type);
-
-BaseType::~BaseType() {
-
-}
-
-BaseExtension *
-BaseType::baseExt() {
-    return static_cast<BaseExtension *>(_ext);
-}
-
-BaseExtension *
-BaseType::baseExt() const {
-    return static_cast<BaseExtension * const>(_ext);
-}
-
-
-INIT_JBALLOC_REUSECAT(NumericType, BaseType)
-SUBCLASS_KINDSERVICE_IMPL(NumericType, "NumericType", BaseType, Type);
-
-NumericType::~NumericType() {
-
-}
-
-
-INIT_JBALLOC_REUSECAT(IntegerType, NumericType)
-SUBCLASS_KINDSERVICE_IMPL(IntegerType, "IntegerType", NumericType, Type);
-
-IntegerType::~IntegerType() {
-
-}
-
-
-INIT_JBALLOC_REUSECAT(Int8Type, IntegerType)
-SUBCLASS_KINDSERVICE_IMPL(Int8Type, "Int8Type", IntegerType, Type);
-
-Int8Type::Int8Type(Allocator *a, const Int8Type *source, IRCloner *cloner)
-    : IntegerType(a, source, cloner) {
-
-}
-
-const Type *
-Int8Type::clone(Allocator *a, IRCloner *cloner) const {
-    return new (a) Int8Type(a, this, cloner);
-}
-
-Int8Type::~Int8Type() {
-
-}
-
-Literal *
-Int8Type::literal(LOCATION, IR *ir, const int8_t value) const {
-    return this->Type::literal(PASSLOC, ir, reinterpret_cast<const LiteralBytes *>(&value));
-}
-
-bool
-Int8Type::literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const {
-    return (*reinterpret_cast<const int8_t *>(l1)) == (*reinterpret_cast<const int8_t *>(l2));
-}
-
-void
-Int8Type::logValue(TextLogger & lgr, const void *p) const {
-    lgr << name() << " " << ((int) *reinterpret_cast<const int8_t *>(p));
-}
-
-void
-Int8Type::logLiteral(TextLogger & lgr, const Literal *lv) const {
-    lgr << name() << "(" << ((int) lv->value<const int8_t>()) << ")";
-}
-
-const int64_t
-Int8Type::getInteger(const Literal *lv) const {
-    return (const int64_t) (lv->value<const int8_t>());
-}
-
-
-INIT_JBALLOC_REUSECAT(Int16Type, IntegerType)
-SUBCLASS_KINDSERVICE_IMPL(Int16Type, "Int16Type", IntegerType, Type);
-
-Int16Type::Int16Type(Allocator *a, const Int16Type *source, IRCloner *cloner)
-    : IntegerType(a, source, cloner) {
-
-}
-
-const Type *
-Int16Type::clone(Allocator *a, IRCloner *cloner) const {
-    return new (a) Int16Type(a, this, cloner);
-}
-
-Int16Type::~Int16Type() {
-
-}
-
-Literal *
-Int16Type::literal(LOCATION, IR *ir, const int16_t value) const {
-    return this->Type::literal(PASSLOC, ir, reinterpret_cast<const LiteralBytes *>(&value));
-}
-
-bool
-Int16Type::literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const {
-    return (*reinterpret_cast<const int16_t *>(l1)) == (*reinterpret_cast<const int16_t *>(l2));
-}
-
-void
-Int16Type::logValue(TextLogger &lgr, const void *p) const {
-    lgr << name() << " " << *reinterpret_cast<const int16_t *>(p);
-}
-
-void
-Int16Type::logLiteral(TextLogger & lgr, const Literal *lv) const {
-    lgr << name() << "(" << (lv->value<const int16_t>()) << ")";
-}
-
-const int64_t
-Int16Type::getInteger(const Literal *lv) const {
-    return (const int64_t) (lv->value<const int16_t>());
-}
-
-
-INIT_JBALLOC_REUSECAT(Int32Type, IntegerType)
-SUBCLASS_KINDSERVICE_IMPL(Int32Type, "Int32Type", IntegerType, Type);
-
-Int32Type::Int32Type(Allocator *a, const Int32Type *source, IRCloner *cloner)
-    : IntegerType(a, source, cloner) {
-
-}
-
-const Type *
-Int32Type::clone(Allocator *a, IRCloner *cloner) const {
-    return new (a) Int32Type(a, this, cloner);
-}
-
-Int32Type::~Int32Type() {
-
-}
-
-Literal *
-Int32Type::literal(LOCATION, IR *ir, const int32_t value) const {
-    return this->Type::literal(PASSLOC, ir, reinterpret_cast<const LiteralBytes *>(&value));
-}
-
-bool
-Int32Type::literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const {
-    return (*reinterpret_cast<const int32_t *>(l1)) == (*reinterpret_cast<const int32_t *>(l2));
-}
-
-void
-Int32Type::logValue(TextLogger & lgr, const void *p) const {
-    lgr << name() << " " << *reinterpret_cast<const int32_t *>(p);
-}
-
-void
-Int32Type::logLiteral(TextLogger & lgr, const Literal *lv) const {
-    lgr << name() << "(" << (lv->value<const int32_t>()) << ")";
-}
-
-const int64_t
-Int32Type::getInteger(const Literal *lv) const {
-    return (const int64_t) (lv->value<const int32_t>());
-}
-
-
-INIT_JBALLOC_REUSECAT(Int64Type, IntegerType)
-SUBCLASS_KINDSERVICE_IMPL(Int64Type, "Int64Type", IntegerType, Type);
-
-Int64Type::Int64Type(Allocator *a, const Int64Type *source, IRCloner *cloner)
-    : IntegerType(a, source, cloner) {
-
-}
-
-const Type *
-Int64Type::clone(Allocator *a, IRCloner *cloner) const {
-    return new (a) Int64Type(a, this, cloner);
-}
-
-Int64Type::~Int64Type() {
-
-}
-
-Literal *
-Int64Type::literal(LOCATION, IR *ir, const int64_t value) const {
-    return this->Type::literal(PASSLOC, ir, reinterpret_cast<const LiteralBytes *>(&value));
-}
-
-bool
-Int64Type::literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const {
-    return (*reinterpret_cast<const int64_t *>(l1)) == (*reinterpret_cast<const int64_t *>(l2));
-}
-
-void
-Int64Type::logValue(TextLogger & lgr, const void *p) const {
-    lgr << name() << " " << *reinterpret_cast<const int64_t *>(p);
-}
-
-void
-Int64Type::logLiteral(TextLogger & lgr, const Literal *lv) const {
-    lgr << name() << "(" << (lv->value<const int64_t>()) << ")";
-}
-
-const int64_t
-Int64Type::getInteger(const Literal *lv) const {
-    return (const int64_t) (lv->value<const int64_t>());
-}
-
-
-INIT_JBALLOC_REUSECAT(FloatingPointType, NumericType)
-SUBCLASS_KINDSERVICE_IMPL(FloatingPointType, "FloatingPointType", IntegerType, Type);
-
-FloatingPointType::~FloatingPointType() {
-
-}
-
-INIT_JBALLOC_REUSECAT(Float32Type, FloatingPointType)
-SUBCLASS_KINDSERVICE_IMPL(Float32Type, "Float32Type", FloatingPointType, Type);
-
-Float32Type::Float32Type(Allocator *a, const Float32Type *source, IRCloner *cloner)
-    : FloatingPointType(a, source, cloner) {
-
-}
-
-const Type *
-Float32Type::clone(Allocator *a, IRCloner *cloner) const {
-    return new (a) Float32Type(a, this, cloner);
-}
-
-Float32Type::~Float32Type() {
-
-}
-
-Literal *
-Float32Type::literal(LOCATION, IR *ir, const float value) const {
-    return this->Type::literal(PASSLOC, ir, reinterpret_cast<const LiteralBytes *>(&value));
-}
-
-bool
-Float32Type::literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const {
-    return (*reinterpret_cast<const float *>(l1)) == (*reinterpret_cast<const float *>(l2));
-}
-
-void
-Float32Type::logValue(TextLogger & lgr, const void *p) const {
-    lgr << name() << " " << *reinterpret_cast<const float *>(p);
-}
-
-void
-Float32Type::logLiteral(TextLogger & lgr, const Literal *lv) const {
-    lgr << name() << "(" << (lv->value<const float>()) << ")";
-}
-
-const double
-Float32Type::getFloatingPoint(const Literal *lv) const {
-    return (const double) (lv->value<const float>());
-}
-
-
-INIT_JBALLOC_REUSECAT(Float64Type, FloatingPointType)
-SUBCLASS_KINDSERVICE_IMPL(Float64Type, "Float64Type", FloatingPointType, Type);
-
-Float64Type::Float64Type(Allocator *a, const Float64Type *source, IRCloner *cloner)
-    : FloatingPointType(a, source, cloner) {
-
-}
-
-const Type *
-Float64Type::clone(Allocator *a, IRCloner *cloner) const {
-    return new (a) Float64Type(a, this, cloner);
-}
-
-Float64Type::~Float64Type() {
-
-}
-
-Literal *
-Float64Type::literal(LOCATION, IR *ir, const double value) const {
-    return this->Type::literal(PASSLOC, ir, reinterpret_cast<const LiteralBytes *>(&value));
-}
-
-bool
-Float64Type::literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const {
-    return (*reinterpret_cast<const double *>(l1)) == (*reinterpret_cast<const double *>(l2));
-}
-
-void
-Float64Type::logValue(TextLogger & lgr, const void *p) const {
-    lgr << name() << " " << *reinterpret_cast<const double *>(p);
-}
-
-void
-Float64Type::logLiteral(TextLogger & lgr, const Literal *lv) const {
-    lgr << name() << "(" << (lv->value<const double>()) << ")";
-}
-
-const double
-Float64Type::getFloatingPoint(const Literal *lv) const {
-    return (const double) (lv->value<const double>());
-}
-
-
-INIT_JBALLOC_REUSECAT(AddressType, BaseType)
-SUBCLASS_KINDSERVICE_IMPL(AddressType, "AddressType", IntegerType, Type);
-
-AddressType::AddressType(Allocator *a, const AddressType *source, IRCloner *cloner)
-    : BaseType(a, source, cloner) {
-
-}
-
-const Type *
-AddressType::clone(Allocator *a, IRCloner *cloner) const {
-    return new (a) AddressType(a, this, cloner);
-}
-
-AddressType::~AddressType() {
-
-}
-
-AddressType::AddressType(MEM_LOCATION(a), Extension *ext)
-    : BaseType(MEM_PASSLOC(a), getTypeClassKind(), ext, "Address", ext->compiler()->platformWordSize()) {
-
-}
-
-AddressType::AddressType(MEM_LOCATION(a), Extension *ext, String name)
-    : BaseType(MEM_PASSLOC(a), getTypeClassKind(), ext, name, ext->compiler()->platformWordSize() ) {
-}
-
-AddressType::AddressType(MEM_LOCATION(a), Extension *ext, TypeDictionary *dict, String name)
-    : BaseType(MEM_PASSLOC(a), getTypeClassKind(), ext, dict, name, dict->compiler()->platformWordSize() ) {
-}
-
-AddressType::AddressType(MEM_LOCATION(a), Extension *ext, TypeDictionary *dict, TypeKind kind, String name)
-    : BaseType(MEM_PASSLOC(a), kind, ext, dict, name, dict->compiler()->platformWordSize() ) {
-}
-
-Literal *
-AddressType::literal(LOCATION, IR *ir, const void * value) const {
-    return this->Type::literal(PASSLOC, ir, reinterpret_cast<const LiteralBytes *>(&value));
-}
-bool
-AddressType::literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const {
-    return (*reinterpret_cast<void * const *>(l1)) == (*reinterpret_cast<void * const *>(l2));
-}
-
-void
-AddressType::logValue(TextLogger & lgr, const void *p) const {
-    lgr << name() << " " << *(reinterpret_cast<const void * const *>(p));
-}
-
-void
-AddressType::logLiteral(TextLogger & lgr, const Literal *lv) const {
-    lgr << name() << "(" << (lv->value<void * const>()) << ")";
-}
-
+#define DEFINE_BASETYPE_CLASS(C,Super,user_code) \
+    INIT_JBALLOC_REUSECAT(C, Type) \
+    SUBCLASS_KINDSERVICE_IMPL(C, #C, Super, Type); \
+    C::C(MEM_LOCATION(a), TypeKind kind, Extension *ext, String name, size_t size, TypeDictionary *dict) \
+        : Super(MEM_PASSLOC(a), kind, ext, name, size, dict) { } \
+    C::C(Allocator *a, const C *source, IRCloner *cloner) \
+        : Super(a, source, cloner) { } \
+    C::~C() { } \
+    user_code
+
+#define DEFINE_ABSTRACT_BASETYPE_CLASS(C,Super,user_code) \
+    DEFINE_BASETYPE_CLASS(C,Super, \
+        const Type * C::clone(Allocator *a, IRCloner *cloner) const { assert(0); return NULL; } \
+        void C::logValue(TextLogger &lgr, const void *p) const { assert(0); } \
+        void C::logLiteral(TextLogger & lgr, const Literal *lv) const { assert(0); } \
+        bool C::literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const { return false; } \
+        user_code \
+    )
+
+
+#define DEFINE_CONCRETE_BASETYPE_CLASS(C,Super,size,user_code) \
+    DEFINE_BASETYPE_CLASS(C,Super, \
+        C::C(MEM_LOCATION(a), Extension *ext) : Super(MEM_PASSLOC(a), getTypeClassKind(), ext, #C, size) { } \
+        const Type * \
+        C::clone(Allocator *a, IRCloner *cloner) const { \
+            assert(_kind == KIND(Type)); \
+            return new (a) C(a, this, cloner); \
+        } \
+        user_code \
+    )
+
+
+DEFINE_ABSTRACT_BASETYPE_CLASS(BaseType, Type,
+    BaseExtension *
+    BaseType::baseExt() {
+        return static_cast<BaseExtension *>(_ext);
+    }
+
+    BaseExtension *
+    BaseType::baseExt() const {
+        return static_cast<BaseExtension * const>(_ext);
+    }
+)
+
+DEFINE_ABSTRACT_BASETYPE_CLASS(NumericType, BaseType,)
+
+//
+// Integer types
+//
+
+DEFINE_ABSTRACT_BASETYPE_CLASS(IntegerType, NumericType,)
+
+#define DEFINE_INTTYPE_CLASS(size) \
+    DEFINE_CONCRETE_BASETYPE_CLASS(Int ## size ## Type, IntegerType, size, \
+        Literal * \
+        Int ## size ## Type::zero(LOCATION, IR *ir) const { \
+            return literal(PASSLOC, ir, (int ## size ## _t) 0); \
+        } \
+        Literal * \
+        Int ## size ## Type::identity(LOCATION, IR *ir) const { \
+            return literal(PASSLOC, ir, (int ## size ## _t) 1); \
+        } \
+        Literal * \
+        Int ## size ## Type::literal(LOCATION, IR *ir, const int ## size ## _t value) const { \
+            return this->Type::literal(PASSLOC, ir, reinterpret_cast<const LiteralBytes *>(&value)); \
+        } \
+        bool \
+        Int ## size ## Type::literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const { \
+            return (*reinterpret_cast<const int ## size ## _t *>(l1)) == (*reinterpret_cast<const int ## size ## _t *>(l2)); \
+        } \
+        void \
+        Int ## size ## Type::logValue(TextLogger & lgr, const void *p) const { \
+            lgr << name() << " " << ((int) *reinterpret_cast<const int ## size ## _t *>(p)); \
+        } \
+        void \
+        Int ## size ## Type::logLiteral(TextLogger & lgr, const Literal *lv) const { \
+            lgr << name() << "(" << ((int) lv->value<const int ## size ## _t>()) << ")"; \
+        } \
+        const int64_t \
+        Int ## size ## Type::getInteger(const Literal *lv) const { \
+            return (const int64_t) (lv->value<const int ## size ## _t>()); \
+        } \
+    )
+
+DEFINE_INTTYPE_CLASS(8)
+DEFINE_INTTYPE_CLASS(16)
+DEFINE_INTTYPE_CLASS(32)
+DEFINE_INTTYPE_CLASS(64)
+
+//
+// Floating point types
+//
+
+DEFINE_ABSTRACT_BASETYPE_CLASS(FloatingPointType, NumericType,)
+
+#define DEFINE_FLOATTYPE_CLASS(size, ctype) \
+    DEFINE_CONCRETE_BASETYPE_CLASS(Float ## size ## Type, FloatingPointType, size, \
+        Literal * \
+        Float ## size ## Type::zero(LOCATION, IR *ir) const { \
+            return literal(PASSLOC, ir, (ctype) 0.0); \
+        } \
+        Literal * \
+        Float ## size ## Type::identity(LOCATION, IR *ir) const { \
+            return literal(PASSLOC, ir, (ctype) 1.0); \
+        } \
+        Literal * \
+        Float ## size ## Type::literal(LOCATION, IR *ir, const ctype value) const { \
+            return this->Type::literal(PASSLOC, ir, reinterpret_cast<const LiteralBytes *>(&value)); \
+        } \
+        bool \
+        Float ## size ## Type::literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const { \
+            return (*reinterpret_cast<const ctype *>(l1)) == (*reinterpret_cast<const ctype *>(l2)); \
+        } \
+        void \
+        Float ## size ## Type::logValue(TextLogger & lgr, const void *p) const { \
+            lgr << name() << " " << ((int) *reinterpret_cast<const ctype *>(p)); \
+        } \
+        void \
+        Float ## size ## Type::logLiteral(TextLogger & lgr, const Literal *lv) const { \
+            lgr << name() << "(" << ((int) lv->value<const ctype>()) << ")"; \
+        } \
+        const double \
+        Float ## size ## Type::getFloatingPoint(const Literal *lv) const { \
+            return (const int64_t) (lv->value<const ctype>()); \
+        } \
+    )
+
+DEFINE_FLOATTYPE_CLASS(32, float)
+DEFINE_FLOATTYPE_CLASS(64, double)
+
+
+DEFINE_CONCRETE_BASETYPE_CLASS(AddressType, IntegerType, ext->compiler()->platformWordSize(),
+    Literal *
+    AddressType::zero(LOCATION, IR *ir) const {
+        return literal(PASSLOC, ir, (const void *) 0);
+    }
+
+    Literal *
+    AddressType::identity(LOCATION, IR *ir) const {
+        assert(0);
+        return NULL;
+    }
+
+    Literal *
+    AddressType::literal(LOCATION, IR *ir, const void * value) const {
+        return this->Type::literal(PASSLOC, ir, reinterpret_cast<const LiteralBytes *>(&value));
+    }
+
+    bool
+    AddressType::literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const {
+        return (*reinterpret_cast<void * const *>(l1)) == (*reinterpret_cast<void * const *>(l2));
+    }
+
+    void
+    AddressType::logValue(TextLogger & lgr, const void *p) const {
+        lgr << name() << " " << *(reinterpret_cast<const void * const *>(p));
+    }
+
+    void
+    AddressType::logLiteral(TextLogger & lgr, const Literal *lv) const {
+        lgr << name() << "(" << (lv->value<void * const>()) << ")";
+    }
+)
 
 INIT_JBALLOC(PointerTypeBuilder)
 
@@ -439,69 +250,65 @@ PointerTypeBuilder::create(LOCATION) {
 }
 
 
-INIT_JBALLOC_REUSECAT(PointerType, BaseType)
-SUBCLASS_KINDSERVICE_IMPL(PointerType, "PointerType", IntegerType, Type);
+DEFINE_CONCRETE_BASETYPE_CLASS(PointerType, AddressType, ext->compiler()->platformWordSize(),
+    PointerType::PointerType(MEM_LOCATION(a), PointerTypeBuilder *builder)
+        : AddressType(MEM_PASSLOC(a), getTypeClassKind(), builder->extension(), builder->name(), builder->extension()->compiler()->platformWordSize(), builder->dict()) {
 
-PointerType::PointerType(Allocator *a, const PointerType *source, IRCloner *cloner)
-    : AddressType(a, source, cloner)
-    , _baseType(cloner->clonedType(source->_baseType)) {
+        if (builder->helper())
+            builder->helper()(this, builder);
+        _baseType = builder->baseType();
+        assert(_baseType);
 
-}
+        builder->ir()->addon<BaseIRAddon>()->registerPointerType(this);
+    }
 
-const Type *
-PointerType::clone(Allocator *a, IRCloner *cloner) const {
-    return new (a) PointerType(a, this, cloner);
-}
+    Literal *
+    PointerType::zero(LOCATION, IR *ir) const {
+        return literal(PASSLOC, ir, (const void *) 0);
+    }
 
-PointerType::~PointerType() {
+    Literal *
+    PointerType::identity(LOCATION, IR *ir) const {
+        assert(0);
+        return NULL;
+    }
 
-}
+    Literal *
+    PointerType::literal(LOCATION, IR *ir, const void * value) const {
+        return this->Type::literal(PASSLOC, ir, reinterpret_cast<const LiteralBytes *>(&value));
+    }
 
-PointerType::PointerType(MEM_LOCATION(a), PointerTypeBuilder *builder)
-    : AddressType(MEM_PASSLOC(a), builder->extension(), builder->dict(), getTypeClassKind(), builder->name()) {
+    bool
+    PointerType::literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const {
+        return (*reinterpret_cast<void * const *>(l1)) == (*reinterpret_cast<void * const *>(l2));
+    }
 
-    if (builder->helper())
-        builder->helper()(this, builder);
-    _baseType = builder->baseType();
-    assert(_baseType);
+    String
+    PointerType::to_string(Allocator *mem, bool useHeader) const {
+        String s(Type::base_string(mem, useHeader));
+        return s.append(String(mem, " pointerType base t")).append(String::to_string(mem, _baseType->id()));
+    }
 
-    builder->ir()->addon<BaseIRAddon>()->registerPointerType(this);
-}
+    void
+    PointerType::logValue(TextLogger & lgr, const void *p) const {
+        lgr << name() << " " << *(reinterpret_cast<const void * const *>(p));
+    }
 
-Literal *
-PointerType::literal(LOCATION, IR *ir, const void * value) const {
-    return this->Type::literal(PASSLOC, ir, reinterpret_cast<const LiteralBytes *>(&value));
-}
+    void
+    PointerType::logLiteral(TextLogger & lgr, const Literal *lv) const {
+        lgr << name() << "(" << (lv->value<void * const>()) << ")";
+    }
 
-bool
-PointerType::literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const {
-    return (*reinterpret_cast<void * const *>(l1)) == (*reinterpret_cast<void * const *>(l2));
-}
+    const Type *
+    PointerType::replace(TypeReplacer *repl) {
+        const Type *currentBaseType = baseType();
+        const Type *newBaseType = repl->replacedType(currentBaseType);
+        Compilation *comp = repl->comp();
+        const Type *newPtrType = baseExt()->PointerTo(LOC, comp, newBaseType);
+        return newPtrType;
+    }
+)
 
-String
-PointerType::to_string(Allocator *mem, bool useHeader) const {
-    String s(Type::base_string(mem, useHeader));
-    return s.append(String(mem, " pointerType base t")).append(String::to_string(mem, _baseType->id()));
-}
-
-void
-PointerType::logValue(TextLogger & lgr, const void *p) const {
-    lgr << name() << " " << *(reinterpret_cast<const void * const *>(p));
-}
-
-void
-PointerType::logLiteral(TextLogger & lgr, const Literal *lv) const {
-    lgr << name() << "(" << (lv->value<void * const>()) << ")";
-}
-
-const Type *
-PointerType::replace(TypeReplacer *repl) {
-    const Type *currentBaseType = baseType();
-    const Type *newBaseType = repl->replacedType(currentBaseType);
-    Compilation *comp = repl->comp();
-    const Type *newPtrType = baseExt()->PointerTo(LOC, comp, newBaseType);
-    return newPtrType;
-}
 
 
 INIT_JBALLOC_REUSECAT(FieldType, BaseType)
@@ -521,8 +328,8 @@ FieldType::clone(Allocator *a, IRCloner *cloner) const {
     return new (a) FieldType(a, this, cloner);
 }
 
-FieldType::FieldType(MEM_LOCATION(a), BaseExtension *ext, TypeDictionary *dict, const StructType *structType, String name, const Type *type, size_t offset)
-    : BaseType(MEM_PASSLOC(a), getTypeClassKind(), ext, dict, name, type->size())
+FieldType::FieldType(MEM_LOCATION(a), BaseExtension *ext, const StructType *structType, String name, const Type *type, size_t offset, TypeDictionary *dict)
+    : BaseType(MEM_PASSLOC(a), getTypeClassKind(), ext, name, type->size(), dict)
     , _structType(structType)
     , _fieldName(name)
     , _type(type)
@@ -612,7 +419,7 @@ void
 StructTypeBuilder::createFields(MEM_LOCATION(a)) {
     for (auto it = _fields.iterator(); it.hasItem(); it++) {
         FieldInfo info = it.item();
-        _structType->addField(MEM_PASSLOC(a), _ext, _dict, info._name, info._type, info._offset);
+        _structType->addField(MEM_PASSLOC(a), _ext, info._name, info._type, info._offset, _dict);
     }
 }
 
@@ -642,7 +449,7 @@ INIT_JBALLOC_REUSECAT(StructType, BaseType)
 SUBCLASS_KINDSERVICE_IMPL(StructType, "StructType", BaseType, Type);
 
 StructType::StructType(MEM_LOCATION(a), StructTypeBuilder *builder)
-    : BaseType(MEM_PASSLOC(a), getTypeClassKind(), builder->extension(), builder->dict(), builder->name(), builder->size())
+    : BaseType(MEM_PASSLOC(a), getTypeClassKind(), builder->extension(), builder->name(), builder->size(), builder->dict())
     , _structSize(0) {
 
     if (builder->helper())
@@ -674,7 +481,7 @@ StructType::~StructType() {
 }
 
 const FieldType *
-StructType::addField(MEM_LOCATION(a), Extension *ext, TypeDictionary *dict, String name, const Type *type, size_t offset) {
+StructType::addField(MEM_LOCATION(a), Extension *ext, String name, const Type *type, size_t offset, TypeDictionary *dict) {
     const FieldType *preExistingField = LookupField(name);
     if (preExistingField) {
         if (preExistingField->type() == type && preExistingField->offset() == offset)
@@ -682,7 +489,7 @@ StructType::addField(MEM_LOCATION(a), Extension *ext, TypeDictionary *dict, Stri
         return NULL;
     }
 
-    FieldType *field = new (a) FieldType(MEM_PASSLOC(a), baseExt(), dict, this, name, type, offset);
+    FieldType *field = new (a) FieldType(MEM_PASSLOC(a), baseExt(), this, name, type, offset, dict);
     _fieldsByName.insert({name, field});
     _fieldsByOffset.insert({offset, field});
 

@@ -29,17 +29,64 @@ namespace OMR {
 namespace JitBuilder {
 namespace Func {
 
-INIT_JBALLOC_REUSECAT(FunctionType, Type)
+INIT_JBALLOC_REUSECAT(FunctionTypeBuilder, Type)
 
-TypeKind FunctionType::TYPEKIND = KindService::NoKind;
-bool FunctionType::kindRegistered = false;
+FunctionTypeBuilder::FunctionTypeBuilder(Compilation *comp)
+    : _helper(NULL)
+    , _returnType(NULL)
+    , _parameterTypes(NULL, comp->ir()->mem()) {
 
-FunctionType::FunctionType(MEM_LOCATION(a), Extension *ext, TypeDictionary *dict, const Type *returnType, int32_t numParms, const Type ** parmTypes)
-    : Type(MEM_PASSLOC(a), getTypeClassKind(), ext, dict, typeName(dict->mem(), returnType, numParms, parmTypes), 0)
-    , _returnType(returnType)
-    , _numParms(numParms)
-    , _parmTypes(parmTypes) {
+}
 
+FunctionTypeBuilder::FunctionTypeBuilder(Allocator *a, Compilation *comp)
+    : _helper(NULL)
+    , _returnType(NULL)
+    , _parameterTypes(NULL, a) {
+
+}
+
+FunctionTypeBuilder::FunctionTypeBuilder(IR *ir)
+    : _helper(NULL)
+    , _returnType(NULL)
+    , _parameterTypes(NULL, ir->mem()) {
+
+}
+
+FunctionTypeBuilder::FunctionTypeBuilder(Allocator *a, IR *ir)
+    : _helper(NULL)
+    , _returnType(NULL)
+    , _parameterTypes(NULL, a) {
+
+}
+
+FunctionTypeBuilder::~FunctionTypeBuilder() {
+
+}
+
+const FunctionType *
+FunctionTypeBuilder::create(FunctionExtension *fx, Compilation *comp) {
+    Allocator *mem = comp->ir()->mem();
+    return new (mem) FunctionType(MEM_LOC(mem), fx, *this);
+}
+
+const FunctionType *
+FunctionTypeBuilder::create(MEM_LOCATION(a), FunctionExtension *fx, IR *ir) {
+    return new (a) FunctionType(MEM_PASSLOC(a), fx, *this);
+}
+
+DEFINE_TYPE_CLASS_COMMON(FunctionType, Type, "FunctionType",)
+
+FunctionType::FunctionType(MEM_LOCATION(a), FunctionExtension *fx, FunctionTypeBuilder &ftb)
+    : Type(MEM_PASSLOC(a), getTypeClassKind(), fx, typeName(a, ftb))
+    , _returnType(ftb.returnType())
+    , _numParms(ftb.numParameters())
+    , _parmTypes((_numParms > 0) ? a->allocate<const Type *>(_numParms) : NULL) {
+
+    int p=0;
+    for (auto it = ftb.parameterTypes(); it.hasItem(); it++) {
+        const Type *parmType = it.item();
+        _parmTypes[p++] = parmType;
+    }
 }
 
 FunctionType::FunctionType(Allocator *a, const FunctionType *source, IRCloner *cloner)
@@ -47,12 +94,6 @@ FunctionType::FunctionType(Allocator *a, const FunctionType *source, IRCloner *c
     , _returnType(cloner->clonedType(source->_returnType))
     , _numParms(source->_numParms)
     , _parmTypes(cloner->clonedTypeArray(source->_numParms, source->_parmTypes)) {
-
-}
-
-const Type *
-FunctionType::clone(Allocator *mem, IRCloner *cloner) const {
-    return new (mem) FunctionType(mem, this, cloner);
 }
 
 FunctionType::~FunctionType() {
@@ -68,24 +109,17 @@ FunctionExtension *
 FunctionType::funcExt() const {
     return static_cast<FunctionExtension * const>(_ext);
 }
-
-const TypeKind
-FunctionType::getTypeClassKind() {
-    if (!kindRegistered) {
-        TYPEKIND = Type::kindService.assignKind(NoTypeType::getTypeClassKind(), "Function");
-        kindRegistered = true;
-    }
-    return TYPEKIND;
-}
-
-
+ 
 String
-FunctionType::typeName(Allocator *mem, const Type * returnType, int32_t numParms, const Type **parmTypes) {
-    String s(mem, String(mem, "t").append(String::to_string(mem, returnType->id())).append(String(mem, " <- (")));
-    if (numParms > 0)
-        s.append(String(mem, "0:t")).append(String::to_string(mem, parmTypes[0]->id()));
-    for (auto p = 1; p < numParms; p++) {
-        const Type *type = parmTypes[p];
+FunctionType::typeName(Allocator *mem, FunctionTypeBuilder & ftb) {
+    String s(mem, String(mem, "t").append(String::to_string(mem, ftb.returnType()->id())).append(String(mem, " <- (")));
+    auto it = ftb.parameterTypes();
+    if (it.hasItem()) {
+        const Type *type = it.item();
+        s.append(String(mem, "0:t")).append(String::to_string(mem, type->id()));
+    }
+    for (int p=0 ;it.hasItem(); p++, it++) {
+        const Type *type = it.item();
         s.append(String(mem, " ")).append(String::to_string(mem, p)).append(String(mem, ":t")).append(String::to_string(mem, type->id()));
     }
     s.append(String(mem, ")"));
@@ -104,6 +138,17 @@ FunctionType::logValue(TextLogger &lgr, const void *p) const {
     // TODO
 }
 
+bool
+FunctionType::literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const {
+    return false;
+}
+
+void
+FunctionType::logLiteral(TextLogger & lgr, const Literal *lv) const {
+
+}
+
+#if 0
 const Type *
 FunctionType::replace(TypeReplacer *repl) {
     const Type *returnType = _returnType;
@@ -133,10 +178,16 @@ FunctionType::replace(TypeReplacer *repl) {
 
     assert(parmNum == numNewParms);
 
+    FunctionTypeBuilder ftb(repl->comp()->ir());
+    ftb.setReturnType(newReturnType);
+    for (uint32_t p=0;p < numParms;p++)
+        ftb.addParameterType(newParmTypes[p]);
+
     Allocator *mem = repl->comp()->compiler()->mem();
-    const FunctionType *newType = new (mem) FunctionType(MEM_LOC(mem) , _ext, repl->comp()->ir()->typedict(), newReturnType, numNewParms, newParmTypes);
+    const FunctionType *newType = ftb.create(MEM_LOC(mem), funcExt(), repl->comp()->ir());
     return newType;
 }
+#endif
 
 } // namespace Func
 } // namespace JitBuilder
