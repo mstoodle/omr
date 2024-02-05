@@ -51,13 +51,9 @@ VMJBCodeGenerator::~VMJBCodeGenerator() {
 
 bool
 VMJBCodeGenerator::registerBuilder(JBMethodBuilder *jbmb, Builder *b) {
-    if (b->isKind<VM::BytecodeBuilder>()) { // maybe assert?
-        VM::BytecodeBuilder *bcb = b->refine<VM::BytecodeBuilder>();
-        jbmb->createBytecodeBuilder(b, bcb->bcIndex(), bcb->name());
-        return true;
-    }
-
-    return false;
+    VM::VMBuilderAddon *vmba = b->addon<VM::VMBuilderAddon>();
+    jbmb->createBytecodeBuilder(b, vmba->bcIndex(), b->name());
+    return true;
 }
 
 } // namespace JB

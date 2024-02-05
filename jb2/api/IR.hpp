@@ -26,7 +26,7 @@
 #include "common.hpp"
 #include "CompileUnit.hpp"
 #include "CreateLoc.hpp"
-#include "Extensible.hpp"
+#include "ExtensibleIR.hpp"
 #include "Scope.hpp"
 
 namespace OMR {
@@ -50,7 +50,7 @@ class Type;
 class TypeDictionary;
 class Value;
 
-class IR : public Extensible {
+class IR : public ExtensibleIR {
     JBALLOC_(IR)
 
     friend class Builder;

@@ -24,16 +24,16 @@
 
 #include <map>
 #include "JBCore.hpp"
-#include "BaseAddon.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 namespace Base {
 
+class BaseExtension;
 class PointerType;
 class StructType;
 
-class BaseIRAddon : public BaseAddon {
+class BaseIRAddon : public AddonIR {
     JBALLOC_NO_DESTRUCTOR_(BaseIRAddon)
 
     friend class BaseExtension;
@@ -48,6 +48,9 @@ public:
 
 protected:
     BaseIRAddon(Allocator *a, BaseExtension *bx, IR *root);
+    BaseIRAddon(Allocator *a, const BaseIRAddon *source, IRCloner *cloner);
+
+    virtual AddonIR *clone(Allocator *a, IRCloner *cloner) const;
 
     std::map<const Type *,const PointerType *> _pointerTypeFromBaseType;
     std::map<String,const StructType *> _structTypeFromName;

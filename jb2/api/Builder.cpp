@@ -33,10 +33,10 @@ namespace OMR {
 namespace JitBuilder {
 
 INIT_JBALLOC_ON(Builder, IL);
-SUBCLASS_KINDSERVICE_IMPL(Builder, "Builder", Extensible, Extensible);
+SUBCLASS_KINDSERVICE_IMPL(Builder, "Builder", ExtensibleIR, Extensible);
 
 Builder::Builder(Allocator *a, Extension *ext, KINDTYPE(Extensible) kind, IR *ir, Scope *scope, String name)
-    : Extensible(a, ext, kind)
+    : ExtensibleIR(a, ext, kind)
     , _id(ir->getBuilderID())
     , _ext(ext)
     , _ir(ir)
@@ -56,10 +56,11 @@ Builder::Builder(Allocator *a, Extension *ext, KINDTYPE(Extensible) kind, IR *ir
     , _isBound(false)
     , _controlReachesEnd(true) {
 
+    // this constructor is used by subclasses, so defer notifyCreation to subclass's constructor
 }
 
 Builder::Builder(Allocator *a, Extension *ext, IR * ir, Scope *scope, String name)
-    : Extensible(a, ext, CLASSKIND(Builder, Extensible))
+    : ExtensibleIR(a, ext, CLASSKIND(Builder, Extensible))
     , _id(ir->getBuilderID())
     , _ext(ext)
     , _ir(ir)
@@ -79,10 +80,11 @@ Builder::Builder(Allocator *a, Extension *ext, IR * ir, Scope *scope, String nam
     , _isBound(false)
     , _controlReachesEnd(true) {
 
+    notifyCreation(KIND(Extensible));
 }
 
 Builder::Builder(Allocator *a, Extension *ext, Builder *parent, Scope *scope, String name)
-    : Extensible(a, ext, CLASSKIND(Builder, Extensible))
+    : ExtensibleIR(a, ext, CLASSKIND(Builder, Extensible))
     , _id(parent->ir()->getBuilderID())
     , _ext(ext)
     , _ir(parent->_ir)
@@ -102,11 +104,12 @@ Builder::Builder(Allocator *a, Extension *ext, Builder *parent, Scope *scope, St
     , _isBound(false)
     , _controlReachesEnd(true) {
 
+    notifyCreation(KIND(Extensible));
     parent->addChild(this);
 }
 
 Builder::Builder(Allocator *a, Extension *ext, Builder *parent, Operation *boundToOp, String name)
-    : Extensible(a, ext, CLASSKIND(Builder, Extensible))
+    : ExtensibleIR(a, ext, CLASSKIND(Builder, Extensible))
     , _id(parent->ir()->getBuilderID())
     , _ext(ext)
     , _ir(parent->_ir)
@@ -125,11 +128,13 @@ Builder::Builder(Allocator *a, Extension *ext, Builder *parent, Operation *bound
     , _isTarget(false)
     , _isBound(true)
     , _controlReachesEnd(true) {
+
+    notifyCreation(KIND(Extensible));
     parent->addChild(this);
 }
 
 Builder::Builder(Allocator *a, const Builder *source, IRCloner *cloner)
-    : Extensible(a, source->_ext, CLASSKIND(Builder, Extensible))
+    : ExtensibleIR(a, source->_ext, CLASSKIND(Builder, Extensible))
     , _id(source->_id)
     , _ext(source->_ext)
     , _ir(source->_ir)
@@ -158,6 +163,8 @@ Builder::Builder(Allocator *a, const Builder *source, IRCloner *cloner)
         Operation *op = it.item();
         _operations.push_back(cloner->clonedOperation(op));
     }
+
+    // special case: don't notifyCreation because addons are created by ExtensibleIR subclass cloning what the source has
 }
 
 Builder *

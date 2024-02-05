@@ -15,41 +15,27 @@
  *
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
- *   
+ *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef BASEFUNCTIONEXTENSIONADDON_INCL
-#define BASEFUNCTIONEXTENSIONADDON_INCL
-
-#include "JBCore.hpp"
-#include "Base/BaseAddon.hpp"
-#include "Func/Func.hpp"
+#include "AddonIR.hpp"
 
 namespace OMR {
 namespace JitBuilder {
-namespace Base {
 
-class BaseFunctionExtensionAddon : public BaseAddon {
-    JBALLOC_NO_DESTRUCTOR_(BaseFunctionExtensionAddon)
+INIT_JBALLOC(AddonIR)
+SUBCLASS_KINDSERVICE_IMPL(AddonIR,"AddonIR",Addon,Extensible);
 
-public:
-    DYNAMIC_ALLOC_ONLY(BaseFunctionExtensionAddon, Func::FunctionExtension *fx, Base::BaseExtension *bx);
+AddonIR::AddonIR(Allocator *a, Extension *ext, Extensible *root, KINDTYPE(Extensible) kind)
+    : Addon(a, ext, root, kind) {
 
-    void Increment(LOCATION, Builder *b, Symbol *sym, Value *bump);
-    void Increment(LOCATION, Builder *b, Symbol *sym);
+}
 
-    SUBCLASS_KINDSERVICE_DECL(Extensible,BaseFunctionExtensionAddon);
+AddonIR::AddonIR(Allocator *a, const AddonIR *source, IRCloner *cloner)
+    : Addon(a, source->ext(), source->root(), source->kind()) {
 
-protected:
-    Func::FunctionExtension *fx() const { return _fx; }
+}
 
-private:
-    Func::FunctionExtension *_fx;
-};
-
-} // namespace Base
 } // namespace JitBuilder
 } // namespace OMR
-
-#endif // defined(BASEFUNCTIONEXTENSIONADDON_INCL)

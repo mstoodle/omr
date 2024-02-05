@@ -21,6 +21,7 @@
 
 #include "JBCore.hpp"
 #include "Func/Func.hpp"
+#include "Base/BaseExtension.hpp"
 #include "Base/BaseIRAddon.hpp"
 #include "Base/BaseTypes.hpp"
 
@@ -29,12 +30,23 @@ namespace JitBuilder {
 namespace Base {
 
 INIT_JBALLOC_REUSECAT(BaseIRAddon, Compilation)
-SUBCLASS_KINDSERVICE_IMPL(BaseIRAddon,"BaseIRAddon",BaseAddon,Extensible)
+SUBCLASS_KINDSERVICE_IMPL(BaseIRAddon,"BaseIRAddon",AddonIR,Extensible)
 
 BaseIRAddon::BaseIRAddon(Allocator *a, BaseExtension *bx, IR *root)
-    : BaseAddon(a, bx, root, KIND(Extensible))
+    : AddonIR(a, bx, root, KIND(Extensible))
     , _nextCaseID(NoCase+1) {
 
+}
+
+BaseIRAddon::BaseIRAddon(Allocator *a, const BaseIRAddon *source, IRCloner *cloner)
+    : AddonIR(a, source, cloner)
+    , _nextCaseID(source->_nextCaseID) {
+
+}
+
+AddonIR *
+BaseIRAddon::clone(Allocator *a, IRCloner *cloner) const {
+    return new (a) BaseIRAddon(a, this, cloner);
 }
 
 const PointerType *

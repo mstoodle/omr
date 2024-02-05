@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021, 2022 IBM Corp. and others
+ * Copyright (c) 2024 IBM Corp.
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -15,41 +15,37 @@
  *
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
- *   
+ *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef BASEFUNCTIONEXTENSIONADDON_INCL
-#define BASEFUNCTIONEXTENSIONADDON_INCL
+#ifndef VMADDONIR_INCL
+#define VMADDONIR_INCL
 
 #include "JBCore.hpp"
-#include "Base/BaseAddon.hpp"
-#include "Func/Func.hpp"
 
 namespace OMR {
 namespace JitBuilder {
-namespace Base {
+namespace VM {
 
-class BaseFunctionExtensionAddon : public BaseAddon {
-    JBALLOC_NO_DESTRUCTOR_(BaseFunctionExtensionAddon)
+class VMExtension;
+
+// This class doesn't have much in it yet, but collects all VM classes that are Addons
+class VMAddonIR : public AddonIR {
+    JBALLOC_NO_DESTRUCTOR_(VMAddonIR)
 
 public:
-    DYNAMIC_ALLOC_ONLY(BaseFunctionExtensionAddon, Func::FunctionExtension *fx, Base::BaseExtension *bx);
-
-    void Increment(LOCATION, Builder *b, Symbol *sym, Value *bump);
-    void Increment(LOCATION, Builder *b, Symbol *sym);
-
-    SUBCLASS_KINDSERVICE_DECL(Extensible,BaseFunctionExtensionAddon);
+    DYNAMIC_ALLOC_ONLY(VMAddonIR, VMExtension *vmx, Extensible *root, KINDTYPE(Extensible)=KIND(Extensible));
+    DYNAMIC_ALLOC_ONLY(VMAddonIR, const VMAddonIR *source, IRCloner *cloner);
 
 protected:
-    Func::FunctionExtension *fx() const { return _fx; }
+    VMExtension *vmx() const;
 
-private:
-    Func::FunctionExtension *_fx;
+    SUBCLASS_KINDSERVICE_DECL(Extensible, VMAddonIR);
 };
 
-} // namespace Base
+} // namespace VM
 } // namespace JitBuilder
 } // namespace OMR
 
-#endif // defined(BASEFUNCTIONEXTENSIONADDON_INCL)
+#endif // !defined(VMADDONIR_INCL)

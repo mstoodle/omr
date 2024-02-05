@@ -25,6 +25,7 @@
 #include "Func/FunctionCompilation.hpp"
 #include "Func/FunctionContext.hpp"
 #include "Func/FunctionExtension.hpp"
+#include "Func/FunctionIRAddon.hpp"
 #include "Func/FunctionOperations.hpp"
 #include "Func/FunctionScope.hpp"
 #include "Func/FunctionSymbols.hpp"
@@ -62,7 +63,7 @@ FunctionExtension::FunctionExtension(MEM_LOCATION(a), Compiler *compiler, bool e
         registerChecker(new (a) FunctionExtensionChecker(a, this));
     }
 
-    registerForExtensible(CLASSKIND(Func::FunctionCompilation,Extensible), this);
+    registerForExtensible(CLASSKIND(IR,Extensible), this);
 }
 
 FunctionExtension::~FunctionExtension() {
@@ -78,9 +79,9 @@ void
 FunctionExtension::createAddon(Extensible *e) {
     Allocator *mem = e->allocator();
 
-    if (e->isKind<FunctionCompilation>()) {
-        FunctionCompilationAddon *fc = new (mem) FunctionCompilationAddon(mem, this, e->refine<FunctionCompilation>());
-        e->attach(fc);
+    if (e->isKind<IR>()) {
+        FunctionIRAddon *fir = new (mem) FunctionIRAddon(mem, this, e->refine<IR>());
+        e->attach(fir);
     }
 }
 
@@ -192,18 +193,16 @@ FunctionExtension::Return(LOCATION, Builder *b, Value *v) {
     addOperation(b, new (mem) Op_Return(MEM_PASSLOC(mem), this, b, this->aReturn, v));
 }
 
-// DefineFunctionType takes ownership of parmTypes array and must ensure it will always be freed
 const FunctionType *
-FunctionExtension::DefineFunctionType(LOCATION, FunctionCompilation *comp, const Type *returnType, int32_t numParms, const Type **parmTypes) {
-    const FunctionType *fType = comp->addon<FunctionCompilationAddon>()->lookupFunctionType(returnType, numParms, parmTypes);
-    if (fType) {
-        delete[] parmTypes;
+FunctionExtension::DefineFunctionType(LOCATION, FunctionCompilation *comp, FunctionTypeBuilder & ftb) {
+    IR *ir = comp->ir();
+    const FunctionType *fType = ir->addon<FunctionIRAddon>()->lookupFunctionType(ftb);
+    if (fType)
         return fType;
-    }
 
-    Allocator *mem = comp->ir()->mem();
-    const FunctionType *f = new (mem) FunctionType(MEM_PASSLOC(mem), this, comp->ir()->typedict(), returnType, numParms, parmTypes);
-    comp->addon<FunctionCompilationAddon>()->registerFunctionType(f);
+    Allocator *mem = ir->mem();
+    const FunctionType *f = new (mem) FunctionType(MEM_PASSLOC(mem), this, ftb);
+    ir->addon<FunctionIRAddon>()->registerFunctionType(f);
     return f;
 }
 

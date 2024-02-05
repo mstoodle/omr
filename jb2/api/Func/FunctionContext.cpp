@@ -247,7 +247,11 @@ FunctionContext::internalDefineFunction(LOCATION,
                                         const Type **parmTypes) {
 
     FunctionExtension *fx = ext()->refine<FunctionExtension>();
-    const FunctionType *type = fx->DefineFunctionType(PASSLOC, comp, returnType, numParms, parmTypes);
+    FunctionTypeBuilder ftb(comp);
+    ftb.setReturnType(returnType);
+    for (auto p=0;p < numParms;p++)
+        ftb.addParameterType(parmTypes[p]);
+    const FunctionType *type = fx->DefineFunctionType(PASSLOC, comp, ftb);
     Allocator *mem = _ir->mem();
     FunctionSymbol *sym = new (mem) FunctionSymbol(mem, ext(), type, name, fileName, lineNumber, entryPoint);
     _functions.push_back(sym);

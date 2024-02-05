@@ -15,41 +15,35 @@
  *
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
- *   
+ *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef BASEFUNCTIONEXTENSIONADDON_INCL
-#define BASEFUNCTIONEXTENSIONADDON_INCL
-
-#include "JBCore.hpp"
-#include "Base/BaseAddon.hpp"
-#include "Func/Func.hpp"
+#include "vm/VMAddon.hpp"
+#include "vm/VMExtension.hpp"
 
 namespace OMR {
 namespace JitBuilder {
-namespace Base {
+namespace VM {
 
-class BaseFunctionExtensionAddon : public BaseAddon {
-    JBALLOC_NO_DESTRUCTOR_(BaseFunctionExtensionAddon)
+INIT_JBALLOC(VMAddonIR)
+SUBCLASS_KINDSERVICE_IMPL(VMAddonIR,"VMAddonIR",AddonIR,Extensible);
 
-public:
-    DYNAMIC_ALLOC_ONLY(BaseFunctionExtensionAddon, Func::FunctionExtension *fx, Base::BaseExtension *bx);
+VMAddonIR::VMAddonIR(Allocator *a, VMExtension *vmx, Extensible *root, KINDTYPE(Extensible) kind)
+    : AddonIR(a, vmx, root, kind) {
 
-    void Increment(LOCATION, Builder *b, Symbol *sym, Value *bump);
-    void Increment(LOCATION, Builder *b, Symbol *sym);
+}
 
-    SUBCLASS_KINDSERVICE_DECL(Extensible,BaseFunctionExtensionAddon);
+VMAddonIR::VMAddonIR(Allocator *a, const VMAddonIR *source, IRCloner *cloner)
+    : AddonIR(a, source, cloner) {
 
-protected:
-    Func::FunctionExtension *fx() const { return _fx; }
+}
 
-private:
-    Func::FunctionExtension *_fx;
-};
+VMExtension *
+VMAddonIR::vmx() const {
+    return static_cast<VMExtension *>(ext());
+}
 
-} // namespace Base
+} // namespace VM
 } // namespace JitBuilder
 } // namespace OMR
-
-#endif // defined(BASEFUNCTIONEXTENSIONADDON_INCL)

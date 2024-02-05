@@ -15,41 +15,44 @@
  *
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
- *   
+ *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef BASEFUNCTIONEXTENSIONADDON_INCL
-#define BASEFUNCTIONEXTENSIONADDON_INCL
-
-#include "JBCore.hpp"
-#include "Base/BaseAddon.hpp"
-#include "Func/Func.hpp"
+#include "AddonIR.hpp"
+#include "ExtensibleIR.hpp"
 
 namespace OMR {
 namespace JitBuilder {
-namespace Base {
 
-class BaseFunctionExtensionAddon : public BaseAddon {
-    JBALLOC_NO_DESTRUCTOR_(BaseFunctionExtensionAddon)
+INIT_JBALLOC(ExtensibleIR)
+SUBCLASS_KINDSERVICE_IMPL(ExtensibleIR, "ExtensibleIR", Extensible, Extensible);
 
-public:
-    DYNAMIC_ALLOC_ONLY(BaseFunctionExtensionAddon, Func::FunctionExtension *fx, Base::BaseExtension *bx);
+ExtensibleIR::ExtensibleIR(Allocator *a, Extension *ext, KINDTYPE(Extensible) kind)
+    : Extensible(a, ext, kind) {
 
-    void Increment(LOCATION, Builder *b, Symbol *sym, Value *bump);
-    void Increment(LOCATION, Builder *b, Symbol *sym);
+}
 
-    SUBCLASS_KINDSERVICE_DECL(Extensible,BaseFunctionExtensionAddon);
+ExtensibleIR::ExtensibleIR(Allocator *a, const ExtensibleIR *source, IRCloner *cloner)
+    : Extensible(a, source->ext(), source->kind()) {
 
-protected:
-    Func::FunctionExtension *fx() const { return _fx; }
+    if (source->addons() != NULL) {
+        for (auto it = source->addons()->iterator(); it.hasItem(); it++) {
+            Addon *sourceAddon = it.item();
+            AddonIR *addon = sourceAddon->refine<AddonIR>();
+            AddonIR *clonedAddon = addon->clone(a, cloner);
+            this->attach(clonedAddon);
+        }
+    }
+}
 
-private:
-    Func::FunctionExtension *_fx;
-};
+ExtensibleIR::~ExtensibleIR() {
+}
 
-} // namespace Base
+ExtensibleIR *
+ExtensibleIR::clone(Allocator *a, IRCloner *cloner) const {
+    return new (a) ExtensibleIR(a, this, cloner);
+}
+
 } // namespace JitBuilder
 } // namespace OMR
-
-#endif // defined(BASEFUNCTIONEXTENSIONADDON_INCL)

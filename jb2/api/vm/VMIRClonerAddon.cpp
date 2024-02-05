@@ -29,8 +29,8 @@ namespace VM {
 INIT_JBALLOC_REUSECAT(VMIRClonerAddon, IRCloner)
 SUBCLASS_KINDSERVICE_IMPL(VMIRClonerAddon,"VMIRClonerAddon",Addon,Extensible)
 
-VMIRClonerAddon::VMIRClonerAddon(Allocator *a, VMExtension *ext, IRCloner *root)
-    : Addon(a, ext, root, KIND(Extensible))
+VMIRClonerAddon::VMIRClonerAddon(Allocator *a, VMExtension *vmx, IRCloner *root)
+    : Addon(a, vmx, root, KIND(Extensible))
     , _clonedStates(NULL, a) {
 
 }
@@ -40,6 +40,11 @@ VMIRClonerAddon::~VMIRClonerAddon() {
         VirtualMachineState *s = _clonedStates[i];
         delete s;
     }
+}
+
+VMExtension *
+VMIRClonerAddon::vmx() const {
+    return ext()->refine<VMExtension>();
 }
 
 VirtualMachineState *

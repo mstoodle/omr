@@ -42,35 +42,32 @@
  *
  * Extensible is a base class used to implement this "addon" facility, leveraging the Extensible Kind category used throughout the compiler classes.
  */
-#ifndef ADDON_INCL
-#define ADDON_INCL
+#ifndef ADDONIR_INCL
+#define ADDONIR_INCL
 
-#include "common.hpp"
+// tricky include dependencies means you can't directly include Addon.hpp, only via Extensible.hpp
 #include "Extensible.hpp"
-#include "KindService.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 
-class Extension;
+class IRCloner;
 
-// This class doesn't have much in it yet, but collects all classes that are Addons
-// Addon is abstract because clone() is purposefully not implemented
-class Addon : public Extensible {
-    JBALLOC_NO_DESTRUCTOR_(Addon)
+// This class doesn't have much in it yet, but collects all IR classes that are Addons and must support cloning via an IRCloner
+// AddonIR is abstract because clone() is purposefully not implemented
+class AddonIR : public Addon {
+    JBALLOC_NO_DESTRUCTOR_(AddonIR)
 
 public:
-    DYNAMIC_ALLOC_ONLY(Addon, Extension *ext, Extensible *root, KINDTYPE(Extensible) kind);
-    Extensible *root() const { return _root; }
+    DYNAMIC_ALLOC_ONLY(AddonIR, Extension *ext, Extensible *root, KINDTYPE(Extensible) kind);
+    DYNAMIC_ALLOC_ONLY(AddonIR, const AddonIR *source, IRCloner *cloner);
+    virtual AddonIR *clone(Allocator *a, IRCloner *cloner) const = 0;
 
-private:
-    Extensible *_root;
-
-    SUBCLASS_KINDSERVICE_DECL(Extensible, Addon);
+    SUBCLASS_KINDSERVICE_DECL(Extensible, AddonIR);
 };
 
 } // namespace JitBuilder
 } // namespace OMR
 
-#endif // !defined(ADDON_INCL)
+#endif // !defined(ADDONIR_INCL)
 

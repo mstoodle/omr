@@ -59,7 +59,7 @@ VMFunction::~VMFunction() {
 
 Builder *
 VMFunction::EntryBuilder(LOCATION, IR *ir, Scope *scope) {
-    return _vmx->OrphanBytecodeBuilder(ir, 0, 0, scope, "Entry");
+    return _vmx->EntryBuilder(PASSLOC, ir, scope, "Entry");
 }
 
 } // namespace VM

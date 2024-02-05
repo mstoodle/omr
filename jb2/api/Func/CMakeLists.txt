@@ -30,6 +30,7 @@ add_library(jb2func SHARED
 	FunctionCompilation.cpp
 	FunctionContext.cpp
 	FunctionExtension.cpp
+	FunctionIRAddon.cpp
 	FunctionOperations.cpp
 	FunctionScope.cpp
 	FunctionSymbols.cpp

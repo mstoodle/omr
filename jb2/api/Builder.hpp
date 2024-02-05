@@ -23,7 +23,7 @@
 #define BUILDER_INCL
 
 #include "common.hpp"
-#include "Extensible.hpp"
+#include "ExtensibleIR.hpp"
 #include "String.hpp"
 
 namespace OMR {
@@ -45,7 +45,7 @@ class TextLogger;
 class Transformer;
 class TypeDictionary;
 
-class Builder : public Extensible {
+class Builder : public ExtensibleIR {
     JBALLOC_(Builder);
 
     friend class CoreExtension;

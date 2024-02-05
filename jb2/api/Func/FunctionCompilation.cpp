@@ -25,6 +25,7 @@
 #include "Func/Function.hpp"
 #include "Func/FunctionCompilation.hpp"
 #include "Func/FunctionContext.hpp"
+#include "Func/FunctionIRAddon.hpp"
 #include "Func/FunctionScope.hpp"
 #include "Func/FunctionSymbols.hpp"
 #include "Func/FunctionType.hpp"
@@ -84,30 +85,6 @@ FunctionCompilation::prepareIL(LOCATION) {
 
 
 
-INIT_JBALLOC_REUSECAT(FunctionCompilationAddon, Compilation);
-SUBCLASS_KINDSERVICE_IMPL(FunctionCompilationAddon, "FunctionCompilationAddon", Addon, Extensible);
-
-FunctionCompilationAddon::FunctionCompilationAddon(Allocator *a, Extension *ext, FunctionCompilation *root)
-    : Addon(a, ext, root, KIND(Extensible)) {
-
-}
-
-const FunctionType *
-FunctionCompilationAddon::lookupFunctionType(const Type *returnType, int32_t numParms, const Type **parmTypes) {
-    String name = FunctionType::typeName(root()->refine<FunctionCompilation>()->mem(), returnType, numParms, parmTypes);
-    auto it = _functionTypesFromName.find(name);
-    if (it != _functionTypesFromName.end()) {
-        const FunctionType *fType = it->second;
-        return fType;
-    }
-    return NULL;
-}
-
-void
-FunctionCompilationAddon::registerFunctionType(const FunctionType *fType) {
-    _functionTypesFromName.insert({fType->name(), fType});
-}
-
 void
 FunctionCompilation::log(TextLogger &lgr) const {
     lgr << "Function" << lgr.endl();
@@ -136,7 +113,7 @@ FunctionCompilation::log(TextLogger &lgr) const {
         const LocalSymbol *local = localIt.item();
         lgr.indent() << "[ local " << local << " ]" << lgr.endl();
     }
-    for (auto functionIt = fc->functions();functionIt.hasItem();functionIt++) {
+    for (auto functionIt = fc->ir()->addon<FunctionIRAddon>()->functions();functionIt.hasItem();functionIt++) {
         const FunctionSymbol *function = functionIt.item();
         lgr.indent() << "[ function " << function << " ]" << lgr.endl();
     }
@@ -258,6 +235,9 @@ FunctionCompilation::replaceTypes(TypeReplacer *repl) {
         }
     }
 
+#if 0
+    // functions are now in IR object so need to adjust this code
+
     // replace functions if needed, creating new Symbols if needed
     bool changeSomeFunction = false;
     for (auto fnIt = fc->functions(); fnIt.hasItem(); fnIt++) {
@@ -283,7 +263,7 @@ FunctionCompilation::replaceTypes(TypeReplacer *repl) {
                 const Type *newType = typeMapper->next();
                 assert(newType->isKind<FunctionType>() && newType != type);
                 const FunctionType *newFnType = newType->refine<FunctionType>();
-                FunctionSymbol *newSym = fc->DefineFunction(LOC,
+                FunctionSymbol *newSym = fx->DefineFunction(LOC,
                                                             this,
                                                             function->name(), // maybe not right
                                                             function->fileName(), // not quite right
@@ -306,6 +286,7 @@ FunctionCompilation::replaceTypes(TypeReplacer *repl) {
             repl->recordSymbolMapper(function, symMapper);
         }
     }
+#endif
 }
 
 } // namespace Func
