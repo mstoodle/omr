@@ -29,66 +29,49 @@ namespace JitBuilder {
 namespace Func {
 
 class FunctionExtension;
+class FunctionType;
+class FunctionTypeBuilder;
 
-class FunctionType : public Type {
-    JBALLOC_(FunctionType)
+typedef void (FunctionTypeHelper)(FunctionType *funcType, FunctionTypeBuilder *builder);
 
-    friend class FunctionExtension;
-    friend class TypeDictionary;
+class FunctionTypeBuilder : public Allocatable {
+    JBALLOC_(FunctionTypeBuilder)
+
+    friend class FunctionType;
 
 public:
-    #if 0
-    // TODO: Move to separate class
-    class TypeBuilder {
-        struct FieldInfo {
-            String _name;
-            const Type * _type;
-            size_t _offset;
-            FieldInfo(String name, const Type *type, size_t offset)
-                : _name(name, _type(type), _offset(offset) {
-            }
-        };
-    public:
-        TypeBuilder()
-            : _ext(NULL)
-            , _name("")
-            , _size(0)
-            , _helper(NULL) {
-        }
-        TypeBuilder *setExtension(Extension *ext) { _ext = ext; }
-        TypeBuilder *setName(String n) { _name = n; }
-        TypeBuilder *setSize(size_t size) { _size = size; }
-        TypeBuilder *addField(String name, const Type *fieldType, size_t offset) {
-            FieldInfo info(name, fieldType, offset);
-            _fields.push_back(info);
-        }
-        TypeBuilder *setHelper(StructHelperFuntion *helper) { _helper = helper; }
+    ALL_ALLOC_ALLOWED(FunctionTypeBuilder, Compilation *comp);
+    ALL_ALLOC_ALLOWED(FunctionTypeBuilder, IR *ir);
 
-        Extention *extension() const { return _extension; }
-        String name() const { return _name; }
-        size_t size() const { return _size; }
-        StructHelperFunction *helper() const { return _helper; }
+    FunctionTypeBuilder & setHelper(FunctionTypeHelper *helper) { _helper = helper; return *this; }
+    FunctionTypeBuilder & setReturnType(const Type * type) { _returnType = type; return *this; }
+    FunctionTypeBuilder & addParameterType(const Type * type) { _parameterTypes.push_back(type); return *this; }
 
-        void createFields(LOCATION, StructType *structType) {
-            for (auto it = _fields.begin(); it != _fields.end(); it++) {
-                FieldInfo info = *it;
-                structType->addField(PASSLOC, info._name, info._type, info._offset);
-            }
-        }
+    const FunctionType * create(FunctionExtension *fx, Compilation *comp); 
+    const FunctionType * create(MEM_LOCATION(a), FunctionExtension *fx, IR *ir); 
 
-        const StructType *create() {
-            return StructType::create(this);
-        }
+protected:
+    const Type * returnType() const { return _returnType; };
+    size_t numParameters() const { return _parameterTypes.length(); }
+    List<const Type *>::Iterator parameterTypes() const { return _parameterTypes.iterator(); }
 
-    protected:
-        Extension * _ext;
-        String _name;
-        size_t _size;
-        List<FieldInfo> _fields;
-        StructHelperFunction _helper;
-    };
-    #endif
-    
+    FunctionTypeHelper * _helper;
+    const Type * _returnType;
+    List<const Type *> _parameterTypes;
+};
+
+DECL_TYPE_CLASS_WITH_STATE(FunctionType,Type,FunctionExtension,
+    friend class TypeDictionary;
+    const Type * _returnType;
+    int32_t _numParms;
+    const Type ** _parmTypes;
+
+    FunctionExtension *funcExt();
+    FunctionExtension *funcExt() const;
+
+public:
+    DYNAMIC_ALLOC_ONLY(FunctionType, LOCATION, FunctionExtension *fx, FunctionTypeBuilder &ftb);
+
     //virtual Literal *literal(LOCATION, IR *ir, void * functionValue);
     virtual String to_string(Allocator *mem, bool useHeader=false) const;
 
@@ -97,30 +80,10 @@ public:
     const Type *parmType(int p) const { return _parmTypes[p]; }
     const Type **parmTypes() const { return _parmTypes; }
 
-    virtual void logValue(TextLogger &lgr, const void *p) const;
+    //virtual const Type * replace(TypeReplacer *repl);
 
-    virtual const Type * replace(TypeReplacer *repl);
-
-    static String typeName(Allocator *mem, const Type *returnType, int32_t numParms, const Type **parmTypes);
-
-    static const TypeKind getTypeClassKind();
-
-protected:
-    DYNAMIC_ALLOC_ONLY(FunctionType, LOCATION, Extension *ext, TypeDictionary *dict, const Type *returnType, int32_t numParms, const Type ** parmTypes);
-    DYNAMIC_ALLOC_ONLY(FunctionType, const FunctionType *source, IRCloner *cloner);
-
-    virtual const Type *clone(Allocator *mem, IRCloner *cloner) const;
-
-    const Type *_returnType;
-    int32_t _numParms;
-    const Type **_parmTypes;
-
-    static TypeKind TYPEKIND;
-    static bool kindRegistered;
-
-    FunctionExtension *funcExt();
-    FunctionExtension *funcExt() const;
-};
+    static String typeName(Allocator *mem, FunctionTypeBuilder & ftb);
+)
 
 } // namespace Func
 } // namespace JitBuilder

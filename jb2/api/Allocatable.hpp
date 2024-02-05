@@ -158,7 +158,7 @@ private:
         static bool allocCategoryInitialized; \
     public: \
         static AllocationCategoryID allocCat(); \
-        JBALLOC_NO_DESTRUCTOR(C,C::allocCategory)
+        JBALLOC_NO_DESTRUCTOR(C,C::allocCat())
 
 
 // One of these goes in the cpp file for class C and takes care of initializing the allocation category appropriately

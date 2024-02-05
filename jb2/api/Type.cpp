@@ -34,32 +34,18 @@ namespace JitBuilder {
 INIT_JBALLOC_ON(Type, TypeDictionary)
 BASECLASS_KINDSERVICE_IMPL(Type)
 
-Type::Type(MEM_LOCATION(a), TypeKind kind, Extension *ext, String name, size_t size, const Type *layout)
+Type::Type(MEM_LOCATION(a), TypeKind kind, Extension *ext, String name, size_t size, TypeDictionary *dict, const Type *layout)
     : Allocatable(a)
     , _ext(ext)
     , _createLoc(PASSLOC)
-    , _dict(ext->compiler()->typedict())
-    , _id(ext->compiler()->typedict()->getTypeID())
+    , _dict((dict!=NULL)?dict:ext->compiler()->typedict())
+    , _id(_dict->getTypeID())
     , _name(name)
     , _size(size)
     , _layout(layout)
     , BASECLASS_KINDINIT(kind) {
 
-    ext->compiler()->typedict()->registerType(this);
-}
-
-Type::Type(MEM_LOCATION(a), TypeKind kind, Extension *ext, TypeDictionary *dict, String name, size_t size, const Type *layout)
-    : Allocatable(a)
-    , _ext(ext)
-    , _createLoc(PASSLOC)
-    , _dict(dict)
-    , _id(dict->getTypeID())
-    , _name(name)
-    , _size(size)
-    , _layout(layout)
-    , BASECLASS_KINDINIT(kind) {
-
-    dict->registerType(this);
+    _dict->registerType(this);
 }
 
 // only used by clone
@@ -142,32 +128,22 @@ Type::transformTypeIfNeeded(TypeReplacer *repl, const Type *type) const {
 // NoType
 //
 
-SUBCLASS_KINDSERVICE_IMPL(NoTypeType, "NoType", Type, Type);
+DEFINE_TYPE_CLASS(NoTypeType, Type, "NoType",
+    void
+    NoTypeType::logValue(TextLogger &lgr, const void *p) const {
+        lgr << "NoType";
+    }
 
-NoTypeType::NoTypeType(MEM_LOCATION(a), Extension *ext)
-    : Type(MEM_PASSLOC(a), getTypeClassKind(), ext, "NoType", 0) {
+    void
+    NoTypeType::logLiteral(TextLogger & lgr, const Literal *lv) const {
+        assert(0);
+    }
 
-}
-
-NoTypeType::NoTypeType(Allocator *a, const Type *source, IRCloner *cloner)
-    : Type(a, source, cloner) {
-
-}
-
-NoTypeType::~NoTypeType() {
-
-}
-
-const Type *
-NoTypeType::clone(Allocator *a, IRCloner *cloner) const {
-    assert(_kind == KIND(Type));
-    return new (a) NoTypeType(a, this, cloner);
-}
-
-void
-NoTypeType::logValue(TextLogger &lgr, const void *p) const {
-    lgr << name();
-}
+    bool
+    NoTypeType::literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const {
+        return false;
+    }
+)
 
 
 } // namespace JitBuilder

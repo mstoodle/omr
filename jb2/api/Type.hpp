@@ -35,6 +35,7 @@ class Builder;
 class Compiler;
 class Extension;
 class IR;
+class IRCloner;
 class Location;
 class TextLogger;
 class Type;
@@ -100,9 +101,8 @@ public:
     }
 
 protected:
-    DYNAMIC_ALLOC_ONLY(Type, LOCATION, TypeKind kind, Extension *ext, String name, size_t size, const Type *layout=NULL);
-    DYNAMIC_ALLOC_ONLY(Type, LOCATION, TypeKind kind, Extension *ext, TypeDictionary *dict, String name, size_t size, const Type *layout=NULL);
-    Type(Allocator *a, const Type *type, IRCloner *cloner); // used by clone
+    DYNAMIC_ALLOC_ONLY(Type, LOCATION, TypeKind kind, Extension *ext, String name, size_t size=0, TypeDictionary *dict=NULL, const Type *layout=NULL);
+    Type(Allocator *a, const Type *source, IRCloner *cloner); // used by clone
 
     void transformTypeIfNeeded(TypeReplacer *repl, const Type *type) const;
 
@@ -120,22 +120,83 @@ protected:
     BASECLASS_KINDSERVICE_DECL_CONST_ONLY(Type);
 };
 
-class NoTypeType : public Type {
-    JBALLOC(NoTypeType, NoAllocationCategory);
+// All DECL_* macros are designed to be used in headers
 
-    friend class CoreExtension;
+#define DECL_TYPE_CLASS_COMMON(C,Super,Ext,user_decl) \
+    class C : public Super { \
+        JBALLOC_NO_DESTRUCTOR_(C); \
+        friend class Ext; \
+    public: \
+        virtual bool literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const; \
+        virtual void logValue(TextLogger &lgr, const void *p) const; \
+        virtual void logLiteral(TextLogger & lgr, const Literal *lv) const; \
+    protected: \
+        virtual const Type *clone(Allocator *mem, IRCloner *cloner) const; \
+        SUBCLASS_KINDSERVICE_DECL(Type, C); \
+        user_decl \
+    };
 
-    public:
-    virtual void logValue(TextLogger &lgr, const void *p) const;
+// C(Allocator *a, const C *source, IRCloner *cloner); 
 
-    protected:
-    DYNAMIC_ALLOC_ONLY(NoTypeType, LOCATION, Extension *ext);
-    NoTypeType(Allocator *a, const Type *source, IRCloner *cloner); // used by clone
+#define DECL_TYPE_CLASS_WITH_STATE(C,Super,Ext,user_decl) \
+    DECL_TYPE_CLASS_COMMON(C,Super,Ext, \
+        C(Allocator *a, const C *source, IRCloner *cloner); \
+        virtual ~C(); \
+    protected: \
+        DYNAMIC_ALLOC_ONLY(C, LOCATION, Extension *ext, TypeDictionary *dict=NULL); \
+    user_decl \
+    )
 
-    virtual const Type *clone(Allocator *mem, IRCloner *cloner) const;
+#define DECL_TYPE_CLASS(C,Super,Ext) \
+    DECL_TYPE_CLASS_WITH_STATE(C, Super, Ext, )
 
-    SUBCLASS_KINDSERVICE_DECL(Type, NoTypeType);
-};
+#define DECL_TYPE_CLASS_WITH_STATE_AND_KIND(C,Super,Ext,user_decl) \
+    DECL_TYPE_CLASS_COMMON(C,Super,Ext, \
+        C(Allocator *a, const C *source, IRCloner *cloner); \
+        virtual ~C(); \
+    protected: \
+        DYNAMIC_ALLOC_ONLY(C, LOCATION, TypeKind kind, Extension *ext, String name, TypeDictionary *dict=NULL); \
+    user_decl \
+    )
+
+#define DECL_TYPE_CLASS_WITH_KIND(C,Super,Ext) \
+    DECL_TYPE_CLASS_WITH_STATE_AND_KIND(C,Super,Ext,)
+
+
+// All DEFINE_* macros are designed to be used in cpp file
+#define DEFINE_TYPE_CLASS_COMMON(C,Super,name,user_code) \
+    INIT_JBALLOC_REUSECAT(C, Type) \
+    SUBCLASS_KINDSERVICE_IMPL(C, name, Super, Super); \
+    const Type * \
+    C::clone(Allocator *a, IRCloner *cloner) const { \
+        assert(_kind == KIND(Type)); \
+        return new (a) C(a, this, cloner); \
+    } \
+    user_code
+
+// Define class C extending Super with the given name
+#define DEFINE_TYPE_CLASS(C,Super,name,user_code) \
+    DEFINE_TYPE_CLASS_COMMON(C,Super,name, \
+        C::C(Allocator *a, const C *source, IRCloner *cloner) \
+            : Super(a, source, cloner) { } \
+        C::~C() { } \
+        C::C(MEM_LOCATION(a), Extension *ext, TypeDictionary *dict) \
+            : Super(MEM_PASSLOC(a), getTypeClassKind(), ext, name, 0, dict) { } \
+        user_code \
+    )
+
+#define DEFINE_TYPE_CLASS_WITH_KIND(C,Super,name,user_code) \
+    DEFINE_TYPE_CLASS_COMMON(C,Super,name, \
+        C::C(Allocator *a, const C *source, IRCloner *cloner) \
+            : Super(a, source, cloner) { } \
+        C::~C() { } \
+        C::C(MEM_LOCATION(a), TYPEKind kind, Extension *ext, TypeDictionary *dict) \
+            : Super(MEM_PASSLOC(a), kind, ext, name, 0, dict) { } \
+        user_code \
+    )
+
+    
+DECL_TYPE_CLASS(NoTypeType, Type, CoreExtension)
 
 } // namespace JitBuilder
 } // namespace OMR
