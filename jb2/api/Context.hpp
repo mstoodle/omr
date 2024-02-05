@@ -23,7 +23,7 @@
 #define CONTEXT_INCL
 
 #include "common.hpp"
-#include "Extensible.hpp"
+#include "ExtensibleIR.hpp"
 #include "String.hpp"
 
 // Context is an extremely important concept. Every Builder B has a Context C though B
@@ -101,7 +101,7 @@ class Symbol;
 class SymbolDictionary;
 class TypeDictionary;
 
-class Context : public Extensible {
+class Context : public ExtensibleIR {
     JBALLOC_(Context)
 
     friend class IRCloner;

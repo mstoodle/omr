@@ -28,8 +28,6 @@
 namespace OMR {
 namespace JitBuilder {
 
-KINDSERVICE_CATEGORY(BuilderEntry);
-
 class BuilderEntry : public EntryPoint {
     JBALLOC_(BuilderEntry)
 
@@ -45,7 +43,7 @@ protected:
 
     Builder *_builder;
 
-    SUBCLASS_KINDSERVICE_DECL(EntryPoint,BuilderEntry);
+    SUBCLASS_KINDSERVICE_DECL(Extensible,BuilderEntry);
 };
 
 } // namespace JitBuilder

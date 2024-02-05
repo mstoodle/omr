@@ -26,7 +26,7 @@ namespace JitBuilder {
 namespace Base {
 
 INIT_JBALLOC(BaseAddon)
-SUBCLASS_KINDSERVICE_IMPL(BaseAddon,"BaseAddon",Addon,Extensible);
+SUBCLASS_KINDSERVICE_IMPL(BaseAddon,"BaseAddon",AddonIR,Extensible);
 
 BaseAddon::BaseAddon(Allocator *a, BaseExtension *bx, Extensible *root, KINDTYPE(Extensible) kind)
     : Addon(a, bx, root, kind) {

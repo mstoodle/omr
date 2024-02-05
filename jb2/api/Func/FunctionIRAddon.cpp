@@ -19,50 +19,54 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef FUNCTIONCOMPILATION_INCL
-#define FUNCTIONCOMPILATION_INCL
-
-#include <map>
 #include "JBCore.hpp"
+#include "Func/Func.hpp"
+#include "Func/FunctionIRAddon.hpp"
+#include "Func/FunctionType.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 namespace Func {
 
-class Function;
-class FunctionContext;
-class FunctionType;
-class FunctionTypeBuilder;
-class PointerType;
-class StructType;
+INIT_JBALLOC_REUSECAT(FunctionIRAddon, IR)
+SUBCLASS_KINDSERVICE_IMPL(FunctionIRAddon,"FunctionIRAddon",Addon,Extensible)
 
-class FunctionCompilation : public Compilation {
-    JBALLOC(FunctionCompilation, NoAllocationCategory)
+FunctionIRAddon::FunctionIRAddon(Allocator *a, FunctionExtension *fx, IR *root)
+    : AddonIR(a, fx, root, KIND(Extensible))
+    , _functions(NULL, a) {
 
-    friend class FunctionExtension;
+}
 
-public:
-    DYNAMIC_ALLOC_ONLY(FunctionCompilation, Extension *ext, Function *func, StrategyID strategy=NoStrategy, Config *localConfig=NULL);
+FunctionIRAddon::FunctionIRAddon(Allocator *a, const FunctionIRAddon *source, IRCloner *cloner)
+    : AddonIR(a, source->ext()->refine<FunctionExtension>(), cloner->clonedIR(), KIND(Extensible))
+    , _functions(NULL, a) {
 
-    Function *func() const;
+    // clone functions and functionTypesFromNames
 
-    virtual void log(TextLogger & lgr) const;
-    virtual void replaceTypes(TypeReplacer *repl);
+}
 
-protected:
-    DYNAMIC_ALLOC_ONLY(FunctionCompilation, Extension *ext, KINDTYPE(Extensible) kind, Function *func, StrategyID strategy=NoStrategy, Config *localConfig=NULL);
+AddonIR *
+FunctionIRAddon::clone(Allocator *a, IRCloner *cloner) const {
+    return new (a) FunctionIRAddon(a, this, cloner);
+}
 
-    virtual void addInitialBuildersToWorklist(BuilderList & worklist);
+const FunctionType *
+FunctionIRAddon::lookupFunctionType(FunctionTypeBuilder & ftb) {
+    String name = FunctionType::typeName(root()->refine<IR>()->mem(), ftb);
+    auto it = _functionTypesFromName.find(name);
+    if (it != _functionTypesFromName.end()) {
+        const FunctionType *fType = it->second;
+        return fType;
+    }
+    return NULL;
+}
 
-    virtual bool prepareIL(LOCATION);
+void
+FunctionIRAddon::registerFunctionType(const FunctionType *fType) {
+    _functionTypesFromName.insert({fType->name(), fType});
+}
 
-    SUBCLASS_KINDSERVICE_DECL(Extensible, FunctionCompilation);
-};
 
-
-} // namespace Func
+} // namespace Function
 } // namespace JitBuilder
 } // namespace OMR
-
-#endif // !defined(FUNCTIONCOMPILATION_INCL)
-

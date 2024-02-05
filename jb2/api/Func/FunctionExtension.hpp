@@ -33,6 +33,7 @@ class FunctionCompilation;
 class FunctionExtensionChecker;
 class FunctionSymbol;
 class FunctionType;
+class FunctionTypeBuilder;
 class LocalSymbol;
 class ParameterSymbol;
 
@@ -54,12 +55,7 @@ public:
     //
     // Types
     //
-
-    #if 0
-    const FunctionType * DefineFunctionType(LOCATION, FunctionTypeBuilder *builder);
-    #endif
-    // deprecated
-    const FunctionType * DefineFunctionType(LOCATION, FunctionCompilation *comp, const Type *returnType, int32_t numParms, const Type **parmTypes);
+    const FunctionType * DefineFunctionType(LOCATION, FunctionCompilation *comp, FunctionTypeBuilder & ftb);
 
     //
     // Actions

@@ -458,10 +458,10 @@ OperandStackTestFunction::buildContext(LOCATION, Func::FunctionCompilation *comp
 }
 
 // convenience macros
-#define STACK(b)           (((b)->vmState()->refine<TestState>())->_stack)
-#define STACKTOP(b)        (((b)->vmState()->refine<TestState>())->_stackTop)
-#define COMMIT(b)          ((b)->vmState()->Commit(LOC, b))
-#define RELOAD(b)          ((b)->vmState()->Reload(LOC, b))
+#define STACK(b)           (((b)->addon<VM::VMBuilderAddon>()->vmState()->refine<TestState>())->_stack)
+#define STACKTOP(b)        (((b)->addon<VM::VMBuilderAddon>()->vmState()->refine<TestState>())->_stackTop)
+#define COMMIT(b)          ((b)->addon<VM::VMBuilderAddon>()->vmState()->Commit(LOC, b))
+#define RELOAD(b)          ((b)->addon<VM::VMBuilderAddon>()->vmState()->Reload(LOC, b))
 #define UPDATESTACK(b,s)   (STACK(b)->UpdateStack(LOC, b, s))
 #define PUSH(b,v)          (STACK(b)->Push(v))
 #define POP(b)             (STACK(b)->Pop())
@@ -470,8 +470,8 @@ OperandStackTestFunction::buildContext(LOCATION, Func::FunctionCompilation *comp
 #define DROP(b,d)          (STACK(b)->Drop(d))
 #define PICK(b,d)          (STACK(b)->Pick(d))
 
-VM::BytecodeBuilder *
-OperandStackTestFunction::testStack(VM::BytecodeBuilder *b, IR *ir, bool useEqual) {
+Builder *
+OperandStackTestFunction::testStack(Builder *b, IR *ir, bool useEqual) {
     STACKVALUECTYPE one=1;
     Literal *lv1 = _valueType->literal(LOC, ir, reinterpret_cast<LiteralBytes *>(&one));
     PUSH(b, _bx->Const(LOC, b, lv1));
@@ -534,9 +534,9 @@ OperandStackTestFunction::testStack(VM::BytecodeBuilder *b, IR *ir, bool useEqua
     UPDATESTACK(b, newStack);
     _fx->Call(LOC, b, _verifyResult11);
 
-    VM::BytecodeBuilder *thenBB = _vmx->OrphanBytecodeBuilder(ir, 1, 1, NULL, String("BCI_then"));
-    VM::BytecodeBuilder *elseBB = _vmx->OrphanBytecodeBuilder(ir, 2, 1, NULL, String("BCI_else"));
-    VM::BytecodeBuilder *mergeBB = _vmx->OrphanBytecodeBuilder(ir, 3, 1, NULL, String("BCI_merge"));
+    Builder *thenBB = _vmx->OrphanBuilder(LOC, b, 1, 1, NULL, String("BCI_then"));
+    Builder *elseBB = _vmx->OrphanBuilder(LOC, b, 2, 1, NULL, String("BCI_else"));
+    Builder *mergeBB = _vmx->OrphanBuilder(LOC, b, 3, 1, NULL, String("BCI_merge"));
 
     Value *v1 = POP(b);
     Value *v2 = POP(b);
@@ -612,8 +612,8 @@ OperandStackTestFunction::buildIL(LOCATION, Func::FunctionCompilation *comp, Fun
 
     TestState *vmState = new (mem) TestState(MEM_LOC(mem), _vmx, stack, stackTop);
 
-    VM::BytecodeBuilder *bb = _vmx->OrphanBytecodeBuilder(comp->ir(), 0, 1, scope, String("entry"));
-    bb->setVMState(vmState); // ownership passed to bb so we should never delete vmState ourselves
+    Builder *bb = _vmx->OrphanBuilder(PASSLOC, entry, 0, 0, scope, String("entry"));
+    bb->addon<VM::VMBuilderAddon>()->setVMState(vmState); // ownership passed to bb so we should never delete vmState ourselves
     _bx->Goto(LOC, entry, bb);
 
     testStack(bb, comp->ir(), true);
@@ -655,8 +655,8 @@ OperandStackTestUsingStructFunction::buildIL(LOCATION, Func::FunctionCompilation
     VM::VirtualMachineOperandStack *stack = new (mem) VM::VirtualMachineOperandStack(MEM_LOC(mem), _vmx, comp, 1, stackTop, _bx->STACKVALUETYPE);
 
     TestState *vmState = new (mem) TestState(MEM_LOC(mem), _vmx, stack, stackTop);
-    VM::BytecodeBuilder *bb = _vmx->OrphanBytecodeBuilder(comp->ir(), 0, 1, scope, String("entry"));
-    bb->setVMState(vmState); // ownership transferred to bb so should never delete it ourselves
+    Builder *bb = _vmx->OrphanBuilder(PASSLOC, entry, 0, 0, scope, String("entry"));
+    bb->addon<VM::VMBuilderAddon>()->setVMState(vmState); // ownership transferred to bb so should never delete it ourselves
     _bx->Goto(LOC, entry, bb);
 
     testStack(bb, comp->ir(), false);

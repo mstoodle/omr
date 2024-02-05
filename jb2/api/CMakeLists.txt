@@ -57,6 +57,7 @@ set(JB2_JB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/jb)
 
 add_library(jb2core SHARED
     Addon.cpp
+    AddonIR.cpp
     AllocationCategoryClasses.cpp
     AllocationCategoryService.cpp
     Allocator.cpp
@@ -76,6 +77,7 @@ add_library(jb2core SHARED
     CreateLoc.cpp
     EntryPoint.cpp
     Extensible.cpp
+    ExtensibleIR.cpp
     Extension.cpp
     InputReader.cpp
     IR.cpp
@@ -111,11 +113,42 @@ set(VALGRIND "")
 
 add_subdirectory(test)
 
-# Extensions
-add_subdirectory(Func)
-add_subdirectory(Base)
-add_subdirectory(jb)
-add_subdirectory(vm)
-#add_subdirectory(Debug)
-#add_subdirectory(Sim)
-#add_subdirectory(Complex)
+# Extensions can be turned on individually, but by default the ones below will be built
+if (NOT OMR_JB2_PICK_EXTS)
+	set(OMR_JB2_EXT_FUNC ON CACHE BOOL "jb2 include Function extension")
+	set(OMR_JB2_EXT_BASE ON CACHE BOOL "jb2 include Base extension")
+	set(OMR_JB2_EXT_JB ON CACHE BOOL "jb2 include JB extension")
+	set(OMR_JB2_EXT_VM ON CACHE BOOL "jb2 include VM extension")
+
+	set(OMR_JB2_EXT_DEBUG OFF CACHE BOOL "jb2 include Debug extension")
+	set(OMR_JB2_EXT_SIM OFF CACHE BOOL "jb2 include Sim extension")
+	set(OMR_JB2_EXT_COMPLEX OFF CACHE BOOL "jb2 include Complex extension")
+endif()
+
+if (OMR_JB2_EXT_FUNC)
+	add_subdirectory(Func)
+endif()
+
+if (OMR_JB2_EXT_BASE)
+	add_subdirectory(Base)
+endif()
+
+if (OMR_JB2_EXT_JB)
+	add_subdirectory(jb)
+endif()
+
+if (OMR_JB2_EXT_VM)
+	add_subdirectory(vm)
+endif()
+
+if (OMR_JB2_EXT_DEBUG)
+	add_subdirectory(Debug)
+endif()
+
+if (OMR_JB2_EXT_SIM)
+	add_subdirectory(Sim)
+endif()
+
+if (OMR_JB2_EXT_COMPLEX)
+	add_subdirectory(Complex)
+endif()

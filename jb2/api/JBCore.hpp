@@ -23,7 +23,8 @@
 #define OMR_JITBUILDER_JBCORE_INCL
 
 #include "common.hpp"
-//#include "Addon.hpp" // included via Extensible.hpp
+//#include "Addon.hpp" // must be included via Extensible.hpp
+#include "AddonIR.hpp"
 #include "AllocatorTracer.hpp"
 #include "AllocatorTracker.hpp"
 #include "Builder.hpp"
@@ -39,6 +40,7 @@
 #include "CreateLoc.hpp"
 #include "EntryPoint.hpp"
 #include "Extensible.hpp"
+#include "ExtensibleIR.hpp"
 #include "Extension.hpp"
 #include "InputReader.hpp"
 #include "IR.hpp"

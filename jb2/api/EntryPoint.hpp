@@ -22,8 +22,7 @@
 #ifndef ENTRYPOINT_INCL
 #define ENTRYPOINT_INCL
 
-#include "common.hpp"
-#include "KindService.hpp"
+#include "ExtensibleIR.hpp"
 #include "List.hpp"
 #include "String.hpp"
 
@@ -35,15 +34,13 @@ class Compilation;
 class IR;
 class IRCloner;
 
-KINDSERVICE_CATEGORY(EntryPoint);
-
-class EntryPoint : public Allocatable {
+class EntryPoint : public ExtensibleIR {
     JBALLOC_(EntryPoint)
 
     friend class IRCloner;
 
 public:
-    DYNAMIC_ALLOC_ONLY(EntryPoint, IR *ir, EntryPointKind kind, EntryID entryID, String name="");
+    DYNAMIC_ALLOC_ONLY(EntryPoint, IR *ir, ExtensibleKind kind, EntryID entryID, String name="");
 
     EntryPointID id() const { return _id; }
     EntryID entryID() const { return _entryID; }
@@ -63,7 +60,7 @@ protected:
     IR *_ir;
     String _name;
 
-    BASECLASS_KINDSERVICE_DECL(EntryPoint);
+    SUBCLASS_KINDSERVICE_DECL(Extensible, EntryPoint);
 };
 
 } // namespace JitBuilder

@@ -44,7 +44,7 @@ INIT_JBALLOC_ON(IR, Compilation)
 SUBCLASS_KINDSERVICE_IMPL(IR,"IR",Extensible,Extensible)
 
 IR::IR(Allocator *a, CompileUnit *unit)
-    : Extensible(a, unit->compiler()->coreExt(), KIND(Extensible))
+    : ExtensibleIR(a, unit->compiler()->coreExt(), KIND(Extensible))
     , _nextBuilderID(NoBuilder+1)
     , _nextContextID(NoContext+1)
     , _nextLiteralID(NoLiteral+1)
@@ -67,7 +67,7 @@ IR::IR(Allocator *a, CompileUnit *unit)
 }
 
 IR::IR(Allocator *a, const IR *source, IRCloner *cloner)
-    : Extensible(a, source->ext(), KIND(Extensible))
+    : ExtensibleIR(a, source->ext(), KIND(Extensible))
     , _nextBuilderID(NoBuilder+1)
     , _nextContextID(NoContext+1)
     , _nextLiteralID(NoLiteral+1)
@@ -101,6 +101,7 @@ IR::IR(Allocator *a, const IR *source, IRCloner *cloner)
 
     // we can now clone Builders which clones Operations and Values which depend on Literals, Symbols, and Types
     _scope = cloner->clonedScope(source->scope<Scope>());
+
 
     // Literals, Symbols, TypeDictionaries, and Values reference Types
     // LiteralDictionaries reference Literals

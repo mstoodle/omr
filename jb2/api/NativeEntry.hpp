@@ -42,11 +42,11 @@ public:
     T *entry() { return reinterpret_cast<T *>(_entry); }
 
 protected:
-    DYNAMIC_ALLOC_ONLY(NativeEntry, IR *ir, EntryPointKind kind, EntryID id, void *entry, String name="");
+    DYNAMIC_ALLOC_ONLY(NativeEntry, IR *ir, ExtensibleKind kind, EntryID id, void *entry, String name="");
 
     void *_entry;
 
-    SUBCLASS_KINDSERVICE_DECL(EntryPoint,NativeEntry);
+    SUBCLASS_KINDSERVICE_DECL(Extensible,NativeEntry);
 };
 
 } // namespace JitBuilder

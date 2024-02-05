@@ -34,8 +34,6 @@ namespace OMR {
 namespace JitBuilder {
 namespace VM {
 
-class BytecodeBuilder;
-
 class VMExtension : public Extension {
     JBALLOC_(VMExtension)
 
@@ -72,23 +70,21 @@ public:
     //
 
     // Pseudo operations
-    void Goto(LOCATION, BytecodeBuilder *b, BytecodeBuilder *target);
-    void IfCmpEqual(LOCATION, BytecodeBuilder *b, BytecodeBuilder *target, Value *left, Value *right);
-    void IfCmpEqualZero(LOCATION, BytecodeBuilder *b, BytecodeBuilder *target, Value *condition);
-    void IfCmpLessOrEqual(LOCATION, BytecodeBuilder *b, BytecodeBuilder *target, Value *left, Value *right);
-    void IfCmpLessThan(LOCATION, BytecodeBuilder *b, BytecodeBuilder *target, Value *left, Value *right);
-    void IfCmpGreaterOrEqual(LOCATION, BytecodeBuilder *b, BytecodeBuilder *target, Value *left, Value *right);
-    void IfCmpGreaterThan(LOCATION, BytecodeBuilder *b, BytecodeBuilder *target, Value *left, Value *right);
-    void IfCmpNotEqual(LOCATION, BytecodeBuilder *b, BytecodeBuilder *target, Value *left, Value *right);
-    void IfCmpNotEqualZero(LOCATION, BytecodeBuilder *b, BytecodeBuilder *target, Value *condition);
-    void IfCmpUnsignedLessOrEqual(LOCATION, BytecodeBuilder *b, BytecodeBuilder *target, Value *left, Value *right);
-    void IfCmpUnsignedLessThan(LOCATION, BytecodeBuilder *b, BytecodeBuilder *target, Value *left, Value *right);
-    void IfCmpUnsignedGreaterOrEqual(LOCATION, BytecodeBuilder *b, BytecodeBuilder *target, Value *left, Value *right);
-    void IfCmpUnsignedGreaterThan(LOCATION, BytecodeBuilder *b, BytecodeBuilder *target, Value *left, Value *right);
-    BytecodeBuilder *OrphanBytecodeBuilder(Compilation *comp, int32_t bcIndex, int32_t bcLength=1, Scope *scope=NULL, String name="") {
-        return OrphanBytecodeBuilder(comp->ir(), bcIndex, bcLength, scope, name);
-    }
-    BytecodeBuilder *OrphanBytecodeBuilder(IR *ir, int32_t bcIndex, int32_t bcLength=1, Scope *scope=NULL, String name="");
+    void Goto(LOCATION, Builder *b, Builder *target);
+    void IfCmpEqual(LOCATION, Builder *b, Builder *target, Value *left, Value *right);
+    void IfCmpEqualZero(LOCATION, Builder *b, Builder *target, Value *condition);
+    void IfCmpLessOrEqual(LOCATION, Builder *b, Builder *target, Value *left, Value *right);
+    void IfCmpLessThan(LOCATION, Builder *b, Builder *target, Value *left, Value *right);
+    void IfCmpGreaterOrEqual(LOCATION, Builder *b, Builder *target, Value *left, Value *right);
+    void IfCmpGreaterThan(LOCATION, Builder *b, Builder *target, Value *left, Value *right);
+    void IfCmpNotEqual(LOCATION, Builder *b, Builder *target, Value *left, Value *right);
+    void IfCmpNotEqualZero(LOCATION, Builder *b, Builder *target, Value *condition);
+    void IfCmpUnsignedLessOrEqual(LOCATION, Builder *b, Builder *target, Value *left, Value *right);
+    void IfCmpUnsignedLessThan(LOCATION, Builder *b, Builder *target, Value *left, Value *right);
+    void IfCmpUnsignedGreaterOrEqual(LOCATION, Builder *b, Builder *target, Value *left, Value *right);
+    void IfCmpUnsignedGreaterThan(LOCATION, Builder *b, Builder *target, Value *left, Value *right);
+    Builder *EntryBuilder(LOCATION, IR *ir, Scope *scope=NULL, String name="");
+    Builder *OrphanBuilder(LOCATION, Builder *parent, int32_t bcIndex, int32_t bcLength=1, Scope *scope=NULL, String name="");
 
     CompiledBody * compile(LOCATION, Func::Function *func, StrategyID strategy, TextLogger *lgr);
 

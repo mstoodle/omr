@@ -19,38 +19,48 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef VMIRCLONERADDON_INCL
-#define VMIRCLONERADDON_INCL
+#ifndef FUNCTIONIRADDON_INCL
+#define FUNCTIONIRADDON_INCL
 
-#include "vm/VMAddon.hpp"
+#include <map>
+#include "JBCore.hpp"
+#include "Func/FunctionExtension.hpp"
 
 namespace OMR {
 namespace JitBuilder {
-namespace VM {
+namespace Func {
 
-class VMExtension;
-class VirtualMachineState;
+class FunctionTypeBuilder;
 
-class VMIRClonerAddon : public Addon {
-    JBALLOC_NO_DESTRUCTOR_(VMIRClonerAddon)
+class FunctionIRAddon : public AddonIR {
+    JBALLOC_NO_DESTRUCTOR_(FunctionIRAddon)
+
+    friend class FunctionExtension;
 
 public:
-    VMIRClonerAddon(Allocator *a, VMExtension *vmx, IRCloner *root);
-    virtual ~VMIRClonerAddon();
+    const FunctionType * lookupFunctionType(FunctionTypeBuilder & ftb);
+    void registerFunctionType(const FunctionType * fType);
 
-    VirtualMachineState *clonedState(VirtualMachineState *s);
+    FunctionSymbolIterator functions() const { return this->_functions.iterator(); }
+    FunctionSymbolList resetFunctions();
+    FunctionSymbol *LookupFunction(String name);
 
 protected:
-    VMExtension *vmx() const;
+    FunctionIRAddon(Allocator *a, FunctionExtension *bx, IR *root);
+    FunctionIRAddon(Allocator *a, const FunctionIRAddon *source, IRCloner *cloner);
 
-    Array<VirtualMachineState *> _clonedStates;
+    virtual AddonIR *clone(Allocator *a, IRCloner *cloner) const;
 
-    SUBCLASS_KINDSERVICE_DECL(Extensible, VMIRClonerAddon);
+    std::map<String,const FunctionType *> _functionTypesFromName;
+    FunctionSymbolList _functions;
+
+    SUBCLASS_KINDSERVICE_DECL(Extensible, FunctionIRAddon);
+
+    FunctionExtension *fx() const { return static_cast<FunctionExtension *>(ext()); }
 };
 
-} // namespace VM
+} // namespace Func
 } // namespace JitBuilder
 } // namespace OMR
 
-#endif // !defined(VMIRCLONERADDON_INCL)
-
+#endif // !defined(FUNCTIONIRADDON_INCL)

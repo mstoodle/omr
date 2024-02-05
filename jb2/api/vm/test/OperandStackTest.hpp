@@ -52,7 +52,7 @@ public:
     STACKVALUECTYPE **getSPPtr() { return &_realStackTop; }
 
 protected:
-    VM::BytecodeBuilder * testStack(VM::BytecodeBuilder *b, IR *ir, bool useEqual);
+    Builder * testStack(Builder *b, IR *ir, bool useEqual);
 
     CoreExtension *_cx;
     Base::BaseExtension *_bx;

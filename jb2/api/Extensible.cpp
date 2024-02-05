@@ -38,10 +38,11 @@ Extensible::Extensible(Allocator *a, Extension *ext, KINDTYPE(Extensible) kind)
 
 Extensible::~Extensible() {
     if (_addons != NULL) {
+        #if 0 // should be covered already because Addon's are Extensible?
         for (auto it = _addons->iterator(); it.hasItem(); it++) {
             Addon *addon = it.item();
-            delete addon;
         }
+        #endif
         delete _addons;
     }
 }
