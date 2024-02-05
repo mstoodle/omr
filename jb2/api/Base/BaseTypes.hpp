@@ -31,255 +31,85 @@ namespace Base {
 
 class BaseExtension;
 
-class BaseType : public Type {
-    JBALLOC_(BaseType)
+#define DECL_BASETYPE_CLASS(C,Super,user_decl) \
+    DECL_TYPE_CLASS_WITH_STATE_AND_KIND(C,Super,BaseExtension, \
+    protected: \
+        DYNAMIC_ALLOC_ONLY(C, LOCATION, TypeKind kind, Extension *ext, String name, size_t size=0, TypeDictionary *dict=NULL); \
+        user_decl \
+    )
 
-    friend class BaseExtension;
+#define DECL_CONCRETE_BASETYPE(C,Super,size,user_decl) \
+    DECL_BASETYPE_CLASS(C,Super, \
+        public: \
+            virtual Literal *zero(LOCATION, IR *ir) const; \
+            virtual Literal *identity(LOCATION, IR *ir) const; \
+        protected: \
+            C(MEM_LOCATION(a), Extension *ext); \
+        user_decl \
+    )
 
+DECL_BASETYPE_CLASS(BaseType, Type,
     protected:
-    BaseType(MEM_LOCATION(a), TypeKind kind, Extension *ext, String name, size_t size)
-        : Type(MEM_PASSLOC(a), kind, ext, name, size) {
+        BaseExtension *baseExt();
+        BaseExtension *baseExt() const;
+)
+
+DECL_BASETYPE_CLASS(NumericType, BaseType,
+    public:
+        virtual bool isInteger() const { return false; }
+        virtual bool isFloatingPoint() const { return false; }
+)
+
+DECL_BASETYPE_CLASS(IntegerType, NumericType,
+    public:
+        virtual bool isInteger() const { return true; }
+)
+
+DECL_CONCRETE_BASETYPE(Int8Type, IntegerType, 8, 
+    public:
+        Literal *literal(LOCATION, IR *ir, const int8_t value) const;
+        virtual const int64_t getInteger(const Literal *lv) const;
+)
+DECL_CONCRETE_BASETYPE(Int16Type, IntegerType, 16, 
+    public:
+        Literal *literal(LOCATION, IR *ir, const int16_t value) const;
+        virtual const int64_t getInteger(const Literal *lv) const;
+)
+DECL_CONCRETE_BASETYPE(Int32Type, IntegerType, 32, 
+    public:
+        Literal *literal(LOCATION, IR *ir, const int32_t value) const;
+        virtual const int64_t getInteger(const Literal *lv) const;
+)
+DECL_CONCRETE_BASETYPE(Int64Type, IntegerType, 64, 
+    public:
+        Literal *literal(LOCATION, IR *ir, const int64_t value) const;
+        virtual const int64_t getInteger(const Literal *lv) const;
+)
+
+
+DECL_BASETYPE_CLASS(FloatingPointType, NumericType,
+    public:
+        virtual bool isFloatingPoint() const { return true; }
+)
+
+DECL_CONCRETE_BASETYPE(Float32Type, FloatingPointType, 32, 
+    public:
+        Literal *literal(LOCATION, IR *ir, const float value) const;
+        virtual const double getFloatingPoint(const Literal *lv) const;
+)
+
+DECL_CONCRETE_BASETYPE(Float64Type, FloatingPointType, 64, 
+    public:
+        Literal *literal(LOCATION, IR *ir, const double value) const;
+        virtual const double getFloatingPoint(const Literal *lv) const;
+)
+
+
+DECL_CONCRETE_BASETYPE(AddressType,IntegerType,size,
+    public:
+        Literal *literal(LOCATION, IR *ir, const void * value) const;
+)
 
-    }
-    BaseType(MEM_LOCATION(a), TypeKind kind, Extension *ext, TypeDictionary *dict, String name, size_t size)
-        : Type(MEM_PASSLOC(a), kind, ext, dict, name, size) {
-
-    }
-    BaseType(Allocator *a, const BaseType *source, IRCloner *cloner)
-        : Type(a, source, cloner) {
-
-    }
-
-    BaseExtension *baseExt();
-    BaseExtension *baseExt() const;
-
-    SUBCLASS_KINDSERVICE_DECL(Type, BaseType);
-};
-
-class NumericType : public BaseType {
-    JBALLOC_(NumericType)
-
-    friend class BaseExtension;
-
-protected:
-    NumericType(MEM_LOCATION(a), TypeKind kind, Extension *ext, String name, size_t size)
-        : BaseType(MEM_PASSLOC(a), kind, ext, name, size) {
-
-    }
-    NumericType(Allocator *a, const NumericType *source, IRCloner *cloner)
-        : BaseType(a, source, cloner) {
-
-    }
-
-    SUBCLASS_KINDSERVICE_DECL(Type, NumericType);
-};
-
-class IntegerType : public NumericType {
-    JBALLOC_(IntegerType)
-
-    friend class BaseExtension;
-public:
-    virtual bool isInteger() const { return true; }
-
-protected:
-    IntegerType(MEM_LOCATION(a), TypeKind kind, Extension *ext, String name, size_t size)
-        : NumericType(MEM_PASSLOC(a), kind, ext, name, size) {
-
-    }
-    IntegerType(Allocator *a, const IntegerType *source, IRCloner *cloner)
-        : NumericType(a, source, cloner) {
-
-    }
-
-    SUBCLASS_KINDSERVICE_DECL(Type, IntegerType);
-};
-
-class Int8Type : public IntegerType {
-    JBALLOC_(Int8Type)
-
-    friend class BaseExtension;
-
-public:
-    virtual size_t size() const { return 8; }
-    virtual Literal *literal(LOCATION, IR *ir, const int8_t value) const;
-    virtual Literal *zero(LOCATION, IR *ir) const { return literal(PASSLOC, ir, 0); }
-    virtual Literal *identity(LOCATION, IR *ir) const { return literal(PASSLOC, ir, 1); }
-    virtual bool literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const;
-    virtual void logValue(TextLogger & lgr, const void *p) const;
-    virtual void logLiteral(TextLogger & lgr, const Literal *lv) const;
-    virtual const int64_t getInteger(const Literal *lv) const;
-
-protected:
-    Int8Type(MEM_LOCATION(a), Extension *ext) : IntegerType(MEM_PASSLOC(a), getTypeClassKind(), ext, "Int8", 8) { }
-    Int8Type(Allocator *a, const Int8Type *source, IRCloner *cloner);
-
-    virtual const Type *clone(Allocator *a, IRCloner *cloner) const;
-
-    SUBCLASS_KINDSERVICE_DECL(Type, Int8Type);
-};
-
-class Int16Type : public IntegerType {
-    JBALLOC_(Int16Type)
-
-    friend class BaseExtension;
-
-public:
-    virtual size_t size() const { return 16; }
-    virtual Literal *literal(LOCATION, IR *ir, const int16_t value) const;
-    virtual Literal *zero(LOCATION, IR *ir) const { return literal(PASSLOC, ir, 0); }
-    virtual Literal *identity(LOCATION, IR *ir) const { return literal(PASSLOC, ir, 1); }
-    virtual bool literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const;
-    virtual void logValue(TextLogger & lgr, const void *p) const;
-    virtual void logLiteral(TextLogger & lgr, const Literal *lv) const;
-    virtual const int64_t getInteger(const Literal *lv) const;
-
-protected:
-    Int16Type(MEM_LOCATION(a), Extension *ext) : IntegerType(MEM_PASSLOC(a), getTypeClassKind(), ext, "Int16", 16) { }
-    Int16Type(Allocator *a, const Int16Type *source, IRCloner *cloner);
-
-    virtual const Type *clone(Allocator *a, IRCloner *cloner) const;
-
-    SUBCLASS_KINDSERVICE_DECL(Type, Int16Type);
-};
-
-class Int32Type : public IntegerType {
-    JBALLOC_(Int32Type)
-
-    friend class BaseExtension;
-
-public:
-    virtual size_t size() const { return 32; }
-    virtual Literal *literal(LOCATION, IR *ir, const int32_t value) const;
-    virtual Literal *zero(LOCATION, IR *ir) const { return literal(PASSLOC, ir, 0); }
-    virtual Literal *identity(LOCATION, IR *ir) const { return literal(PASSLOC, ir, 1); }
-    virtual bool literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const;
-    virtual void logValue(TextLogger & lgr, const void *p) const;
-    virtual void logLiteral(TextLogger & lgr, const Literal *lv) const;
-    virtual const int64_t getInteger(const Literal *lv) const;
-
-protected:
-    Int32Type(MEM_LOCATION(a), Extension *ext) : IntegerType(MEM_PASSLOC(a), getTypeClassKind(), ext, "Int32", 32) { }
-    Int32Type(Allocator *a, const Int32Type *source, IRCloner *cloner);
-
-    virtual const Type *clone(Allocator *a, IRCloner *cloner) const;
-
-    SUBCLASS_KINDSERVICE_DECL(Type, Int32Type);
-};
-
-class Int64Type : public IntegerType {
-    JBALLOC_(Int64Type)
-
-    friend class BaseExtension;
-
-public:
-    virtual size_t size() const { return 64; }
-    virtual Literal *literal(LOCATION, IR *ir, const int64_t value) const;
-    virtual Literal *zero(LOCATION, IR *ir) const { return literal(PASSLOC, ir, 0); }
-    virtual Literal *identity(LOCATION, IR *ir) const { return literal(PASSLOC, ir, 1); }
-    virtual bool literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const;
-    virtual void logValue(TextLogger & lgr, const void *p) const;
-    virtual void logLiteral(TextLogger & lgr, const Literal *lv) const;
-    virtual const int64_t getInteger(const Literal *lv) const;
-
-protected:
-    Int64Type(MEM_LOCATION(a), Extension *ext) : IntegerType(MEM_PASSLOC(a), getTypeClassKind(), ext, "Int64", 64) { }
-    Int64Type(Allocator *a, const Int64Type *source, IRCloner *cloner);
-
-    virtual const Type *clone(Allocator *a, IRCloner *cloner) const;
-
-    SUBCLASS_KINDSERVICE_DECL(Type, Int64Type);
-};
-
-class FloatingPointType : public NumericType {
-    JBALLOC_(FloatingPointType)
-
-    friend class BaseExtension;
-
-protected:
-    FloatingPointType(MEM_LOCATION(a), TypeKind kind, Extension *ext, String name, size_t size)
-        : NumericType(MEM_PASSLOC(a), kind, ext, name, size) {
-
-    }
-    FloatingPointType(Allocator *a, const FloatingPointType *source, IRCloner *cloner)
-        : NumericType(a, source, cloner) {
-
-    }
-
-    SUBCLASS_KINDSERVICE_DECL(Type, FloatingPointType);
-};
-
-class Float32Type : public FloatingPointType {
-    JBALLOC_(Float32Type)
-
-    friend class BaseExtension;
-
-public:
-    virtual size_t size() const { return 32; }
-    virtual Literal *literal(LOCATION, IR *ir, const float value) const;
-    virtual Literal *zero(LOCATION, IR *ir) const { return literal(PASSLOC, ir, 0.0); }
-    virtual Literal *identity(LOCATION, IR *ir) const { return literal(PASSLOC, ir, 1.0); }
-    virtual bool literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const;
-    virtual void logValue(TextLogger & lgr, const void *p) const;
-    virtual void logLiteral(TextLogger & lgr, const Literal *lv) const;
-    virtual const double getFloatingPoint(const Literal *lv) const;
-
-protected:
-    Float32Type(MEM_LOCATION(a), Extension *ext) : FloatingPointType(MEM_PASSLOC(a), getTypeClassKind(), ext, "Float32", 32) { }
-    Float32Type(Allocator *a, const Float32Type *source, IRCloner *cloner);
-
-    virtual const Type *clone(Allocator *a, IRCloner *cloner) const;
-
-    SUBCLASS_KINDSERVICE_DECL(Type, Float32Type);
-};
-
-class Float64Type : public FloatingPointType {
-    JBALLOC_(Float64Type)
-
-    friend class BaseExtension;
-
-public:
-    virtual size_t size() const { return 64; }
-    virtual Literal *literal(LOCATION, IR *ir, const double value) const;
-    virtual Literal *zero(LOCATION, IR *ir) const { return literal(PASSLOC, ir, 0.0); }
-    virtual Literal *identity(LOCATION, IR *ir) const { return literal(PASSLOC, ir, 1.0); }
-    virtual bool literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const;
-    virtual void logValue(TextLogger & lgr, const void *p) const;
-    virtual void logLiteral(TextLogger & lgr, const Literal *lv) const;
-    virtual const double getFloatingPoint(const Literal *lv) const;
-
-protected:
-    Float64Type(MEM_LOCATION(a), Extension *ext) : FloatingPointType(MEM_PASSLOC(a), getTypeClassKind(), ext, "Float64", 64) { }
-    Float64Type(Allocator *a, const Float64Type *source, IRCloner *cloner);
-
-    virtual const Type *clone(Allocator *a, IRCloner *cloner) const;
-
-    SUBCLASS_KINDSERVICE_DECL(Type, Float64Type);
-};
-
-class AddressType : public BaseType {
-    JBALLOC_(AddressType)
-
-    friend class BaseExtension;
-
-public:
-    virtual size_t size() const { return 64; } // should be platform specific
-    virtual Literal *literal(LOCATION, IR *ir, const void * value) const;
-    virtual Literal *zero(LOCATION, IR *ir) const { return literal(PASSLOC, ir, NULL); }
-    virtual bool literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const;
-    virtual void logValue(TextLogger & lgr, const void *p) const;
-    virtual void logLiteral(TextLogger & lgr, const Literal *lv) const;
-
-protected:
-    DYNAMIC_ALLOC_ONLY(AddressType, LOCATION, Extension *ext);
-    DYNAMIC_ALLOC_ONLY(AddressType, LOCATION, Extension *ext, String name);
-    DYNAMIC_ALLOC_ONLY(AddressType, LOCATION, Extension *ext, TypeDictionary *dict, String name);
-    DYNAMIC_ALLOC_ONLY(AddressType, LOCATION, Extension *ext, TypeDictionary *dict, TypeKind kind, String name);
-    AddressType(Allocator *a, const AddressType *source, IRCloner *cloner);
-
-    virtual const Type *clone(Allocator *a, IRCloner *cloner) const;
-
-    SUBCLASS_KINDSERVICE_DECL(Type, AddressType);
-};
 
 class PointerType;
 class PointerTypeBuilder;
@@ -312,6 +142,19 @@ protected:
     PointerTypeHelper *_helper;
 };
     
+DECL_CONCRETE_BASETYPE(PointerType,AddressType,size,
+    friend class PointerTypeBuilder;
+    public:
+        const Type * baseType() const { return _baseType; }
+        Literal *literal(LOCATION, IR *ir, const void * value) const;
+        virtual String to_string(Allocator *mem, bool useHeader=false) const;
+        virtual const Type * replace(TypeReplacer *repl);
+    protected:
+        DYNAMIC_ALLOC_ONLY(PointerType, LOCATION, PointerTypeBuilder *builder);
+        const Type * _baseType;
+)
+
+#if 0
 class PointerType : public AddressType {
     JBALLOC_(PointerType)
 
@@ -337,6 +180,7 @@ protected:
 
     SUBCLASS_KINDSERVICE_DECL(Type, PointerType);
 };
+#endif
 
 struct StructType;
 
@@ -362,7 +206,7 @@ public:
 
 protected:
     protected:
-    DYNAMIC_ALLOC_ONLY(FieldType, LOCATION, BaseExtension *ext, TypeDictionary *dict, const StructType *structType, String fieldName, const Type *type, size_t offset);
+    DYNAMIC_ALLOC_ONLY(FieldType, LOCATION, BaseExtension *ext, const StructType *structType, String fieldName, const Type *type, size_t offset, TypeDictionary *dict=NULL);
     FieldType(Allocator *a, const FieldType *source, IRCloner *cloner);
 
     virtual const Type *clone(Allocator *a, IRCloner *cloner) const;
@@ -489,9 +333,9 @@ protected:
 
     virtual const Type *clone(Allocator *a, IRCloner *cloner) const;
 
-    virtual const FieldType * addField(MEM_LOCATION(a), Extension *ext, TypeDictionary *dict, String name, const Type *type, size_t offset);
-    virtual const FieldType * addField(LOCATION, Extension *ext, TypeDictionary *dict, String name, const Type *type, size_t offset) {
-        return addField(MEM_PASSLOC(allocator()), ext, dict, name, type, offset);
+    virtual const FieldType * addField(MEM_LOCATION(a), Extension *ext, String name, const Type *type, size_t offset, TypeDictionary *dict=NULL);
+    virtual const FieldType * addField(LOCATION, Extension *ext, String name, const Type *type, size_t offset, TypeDictionary *dict=NULL) {
+        return addField(MEM_PASSLOC(allocator()), ext, name, type, offset, dict);
     }
     void transformFields(TypeReplacer *repl, StructTypeBuilder *stb, StructType *origStruct, String baseName, size_t baseOffset) const;
     void mapTransformedFields(TypeReplacer *repl, const StructType *type, String baseName, TypeMapper *mapper) const;
