@@ -20,7 +20,7 @@
  *******************************************************************************/
 
 #include "JBCore.hpp"
-#include "jb/CoreCodeGenerator.hpp"
+#include "jb/JBCodeGeneratorForCore.hpp"
 #include "jb/JBMethodBuilder.hpp"
 
 
@@ -31,46 +31,57 @@ namespace JB {
 static const MajorID BASEDON_COREEXT_MAJOR=0;
 static const MajorID BASEDON_COREEXT_MINOR=1;
 static const MajorID BASEDON_COREEXT_PATCH=0;
-const static SemanticVersion correctCoreVersion(BASEDON_COREEXT_MAJOR,BASEDON_COREEXT_MINOR,BASEDON_COREEXT_PATCH);
+const static SemanticVersion minCoreVersion(BASEDON_COREEXT_MAJOR,BASEDON_COREEXT_MINOR,BASEDON_COREEXT_PATCH);
 
-INIT_JBALLOC_REUSECAT(CoreJBCodeGenerator, CodeGeneration)
-SUBCLASS_KINDSERVICE_IMPL(CoreJBCodeGenerator,"CoreJBCodeGenerator",JBCodeGenerator,Extensible);
+INIT_JBALLOC_REUSECAT(JBCodeGeneratorForCore, CodeGeneration)
+SUBCLASS_KINDSERVICE_IMPL(JBCodeGeneratorForCore,"JBCodeGeneratorForCore",CodeGeneratorForCore,Extensible);
 
-CoreJBCodeGenerator::CoreJBCodeGenerator(Allocator *a, CoreExtension *cx)
-    : JBCodeGenerator(a, cx)
-    , _cx(cx) {
+JBCodeGeneratorForCore::JBCodeGeneratorForCore(Allocator *a, JBCodeGenerator *jbcg, CoreExtension *cx)
+    : CodeGeneratorForCore(a, jbcg, cx) {
 
-    assert(cx->semver()->isCompatibleWith(correctCoreVersion));
+    assert(cx->semver()->isCompatibleWith(minCoreVersion));
 
     setTraceEnabled(false);
 }
 
-CoreJBCodeGenerator::~CoreJBCodeGenerator() {
+JBCodeGeneratorForCore::~JBCodeGeneratorForCore() {
 }
 
 
+JBCodeGenerator *
+JBCodeGeneratorForCore::jbcg() const {
+    return cg()->refine<JBCodeGenerator>();
+}
+
+JBMethodBuilder *
+JBCodeGeneratorForCore::jbmb() const {
+    return jbcg()->jbmb();
+}
+
 bool
-CoreJBCodeGenerator::registerType(JBMethodBuilder *jbmb, const Type *t) {
-    assert(t == _cx->NoType);
-    jbmb->registerNoType(t);
+JBCodeGeneratorForCore::registerType(const Type *t) {
+    assert(t == cx()->NoType);
+    jbmb()->registerNoType(t);
     return true;
 }
 
 bool
-CoreJBCodeGenerator::registerBuilder(JBMethodBuilder *jbmb, Builder *b) {
+JBCodeGeneratorForCore::registerBuilder(Builder *b) {
     assert(b->isExactKind<Builder>());
-    jbmb->createBuilder(b);
+    jbmb()->createBuilder(b);
     return true;
 }
 
-void
-CoreJBCodeGenerator::gencode(JBMethodBuilder *jbmb, Operation *op) {
-    if (op->action() == _cx->aAppendBuilder)
-        jbmb->AppendBuilder(op->location(), op->parent(), op->builder());
-    else if (op->action() == _cx->aMergeDef)
-        jbmb->StoreOver(op->location(), op->parent(), op->result(), op->operand());
-    else
-        assert(0);
+Builder *
+JBCodeGeneratorForCore::gencodeAppendBuilder(Operation *op) {
+    jbmb()->AppendBuilder(op->location(), op->parent(), op->builder());
+    return NULL;
+}
+
+Builder *
+JBCodeGeneratorForCore::gencodeMergeDef(Operation *op) {
+    jbmb()->StoreOver(op->location(), op->parent(), op->result(), op->operand());
+    return NULL;
 }
 
 } // namespace JB

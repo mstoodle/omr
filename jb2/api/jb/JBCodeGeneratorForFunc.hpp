@@ -19,8 +19,8 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef FUNCJBCODEGENERATOR_INCL
-#define FUNCJBCODEGENERATOR_INCL
+#ifndef JBCODEGENERATORFORFUNC_INCL
+#define JBCODEGENERATORFORFUNC_INCL
 
 #include "JBCore.hpp"
 #include "Func/Func.hpp"
@@ -32,43 +32,34 @@ namespace JB {
 
 class JBMethodBuilder;
 
-class FuncJBCodeGenerator : public JBCodeGenerator {
-    JBALLOC_(FuncJBCodeGenerator)
+class JBCodeGeneratorForFunc : public Func::CodeGeneratorForFunc {
+    JBALLOC_(JBCodeGeneratorForFunc)
 
 public:
-    DYNAMIC_ALLOC_ONLY(FuncJBCodeGenerator, Func::FunctionExtension *func);
+    DYNAMIC_ALLOC_ONLY(JBCodeGeneratorForFunc, JBCodeGenerator *jbcg, Func::FunctionExtension *func);
 
-    virtual void setupbody(JBMethodBuilder *jbmb, Compilation *comp);
-    virtual void genbody(JBMethodBuilder *jbmb, Compilation *comp);
-    virtual void gencode(JBMethodBuilder *jbmb, Operation *op);
+    virtual void setupbody(Compilation *comp);
+    virtual void genbody(Compilation *comp);
+    virtual Builder *gencode(Operation *op);
 
-    virtual bool registerBuilder(JBMethodBuilder *jbmb, Symbol *sym) { return false; }
-    virtual bool registerSymbol(JBMethodBuilder *jbmb, Symbol *sym) { return false; }
-    virtual bool registerType(JBMethodBuilder *jbmb, const Type *type);
+    virtual bool registerBuilder(Symbol *sym) { return false; }
+    virtual bool registerSymbol(Symbol *sym) { return false; }
+    virtual bool registerType(const Type *type);
 
 protected:
-    virtual void visitPreCompilation(Compilation * comp) { }
+    JBCodeGenerator *jbcg() const;
+    JBMethodBuilder *jbmb() const;
 
-    typedef void (FuncJBCodeGenerator::*gencodeFunction)(JBMethodBuilder *jbmb, Operation *op);
-    void gencodeCall(JBMethodBuilder *jbmb, Operation *op);
-    void gencodeCallVoid(JBMethodBuilder *jbmb, Operation *op);
-    void gencodeLoad(JBMethodBuilder *jbmb, Operation *op);
-    void gencodeReturn(JBMethodBuilder *jbmb, Operation *op);
-    void gencodeReturnVoid(JBMethodBuilder *jbmb, Operation *op);
-    void gencodeStore(JBMethodBuilder *jbmb, Operation *op);
-
-    #if 0 // Const should move to core extension
-    void gencodeConst(JBMethodBuilder *jbmb, Operation *op);
-    #endif
+    DEFINE_CG_FUNC_HANDLERS(JBCodeGeneratorForFunc);
+    DEFINE_CG_FUNC_VFT_FIELDS;
 
     Func::FunctionExtension *_fx;
-    Array<gencodeFunction> _gencodeVFT;
 
-    SUBCLASS_KINDSERVICE_DECL(Extensible,FuncJBCodeGenerator);
+    SUBCLASS_KINDSERVICE_DECL(Extensible,JBCodeGeneratorForFunc);
 };
 
 } // namespace JB
 } // namespace JitBuilder
 } // namespace OMR
 
-#endif // defined(FUNCJBCODEGENERATOR_INCL)
+#endif // defined(JBCODEGENERATORFORFUNC_INCL)

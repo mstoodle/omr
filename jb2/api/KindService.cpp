@@ -21,6 +21,7 @@
 
 #include "Compiler.hpp"
 #include "KindService.hpp"
+#include "String.hpp"
 
 namespace OMR {
 namespace JitBuilder {

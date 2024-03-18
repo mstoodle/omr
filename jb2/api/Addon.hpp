@@ -46,7 +46,7 @@
 #define ADDON_INCL
 
 #include "common.hpp"
-#include "Extensible.hpp"
+//#include "Extensible.hpp"
 #include "KindService.hpp"
 
 namespace OMR {
@@ -54,8 +54,7 @@ namespace JitBuilder {
 
 class Extension;
 
-// This class doesn't have much in it yet, but collects all classes that are Addons
-// Addon is abstract because clone() is purposefully not implemented
+// This class simply collects all classes that represent Addons to some "root" Extensible object
 class Addon : public Extensible {
     JBALLOC_NO_DESTRUCTOR_(Addon)
 

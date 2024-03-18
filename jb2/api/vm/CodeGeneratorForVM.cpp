@@ -19,36 +19,31 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef VMJBCODEGENERATOR_INCL
-#define VMJBCODEGENERATOR_INCL
+#include "vm/CodeGeneratorForVM.hpp"
+#include "vm/VMExtension.hpp"
 
-#include "JBCore.hpp"
-#include "jb/JBCodeGenerator.hpp"
-#include "vm/VM.hpp"
 
 namespace OMR {
 namespace JitBuilder {
-namespace JB {
+namespace VM {
 
-class JBMethodBuilder;
+INIT_JBALLOC_REUSECAT(CodeGeneratorForVM, CodeGeneration)
+SUBCLASS_KINDSERVICE_IMPL(CodeGeneratorForVM,"CodeGeneratorForVM",CodeGeneratorForExtension,Extensible);
 
-class VMJBCodeGenerator : public JBCodeGenerator {
-    JBALLOC_(VMJBCodeGenerator)
+CodeGeneratorForVM::CodeGeneratorForVM(Allocator *a, CodeGenerator *cg, VMExtension *vmx)
+    : CodeGeneratorForExtension(a, cg, CLASSKIND(CodeGeneratorForVM,Extensible), vmx, "CodeGeneratorForVM") {
 
-public:
-    DYNAMIC_ALLOC_ONLY(VMJBCodeGenerator, VM::VMExtension *vmx);
+    setTraceEnabled(false);
+}
 
-    virtual bool registerBuilder(JBMethodBuilder *jbmb, Builder *b);
+CodeGeneratorForVM::~CodeGeneratorForVM() {
+}
 
-protected:
+bool
+CodeGeneratorForVM::registerBuilder(Builder *builder) {
+    return true;
+}
 
-    VM::VMExtension *_vmx;
-
-    SUBCLASS_KINDSERVICE_DECL(Extensible,VMJBCodeGenerator);
-};
-
-} // namespace JB
+} // namespace VM
 } // namespace JitBuilder
 } // namespace OMR
-
-#endif // defined(VMJBCODEGENERATOR_INCL)

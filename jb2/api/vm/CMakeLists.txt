@@ -29,6 +29,7 @@ omr_assert(
 
 add_library(jb2vm SHARED
 	#BytecodeBuilder.cpp
+	CodeGeneratorForVM.cpp
 	VirtualMachineRegister.cpp
 	VirtualMachineRegisterInStruct.cpp
 	VirtualMachineOperandStack.cpp
@@ -41,5 +42,13 @@ add_library(jb2vm SHARED
 )
 
 target_include_directories(jb2vm PRIVATE ${JB2_CORE_DIR})
+
+target_link_libraries(jb2vm
+    jb2func
+    jb2base
+    jb2core
+    jb2
+    ${CMAKE_DL_LIBS}
+)
 
 add_subdirectory(test)

@@ -74,8 +74,7 @@ public:
 
 protected:
     void notifyCreation(KINDTYPE(Extensible) kind);
-    Extensible(Allocator *a, const Extensible *source, IRCloner *cloner);
-    const List<Addon *> *addons() const;
+    const List<Addon *> *addons() const { return _addons; }
 
 private:
     Extension *_ext;

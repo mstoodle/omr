@@ -19,63 +19,40 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "Compiler.hpp"
+#ifndef CODEGENERATOREXTADDON_INCL
+#define CODEGENERATOREXTADDON_INCL
+
+#include "common.hpp"
+#include "KindService.hpp"
+#include "Loggable.hpp"
+#include "String.hpp"
 #include "Extensible.hpp"
 #include "Extension.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 
-INIT_JBALLOC(Extensible)
-BASECLASS_KINDSERVICE_IMPL(Extensible);
+class CodeGeneratorForExtension;
 
-Extensible::Extensible(Allocator *a, Extension *ext, KINDTYPE(Extensible) kind)
-    : Loggable(a)
-    , _ext(ext)
-    , _addons(NULL)
-    , BASECLASS_KINDINIT(kind) {
-}
+class CodeGeneratorExtensionAddon : public Addon {
+    JBALLOC_(CodeGeneratorExtensionAddon)
 
-Extensible::~Extensible() {
-    if (_addons != NULL) {
-        //#if 0 // should be covered already because Addon's are Extensible?
-        for (auto it = _addons->iterator(); it.hasItem(); it++) {
-            Addon *addon = it.item();
-            delete addon;
-        }
-        //#endif
-        delete _addons;
+public:
+    CodeGeneratorExtensionAddon(Allocator *a, Extension *ext, KINDTYPE(Extensible) kind, CodeGeneratorForExtension *cgForExtension)
+        : Addon(a, ext, ext, kind)
+        , _cgForExtension(cgForExtension) {
+
     }
-}
 
-Compiler *
-Extensible::compiler() const {
-    return _ext->compiler();
-}
+    CodeGeneratorForExtension *cgForExtension() const { return _cgForExtension; }
 
-void
-Extensible::attach(Addon *a) {
-    if (_addons == NULL) {
-        // use same allocator as for primary (Extensible) object
-        Allocator *mem = allocator();
-        _addons = new (mem) List<Addon *>(mem, mem);
-    }
-    #if 0
-     else {
-        for (auto it = _addons->iterator();it.hasItem();it++) {
-            Addon *list_a = it.item();
-            if (list_a->kind() == a->kind())
-                return;
-        }
-    }
-    #endif
-    _addons->push_back(a);
-}
+protected:
+    CodeGeneratorForExtension *_cgForExtension;
 
-void
-Extensible::notifyCreation(KINDTYPE(Extensible) kind) {
-    compiler()->createAnyAddons(this, kind);
-}
+    SUBCLASS_KINDSERVICE_DECL(Extensible,CodeGeneratorExtensionAddon);
+};
 
 } // namespace JitBuilder
 } // namespace OMR
+
+#endif // !defined(CODEGENERATOREXTADDON_INCL)

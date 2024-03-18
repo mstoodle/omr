@@ -50,6 +50,7 @@ CoreExtension::CoreExtension(Allocator *a, LOCATION, Compiler *compiler)
     , NoType(new (a) NoTypeType(MEM_LOC(a), this))
     , aAppendBuilder(registerAction(String(a, "AppendBuilder")))
     , aMergeDef(registerAction(String(a, "MergeDef")))
+    , CompileFail_CodeGeneratorMissingOperationHandler(registerReturnCode(String(a, "CompileFail_CodeGeneratorMissingOperationHandler")))
     , strategyCodegen(_codegenStrategy->id()) {
 
     _dispatcher = new (a) Dispatcher<CodeGenerator>(a, this, "CodeGenDispatcher");

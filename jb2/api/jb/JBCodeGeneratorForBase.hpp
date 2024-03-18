@@ -15,73 +15,55 @@
  *
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
- *   
+ *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef JBEXTENSION_INCL
-#define JBEXTENSION_INCL
+#ifndef JBCODEGENERATORFORBASE_INCL
+#define JBCODEGENERATORFORBASE_INCL
 
 #include "JBCore.hpp"
+#include "Base/Base.hpp"
+#include "Base/CodeGeneratorForBase.hpp"
+#include "jb/JBCodeGenerator.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 namespace JB {
 
-class JBCodeGenerator;
-class OMR_JB;
+class JBMethodBuilder;
 
-class JBExtension : public Extension {
-    JBALLOC_(JBExtension)
+class JBCodeGeneratorForBase : public Base::CodeGeneratorForBase {
+    JBALLOC_(JBCodeGeneratorForBase)
 
 public:
-    DYNAMIC_ALLOC_ONLY(JBExtension, LOCATION, Compiler *compiler, bool extended=false, String extensionName="");
+    DYNAMIC_ALLOC_ONLY(JBCodeGeneratorForBase, JBCodeGenerator *jbcg, Base::BaseExtension *base);
 
-    static const String NAME;
+    virtual Builder *gencode(Operation *op);
 
-    virtual const SemanticVersion * semver() const {
-        return &version;
-    }
-
-    //
-    // Types
-    //
-
-
-    //
-    // Actions
-    //
-
-
-    //
-    // CompilerReturnCodes
-    //
-
-
-    //
-    // Operations
-    //
-
-private:
-    OMR_JB *_jb;
+    virtual bool registerSymbol(Symbol *sym) { return false; }
+    virtual bool registerType(const Type *type);
 
 protected:
-    virtual void notifyNewExtension(Extension *other);
+    Base::BaseExtension *bx() const;
+    JBCodeGenerator *jbcg() const;
+    JBMethodBuilder *jbmb() const;
 
-    OMR_JB *jb();
+    virtual void registerField(String baseStructName, String fieldName, const Type *fieldType, size_t fieldOffset);
 
-    JBCodeGenerator *_jbcg;
+    DEFINE_CG_BASE_HANDLERS(JBCodeGeneratorForBase);
 
-    static const MajorID JBEXT_MAJOR=0;
-    static const MinorID JBEXT_MINOR=1;
-    static const PatchID JBEXT_PATCH=0;
-    static const SemanticVersion version;
+    Base::BaseExtension *_bx;
+    DEFINE_CG_BASE_VFT_FIELDS;
 
-    SUBCLASS_KINDSERVICE_DECL(Extensible,JBExtension);
+    typedef std::map<const Base::FieldType *, String *> FieldMapType;
+    std::map<const Base::StructType *, FieldMapType> _structFieldNameMap;
+
+    SUBCLASS_KINDSERVICE_DECL(Extensible,JBCodeGeneratorForBase);
 };
 
 } // namespace JB
 } // namespace JitBuilder
 } // namespace OMR
 
-#endif // defined(JBEXTENSION_INCL)
+#endif // defined(JBCODEGENERATORFORBASE_INCL)

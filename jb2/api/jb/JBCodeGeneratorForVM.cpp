@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021, 2022 IBM Corp. and others
+ * Copyright (c) 2023, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -15,73 +15,57 @@
  *
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
- *   
+ *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef JBEXTENSION_INCL
-#define JBEXTENSION_INCL
-
+#include <assert.h>
 #include "JBCore.hpp"
+#include "jb/JBMethodBuilder.hpp"
+#include "jb/JBCodeGeneratorForVM.hpp"
+#include "vm/VM.hpp"
+
 
 namespace OMR {
 namespace JitBuilder {
 namespace JB {
 
-class JBCodeGenerator;
-class OMR_JB;
+static const MajorID BASEDON_VMEXT_MAJOR=0;
+static const MajorID BASEDON_VMEXT_MINOR=1;
+static const MajorID BASEDON_VMEXT_PATCH=0;
+const static SemanticVersion correctVMVersion(BASEDON_VMEXT_MAJOR,BASEDON_VMEXT_MINOR,BASEDON_VMEXT_PATCH);
 
-class JBExtension : public Extension {
-    JBALLOC_(JBExtension)
+INIT_JBALLOC_REUSECAT(JBCodeGeneratorForVM, CodeGeneration)
+SUBCLASS_KINDSERVICE_IMPL(JBCodeGeneratorForVM,"JBCodeGeneratorForVM",JBCodeGenerator,Extensible);
 
-public:
-    DYNAMIC_ALLOC_ONLY(JBExtension, LOCATION, Compiler *compiler, bool extended=false, String extensionName="");
+JBCodeGeneratorForVM::JBCodeGeneratorForVM(Allocator *a, JBCodeGenerator *jbcg, VM::VMExtension *vmx)
+    : CodeGeneratorForVM(a, jbcg, vmx)
+    , _vmx(vmx) {
 
-    static const String NAME;
+    assert(vmx->semver()->isCompatibleWith(correctVMVersion));
+}
 
-    virtual const SemanticVersion * semver() const {
-        return &version;
-    }
-
-    //
-    // Types
-    //
-
-
-    //
-    // Actions
-    //
+JBCodeGeneratorForVM::~JBCodeGeneratorForVM() {
+}
 
 
-    //
-    // CompilerReturnCodes
-    //
+JBCodeGenerator *
+JBCodeGeneratorForVM::jbcg() const {
+    return cg()->refine<JBCodeGenerator>();
+}
 
+JBMethodBuilder *
+JBCodeGeneratorForVM::jbmb() const {
+    return jbcg()->jbmb();
+}
 
-    //
-    // Operations
-    //
-
-private:
-    OMR_JB *_jb;
-
-protected:
-    virtual void notifyNewExtension(Extension *other);
-
-    OMR_JB *jb();
-
-    JBCodeGenerator *_jbcg;
-
-    static const MajorID JBEXT_MAJOR=0;
-    static const MinorID JBEXT_MINOR=1;
-    static const PatchID JBEXT_PATCH=0;
-    static const SemanticVersion version;
-
-    SUBCLASS_KINDSERVICE_DECL(Extensible,JBExtension);
-};
+bool
+JBCodeGeneratorForVM::registerBuilder(Builder *b) {
+    VM::VMBuilderAddon *vmba = b->addon<VM::VMBuilderAddon>();
+    jbmb()->createBytecodeBuilder(b, vmba->bcIndex(), b->name());
+    return true;
+}
 
 } // namespace JB
 } // namespace JitBuilder
 } // namespace OMR
-
-#endif // defined(JBEXTENSION_INCL)
