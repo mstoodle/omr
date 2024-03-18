@@ -19,63 +19,38 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "Compiler.hpp"
-#include "Extensible.hpp"
-#include "Extension.hpp"
+#include "Func/CodeGeneratorForFunc.hpp"
+#include "Func/FunctionExtension.hpp"
+
 
 namespace OMR {
 namespace JitBuilder {
+namespace Func {
 
-INIT_JBALLOC(Extensible)
-BASECLASS_KINDSERVICE_IMPL(Extensible);
+INIT_JBALLOC_REUSECAT(CodeGeneratorForFunc, CodeGeneration)
+SUBCLASS_KINDSERVICE_IMPL(CodeGeneratorForFunc,"CodeGeneratorForFunc",CodeGeneratorForExtension,Extensible);
 
-Extensible::Extensible(Allocator *a, Extension *ext, KINDTYPE(Extensible) kind)
-    : Loggable(a)
-    , _ext(ext)
-    , _addons(NULL)
-    , BASECLASS_KINDINIT(kind) {
+CodeGeneratorForFunc::CodeGeneratorForFunc(Allocator *a, CodeGenerator *cg, FunctionExtension *fx)
+    : CodeGeneratorForExtension(a, cg, CLASSKIND(CodeGeneratorForFunc,Extensible), fx, "CodeGeneratorForFunc")
+    , INIT_CG_FUNC_VFT_FIELDS(a) {
+
+    INIT_CG_FUNC_HANDLERS(CodeGeneratorForFunc);
+
+    setTraceEnabled(false);
 }
 
-Extensible::~Extensible() {
-    if (_addons != NULL) {
-        //#if 0 // should be covered already because Addon's are Extensible?
-        for (auto it = _addons->iterator(); it.hasItem(); it++) {
-            Addon *addon = it.item();
-            delete addon;
-        }
-        //#endif
-        delete _addons;
-    }
+CodeGeneratorForFunc::~CodeGeneratorForFunc() {
 }
 
-Compiler *
-Extensible::compiler() const {
-    return _ext->compiler();
-}
+DEFINE_CG_FUNC_HANDLER_DISPATCH(CodeGeneratorForFunc)
 
-void
-Extensible::attach(Addon *a) {
-    if (_addons == NULL) {
-        // use same allocator as for primary (Extensible) object
-        Allocator *mem = allocator();
-        _addons = new (mem) List<Addon *>(mem, mem);
-    }
-    #if 0
-     else {
-        for (auto it = _addons->iterator();it.hasItem();it++) {
-            Addon *list_a = it.item();
-            if (list_a->kind() == a->kind())
-                return;
-        }
-    }
-    #endif
-    _addons->push_back(a);
-}
+MISSING_CG_OP_HANDLER(CodeGeneratorForFunc,Call)
+MISSING_CG_OP_HANDLER(CodeGeneratorForFunc,CallVoid)
+MISSING_CG_OP_HANDLER(CodeGeneratorForFunc,Load)
+MISSING_CG_OP_HANDLER(CodeGeneratorForFunc,Return)
+MISSING_CG_OP_HANDLER(CodeGeneratorForFunc,ReturnVoid)
+MISSING_CG_OP_HANDLER(CodeGeneratorForFunc,Store)
 
-void
-Extensible::notifyCreation(KINDTYPE(Extensible) kind) {
-    compiler()->createAnyAddons(this, kind);
-}
-
+} // namespace Func
 } // namespace JitBuilder
 } // namespace OMR

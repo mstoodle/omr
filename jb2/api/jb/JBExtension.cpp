@@ -18,13 +18,14 @@
  *******************************************************************************/
 
 #include "JBCore.hpp"
-#include "jb/BaseCodeGenerator.hpp"
-#include "jb/CoreCodeGenerator.hpp"
-#include "jb/FuncCodeGenerator.hpp"
 #include "jb/JBCodeGenerator.hpp"
+#include "jb/JBCodeGeneratorExtensionAddon.hpp"
+#include "jb/JBCodeGeneratorForBase.hpp"
+#include "jb/JBCodeGeneratorForCore.hpp"
+#include "jb/JBCodeGeneratorForFunc.hpp"
+#include "jb/JBCodeGeneratorForVM.hpp"
 #include "jb/JBExtension.hpp"
 #include "jb/OMRJB.hpp"
-#include "jb/VMCodeGenerator.hpp"
 #include "Base/Base.hpp"
 #include "Func/Func.hpp"
 #include "vm/VMExtension.hpp"
@@ -54,8 +55,8 @@ JBExtension::JBExtension(MEM_LOCATION(a), Compiler *compiler, bool extended, Str
 
     // register extended passes here
     Allocator *mem = compiler->mem();
-    JBCodeGenerator *cg = new (mem) JBCodeGenerator(mem, this);
-    compiler->registerExtensible(cg, CLASSKIND(CodeGenerator, Extensible));
+    _jbcg = new (mem) JBCodeGenerator(mem, this);
+    compiler->registerExtensible(_jbcg, CLASSKIND(CodeGenerator, Extensible));
 }
 
 JBExtension::~JBExtension() {
@@ -67,20 +68,24 @@ JBExtension::notifyNewExtension(Extension *other) {
     Allocator *mem = other->allocator();
     if (other->isExactKind<Base::BaseExtension>()) {
         Base::BaseExtension *bx = other->refine<Base::BaseExtension>();
-        BaseJBCodeGenerator *bcg = new (mem) BaseJBCodeGenerator(mem, bx);
-        registerExtendedPass(other, CLASSKIND(JBCodeGenerator,Extensible),bcg);
+        JBCodeGeneratorForBase *bcg = new (mem) JBCodeGeneratorForBase(mem, _jbcg, bx);
+        JBCodeGeneratorExtensionAddon *cgea = new (mem) JBCodeGeneratorExtensionAddon(mem, bx, bcg);
+        bx->attach(cgea);
     } else if (other->isExactKind<CoreExtension>()) {
         CoreExtension *cx = other->refine<CoreExtension>();
-        CoreJBCodeGenerator *ccg = new (mem) CoreJBCodeGenerator(mem, cx);
-        registerExtendedPass(other, CLASSKIND(JBCodeGenerator,Extensible),ccg);
+        JBCodeGeneratorForCore *ccg = new (mem) JBCodeGeneratorForCore(mem, _jbcg, cx);
+        JBCodeGeneratorExtensionAddon *cgea = new (mem) JBCodeGeneratorExtensionAddon(mem, cx, ccg);
+        cx->attach(cgea);
     } else if (other->isExactKind<Func::FunctionExtension>()) {
         Func::FunctionExtension *fx = other->refine<Func::FunctionExtension>();
-        FuncJBCodeGenerator *fcg = new (mem) FuncJBCodeGenerator(mem, fx);
-        registerExtendedPass(other, CLASSKIND(JBCodeGenerator,Extensible),fcg);
+        JBCodeGeneratorForFunc *fcg = new (mem) JBCodeGeneratorForFunc(mem, _jbcg, fx);
+        JBCodeGeneratorExtensionAddon *cgea = new (mem) JBCodeGeneratorExtensionAddon(mem, fx, fcg);
+        fx->attach(cgea);
     } else if (other->isExactKind<VM::VMExtension>()) {
         VM::VMExtension *vmx = other->refine<VM::VMExtension>();
-        VMJBCodeGenerator *vcg = new (mem) VMJBCodeGenerator(mem, vmx);
-        registerExtendedPass(other, CLASSKIND(JBCodeGenerator,Extensible),vcg);
+        JBCodeGeneratorForVM *vmcg = new (mem) JBCodeGeneratorForVM(mem, _jbcg, vmx);
+        JBCodeGeneratorExtensionAddon *cgea = new (mem) JBCodeGeneratorExtensionAddon(mem, vmx, vmcg);
+        vmx->attach(cgea);
     }
 }
 

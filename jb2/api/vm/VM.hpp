@@ -22,6 +22,7 @@
 #ifndef OMR_JITBUILDER_VM_INCL
 #define OMR_JITBUILDER_VM_INCL
 
+#include "vm/CodeGeneratorForVM.hpp"
 #include "vm/VirtualMachineOperandStack.hpp"
 #include "vm/VirtualMachineRegister.hpp"
 #include "vm/VirtualMachineRegisterInStruct.hpp"

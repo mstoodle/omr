@@ -160,6 +160,9 @@ public:
     const CompilerReturnCode CompileFail_BadInputTypes_Switch;
     const CompilerReturnCode CompileFail_BadInputArray_OffsetAt;
     const CompilerReturnCode CompileFail_MismatchedArgumentTypes_Call;
+    const CompilerReturnCode CompileFail_CodeGeneratorMissingOperationHandler;
+    const CompilerReturnCode CompileFail_CodeGeneratorMissingTypeRegistration;
+    const CompilerReturnCode CompileFail_CodeGeneratorMissingConstForTypeHandler;
 
 
     //

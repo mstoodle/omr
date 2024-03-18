@@ -19,43 +19,32 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef COREJBCODEGENERATOR_INCL
-#define COREJBCODEGENERATOR_INCL
+#ifndef CODEGENERATORFORVM_INCL
+#define CODEGENERATORFORVM_INCL
 
 #include "JBCore.hpp"
-#include "Base/Base.hpp"
-#include "jb/JBCodeGenerator.hpp"
 
 namespace OMR {
 namespace JitBuilder {
-namespace JB {
+namespace VM {
 
-class JBMethodBuilder;
+class VMExtension;
 
-class CoreJBCodeGenerator : public JBCodeGenerator {
-    JBALLOC_(CoreJBCodeGenerator)
+class CodeGeneratorForVM : public CodeGeneratorForExtension {
+    JBALLOC_(CodeGeneratorForVM)
 
 public:
-    DYNAMIC_ALLOC_ONLY(CoreJBCodeGenerator, CoreExtension *cx);
+    DYNAMIC_ALLOC_ONLY(CodeGeneratorForVM, CodeGenerator *cg, VMExtension *vmx);
 
-    virtual bool registerType(JBMethodBuilder *jbmb, const Type *t);
-    virtual bool registerBuilder(JBMethodBuilder *jbmb, Builder *b);
-
-    virtual void gencode(JBMethodBuilder *jbmb, Operation *op);
+    virtual bool registerBuilder(Builder *b);
 
 protected:
-    virtual void visitPreCompilation(Compilation * comp) { }
 
-    void gencodeAppendBuilder(JBMethodBuilder *jbmb, Operation *op);
-    void gencodeMergeDef(JBMethodBuilder *jbmb, Operation *op);
-
-    CoreExtension *_cx;
-
-    SUBCLASS_KINDSERVICE_DECL(Extensible,CoreJBCodeGenerator);
+    SUBCLASS_KINDSERVICE_DECL(Extensible,CodeGeneratorForVM);
 };
 
-} // namespace JB
+} // namespace VM
 } // namespace JitBuilder
 } // namespace OMR
 
-#endif // defined(COREJBCODEGENERATOR_INCL)
+#endif // defined(CODEGENERATORFORVM_INCL)

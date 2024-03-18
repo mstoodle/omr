@@ -38,9 +38,13 @@ set(JB2_OBJECTS
 	optimizer/Optimizer.hpp
 	runtime/JBCodeCacheManager.cpp
 	runtime/JBJitConfig.cpp
-	api/jb/JBCodeGenerator.cpp
-	api/jb/JBMethodBuilder.cpp
-	api/jb/OMRJB.cpp
+#
+	api/jb/JBCodeGenerator.cpp		# jb extension
+	api/jb/JBMethodBuilder.cpp		# jb extension
+	api/jb/OMRJB.cpp				# jb extension
+#
+	compile/JB2ResolvedMethod.cpp	# omrgen extension
+	ilgen/JB2MethodDetails.cpp		# omrgen extension
 )
 
 if(OMR_ARCH_X86)

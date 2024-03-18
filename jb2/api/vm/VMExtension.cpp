@@ -50,10 +50,22 @@ extern "C" {
 }
 
 VMExtension::VMExtension(MEM_LOCATION(a), Compiler *compiler, bool extended, String extensionName)
-    : Extension(MEM_PASSLOC(a), CLASSKIND(VMExtension,Extensible), compiler, (extended ? extensionName : NAME)) {
-
-    _bx = compiler->lookupExtension<Base::BaseExtension>();
-    _fx = compiler->lookupExtension<Func::FunctionExtension>();
+    : Extension(MEM_PASSLOC(a), CLASSKIND(VMExtension,Extensible), compiler, (extended ? extensionName : NAME))
+    , _bx(compiler->lookupExtension<Base::BaseExtension>())
+    , _fx(compiler->lookupExtension<Func::FunctionExtension>())
+    , aGoto(_bx->aGoto)
+    , aIfCmpEqual(_bx->aIfCmpEqual)
+    , aIfCmpEqualZero(_bx->aIfCmpEqualZero)
+    , aIfCmpLessOrEqual(_bx->aIfCmpLessOrEqual)
+    , aIfCmpLessThan(_bx->aIfCmpLessThan)
+    , aIfCmpGreaterOrEqual(_bx->aIfCmpGreaterOrEqual)
+    , aIfCmpGreaterThan(_bx->aIfCmpGreaterThan)
+    , aIfCmpNotEqual(_bx->aIfCmpNotEqual)
+    , aIfCmpNotEqualZero(_bx->aIfCmpNotEqualZero)
+    , aIfCmpUnsignedLessOrEqual(_bx->aIfCmpUnsignedLessOrEqual)
+    , aIfCmpUnsignedLessThan(_bx->aIfCmpUnsignedLessThan)
+    , aIfCmpUnsignedGreaterOrEqual(_bx->aIfCmpUnsignedGreaterOrEqual)
+    , aIfCmpUnsignedGreaterThan(_bx->aIfCmpUnsignedGreaterThan) {
 
     registerForExtensible(CLASSKIND(IRCloner,Extensible), this);
     registerForExtensible(CLASSKIND(Builder,Extensible), this);

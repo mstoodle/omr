@@ -30,6 +30,9 @@
 #include "Builder.hpp"
 #include "BuilderEntry.hpp"
 #include "CodeGenerator.hpp"
+#include "CodeGeneratorExtensionAddon.hpp"
+#include "CodeGeneratorForCore.hpp"
+#include "CodeGeneratorForExtension.hpp"
 #include "Compilation.hpp"
 #include "CompiledBody.hpp"
 #include "Compiler.hpp"
@@ -70,6 +73,12 @@
 #include "Value.hpp"
 #include "Visitor.hpp"
 #include "String.hpp"
+
+#if defined(OSX)
+    #define CORELIB "libjb2core.dylib"
+#else
+    #define CORELIB "libjb2core.so"
+#endif
 
 #endif // defined(OMR_JITBUILDER_JBCORE_INCL)
 

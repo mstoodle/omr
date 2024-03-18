@@ -21,6 +21,7 @@
 
 #include "api/JBCore.hpp"
 #include "api/jb/JBCodeGenerator.hpp"
+#include "api/jb/JBCodeGeneratorExtensionAddon.hpp"
 #include "api/jb/JBMethodBuilder.hpp"
 
 #include "ilgen/BytecodeBuilder.hpp"
@@ -65,9 +66,8 @@ JBMethodBuilder::registerTypes(TypeDictionary *dict) {
         for (auto it = dict->typesIterator(); it.hasItem(); it++) {
             const Type *type = it.item();
             if (mappedTypes.getBit(type->id()) != true) {
-                Extension *ext = type->ext();
-                JBCodeGenerator *cg = ext->extendedPass<JBCodeGenerator>();
-                bool mapped = cg->registerType(this, type);
+                CodeGeneratorForExtension *cgForExt = type->ext()->addon<JBCodeGeneratorExtensionAddon>()->cgForExtension();
+                bool mapped = cgForExt->registerType(type);
                 if (mapped) {
                     numTypes--;
                     mappedTypes.setBit(type->id());
@@ -700,9 +700,9 @@ JBMethodBuilder::findOrCreateString(const String & str) {
     //std::cout << "Looking for " << (intptr_t) cstr << " " << cstr << "\n";
     if (_strings.find(cstr) != _strings.end()) {
         const char *s = _strings[cstr];
-        //std::cout << "    Found " << s << "\n";
-        assert(strncmp(cstr, s, strlen(cstr)) == 0);
-        return s;
+        //std::cout << "    Found " << s << " (" << (intptr_t)(s) << ")\n";
+        if (strncmp(cstr, s, strlen(cstr)) == 0) // disturbing that need to verify
+            return s;
     }
 
     if (str.length() == 0)
@@ -711,8 +711,8 @@ JBMethodBuilder::findOrCreateString(const String & str) {
     char *s = _comp->mem()->allocate<char>(str.length()+1);
     strcpy(s, cstr);
     _strings[cstr] = s;
-    //std::cout << "    Allocated " << s << " for " << str.c_str() << "\n";
-    return s;
+    //std::cout << "    Allocated " << s << " (" << (intptr_t) s << ") for " << str.c_str() << " (" << (intptr_t)(_strings[cstr]) << ")\n";
+    return _strings[cstr];
 }
 
 void

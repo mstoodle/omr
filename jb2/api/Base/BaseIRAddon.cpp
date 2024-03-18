@@ -36,12 +36,14 @@ BaseIRAddon::BaseIRAddon(Allocator *a, BaseExtension *bx, IR *root)
     : AddonIR(a, bx, root, KIND(Extensible))
     , _nextCaseID(NoCase+1) {
 
+    notifyCreation(KIND(Extensible));
 }
 
 BaseIRAddon::BaseIRAddon(Allocator *a, const BaseIRAddon *source, IRCloner *cloner)
     : AddonIR(a, source, cloner)
     , _nextCaseID(source->_nextCaseID) {
 
+    notifyCreation(KIND(Extensible));
 }
 
 AddonIR *

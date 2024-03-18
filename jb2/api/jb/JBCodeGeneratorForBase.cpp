@@ -19,9 +19,9 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "Base/Base.hpp"
 #include "JBCore.hpp"
-#include "jb/BaseCodeGenerator.hpp"
+#include "Base/Base.hpp"
+#include "jb/JBCodeGeneratorForBase.hpp"
 #include "jb/JBMethodBuilder.hpp"
 
 
@@ -32,180 +32,101 @@ namespace JB {
 static const MajorID BASEDON_BASEEXT_MAJOR=0;
 static const MajorID BASEDON_BASEEXT_MINOR=1;
 static const MajorID BASEDON_BASEEXT_PATCH=0;
-const static SemanticVersion correctBaseVersion(BASEDON_BASEEXT_MAJOR,BASEDON_BASEEXT_MINOR,BASEDON_BASEEXT_PATCH);
+const static SemanticVersion minimumBaseVersion(BASEDON_BASEEXT_MAJOR,BASEDON_BASEEXT_MINOR,BASEDON_BASEEXT_PATCH);
 
-INIT_JBALLOC_REUSECAT(BaseJBCodeGenerator, CodeGeneration)
-SUBCLASS_KINDSERVICE_IMPL(BaseJBCodeGenerator,"BaseJBCodeGenerator",JBCodeGenerator,Extensible);
+INIT_JBALLOC_REUSECAT(JBCodeGeneratorForBase, CodeGeneration)
+SUBCLASS_KINDSERVICE_IMPL(JBCodeGeneratorForBase,"JBCodeGeneratorForBase",JBCodeGenerator,Extensible);
 
-BaseJBCodeGenerator::BaseJBCodeGenerator(Allocator *a, Base::BaseExtension *bx)
-    : JBCodeGenerator(a, bx)
+JBCodeGeneratorForBase::JBCodeGeneratorForBase(Allocator *a, JBCodeGenerator *jbcg, Base::BaseExtension *bx)
+    : Base::CodeGeneratorForBase(a, jbcg, bx)
     , _bx(bx)
-    , _gencodeVFT(NULL, a)
-    , _genconstVFT(NULL, a)
-    , _regtypeVFT(NULL, a) {
+    INIT_CG_BASE_VFT_FIELDS(a) {
 
-    assert(bx->semver()->isCompatibleWith(correctBaseVersion));
+    assert(bx->semver()->isCompatibleWith(minimumBaseVersion));
 
-    // assign these in reverse order so VFT only has to be grown once (technically only last one has to go first)
-    _regtypeVFT.assign(bx->Address->id(), &BaseJBCodeGenerator::regtypeAddress);
-    _regtypeVFT.assign(bx->Float64->id(), &BaseJBCodeGenerator::regtypeFloat64);
-    _regtypeVFT.assign(bx->Float32->id(), &BaseJBCodeGenerator::regtypeFloat32);
-    _regtypeVFT.assign(bx->Int64->id(), &BaseJBCodeGenerator::regtypeInt64);
-    _regtypeVFT.assign(bx->Int32->id(), &BaseJBCodeGenerator::regtypeInt32);
-    _regtypeVFT.assign(bx->Int16->id(), &BaseJBCodeGenerator::regtypeInt16);
-    _regtypeVFT.assign(bx->Int8->id(), &BaseJBCodeGenerator::regtypeInt8);
-
-    // assign these in reverse order so VFT only has to be grown once (technically only last one has to go first)
-    _gencodeVFT.assign(bx->aIndexAt, &BaseJBCodeGenerator::gencodeIndexAt);
-    _gencodeVFT.assign(bx->aCreateLocalStruct, &BaseJBCodeGenerator::gencodeCreateLocalStruct);
-    _gencodeVFT.assign(bx->aCreateLocalArray, &BaseJBCodeGenerator::gencodeCreateLocalArray);
-    _gencodeVFT.assign(bx->aStoreFieldAt, &BaseJBCodeGenerator::gencodeStoreFieldAt);
-    _gencodeVFT.assign(bx->aLoadFieldAt, &BaseJBCodeGenerator::gencodeLoadFieldAt);
-    _gencodeVFT.assign(bx->aStoreField, &BaseJBCodeGenerator::gencodeStoreField);
-    _gencodeVFT.assign(bx->aStoreAt, &BaseJBCodeGenerator::gencodeStoreAt);
-    _gencodeVFT.assign(bx->aLoadAt, &BaseJBCodeGenerator::gencodeLoadAt);
-    _gencodeVFT.assign(bx->aSwitch, &BaseJBCodeGenerator::gencodeSwitch);
-    _gencodeVFT.assign(bx->aIfThenElse, &BaseJBCodeGenerator::gencodeIfThenElse);
-    _gencodeVFT.assign(bx->aIfCmpUnsignedLessOrEqual, &BaseJBCodeGenerator::gencodeIfCmpUnsignedLessOrEqual);
-    _gencodeVFT.assign(bx->aIfCmpUnsignedLessThan, &BaseJBCodeGenerator::gencodeIfCmpUnsignedLessThan);
-    _gencodeVFT.assign(bx->aIfCmpUnsignedGreaterOrEqual, &BaseJBCodeGenerator::gencodeIfCmpUnsignedGreaterOrEqual);
-    _gencodeVFT.assign(bx->aIfCmpUnsignedGreaterThan, &BaseJBCodeGenerator::gencodeIfCmpUnsignedGreaterThan);
-    _gencodeVFT.assign(bx->aIfCmpNotEqualZero, &BaseJBCodeGenerator::gencodeIfCmpNotEqualZero);
-    _gencodeVFT.assign(bx->aIfCmpNotEqual, &BaseJBCodeGenerator::gencodeIfCmpNotEqual);
-    _gencodeVFT.assign(bx->aIfCmpLessOrEqual, &BaseJBCodeGenerator::gencodeIfCmpLessOrEqual);
-    _gencodeVFT.assign(bx->aIfCmpLessThan, &BaseJBCodeGenerator::gencodeIfCmpLessThan);
-    _gencodeVFT.assign(bx->aIfCmpGreaterOrEqual, &BaseJBCodeGenerator::gencodeIfCmpGreaterOrEqual);
-    _gencodeVFT.assign(bx->aIfCmpGreaterThan, &BaseJBCodeGenerator::gencodeIfCmpGreaterThan);
-    _gencodeVFT.assign(bx->aIfCmpEqualZero, &BaseJBCodeGenerator::gencodeIfCmpEqualZero);
-    _gencodeVFT.assign(bx->aIfCmpEqual, &BaseJBCodeGenerator::gencodeIfCmpEqual);
-    _gencodeVFT.assign(bx->aGoto, &BaseJBCodeGenerator::gencodeGoto);
-    _gencodeVFT.assign(bx->aForLoopUp, &BaseJBCodeGenerator::gencodeForLoopUp);
-    _gencodeVFT.assign(bx->aSub, &BaseJBCodeGenerator::gencodeSub);
-    _gencodeVFT.assign(bx->aMul, &BaseJBCodeGenerator::gencodeMul);
-    _gencodeVFT.assign(bx->aConvertTo, &BaseJBCodeGenerator::gencodeConvertTo);
-    _gencodeVFT.assign(bx->aAdd, &BaseJBCodeGenerator::gencodeAdd);
-    _gencodeVFT.assign(bx->aConst, &BaseJBCodeGenerator::gencodeConst);
-
-    // assign these in reverse order so VFT only has to be grown once (technically only last one has to go first)
-    _genconstVFT.assign(bx->Address->id(), &BaseJBCodeGenerator::genconstAddress);
-    _genconstVFT.assign(bx->Float64->id(), &BaseJBCodeGenerator::genconstFloat64);
-    _genconstVFT.assign(bx->Float32->id(), &BaseJBCodeGenerator::genconstFloat32);
-    _genconstVFT.assign(bx->Int64->id(), &BaseJBCodeGenerator::genconstInt64);
-    _genconstVFT.assign(bx->Int32->id(), &BaseJBCodeGenerator::genconstInt32);
-    _genconstVFT.assign(bx->Int16->id(), &BaseJBCodeGenerator::genconstInt16);
-    _genconstVFT.assign(bx->Int8->id(), &BaseJBCodeGenerator::genconstInt8);
+    INIT_CG_BASE_HANDLERS(JBCodeGeneratorForBase);
 
     setTraceEnabled(false);
 }
 
-BaseJBCodeGenerator::~BaseJBCodeGenerator() {
-    for (auto it = _structFieldNameMap.begin();it != _structFieldNameMap.end(); it++) {
-        FieldMapType & mapper = it->second;
-        for (auto it2 = mapper.begin(); it2 != mapper.end(); it2++) {
-            const String *s = it2->second;
-            delete s;
-        }
-    }
+JBCodeGeneratorForBase::~JBCodeGeneratorForBase() {
 }
 
+Base::BaseExtension *
+JBCodeGeneratorForBase::bx() const {
+    return _bx;
+}
+
+JBCodeGenerator *
+JBCodeGeneratorForBase::jbcg() const {
+    return cg()->refine<JBCodeGenerator>();
+}
+
+JBMethodBuilder *
+JBCodeGeneratorForBase::jbmb() const {
+    return jbcg()->jbmb();
+}
 
 //
 // regtype functions per primitive type
 //
 void
-BaseJBCodeGenerator::regtypeInt8(JBMethodBuilder *jbmb, const Type *Int8) {
-    jbmb->registerInt8(Int8);
+JBCodeGeneratorForBase::regtypeInt8(const Type *Int8) {
+    jbmb()->registerInt8(Int8);
 }
 
 void
-BaseJBCodeGenerator::regtypeInt16(JBMethodBuilder *jbmb, const Type *Int16) {
-    jbmb->registerInt16(Int16);
+JBCodeGeneratorForBase::regtypeInt16(const Type *Int16) {
+    jbmb()->registerInt16(Int16);
 }
 
 void
-BaseJBCodeGenerator::regtypeInt32(JBMethodBuilder *jbmb, const Type *Int32) {
-    jbmb->registerInt32(Int32);
+JBCodeGeneratorForBase::regtypeInt32(const Type *Int32) {
+    jbmb()->registerInt32(Int32);
 }
 
 void
-BaseJBCodeGenerator::regtypeInt64(JBMethodBuilder *jbmb, const Type *Int64) {
-    jbmb->registerInt64(Int64);
+JBCodeGeneratorForBase::regtypeInt64(const Type *Int64) {
+    jbmb()->registerInt64(Int64);
 }
 
 void
-BaseJBCodeGenerator::regtypeFloat32(JBMethodBuilder *jbmb, const Type *Float32) {
-    jbmb->registerFloat(Float32);
+JBCodeGeneratorForBase::regtypeFloat32(const Type *Float32) {
+    jbmb()->registerFloat(Float32);
 }
 
 void
-BaseJBCodeGenerator::regtypeFloat64(JBMethodBuilder *jbmb, const Type *Float64) {
-    jbmb->registerDouble(Float64);
+JBCodeGeneratorForBase::regtypeFloat64(const Type *Float64) {
+    jbmb()->registerDouble(Float64);
 }
 
 void
-BaseJBCodeGenerator::regtypeAddress(JBMethodBuilder *jbmb, const Type *Address) {
-    jbmb->registerAddress(Address);
-}
-
-const String &
-BaseJBCodeGenerator::registerFieldString(const Base::StructType * baseStructType, const Base::FieldType *fType, const String & name) {
-    FieldMapType & mapper = _structFieldNameMap[baseStructType];
-    auto it = mapper.find(fType);
-    if (it != mapper.end())
-        return *(it->second);
-
-    String * s = new (allocator()) String(allocator(), allocator(), name);
-    mapper.insert({fType, s}); // ownership passes to _structFieldNameMap
-    return *s;
-}
-
-const String &
-BaseJBCodeGenerator::lookupFieldString(const Base::StructType * baseStructType, const Base::FieldType *fType) {
-    const String & name = *_structFieldNameMap[baseStructType][fType];
-    return name;
+JBCodeGeneratorForBase::regtypeAddress(const Type *Address) {
+    jbmb()->registerAddress(Address);
 }
 
 void
-BaseJBCodeGenerator::registerAllStructFields(JBMethodBuilder *jbmb, const Base::StructType *sType, const Base::StructType * baseStructType, const String & fNamePrefix, size_t baseOffset) {
-    for (auto fIt = sType->FieldsBegin(); fIt != sType->FieldsEnd(); fIt++) {
-        const Base::FieldType *fType = fIt->second;
-        String fieldName = fNamePrefix;
-        fieldName.append(fType->name());
-        size_t fieldOffset = baseOffset + fType->offset();
-
-        const String & name = registerFieldString(baseStructType, fType, fieldName);
-        if (fType->isKind<const Base::StructType>()) {
-            // define a "dummy" field corresponding to the struct field itself, so we can ask for its address easily
-            // in case this field's struct needs to be passed to anything
-            jbmb->registerField(baseStructType->name(), name, _bx->NoType, fieldOffset);
-            const Base::StructType *innerStructType = fType->type()->refine<const Base::StructType>();
-            String newPrefix = fieldName;
-            fieldName.append(".");
-            registerAllStructFields(jbmb, innerStructType, baseStructType, newPrefix, fieldOffset);
-        }
-        else {
-            jbmb->registerField(baseStructType->name(), name, fType->type(), fieldOffset);
-        }
-    }
+JBCodeGeneratorForBase::registerField(String baseStructName, String fieldName, const Type *fieldType, size_t fieldOffset) {
+    jbmb()->registerField(baseStructName, fieldName, fieldType, fieldOffset);
 }
 
 bool
-BaseJBCodeGenerator::registerType(JBMethodBuilder *jbmb, const Type *t) {
+JBCodeGeneratorForBase::registerType(const Type *t) {
     if (t->isKind<Base::PointerType>()) {
         const Type *baseType = t->refine<Base::PointerType>()->baseType();
-        if (!jbmb->typeRegistered(baseType))
+        if (!jbmb()->typeRegistered(baseType))
             return false; // will be registered later in this registration pass
-        jbmb->registerPointer(t, baseType);
+        jbmb()->registerPointer(t, baseType);
     }
     else if (t->isKind<const Base::StructType>()) {
-        if (!jbmb->typeRegistered(t)) {
-            jbmb->registerStruct(t);
+        if (!jbmb()->typeRegistered(t)) {
+            jbmb()->registerStruct(t);
             return false; // first pass just creates struct types
         }
 
         const Base::StructType *structType = t->refine<const Base::StructType>();
-        registerAllStructFields(jbmb, structType, structType, String(allocator(), ""), 0); // second pass defines the fields
-        jbmb->closeStruct(t->name());
+        registerAllStructFields(structType, structType, String(allocator(), ""), 0); // second pass defines the fields
+        jbmb()->closeStruct(t->name());
     }
     else if (t->isKind<const Base::FieldType>()) {
         // fields are registered as part of registering the struct
@@ -213,7 +134,7 @@ BaseJBCodeGenerator::registerType(JBMethodBuilder *jbmb, const Type *t) {
         TypeID id = t->id();
         regtypeFunction f = _regtypeVFT[id];
         if (f != NULL) {
-            (this->*f)(jbmb, t);
+            (this->*f)(t);
             return true;
         }
     }
@@ -226,138 +147,157 @@ BaseJBCodeGenerator::registerType(JBMethodBuilder *jbmb, const Type *t) {
 // gencode functions per Operation
 //
 
-void
-BaseJBCodeGenerator::gencode(JBMethodBuilder *jbmb, Operation *op) {
+Builder *
+JBCodeGeneratorForBase::gencode(Operation *op) {
     ActionID a = op->action();
     gencodeFunction f = _gencodeVFT[a];
-    (this->*f)(jbmb, op);
+    return (this->*f)(op);
 }
 
-void
-BaseJBCodeGenerator::gencodeAdd(JBMethodBuilder *jbmb, Operation *op) {
+Builder *
+JBCodeGeneratorForBase::gencodeAdd(Operation *op) {
     assert(op->action() == _bx->aAdd);
-    jbmb->Add(op->location(), op->parent(), op->result(), op->operand(0), op->operand(1));
+    jbmb()->Add(op->location(), op->parent(), op->result(), op->operand(0), op->operand(1));
+    return NULL;
 }
 
-void
-BaseJBCodeGenerator::gencodeConvertTo(JBMethodBuilder *jbmb, Operation *op) {
+Builder *
+JBCodeGeneratorForBase::gencodeConvertTo(Operation *op) {
     assert(op->action() == _bx->aConvertTo);
-    jbmb->ConvertTo(op->location(), op->parent(), op->result(), op->type(), op->operand());
+    jbmb()->ConvertTo(op->location(), op->parent(), op->result(), op->type(), op->operand());
+    return NULL;
 }
 
-void
-BaseJBCodeGenerator::gencodeMul(JBMethodBuilder *jbmb, Operation *op) {
+Builder *
+JBCodeGeneratorForBase::gencodeMul(Operation *op) {
     assert(op->action() == _bx->aMul);
-    jbmb->Mul(op->location(), op->parent(), op->result(), op->operand(0), op->operand(1));
+    jbmb()->Mul(op->location(), op->parent(), op->result(), op->operand(0), op->operand(1));
+    return NULL;
 }
 
-void
-BaseJBCodeGenerator::gencodeSub(JBMethodBuilder *jbmb, Operation *op) {
+Builder *
+JBCodeGeneratorForBase::gencodeSub(Operation *op) {
     assert(op->action() == _bx->aSub);
-    jbmb->Sub(op->location(), op->parent(), op->result(), op->operand(0), op->operand(1));
+    jbmb()->Sub(op->location(), op->parent(), op->result(), op->operand(0), op->operand(1));
+    return NULL;
 }
 
-void
-BaseJBCodeGenerator::gencodeForLoopUp(JBMethodBuilder *jbmb, Operation *op) {
+Builder *
+JBCodeGeneratorForBase::gencodeForLoopUp(Operation *op) {
     assert(op->action() == _bx->aForLoopUp);
-    jbmb->ForLoopUp(op->location(), op->parent(),
-                    op->symbol(),    // loopVariable
-                    op->operand(0),  // initial
-                    op->operand(1),  // final
-                    op->operand(2),  // bump
-                    op->builder(0),  // loopBody
-                    op->builder(1),  // loopBreak
-                    op->builder(2)); // loopContinue
+    jbmb()->ForLoopUp(op->location(), op->parent(),
+                      op->symbol(),    // loopVariable
+                      op->operand(0),  // initial
+                      op->operand(1),  // final
+                      op->operand(2),  // bump
+                      op->builder(0),  // loopBody
+                      op->builder(1),  // loopBreak
+                      op->builder(2)); // loopContinue
+    return NULL;
 }
 
-void
-BaseJBCodeGenerator::gencodeGoto(JBMethodBuilder *jbmb, Operation *op) {
+Builder *
+JBCodeGeneratorForBase::gencodeGoto(Operation *op) {
     assert(op->action() == _bx->aGoto);
-    jbmb->Goto(op->location(), op->parent(), op->builder());
+    jbmb()->Goto(op->location(), op->parent(), op->builder());
+    return NULL;
 }
 
-void
-BaseJBCodeGenerator::gencodeIfCmpEqual(JBMethodBuilder *jbmb, Operation *op) {
+Builder *
+JBCodeGeneratorForBase::gencodeIfCmpEqual(Operation *op) {
     assert(op->action() == _bx->aIfCmpEqual);
-    jbmb->IfCmpEqual(op->location(), op->parent(), op->builder(), op->operand(0), op->operand(1));
+    jbmb()->IfCmpEqual(op->location(), op->parent(), op->builder(), op->operand(0), op->operand(1));
+    return NULL;
 }
 
-void
-BaseJBCodeGenerator::gencodeIfCmpEqualZero(JBMethodBuilder *jbmb, Operation *op) {
+Builder *
+JBCodeGeneratorForBase::gencodeIfCmpEqualZero(Operation *op) {
     assert(op->action() == _bx->aIfCmpEqualZero);
-    jbmb->IfCmpEqualZero(op->location(), op->parent(), op->builder(), op->operand(0));
+    jbmb()->IfCmpEqualZero(op->location(), op->parent(), op->builder(), op->operand(0));
+    return NULL;
 }
 
-void
-BaseJBCodeGenerator::gencodeIfCmpGreaterThan(JBMethodBuilder *jbmb, Operation *op) {
+Builder *
+JBCodeGeneratorForBase::gencodeIfCmpGreaterThan(Operation *op) {
     assert(op->action() == _bx->aIfCmpGreaterThan);
-    jbmb->IfCmpGreaterThan(op->location(), op->parent(), op->builder(), op->operand(0), op->operand(1));
+    jbmb()->IfCmpGreaterThan(op->location(), op->parent(), op->builder(), op->operand(0), op->operand(1));
+    return NULL;
 }
 
-void
-BaseJBCodeGenerator::gencodeIfCmpGreaterOrEqual(JBMethodBuilder *jbmb, Operation *op) {
+Builder *
+JBCodeGeneratorForBase::gencodeIfCmpGreaterOrEqual(Operation *op) {
     assert(op->action() == _bx->aIfCmpGreaterOrEqual);
-    jbmb->IfCmpGreaterOrEqual(op->location(), op->parent(), op->builder(), op->operand(0), op->operand(1));
+    jbmb()->IfCmpGreaterOrEqual(op->location(), op->parent(), op->builder(), op->operand(0), op->operand(1));
+    return NULL;
 }
 
-void
-BaseJBCodeGenerator::gencodeIfCmpLessThan(JBMethodBuilder *jbmb, Operation *op) {
+Builder *
+JBCodeGeneratorForBase::gencodeIfCmpLessThan(Operation *op) {
     assert(op->action() == _bx->aIfCmpLessThan);
-    jbmb->IfCmpLessThan(op->location(), op->parent(), op->builder(), op->operand(0), op->operand(1));
+    jbmb()->IfCmpLessThan(op->location(), op->parent(), op->builder(), op->operand(0), op->operand(1));
+    return NULL;
 }
 
-void
-BaseJBCodeGenerator::gencodeIfCmpLessOrEqual(JBMethodBuilder *jbmb, Operation *op) {
+Builder *
+JBCodeGeneratorForBase::gencodeIfCmpLessOrEqual(Operation *op) {
     assert(op->action() == _bx->aIfCmpLessOrEqual);
-    jbmb->IfCmpLessOrEqual(op->location(), op->parent(), op->builder(), op->operand(0), op->operand(1));
+    jbmb()->IfCmpLessOrEqual(op->location(), op->parent(), op->builder(), op->operand(0), op->operand(1));
+    return NULL;
 }
 
-void
-BaseJBCodeGenerator::gencodeIfCmpNotEqual(JBMethodBuilder *jbmb, Operation *op) {
+Builder *
+JBCodeGeneratorForBase::gencodeIfCmpNotEqual(Operation *op) {
     assert(op->action() == _bx->aIfCmpNotEqual);
-    jbmb->IfCmpNotEqual(op->location(), op->parent(), op->builder(), op->operand(0), op->operand(1));
+    jbmb()->IfCmpNotEqual(op->location(), op->parent(), op->builder(), op->operand(0), op->operand(1));
+    return NULL;
 }
 
-void
-BaseJBCodeGenerator::gencodeIfCmpNotEqualZero(JBMethodBuilder *jbmb, Operation *op) {
+Builder *
+JBCodeGeneratorForBase::gencodeIfCmpNotEqualZero(Operation *op) {
     assert(op->action() == _bx->aIfCmpNotEqualZero);
-    jbmb->IfCmpNotEqualZero(op->location(), op->parent(), op->builder(), op->operand(0));
+    jbmb()->IfCmpNotEqualZero(op->location(), op->parent(), op->builder(), op->operand(0));
+    return NULL;
 }
 
-void
-BaseJBCodeGenerator::gencodeIfCmpUnsignedGreaterThan(JBMethodBuilder *jbmb, Operation *op) {
+Builder *
+JBCodeGeneratorForBase::gencodeIfCmpUnsignedGreaterThan(Operation *op) {
     assert(op->action() == _bx->aIfCmpUnsignedGreaterThan);
-    jbmb->IfCmpUnsignedGreaterThan(op->location(), op->parent(), op->builder(), op->operand(0), op->operand(1));
+    jbmb()->IfCmpUnsignedGreaterThan(op->location(), op->parent(), op->builder(), op->operand(0), op->operand(1));
+    return NULL;
 }
 
-void
-BaseJBCodeGenerator::gencodeIfCmpUnsignedGreaterOrEqual(JBMethodBuilder *jbmb, Operation *op) {
+Builder *
+JBCodeGeneratorForBase::gencodeIfCmpUnsignedGreaterOrEqual(Operation *op) {
     assert(op->action() == _bx->aIfCmpUnsignedGreaterOrEqual);
-    jbmb->IfCmpUnsignedGreaterOrEqual(op->location(), op->parent(), op->builder(), op->operand(0), op->operand(1));
+    jbmb()->IfCmpUnsignedGreaterOrEqual(op->location(), op->parent(), op->builder(), op->operand(0), op->operand(1));
+    return NULL;
 }
 
-void
-BaseJBCodeGenerator::gencodeIfCmpUnsignedLessThan(JBMethodBuilder *jbmb, Operation *op) {
+Builder *
+JBCodeGeneratorForBase::gencodeIfCmpUnsignedLessThan(Operation *op) {
     assert(op->action() == _bx->aIfCmpUnsignedLessThan);
-    jbmb->IfCmpUnsignedLessThan(op->location(), op->parent(), op->builder(), op->operand(0), op->operand(1));
+    jbmb()->IfCmpUnsignedLessThan(op->location(), op->parent(), op->builder(), op->operand(0), op->operand(1));
+    return NULL;
 }
 
-void
-BaseJBCodeGenerator::gencodeIfCmpUnsignedLessOrEqual(JBMethodBuilder *jbmb, Operation *op) {
+Builder *
+JBCodeGeneratorForBase::gencodeIfCmpUnsignedLessOrEqual(Operation *op) {
     assert(op->action() == _bx->aIfCmpUnsignedLessOrEqual);
-    jbmb->IfCmpUnsignedLessOrEqual(op->location(), op->parent(), op->builder(), op->operand(0), op->operand(1));
+    jbmb()->IfCmpUnsignedLessOrEqual(op->location(), op->parent(), op->builder(), op->operand(0), op->operand(1));
+    return NULL;
 }
 
-void
-BaseJBCodeGenerator::gencodeIfThenElse(JBMethodBuilder *jbmb, Operation *op) {
+Builder *
+JBCodeGeneratorForBase::gencodeIfThenElse(Operation *op) {
     assert(op->action() == _bx->aIfThenElse);
     if (op->builder(1))
-        jbmb->IfThenElse(op->location(), op->parent(), op->builder(0), op->builder(1), op->operand());
-    jbmb->IfThen(op->location(), op->parent(), op->builder(), op->operand());
+        jbmb()->IfThenElse(op->location(), op->parent(), op->builder(0), op->builder(1), op->operand());
+    jbmb()->IfThen(op->location(), op->parent(), op->builder(), op->operand());
+    return NULL;
 }
 
-void
-BaseJBCodeGenerator::gencodeSwitch(JBMethodBuilder *jbmb, Operation *op) {
+Builder *
+JBCodeGeneratorForBase::gencodeSwitch(Operation *op) {
     assert(op->action() == _bx->aSwitch);
     Base::Op_Switch *opSwitch = static_cast<Base::Op_Switch *>(op);
     Allocator *mem = op->parent()->ir()->mem();
@@ -373,122 +313,133 @@ BaseJBCodeGenerator::gencodeSwitch(JBMethodBuilder *jbmb, Operation *op) {
         fallThroughs[index] = c->fallsThrough();
         index++;
     }
-    jbmb->Switch(op->location(), op->parent(), opSwitch->defaultBuilder(), opSwitch->selector(), numCases, lvs, builders, fallThroughs);
+    jbmb()->Switch(op->location(), op->parent(), opSwitch->defaultBuilder(), opSwitch->selector(), numCases, lvs, builders, fallThroughs);
     delete[] fallThroughs;
     delete[] builders;
     delete[] lvs;
+    return NULL;
 }
 
-void
-BaseJBCodeGenerator::gencodeLoadAt(JBMethodBuilder *jbmb, Operation *op) {
+Builder *
+JBCodeGeneratorForBase::gencodeLoadAt(Operation *op) {
     assert(op->action() == _bx->aLoadAt);
-    jbmb->LoadAt(op->location(), op->parent(), op->result(), op->operand());
+    jbmb()->LoadAt(op->location(), op->parent(), op->result(), op->operand());
+    return NULL;
 }
 
-void
-BaseJBCodeGenerator::gencodeStoreAt(JBMethodBuilder *jbmb, Operation *op) {
+Builder *
+JBCodeGeneratorForBase::gencodeStoreAt(Operation *op) {
     assert(op->action() == _bx->aStoreAt);
-    jbmb->StoreAt(op->location(), op->parent(),
-                  op->operand(0),  // base
-                  op->operand(1)); // value
+    jbmb()->StoreAt(op->location(), op->parent(),
+                    op->operand(0),  // base
+                    op->operand(1)); // value
+    return NULL;
 }
 
-void
-BaseJBCodeGenerator::gencodeLoadField(JBMethodBuilder *jbmb, Operation *op) {
+Builder *
+JBCodeGeneratorForBase::gencodeLoadField(Operation *op) {
     assert(op->action() == _bx->aLoadField);
     assert(0); // TODO
+    return NULL;
 }
 
-void
-BaseJBCodeGenerator::gencodeStoreField(JBMethodBuilder *jbmb, Operation *op) {
+Builder *
+JBCodeGeneratorForBase::gencodeStoreField(Operation *op) {
     assert(op->action() == _bx->aStoreField);
     assert(0); // TODO
+    return NULL;
 }
 
-void
-BaseJBCodeGenerator::gencodeLoadFieldAt(JBMethodBuilder *jbmb, Operation *op) {
+Builder *
+JBCodeGeneratorForBase::gencodeLoadFieldAt(Operation *op) {
     assert(op->action() == _bx->aLoadFieldAt);
     const Base::FieldType *ft = op->type()->refine<Base::FieldType>();
     const Base::StructType *owningStruct = ft->owningStruct();
     const String & structName = owningStruct->name();
-    jbmb->LoadIndirect(op->location(), op->parent(), op->result(), structName, lookupFieldString(owningStruct, ft), op->operand());
+    jbmb()->LoadIndirect(op->location(), op->parent(), op->result(), structName, lookupFieldString(owningStruct, ft), op->operand());
+    return NULL;
 }
 
-void
-BaseJBCodeGenerator::gencodeStoreFieldAt(JBMethodBuilder *jbmb, Operation *op) {
+Builder *
+JBCodeGeneratorForBase::gencodeStoreFieldAt(Operation *op) {
     assert(op->action() == _bx->aStoreFieldAt);
     const Base::FieldType *ft = op->type()->refine<Base::FieldType>();
     const Base::StructType *owningStruct = ft->owningStruct();
     const String & structName = owningStruct->name();
-    jbmb->StoreIndirect(op->location(), op->parent(), structName, lookupFieldString(owningStruct, ft), op->operand(0), op->operand(1));
+    jbmb()->StoreIndirect(op->location(), op->parent(), structName, lookupFieldString(owningStruct, ft), op->operand(0), op->operand(1));
+    return NULL;
 }
 
-void
-BaseJBCodeGenerator::gencodeCreateLocalArray(JBMethodBuilder *jbmb, Operation *op) {
+Builder *
+JBCodeGeneratorForBase::gencodeCreateLocalArray(Operation *op) {
     assert(op->action() == _bx->aCreateLocalArray);
-    jbmb->CreateLocalArray(op->location(), op->parent(), op->result(), op->literal(), op->type());
+    jbmb()->CreateLocalArray(op->location(), op->parent(), op->result(), op->literal(), op->type());
+    return NULL;
 }
 
-void
-BaseJBCodeGenerator::gencodeCreateLocalStruct(JBMethodBuilder *jbmb, Operation *op) {
+Builder *
+JBCodeGeneratorForBase::gencodeCreateLocalStruct(Operation *op) {
     assert(op->action() == _bx->aCreateLocalStruct);
-    jbmb->CreateLocalStruct(op->location(), op->parent(), op->result(), op->type());
+    jbmb()->CreateLocalStruct(op->location(), op->parent(), op->result(), op->type());
+    return NULL;
 }
 
-void
-BaseJBCodeGenerator::gencodeIndexAt(JBMethodBuilder *jbmb, Operation *op) {
+Builder *
+JBCodeGeneratorForBase::gencodeIndexAt(Operation *op) {
     assert(op->action() == _bx->aIndexAt);
-    jbmb->IndexAt(op->location(), op->parent(), op->result(), op->operand(0), op->operand(1));
+    jbmb()->IndexAt(op->location(), op->parent(), op->result(), op->operand(0), op->operand(1));
+    return NULL;
 }
 
 
 //
 // genconst functions per primitive type
 //
-void
-BaseJBCodeGenerator::gencodeConst(JBMethodBuilder *jbmb, Operation *op) {
+Builder *
+JBCodeGeneratorForBase::gencodeConst(Operation *op) {
     assert(op->action() == _bx->aConst);
     const Type *retType = op->result()->type();
     if (retType->isKind<Base::PointerType>())
         retType = _bx->Address;
     genconstFunction f = _genconstVFT[retType->id()];
-    (this->*f)(jbmb, op->location(), op->parent(), op->result(), op->literal());
+    (this->*f)(op->location(), op->parent(), op->result(), op->literal());
+    return NULL;
 }
 
 
 void
-BaseJBCodeGenerator::genconstInt8(JBMethodBuilder *jbmb, Location *loc, Builder *b, Value *result, Literal *lv) {
-    jbmb->ConstInt8(loc, b, result, lv->value<const int8_t>());
+JBCodeGeneratorForBase::genconstInt8(Location *loc, Builder *b, Value *result, Literal *lv) {
+    jbmb()->ConstInt8(loc, b, result, lv->value<const int8_t>());
 }
 
 void
-BaseJBCodeGenerator::genconstInt16(JBMethodBuilder *jbmb, Location *loc, Builder *b, Value *result, Literal *lv) {
-    jbmb->ConstInt16(loc, b, result, lv->value<const int16_t>());
+JBCodeGeneratorForBase::genconstInt16(Location *loc, Builder *b, Value *result, Literal *lv) {
+    jbmb()->ConstInt16(loc, b, result, lv->value<const int16_t>());
 }
 
 void
-BaseJBCodeGenerator::genconstInt32(JBMethodBuilder *jbmb, Location *loc, Builder *b, Value *result, Literal *lv) {
-    jbmb->ConstInt32(loc, b, result, lv->value<const int32_t>());
+JBCodeGeneratorForBase::genconstInt32(Location *loc, Builder *b, Value *result, Literal *lv) {
+    jbmb()->ConstInt32(loc, b, result, lv->value<const int32_t>());
 }
 
 void
-BaseJBCodeGenerator::genconstInt64(JBMethodBuilder *jbmb, Location *loc, Builder *b, Value *result, Literal *lv) {
-    jbmb->ConstInt64(loc, b, result, lv->value<const int64_t>());
+JBCodeGeneratorForBase::genconstInt64(Location *loc, Builder *b, Value *result, Literal *lv) {
+    jbmb()->ConstInt64(loc, b, result, lv->value<const int64_t>());
 }
 
 void
-BaseJBCodeGenerator::genconstFloat32(JBMethodBuilder *jbmb, Location *loc, Builder *b, Value *result, Literal *lv) {
-    jbmb->ConstFloat(loc, b, result, lv->value<const float>());
+JBCodeGeneratorForBase::genconstFloat32(Location *loc, Builder *b, Value *result, Literal *lv) {
+    jbmb()->ConstFloat(loc, b, result, lv->value<const float>());
 }
 
 void
-BaseJBCodeGenerator::genconstFloat64(JBMethodBuilder *jbmb, Location *loc, Builder *b, Value *result, Literal *lv) {
-    jbmb->ConstDouble(loc, b, result, lv->value<const double>());
+JBCodeGeneratorForBase::genconstFloat64(Location *loc, Builder *b, Value *result, Literal *lv) {
+    jbmb()->ConstDouble(loc, b, result, lv->value<const double>());
 }
 
 void
-BaseJBCodeGenerator::genconstAddress(JBMethodBuilder *jbmb, Location *loc, Builder *b, Value *result, Literal *lv) {
-    jbmb->ConstAddress(loc, b, result, lv->value<void * const>());
+JBCodeGeneratorForBase::genconstAddress(Location *loc, Builder *b, Value *result, Literal *lv) {
+    jbmb()->ConstAddress(loc, b, result, lv->value<void * const>());
 }
 
 
