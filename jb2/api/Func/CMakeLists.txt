@@ -26,6 +26,7 @@ omr_assert(
 )
 
 add_library(jb2func SHARED
+    CodeGeneratorForFunc.cpp
 	Function.cpp
 	FunctionCompilation.cpp
 	FunctionContext.cpp
@@ -38,5 +39,11 @@ add_library(jb2func SHARED
 )
 
 target_include_directories(jb2func PRIVATE ${JB2_CORE_DIR})
+
+target_link_libraries(jb2func
+    jb2core
+    jb2
+    ${CMAKE_DL_LIBS}
+)
 
 #add_subdirectory(test)

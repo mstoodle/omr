@@ -22,6 +22,7 @@
 #include "api/JBCore.hpp"
 #include "api/jb/JBCodeGenerator.hpp"
 #include "api/jb/JBMethodBuilder.hpp"
+#include "api/jb/JBCodeGeneratorExtensionAddon.hpp"
 
 #include "ilgen/MethodBuilder.hpp"
 #include "ilgen/IlType.hpp"
@@ -60,7 +61,13 @@ JBCodeGenerator::perform(Compilation *comp) {
             JBMethodBuilder *jbmb = cg->jbmb();
             jbmb->setMethodBuilder(this);
             jbmb->registerTypes(_comp->ir()->typedict());
-            comp->ext()->extendedPass<JBCodeGenerator>()->setupbody(jbmb, comp);
+
+            CodeGeneratorForExtension *cgForExt = comp->ext()->addon<JBCodeGeneratorExtensionAddon>()->cgForExtension();
+            if (cgForExt) {
+                cgForExt->setupbody(comp);
+            } else {
+                cg->setupbody(comp);
+            }
         }
 
         virtual bool buildIL() {
@@ -118,45 +125,41 @@ JBCodeGenerator::visitPreCompilation(Compilation *comp) {
     // create all the appropriate builder objects ahead of time
     for (auto it = comp->builders();it.hasItem();it++) {
         Builder *b = it.item();
-        JBCodeGenerator *extPass = b->ext()->extendedPass<JBCodeGenerator>();
-        if (extPass != NULL) {
-            extPass->registerBuilder(_jbmb, b);
+        CodeGeneratorForExtension *cgForExt = b->ext()->addon<JBCodeGeneratorExtensionAddon>()->cgForExtension();
+        if (cgForExt) {
+            cgForExt->registerBuilder(b);
         } else { // assume it's just a Builder
             _jbmb->createBuilder(b);
         }
     }
-    comp->ext()->extendedPass<JBCodeGenerator>()->genbody(_jbmb, comp);
+    CodeGeneratorForExtension *cgForExt = comp->ext()->addon<JBCodeGeneratorExtensionAddon>()->cgForExtension();
+    cgForExt->genbody(comp);
 }
 
 Builder *
-JBCodeGenerator::gencode(CodeGenerator *cgPrime, Operation *op) {
+JBCodeGenerator::gencode(Operation *op) {
     assert(_jbmb);
-    JBCodeGenerator *extPass = op->ext()->extendedPass<JBCodeGenerator>();
-    if (extPass)
-        extPass->gencode(_jbmb, op);
+    CodeGeneratorForExtension *cgForExt = op->ext()->addon<JBCodeGeneratorExtensionAddon>()->cgForExtension();
+    if (cgForExt) {
+        cgForExt->gencode(op);
+    }
     return NULL;
-}
-
-// move to CoreJBCodeGenerator?
-void
-JBCodeGenerator::gencode(JBMethodBuilder *jbmb, Operation *op) {
-    assert(op->action() == compiler()->coreExt()->aMergeDef);
-    jbmb->StoreOver(op->location(), op->parent(), op->result(), op->operand());
 }
 
 void
 JBCodeGenerator::visitBuilderPostOps(Builder *b) {
     assert(_jbmb);
-    JBCodeGenerator *extPass = b->ext()->extendedPass<JBCodeGenerator>();
-    if (extPass)
-        extPass->connectsuccessors(_jbmb, b);
+    CodeGeneratorForExtension *cgForExt = b->ext()->addon<JBCodeGeneratorExtensionAddon>()->cgForExtension();
+    if (cgForExt) {
+        cgForExt->connectsuccessors(b);
+    }
 }
 
 void
 JBCodeGenerator::visitOperation(Operation * op) {
     assert(_jbmb);
 
-    TextLogger *logger = _comp->logger();
+    TextLogger *logger = NULL; //_comp->logger();
     if (logger) {
         TextLogger &log = *logger;
         log << op << log.endl();
@@ -166,9 +169,10 @@ JBCodeGenerator::visitOperation(Operation * op) {
         }
     }
 
-    JBCodeGenerator *extPass = op->ext()->extendedPass<JBCodeGenerator>();
-    if (extPass)
-        extPass->gencode(_jbmb, op);
+    CodeGeneratorForExtension *cgForExt = op->ext()->addon<JBCodeGeneratorExtensionAddon>()->cgForExtension();
+    if (cgForExt) {
+        cgForExt->gencode(op);
+    }
 
     if (logger) {
         TextLogger &log = *logger;
@@ -181,14 +185,12 @@ JBCodeGenerator::visitOperation(Operation * op) {
 
 void
 JBCodeGenerator::visitPostCompilation(Compilation *comp) {
-    #if 0
     assert(_jbmb);
-    TextLogger *lgr = comp->logger(traceEnabled());
+    TextLogger *lgr = NULL; //comp->logger(traceEnabled());
     if (lgr) {
         lgr->indentOut();
         _jbmb->printAllMaps();
     }
-    #endif
 }
 
 #if 0

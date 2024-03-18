@@ -39,6 +39,10 @@ class VMExtension : public Extension {
 
     friend class VMExtensionChecker;
 
+protected: // put these first to simplify initialization
+    Base::BaseExtension *_bx;
+    Func::FunctionExtension *_fx;
+
 public:
     DYNAMIC_ALLOC_ONLY(VMExtension, LOCATION, Compiler *compiler, bool extended=false, String extensionName="vm");
 
@@ -60,6 +64,19 @@ public:
     //
     // Actions
     //
+    ActionID aGoto;
+    ActionID aIfCmpEqual;
+    ActionID aIfCmpEqualZero;
+    ActionID aIfCmpLessOrEqual;
+    ActionID aIfCmpLessThan;
+    ActionID aIfCmpGreaterOrEqual;
+    ActionID aIfCmpGreaterThan;
+    ActionID aIfCmpNotEqual;
+    ActionID aIfCmpNotEqualZero;
+    ActionID aIfCmpUnsignedLessOrEqual;
+    ActionID aIfCmpUnsignedLessThan;
+    ActionID aIfCmpUnsignedGreaterOrEqual;
+    ActionID aIfCmpUnsignedGreaterThan;
 
     //
     // CompilerReturnCodes
@@ -89,9 +106,6 @@ public:
     CompiledBody * compile(LOCATION, Func::Function *func, StrategyID strategy, TextLogger *lgr);
 
 protected:
-    Base::BaseExtension *_bx;
-    Func::FunctionExtension *_fx;
-
     static const MajorID VMEXT_MAJOR=0;
     static const MinorID VMEXT_MINOR=1;
     static const PatchID VMEXT_PATCH=0;

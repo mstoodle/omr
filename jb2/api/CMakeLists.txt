@@ -42,10 +42,12 @@ add_compile_options(
     -I${CMAKE_BINARY_DIR}
 )
 
+if (0)
 if (APPLE)
     add_link_options(
         -undefined dynamic_lookup
     )
+endif()
 endif()
 
 set(JB2_CORE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/)
@@ -54,6 +56,7 @@ set(JB2_DEBUG_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Debug/)
 set(JB2_VM_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vm/)
 set(JB2_COMPLEX_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Complex/)
 set(JB2_JB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/jb)
+set(JB2_OMRGEN_DIR ${CMAKE_CURRENT_SOURCE_DIR}/omrgen)
 
 add_library(jb2core SHARED
     Addon.cpp
@@ -67,6 +70,9 @@ add_library(jb2core SHARED
     Builder.cpp
     BuilderEntry.cpp
     CodeGenerator.cpp
+    CodeGeneratorExtensionAddon.cpp
+    CodeGeneratorForCore.cpp
+    CodeGeneratorForExtension.cpp
     Compilation.cpp
     CompiledBody.cpp
     Compiler.cpp
@@ -109,7 +115,7 @@ add_library(jb2core SHARED
 )
 
 #set(VALGRIND "valgrind --error-exitcode=1 --leak-check=full --show-leak-kinds=all ")
-set(VALGRIND "")
+#set(VALGRIND "leaks --atExit -- ")
 
 add_subdirectory(test)
 
@@ -117,8 +123,9 @@ add_subdirectory(test)
 if (NOT OMR_JB2_PICK_EXTS)
 	set(OMR_JB2_EXT_FUNC ON CACHE BOOL "jb2 include Function extension")
 	set(OMR_JB2_EXT_BASE ON CACHE BOOL "jb2 include Base extension")
-	set(OMR_JB2_EXT_JB ON CACHE BOOL "jb2 include JB extension")
-	set(OMR_JB2_EXT_VM ON CACHE BOOL "jb2 include VM extension")
+	set(OMR_JB2_EXT_JB ON CACHE BOOL "jb2 include jb extension")
+	set(OMR_JB2_EXT_OMRGEN ON CACHE BOOL "jb2 include omrgen extension")
+	set(OMR_JB2_EXT_VM ON CACHE BOOL "jb2 include vm extension")
 
 	set(OMR_JB2_EXT_DEBUG OFF CACHE BOOL "jb2 include Debug extension")
 	set(OMR_JB2_EXT_SIM OFF CACHE BOOL "jb2 include Sim extension")
@@ -135,6 +142,10 @@ endif()
 
 if (OMR_JB2_EXT_JB)
 	add_subdirectory(jb)
+endif()
+
+if (OMR_JB2_EXT_OMRGEN)
+	#add_subdirectory(omrgen)
 endif()
 
 if (OMR_JB2_EXT_VM)

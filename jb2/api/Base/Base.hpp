@@ -29,6 +29,7 @@
 #include "Base/BaseIRClonerAddon.hpp"
 #include "Base/BaseSymbol.hpp"
 #include "Base/BaseTypes.hpp"
+#include "Base/CodeGeneratorForBase.hpp"
 #include "Base/ConstOperation.hpp"
 #include "Base/ControlOperations.hpp"
 #include "Base/MemoryOperations.hpp"

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021, 2022 IBM Corp. and others
+ * Copyright (c) 2024 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,39 +19,38 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef JBCODEGENERATOR_INCL
-#define JBCODEGENERATOR_INCL
+#ifndef CODEGENERATORFOREXTENSION_INCL
+#define CODEGENERATORFOREXTENSION_INCL
 
-#include "JBCore.hpp"
+#include "common.hpp"
+#include "KindService.hpp"
+#include "Loggable.hpp"
+#include "String.hpp"
+#include "Transformer.hpp"
 
 namespace OMR {
 namespace JitBuilder {
-namespace JB {
 
-class JBMethodBuilder;
+class Builder;
+class Context;
+class Extension;
+class Literal;
+class Operation;
+class Scope;
+class Symbol;
+class Type;
+class Value;
 
-typedef void *TRType;
-
-class JBCodeGenerator : public CodeGenerator {
-    JBALLOC_(JBCodeGenerator)
+class CodeGeneratorForExtension : public Loggable {
+    JBALLOC_(CodeGeneratorForExtension)
 
 public:
-    DYNAMIC_ALLOC_ONLY(JBCodeGenerator, Extension *ext);
+    DYNAMIC_ALLOC_ONLY(CodeGeneratorForExtension, CodeGenerator *cg, KINDTYPE(Extensible) kind, Extension *ext, String name);
 
-    void * entryPoint() const  { return _entryPoint; }
-    int32_t returnCode() const { return _compileReturnCode; }
-    JBMethodBuilder *jbmb() const { return _jbmb; }
+    // handle an operation
+    virtual Builder * gencode(Operation *op)    { return NULL; }
 
-    virtual CompilerReturnCode perform(Compilation *comp);
-
-    virtual void setupbody(Compilation *comp) { }
-    virtual void createbuilder(Builder *b) { }
-
-    virtual void genbody(Compilation *comp) { }
-    virtual Builder *gencode(Operation *op);
-
-    virtual void connectsuccessors(Builder *b) { }
-
+    // none of these are mandatory but can be overriden and will be called before traversing any Operations
     virtual bool registerBuilder(Builder *b)    { return true; }
     virtual bool registerContext(Context *c)    { return true; }
     virtual bool registerLiteral(Literal *lv)   { return true; }
@@ -61,21 +60,13 @@ public:
     virtual bool registerValue(Value *value)    { return true; }
 
 protected:
-    virtual void visitPreCompilation(Compilation * comp);
-    virtual void visitBuilderPostOps(Builder * b);
-    virtual void visitOperation(Operation * op);
-    virtual void visitPostCompilation(Compilation *comp);
+    CodeGenerator *_cg;
 
-    JBMethodBuilder *_jbmb;
-    void *  _entryPoint;
-    int32_t _jbCompileReturnCode;
-    CompilerReturnCode _compileReturnCode;
-
-    SUBCLASS_KINDSERVICE_DECL(Extensible,JBCodeGenerator);
+    SUBCLASS_KINDSERVICE_DECL(Extensible,CodeGeneratorForExtension);
 };
 
-} // namespace JB
 } // namespace JitBuilder
 } // namespace OMR
 
-#endif // defined(JBCODEGENERATOR_INCL)
+#endif // !defined(CODEGENERATORFOREXTENSION_INCL)
+

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2023, 2023 IBM Corp. and others
+ * Copyright (c) 2021, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,43 +19,30 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include <assert.h>
-#include "JBCore.hpp"
-#include "jb/JBMethodBuilder.hpp"
-#include "jb/VMCodeGenerator.hpp"
-#include "vm/VM.hpp"
+#ifndef JBCODEGENERATOREXTADDON_INCL
+#define JBCODEGENERATOREXTADDON_INCL
 
+#include "JBCore.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 namespace JB {
 
-static const MajorID BASEDON_VMEXT_MAJOR=0;
-static const MajorID BASEDON_VMEXT_MINOR=1;
-static const MajorID BASEDON_VMEXT_PATCH=0;
-const static SemanticVersion correctVMVersion(BASEDON_VMEXT_MAJOR,BASEDON_VMEXT_MINOR,BASEDON_VMEXT_PATCH);
+class JBCodeGeneratorExtensionAddon : public CodeGeneratorExtensionAddon {
+    JBALLOC_(JBCodeGeneratorExtensionAddon)
 
-INIT_JBALLOC_REUSECAT(VMJBCodeGenerator, CodeGeneration)
-SUBCLASS_KINDSERVICE_IMPL(VMJBCodeGenerator,"VMJBCodeGenerator",JBCodeGenerator,Extensible);
+public:
+    JBCodeGeneratorExtensionAddon(Allocator *a, Extension *ext, CodeGeneratorForExtension *cgForExtension)
+        : CodeGeneratorExtensionAddon(a, ext, CLASSKIND(JBCodeGeneratorExtensionAddon, Extensible), cgForExtension) {
 
-VMJBCodeGenerator::VMJBCodeGenerator(Allocator *a, VM::VMExtension *vmx)
-    : JBCodeGenerator(a, vmx)
-    , _vmx(vmx) {
+    }
 
-    assert(vmx->semver()->isCompatibleWith(correctVMVersion));
-}
-
-VMJBCodeGenerator::~VMJBCodeGenerator() {
-}
-
-
-bool
-VMJBCodeGenerator::registerBuilder(JBMethodBuilder *jbmb, Builder *b) {
-    VM::VMBuilderAddon *vmba = b->addon<VM::VMBuilderAddon>();
-    jbmb->createBytecodeBuilder(b, vmba->bcIndex(), b->name());
-    return true;
-}
+protected:
+    SUBCLASS_KINDSERVICE_DECL(Extensible,JBCodeGeneratorExtensionAddon);
+};
 
 } // namespace JB
 } // namespace JitBuilder
 } // namespace OMR
+
+#endif // !defined(JBCODEGENERATOREXTADDON_INCL)

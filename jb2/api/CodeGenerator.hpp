@@ -89,7 +89,7 @@ public:
     DYNAMIC_ALLOC_ONLY(CodeGenerator, KINDTYPE(Extensible) kind, Extension *ext, String name);
 
     // handle an operation
-    virtual Builder * gencode(CodeGenerator *cgPrime, Operation *op) { return NULL; }
+    virtual Builder * gencode(Operation *op) { return NULL; }
 
     // none of these are mandatory but can be overriden and will be called before traversing any Operations
     virtual bool registerBuilder(Builder *b)              { return true; }
@@ -109,8 +109,8 @@ protected:
     virtual void visitOperation(Operation * op)           { }
     virtual void visitEnd()                               { }
 
-    // probably more to go in here
-    virtual Builder * transformOperation(Operation * op) { return gencode(this, op); }
+    // probably more to go in here?
+    virtual Builder * transformOperation(Operation * op) { return gencode(op); }
 
     Extension *_ext;
 

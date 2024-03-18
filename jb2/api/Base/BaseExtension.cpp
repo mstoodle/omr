@@ -120,6 +120,9 @@ BaseExtension::BaseExtension(MEM_LOCATION(a), Compiler *compiler, bool extended,
     , CompileFail_BadInputTypes_Switch(registerReturnCode(String(a, "CompileFail_BadInputTypes_Switch")))
     , CompileFail_BadInputArray_OffsetAt(registerReturnCode(String(a, "CompileFail_BadInputArray_OffsetAt")))
     , CompileFail_MismatchedArgumentTypes_Call(registerReturnCode(String(a, "CompileFail_MismatchedArgumentTypes_Call")))
+    , CompileFail_CodeGeneratorMissingOperationHandler(registerReturnCode(String(a, "CompileFail_CodeGeneratorMissingOperationHandler")))
+    , CompileFail_CodeGeneratorMissingTypeRegistration(registerReturnCode(String(a, "CompileFail_CodeGeneratorMissingTypeRegistration")))
+    , CompileFail_CodeGeneratorMissingConstForTypeHandler(registerReturnCode(String(a, "CompileFail_CodeGeneratorMissingConstForTypeHandler")))
     , _checkers(NULL, a) {
 
     if (!extended) {

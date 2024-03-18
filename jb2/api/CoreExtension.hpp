@@ -70,6 +70,11 @@ public:
     void AppendBuilder(LOCATION, Builder *parent, Builder *b);
     void MergeDef(LOCATION, Builder *parent, Value *existingDef, Value *newDef);
 
+    //
+    // Compiler return codes
+    //
+    const CompilerReturnCode CompileFail_CodeGeneratorMissingOperationHandler;
+
 protected:
     static const SemanticVersion version;
 
