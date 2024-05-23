@@ -49,6 +49,7 @@ public:
     const String & name() const { return _name; }
     const Type * type() const { return _type; }
     SymbolID id() const { return _id; }
+    Extension *ext() const { return _ext; }
     void log(TextLogger & lgr) const;
     virtual void logDetails(TextLogger & lgr) const { }
 

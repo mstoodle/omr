@@ -23,13 +23,13 @@
 #define JBCODEGENERATORFORVM_INCL
 
 #include "JBCore.hpp"
-#include "jb/JBCodeGenerator.hpp"
 #include "vm/VM.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 namespace JB {
 
+class JBCodeGenerator;
 class JBMethodBuilder;
 
 class JBCodeGeneratorForVM : public VM::CodeGeneratorForVM {

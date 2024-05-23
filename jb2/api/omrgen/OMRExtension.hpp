@@ -15,55 +15,73 @@
  *
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] http://openjdk.java.net/legal/assembly-exception.html
- *
+ *   
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef JBCODEGENERATORFORBASE_INCL
-#define JBCODEGENERATORFORBASE_INCL
+#ifndef OMREXTENSION_INCL
+#define OMREXTENSION_INCL
 
-#include <map>
 #include "JBCore.hpp"
-#include "Base/Base.hpp"
 
 namespace OMR {
 namespace JitBuilder {
-namespace JB {
+namespace omrgen {
 
-class JBCodeGenerator;
-class JBMethodBuilder;
+class OMR_JB;
+class OMRCodeGenerator;
 
-class JBCodeGeneratorForBase : public Base::CodeGeneratorForBase {
-    JBALLOC_(JBCodeGeneratorForBase)
+class OMRExtension : public Extension {
+    JBALLOC_(OMRExtension)
 
 public:
-    DYNAMIC_ALLOC_ONLY(JBCodeGeneratorForBase, JBCodeGenerator *jbcg, Base::BaseExtension *base);
+    DYNAMIC_ALLOC_ONLY(OMRExtension, LOCATION, Compiler *compiler, bool extended=false, String extensionName="");
 
-    virtual Builder *gencode(Operation *op);
+    static const String NAME;
 
-    virtual bool registerSymbol(Symbol *sym) { return false; }
-    virtual bool registerType(const Type *type);
+    virtual const SemanticVersion * semver() const {
+        return &version;
+    }
+
+    //
+    // Types
+    //
+
+
+    //
+    // Actions
+    //
+
+
+    //
+    // CompilerReturnCodes
+    //
+
+
+    //
+    // Operations
+    //
+
+private:
+    OMR_JB *_omr;
 
 protected:
-    Base::BaseExtension *bx() const;
-    JBCodeGenerator *jbcg() const;
-    JBMethodBuilder *jbmb() const;
+    virtual void notifyNewExtension(Extension *other);
 
-    virtual void registerField(String baseStructName, String fieldName, const Type *fieldType, size_t fieldOffset);
+    OMR_JB *singleton();
 
-    DEFINE_CG_BASE_HANDLERS(JBCodeGeneratorForBase);
+    OMRCodeGenerator *_omrcg;
 
-    Base::BaseExtension *_bx;
-    DEFINE_CG_BASE_VFT_FIELDS;
+    static const MajorID OMREXT_MAJOR=0;
+    static const MinorID OMREXT_MINOR=1;
+    static const PatchID OMREXT_PATCH=0;
+    static const SemanticVersion version;
 
-    typedef std::map<const Base::FieldType *, String *> FieldMapType;
-    std::map<const Base::StructType *, FieldMapType> _structFieldNameMap;
-
-    SUBCLASS_KINDSERVICE_DECL(Extensible,JBCodeGeneratorForBase);
+    SUBCLASS_KINDSERVICE_DECL(Extensible,OMRExtension);
 };
 
-} // namespace JB
+} // namespace omrgen
 } // namespace JitBuilder
 } // namespace OMR
 
-#endif // defined(JBCODEGENERATORFORBASE_INCL)
+#endif // defined(OMREXTENSION_INCL)

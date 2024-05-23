@@ -19,8 +19,8 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef BITVECTOR_INCL
-#define BITVECTOR_INCL
+#ifndef JB2_BITVECTOR_INCL
+#define JB2_BITVECTOR_INCL
 
 #include <cassert>
 #include <cstring>
@@ -334,4 +334,4 @@ protected:
 #undef BITWORD
 #undef TOTALWORDS
 
-#endif // defined(BITVECTOR_INCL)
+#endif // defined(JB2_BITVECTOR_INCL)

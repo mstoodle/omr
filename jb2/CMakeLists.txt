@@ -45,6 +45,9 @@ set(JB2_OBJECTS
 #
 	compile/JB2ResolvedMethod.cpp	# omrgen extension
 	ilgen/JB2MethodDetails.cpp		# omrgen extension
+	api/omrgen/OMRCodeGenerator.cpp # omrgen extension
+	api/omrgen/OMRIlGen.cpp			# omrgen extension
+	api/omrgen/OMRJB.cpp			# omrgen extension
 )
 
 if(OMR_ARCH_X86)
