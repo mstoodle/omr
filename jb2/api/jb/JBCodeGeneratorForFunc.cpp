@@ -20,6 +20,7 @@
  *******************************************************************************/
 
 #include "Func/Func.hpp"
+#include "jb/JBCodeGenerator.hpp"
 #include "jb/JBCodeGeneratorForFunc.hpp"
 #include "jb/JBMethodBuilder.hpp"
 

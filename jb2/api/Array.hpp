@@ -19,8 +19,8 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef ARRAY_INCL
-#define ARRAY_INCL
+#ifndef JB2_ARRAY_INCL
+#define JB2_ARRAY_INCL
 
 #include <cassert>
 #include <cstring>
@@ -292,4 +292,4 @@ protected:
 } // namespace JitBuilder
 } // namespace OMR
 
-#endif // defined(ARRAY_INCL)
+#endif // defined(JB2_ARRAY_INCL)

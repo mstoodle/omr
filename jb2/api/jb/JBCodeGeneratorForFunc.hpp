@@ -24,12 +24,12 @@
 
 #include "JBCore.hpp"
 #include "Func/Func.hpp"
-#include "jb/JBCodeGenerator.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 namespace JB {
 
+class JBCodeGenerator;
 class JBMethodBuilder;
 
 class JBCodeGeneratorForFunc : public Func::CodeGeneratorForFunc {

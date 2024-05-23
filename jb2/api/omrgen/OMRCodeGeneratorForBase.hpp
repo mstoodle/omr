@@ -19,8 +19,8 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef JBCODEGENERATORFORBASE_INCL
-#define JBCODEGENERATORFORBASE_INCL
+#ifndef OMRCODEGENERATORFORBASE_INCL
+#define OMRCODEGENERATORFORBASE_INCL
 
 #include <map>
 #include "JBCore.hpp"
@@ -28,16 +28,15 @@
 
 namespace OMR {
 namespace JitBuilder {
-namespace JB {
+namespace omrgen {
 
-class JBCodeGenerator;
-class JBMethodBuilder;
+class OMRCodeGenerator;
 
-class JBCodeGeneratorForBase : public Base::CodeGeneratorForBase {
-    JBALLOC_(JBCodeGeneratorForBase)
+class OMRCodeGeneratorForBase : public Base::CodeGeneratorForBase {
+    JBALLOC_(OMRCodeGeneratorForBase)
 
 public:
-    DYNAMIC_ALLOC_ONLY(JBCodeGeneratorForBase, JBCodeGenerator *jbcg, Base::BaseExtension *base);
+    DYNAMIC_ALLOC_ONLY(OMRCodeGeneratorForBase, OMRCodeGenerator *omrcg, Base::BaseExtension *base);
 
     virtual Builder *gencode(Operation *op);
 
@@ -46,12 +45,12 @@ public:
 
 protected:
     Base::BaseExtension *bx() const;
-    JBCodeGenerator *jbcg() const;
-    JBMethodBuilder *jbmb() const;
+    OMRCodeGenerator *omrcg() const;
+    OMRIlGen *ilgen() const;
 
     virtual void registerField(String baseStructName, String fieldName, const Type *fieldType, size_t fieldOffset);
 
-    DEFINE_CG_BASE_HANDLERS(JBCodeGeneratorForBase);
+    DEFINE_CG_BASE_HANDLERS(OMRCodeGeneratorForBase);
 
     Base::BaseExtension *_bx;
     DEFINE_CG_BASE_VFT_FIELDS;
@@ -59,11 +58,11 @@ protected:
     typedef std::map<const Base::FieldType *, String *> FieldMapType;
     std::map<const Base::StructType *, FieldMapType> _structFieldNameMap;
 
-    SUBCLASS_KINDSERVICE_DECL(Extensible,JBCodeGeneratorForBase);
+    SUBCLASS_KINDSERVICE_DECL(Extensible,OMRCodeGeneratorForBase);
 };
 
-} // namespace JB
+} // namespace omrgen
 } // namespace JitBuilder
 } // namespace OMR
 
-#endif // defined(JBCODEGENERATORFORBASE_INCL)
+#endif // defined(OMRCODEGENERATORFORBASE_INCL)

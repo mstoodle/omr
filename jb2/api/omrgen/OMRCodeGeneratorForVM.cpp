@@ -21,52 +21,51 @@
 
 #include <assert.h>
 #include "JBCore.hpp"
-#include "jb/JBCodeGenerator.hpp"
-#include "jb/JBCodeGeneratorForVM.hpp"
-#include "jb/JBMethodBuilder.hpp"
-#include "vm/VM.hpp"
+#include "omrgen/OMRCodeGenerator.hpp"
+#include "omrgen/OMRCodeGeneratorForVM.hpp"
+#include "omrgen/OMRIlGen.hpp"
 
 
 namespace OMR {
 namespace JitBuilder {
-namespace JB {
+namespace omrgen {
 
 static const MajorID BASEDON_VMEXT_MAJOR=0;
 static const MajorID BASEDON_VMEXT_MINOR=1;
 static const MajorID BASEDON_VMEXT_PATCH=0;
 const static SemanticVersion correctVMVersion(BASEDON_VMEXT_MAJOR,BASEDON_VMEXT_MINOR,BASEDON_VMEXT_PATCH);
 
-INIT_JBALLOC_REUSECAT(JBCodeGeneratorForVM, CodeGeneration)
-SUBCLASS_KINDSERVICE_IMPL(JBCodeGeneratorForVM,"JBCodeGeneratorForVM",JBCodeGenerator,Extensible);
+INIT_JBALLOC_REUSECAT(OMRCodeGeneratorForVM, CodeGeneration)
+SUBCLASS_KINDSERVICE_IMPL(OMRCodeGeneratorForVM,"OMRCodeGeneratorForVM",CodeGeneratorForVM,Extensible);
 
-JBCodeGeneratorForVM::JBCodeGeneratorForVM(Allocator *a, JBCodeGenerator *jbcg, VM::VMExtension *vmx)
-    : CodeGeneratorForVM(a, jbcg, vmx)
+OMRCodeGeneratorForVM::OMRCodeGeneratorForVM(Allocator *a, OMRCodeGenerator *omrcg, VM::VMExtension *vmx)
+    : CodeGeneratorForVM(a, omrcg, vmx)
     , _vmx(vmx) {
 
     assert(vmx->semver()->isCompatibleWith(correctVMVersion));
 }
 
-JBCodeGeneratorForVM::~JBCodeGeneratorForVM() {
+OMRCodeGeneratorForVM::~OMRCodeGeneratorForVM() {
 }
 
 
-JBCodeGenerator *
-JBCodeGeneratorForVM::jbcg() const {
-    return cg()->refine<JBCodeGenerator>();
+OMRCodeGenerator *
+OMRCodeGeneratorForVM::omrcg() const {
+    return cg()->refine<OMRCodeGenerator>();
 }
 
-JBMethodBuilder *
-JBCodeGeneratorForVM::jbmb() const {
-    return jbcg()->jbmb();
+OMRIlGen *
+OMRCodeGeneratorForVM::ilgen() const {
+    return omrcg()->ilgen();
 }
 
 bool
-JBCodeGeneratorForVM::registerBuilder(Builder *b) {
+OMRCodeGeneratorForVM::registerBuilder(Builder *b) {
     VM::VMBuilderAddon *vmba = b->addon<VM::VMBuilderAddon>();
-    jbmb()->createBytecodeBuilder(b, vmba->bcIndex(), b->name());
+    //ilgen()->registerBuilder(b, vmba->bcIndex());
     return true;
 }
 
-} // namespace JB
+} // namespace omrgen
 } // namespace JitBuilder
 } // namespace OMR

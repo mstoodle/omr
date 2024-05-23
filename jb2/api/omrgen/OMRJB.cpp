@@ -19,51 +19,48 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef JBCODEGENERATORFORBASE_INCL
-#define JBCODEGENERATORFORBASE_INCL
+#include "api/omrgen/OMRJB.hpp"
 
-#include <map>
-#include "JBCore.hpp"
-#include "Base/Base.hpp"
+bool internal_initializeJit();
+void internal_shutdownJit();
 
 namespace OMR {
 namespace JitBuilder {
-namespace JB {
+namespace omrgen {
 
-class JBCodeGenerator;
-class JBMethodBuilder;
+OMR_JB::OMR_JB()
+    : _initializeCount(0) {
+}
 
-class JBCodeGeneratorForBase : public Base::CodeGeneratorForBase {
-    JBALLOC_(JBCodeGeneratorForBase)
+OMR_JB OMR_JB::jb;
 
-public:
-    DYNAMIC_ALLOC_ONLY(JBCodeGeneratorForBase, JBCodeGenerator *jbcg, Base::BaseExtension *base);
+OMR_JB *
+OMR_JB::instance() {
+    return &jb;
+}
 
-    virtual Builder *gencode(Operation *op);
+bool
+OMR_JB::initialize() {
+    bool rc=true;
+    // should acquire mutex here
+    if (_initializeCount == 0)
+        rc = internal_initializeJit();
+    if (rc)
+        _initializeCount++;
+    // release mutex
+    return rc;
+}
 
-    virtual bool registerSymbol(Symbol *sym) { return false; }
-    virtual bool registerType(const Type *type);
+void
+OMR_JB::shutdown() {
+    // should acquire mutex here
+    _initializeCount--;
+    if (_initializeCount == 0)
+        internal_shutdownJit();
+    // release mutex
+}
 
-protected:
-    Base::BaseExtension *bx() const;
-    JBCodeGenerator *jbcg() const;
-    JBMethodBuilder *jbmb() const;
-
-    virtual void registerField(String baseStructName, String fieldName, const Type *fieldType, size_t fieldOffset);
-
-    DEFINE_CG_BASE_HANDLERS(JBCodeGeneratorForBase);
-
-    Base::BaseExtension *_bx;
-    DEFINE_CG_BASE_VFT_FIELDS;
-
-    typedef std::map<const Base::FieldType *, String *> FieldMapType;
-    std::map<const Base::StructType *, FieldMapType> _structFieldNameMap;
-
-    SUBCLASS_KINDSERVICE_DECL(Extensible,JBCodeGeneratorForBase);
-};
-
-} // namespace JB
+} // namespace omrgen
 } // namespace JitBuilder
 } // namespace OMR
 
-#endif // defined(JBCODEGENERATORFORBASE_INCL)

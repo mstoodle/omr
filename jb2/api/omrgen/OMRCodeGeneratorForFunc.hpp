@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2021, 2022 IBM Corp. and others
+ * Copyright (c) 2021, 2023 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
- * distribution and is available at http://eclipse.org/legal/epl-2.0
+ * distr/bution and is available at http://eclipse.org/legal/epl-2.0
  * or the Apache License, Version 2.0 which accompanies this distribution
  * and is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
@@ -19,51 +19,46 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef JBCODEGENERATORFORBASE_INCL
-#define JBCODEGENERATORFORBASE_INCL
+#ifndef OMRCODEGENERATORFORFUNC_INCL
+#define OMRCODEGENERATORFORFUNC_INCL
 
-#include <map>
 #include "JBCore.hpp"
-#include "Base/Base.hpp"
+#include "Func/Func.hpp"
 
 namespace OMR {
 namespace JitBuilder {
-namespace JB {
+namespace omrgen {
 
-class JBCodeGenerator;
-class JBMethodBuilder;
+class OMRCodeGenerator;
+class OMRIlGen;
 
-class JBCodeGeneratorForBase : public Base::CodeGeneratorForBase {
-    JBALLOC_(JBCodeGeneratorForBase)
+class OMRCodeGeneratorForFunc : public Func::CodeGeneratorForFunc {
+    JBALLOC_(OMRCodeGeneratorForFunc)
 
 public:
-    DYNAMIC_ALLOC_ONLY(JBCodeGeneratorForBase, JBCodeGenerator *jbcg, Base::BaseExtension *base);
+    DYNAMIC_ALLOC_ONLY(OMRCodeGeneratorForFunc, OMRCodeGenerator *omrcg, Func::FunctionExtension *func);
 
+    virtual void setupbody(Compilation *comp);
+    virtual void genbody(Compilation *comp);
     virtual Builder *gencode(Operation *op);
 
-    virtual bool registerSymbol(Symbol *sym) { return false; }
+    virtual bool registerSymbol(Symbol *sym);
     virtual bool registerType(const Type *type);
 
 protected:
-    Base::BaseExtension *bx() const;
-    JBCodeGenerator *jbcg() const;
-    JBMethodBuilder *jbmb() const;
+    OMRCodeGenerator *omrcg() const;
+    OMRIlGen *ilgen() const;
 
-    virtual void registerField(String baseStructName, String fieldName, const Type *fieldType, size_t fieldOffset);
+    DEFINE_CG_FUNC_HANDLERS(OMRCodeGeneratorForFunc);
+    DEFINE_CG_FUNC_VFT_FIELDS;
 
-    DEFINE_CG_BASE_HANDLERS(JBCodeGeneratorForBase);
+    Func::FunctionExtension *_fx;
 
-    Base::BaseExtension *_bx;
-    DEFINE_CG_BASE_VFT_FIELDS;
-
-    typedef std::map<const Base::FieldType *, String *> FieldMapType;
-    std::map<const Base::StructType *, FieldMapType> _structFieldNameMap;
-
-    SUBCLASS_KINDSERVICE_DECL(Extensible,JBCodeGeneratorForBase);
+    SUBCLASS_KINDSERVICE_DECL(Extensible,OMRCodeGeneratorForFunc);
 };
 
-} // namespace JB
+} // namespace omrgen
 } // namespace JitBuilder
 } // namespace OMR
 
-#endif // defined(JBCODEGENERATORFORBASE_INCL)
+#endif // defined(OMRCODEGENERATORFORFUNC_INCL)

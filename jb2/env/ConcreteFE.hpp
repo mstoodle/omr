@@ -26,6 +26,6 @@
 // can use that
 namespace OMR
 {
-typedef JitBuilder::FrontEnd FrontEnd;
+typedef ::JitBuilder::FrontEnd FrontEnd;
 }
 

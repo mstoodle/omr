@@ -145,7 +145,7 @@ if (OMR_JB2_EXT_JB)
 endif()
 
 if (OMR_JB2_EXT_OMRGEN)
-	#add_subdirectory(omrgen)
+	add_subdirectory(omrgen)
 endif()
 
 if (OMR_JB2_EXT_VM)
