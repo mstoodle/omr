@@ -21,104 +21,113 @@
 
 #include "JBCore.hpp"
 #include "Base/Base.hpp"
-#include "jb/JBCodeGenerator.hpp"
-#include "jb/JBCodeGeneratorForBase.hpp"
-#include "jb/JBMethodBuilder.hpp"
+#include "omrgen/OMRCodeGenerator.hpp"
+#include "omrgen/OMRCodeGeneratorForBase.hpp"
+#include "omrgen/OMRIlGen.hpp"
 
 
 namespace OMR {
 namespace JitBuilder {
-namespace JB {
+namespace omrgen {
 
 static const MajorID BASEDON_BASEEXT_MAJOR=0;
 static const MajorID BASEDON_BASEEXT_MINOR=1;
 static const MajorID BASEDON_BASEEXT_PATCH=0;
 const static SemanticVersion minimumBaseVersion(BASEDON_BASEEXT_MAJOR,BASEDON_BASEEXT_MINOR,BASEDON_BASEEXT_PATCH);
 
-INIT_JBALLOC_REUSECAT(JBCodeGeneratorForBase, CodeGeneration)
-SUBCLASS_KINDSERVICE_IMPL(JBCodeGeneratorForBase,"JBCodeGeneratorForBase",JBCodeGenerator,Extensible);
+INIT_JBALLOC_REUSECAT(OMRCodeGeneratorForBase, CodeGeneration)
+SUBCLASS_KINDSERVICE_IMPL(OMRCodeGeneratorForBase,"OMRCodeGeneratorForBase",Base::CodeGeneratorForBase,Extensible);
 
-JBCodeGeneratorForBase::JBCodeGeneratorForBase(Allocator *a, JBCodeGenerator *jbcg, Base::BaseExtension *bx)
-    : Base::CodeGeneratorForBase(a, jbcg, bx)
+OMRCodeGeneratorForBase::OMRCodeGeneratorForBase(Allocator *a, OMRCodeGenerator *omrcg, Base::BaseExtension *bx)
+    : Base::CodeGeneratorForBase(a, omrcg, bx)
     , _bx(bx)
     INIT_CG_BASE_VFT_FIELDS(a) {
 
     assert(bx->semver()->isCompatibleWith(minimumBaseVersion));
 
-    INIT_CG_BASE_HANDLERS(JBCodeGeneratorForBase);
+    INIT_CG_BASE_HANDLERS(OMRCodeGeneratorForBase);
 
     setTraceEnabled(false);
 }
 
-JBCodeGeneratorForBase::~JBCodeGeneratorForBase() {
+OMRCodeGeneratorForBase::~OMRCodeGeneratorForBase() {
 }
 
 Base::BaseExtension *
-JBCodeGeneratorForBase::bx() const {
+OMRCodeGeneratorForBase::bx() const {
     return _bx;
 }
 
-JBCodeGenerator *
-JBCodeGeneratorForBase::jbcg() const {
-    return cg()->refine<JBCodeGenerator>();
+OMRCodeGenerator *
+OMRCodeGeneratorForBase::omrcg() const {
+    return cg()->refine<OMRCodeGenerator>();
 }
 
-JBMethodBuilder *
-JBCodeGeneratorForBase::jbmb() const {
-    return jbcg()->jbmb();
+OMRIlGen *
+OMRCodeGeneratorForBase::ilgen() const {
+    return omrcg()->ilgen();
 }
 
 //
 // regtype functions per primitive type
 //
 void
-JBCodeGeneratorForBase::regtypeInt8(const Type *Int8) {
-    jbmb()->registerInt8(Int8);
+OMRCodeGeneratorForBase::regtypeInt8(const Type *Int8) {
+    ilgen()->registerInt8(Int8);
 }
 
 void
-JBCodeGeneratorForBase::regtypeInt16(const Type *Int16) {
-    jbmb()->registerInt16(Int16);
+OMRCodeGeneratorForBase::regtypeInt16(const Type *Int16) {
+    ilgen()->registerInt16(Int16);
 }
 
 void
-JBCodeGeneratorForBase::regtypeInt32(const Type *Int32) {
-    jbmb()->registerInt32(Int32);
+OMRCodeGeneratorForBase::regtypeInt32(const Type *Int32) {
+    ilgen()->registerInt32(Int32);
 }
 
 void
-JBCodeGeneratorForBase::regtypeInt64(const Type *Int64) {
-    jbmb()->registerInt64(Int64);
+OMRCodeGeneratorForBase::regtypeInt64(const Type *Int64) {
+    ilgen()->registerInt64(Int64);
 }
 
 void
-JBCodeGeneratorForBase::regtypeFloat32(const Type *Float32) {
-    jbmb()->registerFloat(Float32);
+OMRCodeGeneratorForBase::regtypeFloat32(const Type *Float32) {
+    ilgen()->registerFloat(Float32);
 }
 
 void
-JBCodeGeneratorForBase::regtypeFloat64(const Type *Float64) {
-    jbmb()->registerDouble(Float64);
+OMRCodeGeneratorForBase::regtypeFloat64(const Type *Float64) {
+    ilgen()->registerDouble(Float64);
 }
 
 void
-JBCodeGeneratorForBase::regtypeAddress(const Type *Address) {
-    jbmb()->registerAddress(Address);
+OMRCodeGeneratorForBase::regtypeAddress(const Type *Address) {
+    ilgen()->registerAddress(Address);
 }
 
 void
-JBCodeGeneratorForBase::registerField(String baseStructName, String fieldName, const Type *fieldType, size_t fieldOffset) {
-    jbmb()->registerField(baseStructName, fieldName, fieldType, fieldOffset);
+OMRCodeGeneratorForBase::registerField(String baseStructName, String fieldName, const Type *fieldType, size_t fieldOffset) {
 }
 
 bool
-JBCodeGeneratorForBase::registerType(const Type *t) {
+OMRCodeGeneratorForBase::registerType(const Type *t) {
     if (t->isKind<Base::PointerType>()) {
-        const Type *baseType = t->refine<Base::PointerType>()->baseType();
-        if (!jbmb()->typeRegistered(baseType))
-            return false; // will be registered later in this registration pass
-        jbmb()->registerPointer(t, baseType);
+        ilgen()->registerAddress(t);
+        return true;
+    } else if (t->isKind<const Base::StructType>()) {
+        assert(0); // need to handle
+    } else if (t->isKind<const Base::FieldType>()) {
+        assert(0); // need to handle
+    } else {
+        TypeID id = t->id();
+        regtypeFunction f = _regtypeVFT[id];
+        if (f != NULL) {
+            (this->*f)(t);
+            return true;
+        }
     }
+    #if 0
     else if (t->isKind<const Base::StructType>()) {
         if (!jbmb()->typeRegistered(t)) {
             jbmb()->registerStruct(t);
@@ -131,16 +140,10 @@ JBCodeGeneratorForBase::registerType(const Type *t) {
     }
     else if (t->isKind<const Base::FieldType>()) {
         // fields are registered as part of registering the struct
-    } else {
-        TypeID id = t->id();
-        regtypeFunction f = _regtypeVFT[id];
-        if (f != NULL) {
-            (this->*f)(t);
-            return true;
-        }
     }
+    #endif
 
-    return true;
+    return false;
 }
 
 
@@ -149,157 +152,155 @@ JBCodeGeneratorForBase::registerType(const Type *t) {
 //
 
 Builder *
-JBCodeGeneratorForBase::gencode(Operation *op) {
+OMRCodeGeneratorForBase::gencode(Operation *op) {
     ActionID a = op->action();
     gencodeFunction f = _gencodeVFT[a];
     return (this->*f)(op);
 }
 
 Builder *
-JBCodeGeneratorForBase::gencodeAdd(Operation *op) {
+OMRCodeGeneratorForBase::gencodeAdd(Operation *op) {
     assert(op->action() == _bx->aAdd);
-    jbmb()->Add(op->location(), op->parent(), op->result(), op->operand(0), op->operand(1));
+    assert(0); // TODO
     return NULL;
 }
 
 Builder *
-JBCodeGeneratorForBase::gencodeConvertTo(Operation *op) {
+OMRCodeGeneratorForBase::gencodeConvertTo(Operation *op) {
     assert(op->action() == _bx->aConvertTo);
-    jbmb()->ConvertTo(op->location(), op->parent(), op->result(), op->type(), op->operand());
+    ilgen()->convertTo(op->location(), op->result(), op->type(0), op->operand(0), false);
     return NULL;
 }
 
 Builder *
-JBCodeGeneratorForBase::gencodeMul(Operation *op) {
+OMRCodeGeneratorForBase::gencodeMul(Operation *op) {
     assert(op->action() == _bx->aMul);
-    jbmb()->Mul(op->location(), op->parent(), op->result(), op->operand(0), op->operand(1));
+    assert(0); // TODO
     return NULL;
 }
 
 Builder *
-JBCodeGeneratorForBase::gencodeSub(Operation *op) {
+OMRCodeGeneratorForBase::gencodeSub(Operation *op) {
     assert(op->action() == _bx->aSub);
-    jbmb()->Sub(op->location(), op->parent(), op->result(), op->operand(0), op->operand(1));
+    assert(0); // TODO
     return NULL;
 }
 
 Builder *
-JBCodeGeneratorForBase::gencodeForLoopUp(Operation *op) {
+OMRCodeGeneratorForBase::gencodeForLoopUp(Operation *op) {
     assert(op->action() == _bx->aForLoopUp);
-    jbmb()->ForLoopUp(op->location(), op->parent(),
-                      op->symbol(),    // loopVariable
-                      op->operand(0),  // initial
-                      op->operand(1),  // final
-                      op->operand(2),  // bump
-                      op->builder(0),  // loopBody
-                      op->builder(1),  // loopBreak
-                      op->builder(2)); // loopContinue
+    assert(0); // TODO
     return NULL;
 }
 
 Builder *
-JBCodeGeneratorForBase::gencodeGoto(Operation *op) {
+OMRCodeGeneratorForBase::gencodeGoto(Operation *op) {
     assert(op->action() == _bx->aGoto);
-    jbmb()->Goto(op->location(), op->parent(), op->builder());
+    assert(0); // TODO
     return NULL;
 }
 
 Builder *
-JBCodeGeneratorForBase::gencodeIfCmpEqual(Operation *op) {
+OMRCodeGeneratorForBase::gencodeIfCmpEqual(Operation *op) {
     assert(op->action() == _bx->aIfCmpEqual);
-    jbmb()->IfCmpEqual(op->location(), op->parent(), op->builder(), op->operand(0), op->operand(1));
+    assert(0); // TODO
     return NULL;
 }
 
 Builder *
-JBCodeGeneratorForBase::gencodeIfCmpEqualZero(Operation *op) {
+OMRCodeGeneratorForBase::gencodeIfCmpEqualZero(Operation *op) {
     assert(op->action() == _bx->aIfCmpEqualZero);
-    jbmb()->IfCmpEqualZero(op->location(), op->parent(), op->builder(), op->operand(0));
+    assert(0); // TODO
     return NULL;
 }
 
 Builder *
-JBCodeGeneratorForBase::gencodeIfCmpGreaterThan(Operation *op) {
+OMRCodeGeneratorForBase::gencodeIfCmpGreaterThan(Operation *op) {
     assert(op->action() == _bx->aIfCmpGreaterThan);
-    jbmb()->IfCmpGreaterThan(op->location(), op->parent(), op->builder(), op->operand(0), op->operand(1));
+    assert(0); // TODO
     return NULL;
 }
 
 Builder *
-JBCodeGeneratorForBase::gencodeIfCmpGreaterOrEqual(Operation *op) {
+OMRCodeGeneratorForBase::gencodeIfCmpGreaterOrEqual(Operation *op) {
     assert(op->action() == _bx->aIfCmpGreaterOrEqual);
-    jbmb()->IfCmpGreaterOrEqual(op->location(), op->parent(), op->builder(), op->operand(0), op->operand(1));
+    assert(0); // TODO
     return NULL;
 }
 
 Builder *
-JBCodeGeneratorForBase::gencodeIfCmpLessThan(Operation *op) {
+OMRCodeGeneratorForBase::gencodeIfCmpLessThan(Operation *op) {
     assert(op->action() == _bx->aIfCmpLessThan);
-    jbmb()->IfCmpLessThan(op->location(), op->parent(), op->builder(), op->operand(0), op->operand(1));
+    assert(0); // TODO
     return NULL;
 }
 
 Builder *
-JBCodeGeneratorForBase::gencodeIfCmpLessOrEqual(Operation *op) {
+OMRCodeGeneratorForBase::gencodeIfCmpLessOrEqual(Operation *op) {
     assert(op->action() == _bx->aIfCmpLessOrEqual);
-    jbmb()->IfCmpLessOrEqual(op->location(), op->parent(), op->builder(), op->operand(0), op->operand(1));
+    assert(0); // TODO
     return NULL;
 }
 
 Builder *
-JBCodeGeneratorForBase::gencodeIfCmpNotEqual(Operation *op) {
+OMRCodeGeneratorForBase::gencodeIfCmpNotEqual(Operation *op) {
     assert(op->action() == _bx->aIfCmpNotEqual);
-    jbmb()->IfCmpNotEqual(op->location(), op->parent(), op->builder(), op->operand(0), op->operand(1));
+    assert(0); // TODO
     return NULL;
 }
 
 Builder *
-JBCodeGeneratorForBase::gencodeIfCmpNotEqualZero(Operation *op) {
+OMRCodeGeneratorForBase::gencodeIfCmpNotEqualZero(Operation *op) {
     assert(op->action() == _bx->aIfCmpNotEqualZero);
-    jbmb()->IfCmpNotEqualZero(op->location(), op->parent(), op->builder(), op->operand(0));
+    assert(0); // TODO
     return NULL;
 }
 
 Builder *
-JBCodeGeneratorForBase::gencodeIfCmpUnsignedGreaterThan(Operation *op) {
+OMRCodeGeneratorForBase::gencodeIfCmpUnsignedGreaterThan(Operation *op) {
     assert(op->action() == _bx->aIfCmpUnsignedGreaterThan);
-    jbmb()->IfCmpUnsignedGreaterThan(op->location(), op->parent(), op->builder(), op->operand(0), op->operand(1));
+    assert(0); // TODO
     return NULL;
 }
 
 Builder *
-JBCodeGeneratorForBase::gencodeIfCmpUnsignedGreaterOrEqual(Operation *op) {
+OMRCodeGeneratorForBase::gencodeIfCmpUnsignedGreaterOrEqual(Operation *op) {
     assert(op->action() == _bx->aIfCmpUnsignedGreaterOrEqual);
-    jbmb()->IfCmpUnsignedGreaterOrEqual(op->location(), op->parent(), op->builder(), op->operand(0), op->operand(1));
+    assert(0); // TODO
     return NULL;
 }
 
 Builder *
-JBCodeGeneratorForBase::gencodeIfCmpUnsignedLessThan(Operation *op) {
+OMRCodeGeneratorForBase::gencodeIfCmpUnsignedLessThan(Operation *op) {
     assert(op->action() == _bx->aIfCmpUnsignedLessThan);
-    jbmb()->IfCmpUnsignedLessThan(op->location(), op->parent(), op->builder(), op->operand(0), op->operand(1));
+    assert(0); // TODO
     return NULL;
 }
 
 Builder *
-JBCodeGeneratorForBase::gencodeIfCmpUnsignedLessOrEqual(Operation *op) {
+OMRCodeGeneratorForBase::gencodeIfCmpUnsignedLessOrEqual(Operation *op) {
     assert(op->action() == _bx->aIfCmpUnsignedLessOrEqual);
-    jbmb()->IfCmpUnsignedLessOrEqual(op->location(), op->parent(), op->builder(), op->operand(0), op->operand(1));
+    assert(0); // TODO
     return NULL;
 }
 
 Builder *
-JBCodeGeneratorForBase::gencodeIfThenElse(Operation *op) {
+OMRCodeGeneratorForBase::gencodeIfThenElse(Operation *op) {
     assert(op->action() == _bx->aIfThenElse);
+    assert(0); // TODO
+    #if 0
     if (op->builder(1))
         jbmb()->IfThenElse(op->location(), op->parent(), op->builder(0), op->builder(1), op->operand());
     jbmb()->IfThen(op->location(), op->parent(), op->builder(), op->operand());
+    #endif
     return NULL;
 }
 
 Builder *
-JBCodeGeneratorForBase::gencodeSwitch(Operation *op) {
+OMRCodeGeneratorForBase::gencodeSwitch(Operation *op) {
     assert(op->action() == _bx->aSwitch);
+    assert(0); // TODO
+    #if 0
     Base::Op_Switch *opSwitch = static_cast<Base::Op_Switch *>(op);
     Allocator *mem = op->parent()->ir()->mem();
     int numCases = opSwitch->numCases();
@@ -318,77 +319,82 @@ JBCodeGeneratorForBase::gencodeSwitch(Operation *op) {
     delete[] fallThroughs;
     delete[] builders;
     delete[] lvs;
+    #endif
     return NULL;
 }
 
 Builder *
-JBCodeGeneratorForBase::gencodeLoadAt(Operation *op) {
+OMRCodeGeneratorForBase::gencodeLoadAt(Operation *op) {
     assert(op->action() == _bx->aLoadAt);
-    jbmb()->LoadAt(op->location(), op->parent(), op->result(), op->operand());
+    Base::Op_LoadAt *opLoadAt = static_cast<Base::Op_LoadAt *>(op);
+    Value *address = opLoadAt->operand();
+    const Base::PointerType *addressType = address->type()->refine<Base::PointerType>();
+    ilgen()->loadAt(opLoadAt->location(), opLoadAt->result(), address, addressType->baseType());
     return NULL;
 }
 
 Builder *
-JBCodeGeneratorForBase::gencodeStoreAt(Operation *op) {
+OMRCodeGeneratorForBase::gencodeStoreAt(Operation *op) {
     assert(op->action() == _bx->aStoreAt);
-    jbmb()->StoreAt(op->location(), op->parent(),
-                    op->operand(0),  // base
-                    op->operand(1)); // value
+    Base::Op_StoreAt *opStoreAt = static_cast<Base::Op_StoreAt *>(op);
+    Value *address = opStoreAt->operand(0);
+    const Base::PointerType *addressType = address->type()->refine<Base::PointerType>();
+    ilgen()->storeAt(opStoreAt->location(), address, addressType->baseType(), opStoreAt->operand(1));
     return NULL;
 }
 
 Builder *
-JBCodeGeneratorForBase::gencodeLoadField(Operation *op) {
+OMRCodeGeneratorForBase::gencodeLoadField(Operation *op) {
     assert(op->action() == _bx->aLoadField);
     assert(0); // TODO
     return NULL;
 }
 
 Builder *
-JBCodeGeneratorForBase::gencodeStoreField(Operation *op) {
+OMRCodeGeneratorForBase::gencodeStoreField(Operation *op) {
     assert(op->action() == _bx->aStoreField);
     assert(0); // TODO
     return NULL;
 }
 
 Builder *
-JBCodeGeneratorForBase::gencodeLoadFieldAt(Operation *op) {
+OMRCodeGeneratorForBase::gencodeLoadFieldAt(Operation *op) {
     assert(op->action() == _bx->aLoadFieldAt);
     const Base::FieldType *ft = op->type()->refine<Base::FieldType>();
     const Base::StructType *owningStruct = ft->owningStruct();
     const String & structName = owningStruct->name();
-    jbmb()->LoadIndirect(op->location(), op->parent(), op->result(), structName, lookupFieldString(owningStruct, ft), op->operand());
+    assert(0); // TODO
     return NULL;
 }
 
 Builder *
-JBCodeGeneratorForBase::gencodeStoreFieldAt(Operation *op) {
+OMRCodeGeneratorForBase::gencodeStoreFieldAt(Operation *op) {
     assert(op->action() == _bx->aStoreFieldAt);
     const Base::FieldType *ft = op->type()->refine<Base::FieldType>();
     const Base::StructType *owningStruct = ft->owningStruct();
     const String & structName = owningStruct->name();
-    jbmb()->StoreIndirect(op->location(), op->parent(), structName, lookupFieldString(owningStruct, ft), op->operand(0), op->operand(1));
+    assert(0); // TODO
     return NULL;
 }
 
 Builder *
-JBCodeGeneratorForBase::gencodeCreateLocalArray(Operation *op) {
+OMRCodeGeneratorForBase::gencodeCreateLocalArray(Operation *op) {
     assert(op->action() == _bx->aCreateLocalArray);
-    jbmb()->CreateLocalArray(op->location(), op->parent(), op->result(), op->literal(), op->type());
+    assert(0); // TODO
     return NULL;
 }
 
 Builder *
-JBCodeGeneratorForBase::gencodeCreateLocalStruct(Operation *op) {
+OMRCodeGeneratorForBase::gencodeCreateLocalStruct(Operation *op) {
     assert(op->action() == _bx->aCreateLocalStruct);
-    jbmb()->CreateLocalStruct(op->location(), op->parent(), op->result(), op->type());
+    assert(0); // TODO
     return NULL;
 }
 
 Builder *
-JBCodeGeneratorForBase::gencodeIndexAt(Operation *op) {
+OMRCodeGeneratorForBase::gencodeIndexAt(Operation *op) {
     assert(op->action() == _bx->aIndexAt);
-    jbmb()->IndexAt(op->location(), op->parent(), op->result(), op->operand(0), op->operand(1));
+    assert(0); // TODO
     return NULL;
 }
 
@@ -397,7 +403,7 @@ JBCodeGeneratorForBase::gencodeIndexAt(Operation *op) {
 // genconst functions per primitive type
 //
 Builder *
-JBCodeGeneratorForBase::gencodeConst(Operation *op) {
+OMRCodeGeneratorForBase::gencodeConst(Operation *op) {
     assert(op->action() == _bx->aConst);
     const Type *retType = op->result()->type();
     if (retType->isKind<Base::PointerType>())
@@ -409,38 +415,38 @@ JBCodeGeneratorForBase::gencodeConst(Operation *op) {
 
 
 void
-JBCodeGeneratorForBase::genconstInt8(Location *loc, Builder *b, Value *result, Literal *lv) {
-    jbmb()->ConstInt8(loc, b, result, lv->value<const int8_t>());
+OMRCodeGeneratorForBase::genconstInt8(Location *loc, Builder *b, Value *result, Literal *lv) {
+    ilgen()->literalInt8(result, lv->value<int8_t>());
 }
 
 void
-JBCodeGeneratorForBase::genconstInt16(Location *loc, Builder *b, Value *result, Literal *lv) {
-    jbmb()->ConstInt16(loc, b, result, lv->value<const int16_t>());
+OMRCodeGeneratorForBase::genconstInt16(Location *loc, Builder *b, Value *result, Literal *lv) {
+    ilgen()->literalInt16(result, lv->value<int16_t>());
 }
 
 void
-JBCodeGeneratorForBase::genconstInt32(Location *loc, Builder *b, Value *result, Literal *lv) {
-    jbmb()->ConstInt32(loc, b, result, lv->value<const int32_t>());
+OMRCodeGeneratorForBase::genconstInt32(Location *loc, Builder *b, Value *result, Literal *lv) {
+    ilgen()->literalInt32(result, lv->value<int32_t>());
 }
 
 void
-JBCodeGeneratorForBase::genconstInt64(Location *loc, Builder *b, Value *result, Literal *lv) {
-    jbmb()->ConstInt64(loc, b, result, lv->value<const int64_t>());
+OMRCodeGeneratorForBase::genconstInt64(Location *loc, Builder *b, Value *result, Literal *lv) {
+    ilgen()->literalInt64(result, lv->value<int64_t>());
 }
 
 void
-JBCodeGeneratorForBase::genconstFloat32(Location *loc, Builder *b, Value *result, Literal *lv) {
-    jbmb()->ConstFloat(loc, b, result, lv->value<const float>());
+OMRCodeGeneratorForBase::genconstFloat32(Location *loc, Builder *b, Value *result, Literal *lv) {
+    ilgen()->literalFloat(result, lv->value<float>());
 }
 
 void
-JBCodeGeneratorForBase::genconstFloat64(Location *loc, Builder *b, Value *result, Literal *lv) {
-    jbmb()->ConstDouble(loc, b, result, lv->value<const double>());
+OMRCodeGeneratorForBase::genconstFloat64(Location *loc, Builder *b, Value *result, Literal *lv) {
+    ilgen()->literalDouble(result, lv->value<double>());
 }
 
 void
-JBCodeGeneratorForBase::genconstAddress(Location *loc, Builder *b, Value *result, Literal *lv) {
-    jbmb()->ConstAddress(loc, b, result, lv->value<void * const>());
+OMRCodeGeneratorForBase::genconstAddress(Location *loc, Builder *b, Value *result, Literal *lv) {
+    ilgen()->literalAddress(result, lv->value<uintptr_t>());
 }
 
 
@@ -806,6 +812,6 @@ JBCodeGenerator::transformFunctionBuilderAtEnd(FunctionBuilder * fb)
    }
 #endif
 
-} // namespace JB
+} // namespace omrgen
 } // namespace JitBuilder
 } // namespace OMR

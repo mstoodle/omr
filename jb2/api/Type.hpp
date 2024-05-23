@@ -76,6 +76,8 @@ public:
     virtual const int64_t getInteger(const Literal *lv) const { return 0; }
     virtual const double getFloatingPoint(const Literal *lv) const { return 0.0; }
 
+    virtual bool isManaged() const { return false; }
+
     // creates a Literal of this Type from the raw LiteralBytes
     virtual Literal * literal(LOCATION, IR *ir, const LiteralBytes *value) const;
 

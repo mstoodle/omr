@@ -69,6 +69,8 @@ public:
 
     void log(TextLogger &w);
 
+    SymbolID numSymbols() const { return _nextSymbolID; }
+
 protected:
     SymbolDictionary(Allocator *a, const SymbolDictionary *source, IRCloner *cloner);
 

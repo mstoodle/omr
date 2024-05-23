@@ -19,51 +19,37 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef JBCODEGENERATORFORBASE_INCL
-#define JBCODEGENERATORFORBASE_INCL
+#ifndef OMRCODEGENERATORFORCORE_INCL
+#define OMRCODEGENERATORFORCORE_INCL
 
-#include <map>
 #include "JBCore.hpp"
-#include "Base/Base.hpp"
 
 namespace OMR {
 namespace JitBuilder {
-namespace JB {
+namespace omrgen {
 
-class JBCodeGenerator;
-class JBMethodBuilder;
+class OMRCodeGenerator;
 
-class JBCodeGeneratorForBase : public Base::CodeGeneratorForBase {
-    JBALLOC_(JBCodeGeneratorForBase)
+class OMRCodeGeneratorForCore : public CodeGeneratorForCore {
+    JBALLOC_(OMRCodeGeneratorForCore)
 
 public:
-    DYNAMIC_ALLOC_ONLY(JBCodeGeneratorForBase, JBCodeGenerator *jbcg, Base::BaseExtension *base);
+    DYNAMIC_ALLOC_ONLY(OMRCodeGeneratorForCore, OMRCodeGenerator *omrcg, CoreExtension *cx);
 
-    virtual Builder *gencode(Operation *op);
-
-    virtual bool registerSymbol(Symbol *sym) { return false; }
-    virtual bool registerType(const Type *type);
+    bool registerType(const Type *t);
+    bool registerBuilder(Builder *b);
 
 protected:
-    Base::BaseExtension *bx() const;
-    JBCodeGenerator *jbcg() const;
-    JBMethodBuilder *jbmb() const;
+    OMRCodeGenerator *omrcg() const;
+    OMRIlGen *ilgen() const;
 
-    virtual void registerField(String baseStructName, String fieldName, const Type *fieldType, size_t fieldOffset);
+    DEFINE_CG_CORE_HANDLERS
 
-    DEFINE_CG_BASE_HANDLERS(JBCodeGeneratorForBase);
-
-    Base::BaseExtension *_bx;
-    DEFINE_CG_BASE_VFT_FIELDS;
-
-    typedef std::map<const Base::FieldType *, String *> FieldMapType;
-    std::map<const Base::StructType *, FieldMapType> _structFieldNameMap;
-
-    SUBCLASS_KINDSERVICE_DECL(Extensible,JBCodeGeneratorForBase);
+    SUBCLASS_KINDSERVICE_DECL(Extensible,OMRCodeGeneratorForCore);
 };
 
-} // namespace JB
+} // namespace omrgen
 } // namespace JitBuilder
 } // namespace OMR
 
-#endif // defined(JBCODEGENERATORFORBASE_INCL)
+#endif // defined(OMRCODEGENERATORFORCORE_INCL)

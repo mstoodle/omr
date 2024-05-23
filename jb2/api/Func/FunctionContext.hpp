@@ -53,6 +53,7 @@ public:
     LocalSymbolList resetLocals();
     LocalSymbol * LookupLocal(String name);
 
+    size_t numParameters() const { return this->_parameters.length(); }
     ParameterSymbolIterator parameters() const { return this->_parameters.iterator(); }
     ParameterSymbolList resetParameters();
 
@@ -83,7 +84,6 @@ protected:
 
     void DefineFunction(FunctionSymbol *function);
     FunctionSymbol * internalDefineFunction(LOCATION, FunctionCompilation *comp, String name, String fileName, String lineNumber, void *entryPoint, const Type *returnType, int32_t numParms, const Type **parmTypes);
-
 
     ParameterSymbolList _parameters;
     LocalSymbolList _locals;

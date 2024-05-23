@@ -20,71 +20,69 @@
  *******************************************************************************/
 
 #include "JBCore.hpp"
-#include "jb/JBCodeGenerator.hpp"
-#include "jb/JBCodeGeneratorForCore.hpp"
-#include "jb/JBMethodBuilder.hpp"
+#include "omrgen/OMRCodeGenerator.hpp"
+#include "omrgen/OMRCodeGeneratorForCore.hpp"
+#include "omrgen/OMRIlGen.hpp"
 
 
 namespace OMR {
 namespace JitBuilder {
-namespace JB {
+namespace omrgen {
 
 static const MajorID BASEDON_COREEXT_MAJOR=0;
 static const MajorID BASEDON_COREEXT_MINOR=1;
 static const MajorID BASEDON_COREEXT_PATCH=0;
 const static SemanticVersion minCoreVersion(BASEDON_COREEXT_MAJOR,BASEDON_COREEXT_MINOR,BASEDON_COREEXT_PATCH);
 
-INIT_JBALLOC_REUSECAT(JBCodeGeneratorForCore, CodeGeneration)
-SUBCLASS_KINDSERVICE_IMPL(JBCodeGeneratorForCore,"JBCodeGeneratorForCore",CodeGeneratorForCore,Extensible);
+INIT_JBALLOC_REUSECAT(OMRCodeGeneratorForCore, CodeGeneration)
+SUBCLASS_KINDSERVICE_IMPL(OMRCodeGeneratorForCore,"OMRCodeGeneratorForCore",CodeGeneratorForCore,Extensible);
 
-JBCodeGeneratorForCore::JBCodeGeneratorForCore(Allocator *a, JBCodeGenerator *jbcg, CoreExtension *cx)
-    : CodeGeneratorForCore(a, jbcg, cx) {
+OMRCodeGeneratorForCore::OMRCodeGeneratorForCore(Allocator *a, OMRCodeGenerator *omrcg, CoreExtension *cx)
+    : CodeGeneratorForCore(a, omrcg, cx) {
 
     assert(cx->semver()->isCompatibleWith(minCoreVersion));
 
     setTraceEnabled(false);
 }
 
-JBCodeGeneratorForCore::~JBCodeGeneratorForCore() {
+OMRCodeGeneratorForCore::~OMRCodeGeneratorForCore() {
 }
 
 
-JBCodeGenerator *
-JBCodeGeneratorForCore::jbcg() const {
-    return cg()->refine<JBCodeGenerator>();
+OMRCodeGenerator *
+OMRCodeGeneratorForCore::omrcg() const {
+    return cg()->refine<OMRCodeGenerator>();
 }
 
-JBMethodBuilder *
-JBCodeGeneratorForCore::jbmb() const {
-    return jbcg()->jbmb();
+OMRIlGen *
+OMRCodeGeneratorForCore::ilgen() const {
+    return omrcg()->ilgen();
 }
 
 bool
-JBCodeGeneratorForCore::registerType(const Type *t) {
+OMRCodeGeneratorForCore::registerType(const Type *t) {
     assert(t == cx()->NoType);
-    jbmb()->registerNoType(t);
+    ilgen()->registerNoType(t);
     return true;
 }
 
 bool
-JBCodeGeneratorForCore::registerBuilder(Builder *b) {
+OMRCodeGeneratorForCore::registerBuilder(Builder *b) {
     assert(b->isExactKind<Builder>());
-    jbmb()->createBuilder(b);
+    ilgen()->registerBuilder(b);
     return true;
 }
 
 Builder *
-JBCodeGeneratorForCore::gencodeAppendBuilder(Operation *op) {
-    jbmb()->AppendBuilder(op->location(), op->parent(), op->builder());
+OMRCodeGeneratorForCore::gencodeAppendBuilder(Operation *op) {
     return NULL;
 }
 
 Builder *
-JBCodeGeneratorForCore::gencodeMergeDef(Operation *op) {
-    jbmb()->StoreOver(op->location(), op->parent(), op->result(), op->operand());
+OMRCodeGeneratorForCore::gencodeMergeDef(Operation *op) {
     return NULL;
 }
 
-} // namespace JB
+} // namespace omrgen
 } // namespace JitBuilder
 } // namespace OMR

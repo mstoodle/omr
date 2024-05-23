@@ -1,0 +1,1100 @@
+/*******************************************************************************
+ * Copyright IBM Corp. and others 2024
+ *
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License 2.0 which accompanies this
+ * distribution and is available at http://eclipse.org/legal/epl-2.0
+ * or the Apache License, Version 2.0 which accompanies this distribution
+ * and is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * This Source Code may also be made available under the following Secondary
+ * Licenses when the conditions for such availability set forth in the
+ * Eclipse Public License, v. 2.0 are satisfied: GNU General Public License,
+ * version 2 with the GNU Classpath Exception [1] and GNU General Public
+ * License, version 2 with the OpenJDK Assembly Exception [2].
+ *
+ * [1] https://www.gnu.org/software/classpath/license.html
+ * [2] http://openjdk.java.net/legal/assembly-exception.html
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ *******************************************************************************/
+
+#include <dlfcn.h>
+#include <limits>
+#include <stdio.h>
+#include "gtest/gtest.h"
+#include "JBCore.hpp"
+#include "Func/Func.hpp"
+#include "Base/Base.hpp"
+#include "omrgen/omrgen.hpp"
+
+using namespace OMR::JitBuilder;
+
+static Compiler *getCompiler();
+
+static bool initialized = false;
+static Compiler global("Global Compiler");
+static Compiler *c = getCompiler();
+static Config *config = getCompiler()->config();
+static CoreExtension *cx = getCompiler()->lookupExtension<CoreExtension>();
+static Base::BaseExtension *bx = getCompiler()->lookupExtension<Base::BaseExtension>();
+static Func::FunctionExtension *fx = getCompiler()->lookupExtension<Func::FunctionExtension>();
+static omrgen::OMRExtension *ogx = getCompiler()->lookupExtension<omrgen::OMRExtension>();
+static const Type *NoType = getCompiler()->lookupExtension<CoreExtension>()->NoType;
+static const Type *Int8 = getCompiler()->lookupExtension<Base::BaseExtension>()->Int8;
+static const Type *Int16 = getCompiler()->lookupExtension<Base::BaseExtension>()->Int16;
+static const Type *Int32 = getCompiler()->lookupExtension<Base::BaseExtension>()->Int32;
+static const Type *Int64 = getCompiler()->lookupExtension<Base::BaseExtension>()->Int64;
+static const Type *Float32 = getCompiler()->lookupExtension<Base::BaseExtension>()->Float32;
+static const Type *Float64 = getCompiler()->lookupExtension<Base::BaseExtension>()->Float64;
+static const Type *Address = getCompiler()->lookupExtension<Base::BaseExtension>()->Address;
+
+static Compiler *getCompiler() {
+    if (!initialized) {
+        initialized=true;
+
+        c = &global;
+        c->loadExtension<Base::BaseExtension>(LOC);
+        c->loadExtension<Func::FunctionExtension>(LOC);
+        c->loadExtension<omrgen::OMRExtension>(LOC);
+    }
+    return c;
+}
+
+
+int main(int argc, char** argv) {
+    void *handle = dlopen(CORELIB, RTLD_LAZY);
+    if (!handle) {
+        fputs(dlerror(), stderr);
+        return -1;
+    }
+
+    // creating a Compiler here means JIT will be initialized and shutdown only once
+    //  which means all compiled functions can be logged/tracked
+    // otherwise JIT will be initialized and shutdown with each test's Compiler instance
+    //  and verbose/logs are overwritten and recreated for each Compiler instance
+    //  making it much more difficult to log an individual compiled function
+    getCompiler();
+
+    ::testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
+}
+
+class TestSetup : public Func::Function {
+public:
+    TestSetup(LOCATION, Compiler *compiler, bool log)
+        : Func::Function(PASSLOC, compiler)
+        , _compiler(compiler)
+        , _config(compiler->config())
+        , _lgr(std::cout, String("    "))
+        , _wrt(log ? &_lgr : NULL) {
+
+        if (_wrt)
+            _config->setTraceBuildIL();
+    }
+
+    virtual void compile(LOCATION) = 0;
+    virtual void run(LOCATION) = 0;
+
+protected:
+    Compiler *compiler() const { return _compiler; }
+    Config *config() const { return _config; }
+    TextLogger *wrt() const { return _wrt; }
+    Func::FunctionExtension *fx() const { return ::fx; }
+    Base::BaseExtension *bx() const { return ::bx; }
+    omrgen::OMRExtension *ogx() const { return ::ogx; }
+
+private:
+    Compiler *_compiler;
+    Config *_config;
+    TextLogger _lgr;
+    TextLogger *_wrt;
+};
+
+class TestFunc : public TestSetup {
+public:
+    TestFunc(LOCATION, Compiler *compiler, bool log)
+        : TestSetup(PASSLOC, compiler, log) {
+
+    }
+
+    void compile(LOCATION) {
+        const StrategyID codegenStrategy = cx()->strategyCodegen;
+        _body = fx()->compile(PASSLOC, this, codegenStrategy, wrt());
+        EXPECT_NE(_body, nullptr) << "Compiled body ok";
+        EXPECT_EQ((int)_body->rc(), (int)compiler()->CompileSuccessful) << "Compiled function ok";
+    }
+
+protected:
+    CompiledBody *body() const { return _body; }
+
+private:
+    CompiledBody *_body;
+};
+
+// Return void
+class ReturnVoidFunc : public TestFunc {
+public:
+    ReturnVoidFunc(LOCATION, Compiler *compiler, bool log)
+        : TestFunc(PASSLOC, compiler, log) {
+
+        DefineName("ReturnVoidFunc");
+        DefineFile(__FILE__);
+        DefineLine(LINETOSTR(__LINE__));
+    }
+    
+    void run(LOCATION) {
+    }
+
+protected:
+    virtual bool buildContext(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
+        ctx->DefineReturnType(NoType);
+        return true;
+    }
+    virtual bool buildIL(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
+        Builder *entry = scope->entryPoint<BuilderEntry>(0)->builder();
+        fx()->Return(LOC, entry);
+        return true;
+    }
+};
+
+TEST(omrgenExtension, ReturnVoid) {
+    TextLogger lgr(std::cout, String("    "));
+    ReturnVoidFunc rvf(LOC, c, false);
+    rvf.compile(LOC);
+}
+
+// Return primitive value
+template<typename FuncPrototype, typename cType>
+class ReturnValueFunc : public TestFunc {
+public:
+    ReturnValueFunc(LOCATION, String name, Compiler *compiler, bool log)
+        : TestFunc(PASSLOC, compiler, log)
+        , _type(NULL)
+        , _value(0) {
+
+        DefineName(name);
+        DefineFile(__FILE__);
+        DefineLine(LINETOSTR(__LINE__));
+    }
+    void run(LOCATION) {
+        FuncPrototype *f = body()->template nativeEntryPoint<FuncPrototype>();
+        EXPECT_NE(f, nullptr);
+        EXPECT_EQ(f(), _value) << "Compiled f() returns " << _value;
+    }
+    void test(LOCATION, const Type *type, cType value) {
+        _type = type;
+        _value = value;
+        compile(PASSLOC);
+        run(PASSLOC);
+    }
+
+protected:
+    virtual bool buildContext(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
+        ctx->DefineReturnType(_type);
+        return true;
+    }
+    virtual bool buildIL(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
+        Builder *entry = scope->entryPoint<BuilderEntry>(0)->builder();
+        Literal *lv = new (comp->mem()) Literal(MEM_LOC(comp->mem()), comp->ir(), _type, reinterpret_cast<const LiteralBytes *>(&_value));
+        Value *c = bx()->Const(LOC, entry, lv);
+        fx()->Return(LOC, entry, c);
+        return true;
+    }
+
+private:
+    const Type *_type;
+    cType _value;
+};
+
+TEST(omrgenExtension, ReturnConstInt8) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)();
+    ReturnValueFunc<FuncProto, int8_t> rpt_int8(LOC, "ReturnConstInt8", c, false);
+    rpt_int8.test(LOC, Int8, 0);
+    rpt_int8.test(LOC, Int8, 3);
+    rpt_int8.test(LOC, Int8, std::numeric_limits<int8_t>::min());
+    rpt_int8.test(LOC, Int8, std::numeric_limits<int8_t>::min());
+}
+TEST(omrgenExtension, ReturnConstInt16) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int16_t (FuncProto)();
+    ReturnValueFunc<FuncProto, int16_t> rpt_int16(LOC, "ReturnConstInt16", c, false);
+    rpt_int16.test(LOC, Int16, 0);
+    rpt_int16.test(LOC, Int16, 3);
+    rpt_int16.test(LOC, Int16, std::numeric_limits<int16_t>::min());
+    rpt_int16.test(LOC, Int16, std::numeric_limits<int16_t>::min());
+}
+TEST(omrgenExtension, ReturnConstInt32) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int32_t (FuncProto)();
+    ReturnValueFunc<FuncProto, int32_t> rpt_int32(LOC, "ReturnConstInt32", c, false);
+    rpt_int32.test(LOC, Int32, 0);
+    rpt_int32.test(LOC, Int32, 3);
+    rpt_int32.test(LOC, Int32, std::numeric_limits<int32_t>::min());
+    rpt_int32.test(LOC, Int32, std::numeric_limits<int32_t>::min());
+}
+TEST(omrgenExtension, ReturnConstInt64) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int64_t (FuncProto)();
+    ReturnValueFunc<FuncProto, int64_t> rpt_int64(LOC, "ReturnConstInt64", c, false);
+    rpt_int64.test(LOC, Int64, 0);
+    rpt_int64.test(LOC, Int64, 3);
+    rpt_int64.test(LOC, Int64, std::numeric_limits<int64_t>::min());
+    rpt_int64.test(LOC, Int64, std::numeric_limits<int64_t>::min());
+}
+TEST(omrgenExtension, ReturnConstFloat32) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef float (FuncProto)();
+    ReturnValueFunc<FuncProto, float> rpt_float32(LOC, "ReturnConstFloat32", c, false);
+    rpt_float32.test(LOC, Float32, 0);
+    rpt_float32.test(LOC, Float32, 3);
+    rpt_float32.test(LOC, Float32, std::numeric_limits<float>::min());
+    rpt_float32.test(LOC, Float32, std::numeric_limits<float>::min());
+}
+TEST(omrgenExtension, ReturnConstFloat64) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef double (FuncProto)();
+    ReturnValueFunc<FuncProto, double> rpt_float64(LOC, "ReturnConstFloat64", c, false);
+    rpt_float64.test(LOC, Float64, 0);
+    rpt_float64.test(LOC, Float64, 3);
+    rpt_float64.test(LOC, Float64, std::numeric_limits<double>::min());
+    rpt_float64.test(LOC, Float64, std::numeric_limits<double>::min());
+}
+TEST(omrgenExtension, ReturnConstAddress) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef uintptr_t (FuncProto)();
+    ReturnValueFunc<FuncProto, uintptr_t> rpt_address(LOC, "ReturnConstAddress", c, false);
+    rpt_address.test(LOC, Address, 0);
+    rpt_address.test(LOC, Address, std::numeric_limits<uintptr_t>::min());
+    rpt_address.test(LOC, Address, std::numeric_limits<uintptr_t>::min());
+}
+
+// Test returning the value of a paramater
+template<typename FuncPrototype, typename cType>
+class ReturnParameterFunc : public TestFunc {
+public:
+    ReturnParameterFunc(LOCATION, String name, Compiler *compiler, bool log)
+        : TestFunc(PASSLOC, compiler, log)
+        , _type(NULL)
+        , _value(0) {
+
+        DefineName(name);
+        DefineFile(__FILE__);
+        DefineLine(LINETOSTR(__LINE__));
+    }
+    void run(LOCATION) {
+        FuncPrototype *f = body()->template nativeEntryPoint<FuncPrototype>();
+        EXPECT_NE(f, nullptr);
+        EXPECT_EQ(f(_value), _value) << "Compiled f(" << _value << ") returns " << _value;
+    }
+    void test(LOCATION, const Type *type, cType value) {
+        _type = type;
+        _value = value;
+        compile(PASSLOC);
+        run(PASSLOC);
+    }
+
+protected:
+    virtual bool buildContext(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
+        ctx->DefineParameter("value", _type);
+        ctx->DefineReturnType(_type);
+        return true;
+    }
+    virtual bool buildIL(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
+        Builder *entry = scope->entryPoint<BuilderEntry>(0)->builder();
+        auto parmSym=ctx->LookupLocal("value"); 
+        Value *p = fx()->Load(LOC, entry, parmSym);
+        fx()->Return(LOC, entry, p);
+        return true;
+    }
+
+private:
+    const Type *_type;
+    cType _value;
+};
+
+TEST(omrgenExtension, ReturnParamInt8) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int8_t);
+    ReturnParameterFunc<FuncProto, int8_t> rpp_int8(LOC, "ReturnParamInt8", c, false);
+    rpp_int8.test(LOC, Int8, 0);
+    rpp_int8.test(LOC, Int8, 3);
+    rpp_int8.test(LOC, Int8, std::numeric_limits<int8_t>::min());
+    rpp_int8.test(LOC, Int8, std::numeric_limits<int8_t>::min());
+}
+TEST(omrgenExtension, ReturnParamInt16) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int16_t (FuncProto)(int16_t);
+    ReturnParameterFunc<FuncProto, int16_t> rpp_int16(LOC, "ReturnParamInt16", c, false);
+    rpp_int16.test(LOC, Int16, 0);
+    rpp_int16.test(LOC, Int16, 3);
+    rpp_int16.test(LOC, Int16, std::numeric_limits<int16_t>::min());
+    rpp_int16.test(LOC, Int16, std::numeric_limits<int16_t>::min());
+}
+TEST(omrgenExtension, ReturnParamInt32) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int32_t (FuncProto)(int32_t);
+    ReturnParameterFunc<FuncProto, int32_t> rpp_int32(LOC, "ReturnParamInt32", c, false);
+    rpp_int32.test(LOC, Int32, 0);
+    rpp_int32.test(LOC, Int32, 3);
+    rpp_int32.test(LOC, Int32, std::numeric_limits<int32_t>::min());
+    rpp_int32.test(LOC, Int32, std::numeric_limits<int32_t>::min());
+}
+TEST(omrgenExtension, ReturnParamInt64) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int64_t (FuncProto)(int64_t);
+    ReturnParameterFunc<FuncProto, int64_t> rpp_int64(LOC, "ReturnParamInt64", c, false);
+    rpp_int64.test(LOC, Int64, 0);
+    rpp_int64.test(LOC, Int64, 3);
+    rpp_int64.test(LOC, Int64, std::numeric_limits<int64_t>::min());
+    rpp_int64.test(LOC, Int64, std::numeric_limits<int64_t>::min());
+}
+TEST(omrgenExtension, ReturnParamFloat32) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef float (FuncProto)(float);
+    ReturnParameterFunc<FuncProto, float> rpp_float32(LOC, "ReturnParamFloat32", c, false);
+    rpp_float32.test(LOC, Float32, 0);
+    rpp_float32.test(LOC, Float32, 3);
+    rpp_float32.test(LOC, Float32, std::numeric_limits<float>::min());
+    rpp_float32.test(LOC, Float32, std::numeric_limits<float>::min());
+}
+TEST(omrgenExtension, ReturnParamDouble) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef double (FuncProto)(double);
+    ReturnParameterFunc<FuncProto, double> rpp_float64(LOC, "ReturnParamFloat64", c, false);
+    rpp_float64.test(LOC, Float64, 0);
+    rpp_float64.test(LOC, Float64, 3);
+    rpp_float64.test(LOC, Float64, std::numeric_limits<double>::min());
+    rpp_float64.test(LOC, Float64, std::numeric_limits<double>::min());
+}
+TEST(omrgenExtension, ReturnParamAddress) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef uintptr_t (FuncProto)(uintptr_t);
+    ReturnParameterFunc<FuncProto, uintptr_t> rpp_address(LOC, "ReturnParamAddress", c, false);
+    rpp_address.test(LOC, Address, std::numeric_limits<uintptr_t>::min());
+    rpp_address.test(LOC, Address, std::numeric_limits<uintptr_t>::min());
+    rpp_address.test(LOC, Address, reinterpret_cast<uintptr_t>(Address));
+}
+
+// Test returning the value of a local variable where a parameter value has been stored
+template<typename FuncPrototype, typename cType>
+class ReturnLocalFunc : public TestFunc {
+public:
+    ReturnLocalFunc(LOCATION, String name, Compiler *compiler, bool log)
+        : TestFunc(PASSLOC, compiler, log)
+        , _type(NULL)
+        , _valueSym(NULL)
+        , _tempSym(NULL)
+        , _value(0) {
+
+        DefineName(name);
+        DefineFile(__FILE__);
+        DefineLine(LINETOSTR(__LINE__));
+    }
+    void run(LOCATION) {
+        FuncPrototype *f = body()->template nativeEntryPoint<FuncPrototype>();
+        EXPECT_NE(f, nullptr);
+        EXPECT_EQ(f(_value), _value) << "Compiled f(" << _value << ") returns " << _value;
+    }
+    void test(LOCATION, const Type *type, cType value) {
+        _type = type;
+        _value = value;
+        compile(PASSLOC);
+        run(PASSLOC);
+    }
+
+protected:
+    virtual bool buildContext(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
+        _valueSym = ctx->DefineParameter("value", _type);
+        _tempSym = ctx->DefineLocal("temp", _type); 
+        ctx->DefineReturnType(_type);
+        return true;
+    }
+    virtual bool buildIL(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
+        Builder *entry = scope->entryPoint<BuilderEntry>(0)->builder();
+        Value *parmValue = fx()->Load(LOC, entry, _valueSym);
+        fx()->Store(LOC, entry, _tempSym, parmValue);
+        Value *p = fx()->Load(LOC, entry, _tempSym);
+        fx()->Return(LOC, entry, p);
+        return true;
+    }
+
+private:
+    const Type *_type;
+    Func::ParameterSymbol *_valueSym;
+    Func::LocalSymbol *_tempSym;
+    cType _value;
+};
+
+TEST(omrgenExtension, ReturnLocalInt8) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int8_t);
+    ReturnLocalFunc<FuncProto, int8_t> rlp_int8(LOC, "ReturnLocalInt8", c, false);
+    rlp_int8.test(LOC, Int8, 0);
+    rlp_int8.test(LOC, Int8, 3);
+    rlp_int8.test(LOC, Int8, std::numeric_limits<int8_t>::min());
+    rlp_int8.test(LOC, Int8, std::numeric_limits<int8_t>::min());
+}
+TEST(omrgenExtension, ReturnLocalInt16) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int16_t (FuncProto)(int16_t);
+    ReturnLocalFunc<FuncProto, int16_t> rlp_int16(LOC, "ReturnLocalInt16", c, false);
+    rlp_int16.test(LOC, Int16, 0);
+    rlp_int16.test(LOC, Int16, 3);
+    rlp_int16.test(LOC, Int16, std::numeric_limits<int16_t>::min());
+    rlp_int16.test(LOC, Int16, std::numeric_limits<int16_t>::min());
+}
+TEST(omrgenExtension, ReturnLocalInt32) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int32_t (FuncProto)(int32_t);
+    ReturnLocalFunc<FuncProto, int32_t> rlp_int32(LOC, "ReturnLocalInt32", c, false);
+    rlp_int32.test(LOC, Int32, 0);
+    rlp_int32.test(LOC, Int32, 3);
+    rlp_int32.test(LOC, Int32, std::numeric_limits<int32_t>::min());
+    rlp_int32.test(LOC, Int32, std::numeric_limits<int32_t>::min());
+}
+TEST(omrgenExtension, ReturnLocalInt64) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int64_t (FuncProto)(int64_t);
+    ReturnLocalFunc<FuncProto, int64_t> rlp_int64(LOC, "ReturnLocalInt64", c, false);
+    rlp_int64.test(LOC, Int64, 0);
+    rlp_int64.test(LOC, Int64, 3);
+    rlp_int64.test(LOC, Int64, std::numeric_limits<int64_t>::min());
+    rlp_int64.test(LOC, Int64, std::numeric_limits<int64_t>::min());
+}
+TEST(omrgenExtension, ReturnLocalFloat32) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef float (FuncProto)(float);
+    ReturnLocalFunc<FuncProto, float> rlp_float32(LOC, "ReturnLocalFloat32", c, false);
+    rlp_float32.test(LOC, Float32, 0);
+    rlp_float32.test(LOC, Float32, 3);
+    rlp_float32.test(LOC, Float32, std::numeric_limits<float>::min());
+    rlp_float32.test(LOC, Float32, std::numeric_limits<float>::min());
+}
+TEST(omrgenExtension, ReturnLocalFloat64) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef double (FuncProto)(double);
+    ReturnLocalFunc<FuncProto, double> rlp_float64(LOC, "ReturnLocalFloat64", c, false);
+    rlp_float64.test(LOC, Float64, 0);
+    rlp_float64.test(LOC, Float64, 3);
+    rlp_float64.test(LOC, Float64, std::numeric_limits<double>::min());
+    rlp_float64.test(LOC, Float64, std::numeric_limits<double>::min());
+}
+TEST(omrgenExtension, ReturnLocalAddress) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef uintptr_t (FuncProto)(uintptr_t);
+    ReturnLocalFunc<FuncProto, uintptr_t> rlp_address(LOC, "ReturnLocalAddress", c, false);
+    rlp_address.test(LOC, Address, std::numeric_limits<uintptr_t>::min());
+    rlp_address.test(LOC, Address, std::numeric_limits<uintptr_t>::min());
+    rlp_address.test(LOC, Address, reinterpret_cast<uintptr_t>(Address));
+}
+
+// Test returning a converted parameter value
+template<typename FuncPrototype, typename cTypeFrom, typename cTypeTo>
+class ConvertToFunc : public TestFunc {
+public:
+    ConvertToFunc(LOCATION, String name, Compiler *compiler, bool log)
+        : TestFunc(PASSLOC, compiler, log)
+        , _typeFrom(NULL)
+        , _typeTo(NULL)
+        , _valueSym(NULL)
+        , _valueFrom(0)
+        , _expectedResult(0) {
+
+        DefineName(name);
+        DefineFile(__FILE__);
+        DefineLine(LINETOSTR(__LINE__));
+    }
+    void run(LOCATION) {
+        FuncPrototype *f = body()->template nativeEntryPoint<FuncPrototype>();
+        EXPECT_NE(f, nullptr);
+        EXPECT_EQ(f(_valueFrom), _expectedResult) << "Compiled f(" << _valueFrom << ") returns " << _expectedResult;
+    }
+    void test(LOCATION, bool doCompile, const Type *typeFrom, const Type *typeTo, cTypeFrom value, cTypeTo expectedResult) {
+        _typeFrom = typeFrom;
+        _typeTo = typeTo;
+        _valueFrom = value;
+        _expectedResult = expectedResult;
+        if (doCompile)
+            compile(PASSLOC);
+        run(PASSLOC);
+    }
+
+protected:
+    virtual bool buildContext(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
+        _valueSym = ctx->DefineParameter("value", _typeFrom);
+        ctx->DefineReturnType(_typeTo);
+        return true;
+    }
+    virtual bool buildIL(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
+        Builder *entry = scope->entryPoint<BuilderEntry>(0)->builder();
+        Value *parmValue = fx()->Load(LOC, entry, _valueSym);
+        Value *convertedValue = bx()->ConvertTo(LOC, entry, _typeTo, parmValue);
+        fx()->Return(LOC, entry, convertedValue);
+        return true;
+    }
+
+private:
+    const Type *_typeFrom;
+    const Type *_typeTo;
+    Func::ParameterSymbol *_valueSym;
+    cTypeTo _valueFrom;
+    cTypeFrom _expectedResult;
+};
+
+// test converting Int8 to other primitive types
+TEST(omrgenExtension, ConvertInt8ToInt8) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProtoInt8)(int8_t);
+    ConvertToFunc<FuncProtoInt8, int8_t, int8_t> ct_int8_int8(LOC, "ConvertInt8ToInt8", c, false);
+    ct_int8_int8.test(LOC, true, Int8, Int8, 0, 0);
+    ct_int8_int8.test(LOC, false, Int8, Int8, 3, 3);
+    ct_int8_int8.test(LOC, false, Int8, Int8, std::numeric_limits<int8_t>::min(), (int8_t) std::numeric_limits<int8_t>::min());
+    ct_int8_int8.test(LOC, false, Int8, Int8, std::numeric_limits<int8_t>::max(), (int8_t) std::numeric_limits<int8_t>::max());
+}
+TEST(omrgenExtension, ConvertInt8ToInt16) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int16_t (FuncProtoInt16)(int8_t);
+    ConvertToFunc<FuncProtoInt16, int8_t, int16_t> ct_int8_int16(LOC, "ConvertInt8ToInt16", c, false);
+    ct_int8_int16.test(LOC, true, Int8, Int16, 0, (int16_t)0);
+    ct_int8_int16.test(LOC, false, Int8, Int16, 3, (int16_t)3);
+    ct_int8_int16.test(LOC, false, Int8, Int16, std::numeric_limits<int8_t>::min(), (int16_t) std::numeric_limits<int8_t>::min());
+    ct_int8_int16.test(LOC, false, Int8, Int16, std::numeric_limits<int8_t>::max(), (int16_t) std::numeric_limits<int8_t>::max());
+}
+TEST(omrgenExtension, ConvertInt8ToInt32) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int32_t (FuncProtoInt32)(int8_t);
+    ConvertToFunc<FuncProtoInt32, int8_t, int32_t> ct_int8_int32(LOC, "ConvertInt8ToInt32", c, false);
+    ct_int8_int32.test(LOC, true, Int8, Int32, 0, (int32_t)0);
+    ct_int8_int32.test(LOC, false, Int8, Int32, 3, (int32_t)3);
+    ct_int8_int32.test(LOC, false, Int8, Int32, std::numeric_limits<int8_t>::min(), (int32_t) std::numeric_limits<int8_t>::min());
+    ct_int8_int32.test(LOC, false, Int8, Int32, std::numeric_limits<int8_t>::max(), (int32_t) std::numeric_limits<int8_t>::max());
+}
+TEST(omrgenExtension, ConvertInt8ToInt64) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int64_t (FuncProtoInt64)(int8_t);
+    ConvertToFunc<FuncProtoInt64, int8_t, int64_t> ct_int8_int64(LOC, "ConvertInt8ToInt64", c, false);
+    ct_int8_int64.test(LOC, true, Int8, Int64, 0, (int64_t)0);
+    ct_int8_int64.test(LOC, false, Int8, Int64, 3, (int64_t)3);
+    ct_int8_int64.test(LOC, false, Int8, Int64, std::numeric_limits<int8_t>::min(), (int64_t) std::numeric_limits<int8_t>::min());
+    ct_int8_int64.test(LOC, false, Int8, Int64, std::numeric_limits<int8_t>::max(), (int64_t) std::numeric_limits<int8_t>::max());
+}
+TEST(omrgenExtension, ConvertInt8ToFloat32) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef float (FuncProtoFloat32)(int8_t);
+    ConvertToFunc<FuncProtoFloat32, int8_t, float> ct_int8_float(LOC, "ConvertInt8ToFloat32", c, false);
+    ct_int8_float.test(LOC, true, Int8, Float32, 0, (float)0);
+    ct_int8_float.test(LOC, false, Int8, Float32, 3, (float)3);
+    ct_int8_float.test(LOC, false, Int8, Float32, std::numeric_limits<int8_t>::min(), (float) std::numeric_limits<int8_t>::min());
+    ct_int8_float.test(LOC, false, Int8, Float32, std::numeric_limits<int8_t>::max(), (float) std::numeric_limits<int8_t>::max());
+}
+TEST(omrgenExtension, ConvertInt8ToFloat64) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef double (FuncProtoFloat64)(int8_t);
+    ConvertToFunc<FuncProtoFloat64, int8_t, float> ct_int8_double(LOC, "ConvertInt8ToFloat64", c, false);
+    ct_int8_double.test(LOC, true, Int8, Float64, 0, (float)0);
+    ct_int8_double.test(LOC, false, Int8, Float64, 3, (float)3);
+    ct_int8_double.test(LOC, false, Int8, Float64, std::numeric_limits<int8_t>::min(), (double) std::numeric_limits<int8_t>::min());
+    ct_int8_double.test(LOC, false, Int8, Float64, std::numeric_limits<int8_t>::max(), (double) std::numeric_limits<int8_t>::max());
+}
+
+// test converting Int16 to other primitive types
+TEST(omrgenExtension, ConvertInt16ToInt8) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProtoInt8)(int16_t);
+    ConvertToFunc<FuncProtoInt8, int16_t, int8_t> ct_int16_int8(LOC, "ConvertInt16ToInt8", c, false);
+    ct_int16_int8.test(LOC, true, Int16, Int8, 0, (int8_t)0);
+    ct_int16_int8.test(LOC, false, Int16, Int8, 3, (int8_t)3);
+    ct_int16_int8.test(LOC, false, Int16, Int8, std::numeric_limits<int8_t>::min(), (int8_t) std::numeric_limits<int8_t>::min());
+    ct_int16_int8.test(LOC, false, Int16, Int8, std::numeric_limits<int8_t>::max(), (int8_t) std::numeric_limits<int8_t>::max());
+}
+TEST(omrgenExtension, ConvertInt16ToInt16) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int16_t (FuncProtoInt16)(int16_t);
+    ConvertToFunc<FuncProtoInt16, int16_t, int16_t> ct_int16_int16(LOC, "ConvertInt16ToInt16", c, false);
+    ct_int16_int16.test(LOC, true, Int16, Int16, 0, (int16_t)0);
+    ct_int16_int16.test(LOC, false, Int16, Int16, 3, (int16_t)3);
+    ct_int16_int16.test(LOC, false, Int16, Int16, std::numeric_limits<int16_t>::min(), (int16_t) std::numeric_limits<int16_t>::min());
+    ct_int16_int16.test(LOC, false, Int16, Int16, std::numeric_limits<int16_t>::max(), (int16_t) std::numeric_limits<int16_t>::max());
+}
+TEST(omrgenExtension, ConvertInt16ToInt32) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int32_t (FuncProtoInt32)(int16_t);
+    ConvertToFunc<FuncProtoInt32, int16_t, int32_t> ct_int16_int32(LOC, "ConvertInt16ToInt32", c, false);
+    ct_int16_int32.test(LOC, true, Int16, Int32, 0, (int32_t)0);
+    ct_int16_int32.test(LOC, false, Int16, Int32, 3, (int32_t)3);
+    ct_int16_int32.test(LOC, false, Int16, Int32, std::numeric_limits<int16_t>::min(), (int32_t) std::numeric_limits<int16_t>::min());
+    ct_int16_int32.test(LOC, false, Int16, Int32, std::numeric_limits<int16_t>::max(), (int32_t) std::numeric_limits<int16_t>::max());
+}
+TEST(omrgenExtension, ConvertInt16ToInt64) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int64_t (FuncProtoInt64)(int16_t);
+    ConvertToFunc<FuncProtoInt64, int16_t, int64_t> ct_int16_int64(LOC, "ConvertInt16ToInt64", c, false);
+    ct_int16_int64.test(LOC, true, Int16, Int64, 0, (int64_t)0);
+    ct_int16_int64.test(LOC, false, Int16, Int64, 3, (int64_t)3);
+    ct_int16_int64.test(LOC, false, Int16, Int64, std::numeric_limits<int16_t>::min(), (int64_t) std::numeric_limits<int16_t>::min());
+    ct_int16_int64.test(LOC, false, Int16, Int64, std::numeric_limits<int16_t>::max(), (int64_t) std::numeric_limits<int16_t>::max());
+}
+TEST(omrgenExtension, ConvertInt16ToFloat32) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef float (FuncProtoFloat32)(int16_t);
+    ConvertToFunc<FuncProtoFloat32, int16_t, float> ct_int16_float32(LOC, "ConvertInt16ToFloat32", c, false);
+    ct_int16_float32.test(LOC, true, Int16, Float32, 0, (float)0);
+    ct_int16_float32.test(LOC, false, Int16, Float32, 3, (float)3);
+    ct_int16_float32.test(LOC, false, Int16, Float32, std::numeric_limits<int16_t>::min(), (float)std::numeric_limits<int16_t>::min());
+    ct_int16_float32.test(LOC, false, Int16, Float32, std::numeric_limits<int16_t>::max(), (float)std::numeric_limits<int16_t>::max());
+}
+TEST(omrgenExtension, ConvertInt16ToFloat64) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef double (FuncProtoFloat64)(int16_t);
+    ConvertToFunc<FuncProtoFloat64, int16_t, double> ct_int16_float64(LOC, "ConvertInt16ToFloat64", c, false);
+    ct_int16_float64.test(LOC, true, Int16, Float64, 0, (double)0);
+    ct_int16_float64.test(LOC, false, Int16, Float64, 3, (double)3);
+    ct_int16_float64.test(LOC, false, Int16, Float64, std::numeric_limits<int16_t>::min(), (double)std::numeric_limits<int16_t>::min());
+    ct_int16_float64.test(LOC, false, Int16, Float64, std::numeric_limits<int16_t>::max(), (double)std::numeric_limits<int16_t>::max());
+}
+
+// test converting Int32 to other primitive types
+TEST(omrgenExtension, ConvertInt32ToInt8) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProtoInt8)(int32_t);
+    ConvertToFunc<FuncProtoInt8, int32_t, int8_t> ct_int32_int8(LOC, "ConvertInt32ToInt8", c, false);
+    ct_int32_int8.test(LOC, true, Int32, Int8, (int32_t)0, (int8_t)0);
+    ct_int32_int8.test(LOC, false, Int32, Int8, (int32_t)3, (int8_t)3);
+    ct_int32_int8.test(LOC, false, Int32, Int8, (int32_t)std::numeric_limits<int8_t>::min(), (int8_t) std::numeric_limits<int8_t>::min());
+    ct_int32_int8.test(LOC, false, Int32, Int8, (int32_t)std::numeric_limits<int8_t>::max(), (int8_t) std::numeric_limits<int8_t>::max());
+}
+TEST(omrgenExtension, ConvertInt32ToInt16) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int16_t (FuncProtoInt16)(int32_t);
+    ConvertToFunc<FuncProtoInt16, int32_t, int16_t> ct_int32_int16(LOC, "ConvertInt32ToInt16", c, false);
+    ct_int32_int16.test(LOC, true, Int32, Int16, (int32_t)0, (int16_t)0);
+    ct_int32_int16.test(LOC, false, Int32, Int16, (int32_t)3, (int16_t)3);
+    ct_int32_int16.test(LOC, false, Int32, Int16, (int32_t)std::numeric_limits<int16_t>::min(), (int16_t) std::numeric_limits<int16_t>::min());
+    ct_int32_int16.test(LOC, false, Int32, Int16, (int32_t)std::numeric_limits<int16_t>::max(), (int16_t) std::numeric_limits<int16_t>::max());
+}
+TEST(omrgenExtension, ConvertInt32ToInt32) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int32_t (FuncProtoInt32)(int32_t);
+    ConvertToFunc<FuncProtoInt32, int32_t, int32_t> ct_int32_int32(LOC, "ConvertInt32ToInt32", c, false);
+    ct_int32_int32.test(LOC, true, Int32, Int32, (int32_t)0, (int32_t)0);
+    ct_int32_int32.test(LOC, false, Int32, Int32, (int32_t)3, (int32_t)3);
+    ct_int32_int32.test(LOC, false, Int32, Int32, (int32_t)std::numeric_limits<int32_t>::min(), (int32_t) std::numeric_limits<int32_t>::min());
+    ct_int32_int32.test(LOC, false, Int32, Int32, (int32_t)std::numeric_limits<int32_t>::max(), (int32_t) std::numeric_limits<int32_t>::max());
+}
+TEST(omrgenExtension, ConvertInt32ToInt64) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int64_t (FuncProtoInt64)(int32_t);
+    ConvertToFunc<FuncProtoInt64, int32_t, int64_t> ct_int32_int64(LOC, "ConvertInt32ToInt64", c, false);
+    ct_int32_int64.test(LOC, true, Int32, Int64, (int32_t)0, (int64_t)0);
+    ct_int32_int64.test(LOC, false, Int32, Int64, (int32_t)3, (int64_t)3);
+    ct_int32_int64.test(LOC, false, Int32, Int64, (int32_t)std::numeric_limits<int32_t>::min(), (int64_t) std::numeric_limits<int32_t>::min());
+    ct_int32_int64.test(LOC, false, Int32, Int64, (int32_t)std::numeric_limits<int32_t>::max(), (int64_t) std::numeric_limits<int32_t>::max());
+}
+TEST(omrgenExtension, ConvertInt32ToFloat32) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef float (FuncProtoFloat32)(int32_t);
+    ConvertToFunc<FuncProtoFloat32, int32_t, float> ct_int32_float32(LOC, "ConvertInt32ToFloat32", c, false);
+    ct_int32_float32.test(LOC, true, Int32, Float32, (int32_t)0, (float)0);
+    ct_int32_float32.test(LOC, false, Int32, Float32, (int32_t)3, (float)3);
+    ct_int32_float32.test(LOC, false, Int32, Float32, (int32_t)std::numeric_limits<int32_t>::min(), (float)std::numeric_limits<int32_t>::min());
+    ct_int32_float32.test(LOC, false, Int32, Float32, (int32_t)std::numeric_limits<int32_t>::max(), (float)std::numeric_limits<int32_t>::max());
+}
+TEST(omrgenExtension, ConvertInt32ToFloat64) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef double (FuncProtoFloat64)(int32_t);
+    ConvertToFunc<FuncProtoFloat64, int32_t, double> ct_int32_float64(LOC, "ConvertInt32ToFloat64", c, false);
+    ct_int32_float64.test(LOC, true, Int32, Float64, (int32_t)0, (double)0);
+    ct_int32_float64.test(LOC, false, Int32, Float64, (int32_t)3, (double)3);
+    ct_int32_float64.test(LOC, false, Int32, Float64, (int32_t)std::numeric_limits<int32_t>::min(), (double)std::numeric_limits<int32_t>::min());
+    ct_int32_float64.test(LOC, false, Int32, Float64, (int32_t)std::numeric_limits<int32_t>::max(), (double)std::numeric_limits<int32_t>::max());
+}
+
+// test converting Int64 to other primitive types
+TEST(omrgenExtension, ConvertInt64ToInt8) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProtoInt8)(int64_t);
+    ConvertToFunc<FuncProtoInt8, int64_t, int8_t> ct_int64_int8(LOC, "ConvertInt64ToInt8", c, false);
+    ct_int64_int8.test(LOC, true, Int64, Int8, (int64_t)0, (int8_t)0);
+    ct_int64_int8.test(LOC, false, Int64, Int8, (int64_t)3, (int8_t)3);
+    ct_int64_int8.test(LOC, false, Int64, Int8, (int64_t)std::numeric_limits<int8_t>::min(), (int8_t) std::numeric_limits<int8_t>::min());
+    ct_int64_int8.test(LOC, false, Int64, Int8, (int64_t)std::numeric_limits<int8_t>::max(), (int8_t) std::numeric_limits<int8_t>::max());
+}
+TEST(omrgenExtension, ConvertInt64ToInt16) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int16_t (FuncProtoInt16)(int64_t);
+    ConvertToFunc<FuncProtoInt16, int64_t, int16_t> ct_int64_int16(LOC, "ConvertInt64ToInt16", c, false);
+    ct_int64_int16.test(LOC, true, Int64, Int16, (int64_t)0, (int16_t)0);
+    ct_int64_int16.test(LOC, false, Int64, Int16, (int64_t)3, (int16_t)3);
+    ct_int64_int16.test(LOC, false, Int64, Int16, (int64_t)std::numeric_limits<int16_t>::min(), (int16_t) std::numeric_limits<int16_t>::min());
+    ct_int64_int16.test(LOC, false, Int64, Int16, (int64_t)std::numeric_limits<int16_t>::max(), (int16_t) std::numeric_limits<int16_t>::max());
+}
+TEST(omrgenExtension, ConvertInt64ToInt32) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int32_t (FuncProtoInt32)(int64_t);
+    ConvertToFunc<FuncProtoInt32, int64_t, int32_t> ct_int64_int32(LOC, "ConvertInt64ToInt32", c, false);
+    ct_int64_int32.test(LOC, true, Int64, Int32, (int64_t)0, (int32_t)0);
+    ct_int64_int32.test(LOC, false, Int64, Int32, (int64_t)3, (int32_t)3);
+    ct_int64_int32.test(LOC, false, Int64, Int32, (int64_t)std::numeric_limits<int32_t>::min(), (int32_t) std::numeric_limits<int32_t>::min());
+    ct_int64_int32.test(LOC, false, Int64, Int32, (int64_t)std::numeric_limits<int32_t>::max(), (int32_t) std::numeric_limits<int32_t>::max());
+}
+TEST(omrgenExtension, ConvertInt64ToInt64) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int64_t (FuncProtoInt64)(int64_t);
+    ConvertToFunc<FuncProtoInt64, int64_t, int64_t> ct_int64_int64(LOC, "ConvertInt64ToInt64", c, false);
+    ct_int64_int64.test(LOC, true, Int64, Int64, (int64_t)0, (int64_t)0);
+    ct_int64_int64.test(LOC, false, Int64, Int64, (int64_t)3, (int64_t)3);
+    ct_int64_int64.test(LOC, false, Int64, Int64, (int64_t)std::numeric_limits<int64_t>::min(), (int64_t) std::numeric_limits<int64_t>::min());
+    ct_int64_int64.test(LOC, false, Int64, Int64, (int64_t)std::numeric_limits<int64_t>::max(), (int64_t) std::numeric_limits<int64_t>::max());
+}
+TEST(omrgenExtension, ConvertInt64ToFloat32) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef float (FuncProtoFloat32)(int64_t);
+    ConvertToFunc<FuncProtoFloat32, int64_t, float> ct_int64_float32(LOC, "ConvertInt64ToFloat32", c, false);
+    ct_int64_float32.test(LOC, true, Int64, Float32, (int64_t)0, (float)0);
+    ct_int64_float32.test(LOC, false, Int64, Float32, (int64_t)3, (float)3);
+    ct_int64_float32.test(LOC, false, Int64, Float32, (int64_t)std::numeric_limits<int64_t>::min(), (float)std::numeric_limits<int64_t>::min());
+    ct_int64_float32.test(LOC, false, Int64, Float32, (int64_t)std::numeric_limits<int64_t>::max(), (float)std::numeric_limits<int64_t>::max());
+}
+TEST(omrgenExtension, ConvertInt64ToFloat64) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef double (FuncProtoFloat64)(int64_t);
+    ConvertToFunc<FuncProtoFloat64, int64_t, double> ct_int64_float64(LOC, "ConvertInt64ToFloat64", c, false);
+    ct_int64_float64.test(LOC, true, Int64, Float64, (int64_t)0, (double)0);
+    ct_int64_float64.test(LOC, false, Int64, Float64, (int64_t)3, (double)3);
+    ct_int64_float64.test(LOC, false, Int64, Float64, (int64_t)std::numeric_limits<int64_t>::min(), (double)std::numeric_limits<int64_t>::min());
+    ct_int64_float64.test(LOC, false, Int64, Float64, (int64_t)std::numeric_limits<int64_t>::max(), (double)std::numeric_limits<int64_t>::max());
+}
+
+// test converting Float32 to other primitive types
+TEST(omrgenExtension, ConvertFloat32ToInt8) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProtoInt8)(float);
+    ConvertToFunc<FuncProtoInt8, float, int8_t> ct_float32_int8(LOC, "ConvertFloat32ToInt8", c, false);
+    ct_float32_int8.test(LOC, true, Float32, Int8, (float)0, (int8_t)0);
+    ct_float32_int8.test(LOC, false, Float32, Int8, (float)3, (int8_t)3);
+    ct_float32_int8.test(LOC, false, Float32, Int8, (float)std::numeric_limits<int8_t>::min(), (int8_t) std::numeric_limits<int8_t>::min());
+    ct_float32_int8.test(LOC, false, Float32, Int8, (float)std::numeric_limits<int8_t>::max(), (int8_t) std::numeric_limits<int8_t>::max());
+}
+TEST(omrgenExtension, ConvertFloat32ToInt16) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int16_t (FuncProtoInt16)(float);
+    ConvertToFunc<FuncProtoInt16, float, int16_t> ct_float32_int16(LOC, "ConvertFloat32ToInt16", c, false);
+    ct_float32_int16.test(LOC, true, Float32, Int16, (float)0, (int16_t)0);
+    ct_float32_int16.test(LOC, false, Float32, Int16, (float)3, (int16_t)3);
+    ct_float32_int16.test(LOC, false, Float32, Int16, (float)std::numeric_limits<int16_t>::min(), (int16_t) std::numeric_limits<int16_t>::min());
+    ct_float32_int16.test(LOC, false, Float32, Int16, (float)std::numeric_limits<int16_t>::max(), (int16_t) std::numeric_limits<int16_t>::max());
+}
+TEST(omrgenExtension, ConvertFloat32ToInt32) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int32_t (FuncProtoInt32)(float);
+    ConvertToFunc<FuncProtoInt32, float, int32_t> ct_float32_int32(LOC, "ConvertFloat32ToIn32", c, false);
+    ct_float32_int32.test(LOC, true, Float32, Int32, (float)0, (int32_t)0);
+    ct_float32_int32.test(LOC, false, Float32, Int32, (float)3, (int32_t)3);
+    ct_float32_int32.test(LOC, false, Float32, Int32, (float)std::numeric_limits<int32_t>::min(), (int32_t)(float)std::numeric_limits<int32_t>::min());
+    ct_float32_int32.test(LOC, false, Float32, Int32, (float)std::numeric_limits<int32_t>::max(), (int32_t)(float)std::numeric_limits<int32_t>::max());
+}
+TEST(omrgenExtension, ConvertFloat32ToInt64) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int64_t (FuncProtoInt64)(float);
+    ConvertToFunc<FuncProtoInt64, float, int64_t> ct_float32_int64(LOC, "ConvertFloat32ToInt64", c, false);
+    ct_float32_int64.test(LOC, true, Float32, Int64, (float)0, (int64_t)0);
+    ct_float32_int64.test(LOC, false, Float32, Int64, (float)3, (int64_t)3);
+    ct_float32_int64.test(LOC, false, Float32, Int64, (float)std::numeric_limits<int32_t>::min(), (int64_t)(float)std::numeric_limits<int32_t>::min());
+    ct_float32_int64.test(LOC, false, Float32, Int64, (float)std::numeric_limits<int32_t>::max(), (int64_t)(float)std::numeric_limits<int32_t>::max());
+}
+TEST(omrgenExtension, ConvertFloat32ToFloat32) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef float (FuncProtoFloat32)(float);
+    ConvertToFunc<FuncProtoFloat32, float, float> ct_float32_float32(LOC, "ConvertFloat32ToFloat32", c, false);
+    ct_float32_float32.test(LOC, true, Float32, Float32, (float)0, (float)0);
+    ct_float32_float32.test(LOC, false, Float32, Float32, (float)3, (float)3);
+    ct_float32_float32.test(LOC, false, Float32, Float32, (float)std::numeric_limits<float>::min(), (float)std::numeric_limits<float>::min());
+    ct_float32_float32.test(LOC, false, Float32, Float32, (float)std::numeric_limits<float>::max(), (float)std::numeric_limits<float>::max());
+}
+TEST(omrgenExtension, ConvertFloat32ToFloat64) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef double (FuncProtoFloat64)(float);
+    ConvertToFunc<FuncProtoFloat64, float, double> ct_float32_float64(LOC, "ConvertFloat32ToFloat64", c, false);
+    ct_float32_float64.test(LOC, true, Float32, Float64, (float)0, (double)0);
+    ct_float32_float64.test(LOC, false, Float32, Float64, (float)3, (double)3);
+    ct_float32_float64.test(LOC, false, Float32, Float64, (float)std::numeric_limits<float>::min(), (double)std::numeric_limits<float>::min());
+    ct_float32_float64.test(LOC, false, Float32, Float64, (float)std::numeric_limits<float>::max(), (double)std::numeric_limits<float>::max());
+}
+
+// test converting Float64 to other primitive types
+TEST(omrgenExtension, ConvertFloat64ToInt8) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProtoInt8)(double);
+    ConvertToFunc<FuncProtoInt8, double, int8_t> ct_float64_int8(LOC, "ConvertFloat64ToInt8", c, false);
+    ct_float64_int8.test(LOC, true, Float64, Int8, (double)0, (int8_t)0);
+    ct_float64_int8.test(LOC, false, Float64, Int8, (double)3, (int8_t)3);
+    ct_float64_int8.test(LOC, false, Float64, Int8, (double)std::numeric_limits<int8_t>::min(), (int8_t) std::numeric_limits<int8_t>::min());
+    ct_float64_int8.test(LOC, false, Float64, Int8, (double)std::numeric_limits<int8_t>::max(), (int8_t) std::numeric_limits<int8_t>::max());
+}
+TEST(omrgenExtension, ConvertFloat64ToInt16) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int16_t (FuncProtoInt16)(double);
+    ConvertToFunc<FuncProtoInt16, double, int16_t> ct_float64_int16(LOC, "ConvertFloat64ToInt16", c, false);
+    ct_float64_int16.test(LOC, true, Float64, Int16, (double)0, (int16_t)0);
+    ct_float64_int16.test(LOC, false, Float64, Int16, (double)3, (int16_t)3);
+    ct_float64_int16.test(LOC, false, Float64, Int16, (double)std::numeric_limits<int16_t>::min(), (int16_t) std::numeric_limits<int16_t>::min());
+    ct_float64_int16.test(LOC, false, Float64, Int16, (double)std::numeric_limits<int16_t>::max(), (int16_t) std::numeric_limits<int16_t>::max());
+}
+TEST(omrgenExtension, ConvertFloat64ToInt32) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int32_t (FuncProtoInt32)(double);
+    ConvertToFunc<FuncProtoInt32, double, int32_t> ct_float64_int32(LOC, "ConvertFloat64ToInt32", c, false);
+    ct_float64_int32.test(LOC, true, Float64, Int32, (double)0, (int32_t)0);
+    ct_float64_int32.test(LOC, false, Float64, Int32, (double)3, (int32_t)3);
+    ct_float64_int32.test(LOC, false, Float64, Int32, (double)std::numeric_limits<int32_t>::min(), (int32_t)(float)std::numeric_limits<int32_t>::min());
+    ct_float64_int32.test(LOC, false, Float64, Int32, (double)std::numeric_limits<int32_t>::max(), (int32_t)(float)std::numeric_limits<int32_t>::max());
+}
+TEST(omrgenExtension, ConvertFloat64ToInt64) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int64_t (FuncProtoInt64)(double);
+    ConvertToFunc<FuncProtoInt64, double, int64_t> ct_float64_int64(LOC, "ConvertFloat64ToInt64", c, false);
+    ct_float64_int64.test(LOC, true, Float64, Int64, (double)0, (int64_t)0);
+    ct_float64_int64.test(LOC, false, Float64, Int64, (double)3, (int64_t)3);
+    ct_float64_int64.test(LOC, false, Float64, Int64, (double)std::numeric_limits<int64_t>::min(), (int64_t)(float)std::numeric_limits<int64_t>::min());
+    ct_float64_int64.test(LOC, false, Float64, Int64, (double)std::numeric_limits<int64_t>::max(), (int64_t)(float)std::numeric_limits<int64_t>::max());
+}
+TEST(omrgenExtension, ConvertFloat64ToFloat32) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef float (FuncProtoFloat32)(double);
+    ConvertToFunc<FuncProtoFloat32, double, float> ct_float64_float32(LOC, "ConvertFloat64ToFloat32", c, false);
+    ct_float64_float32.test(LOC, true, Float64, Float32, (double)0, (float)0);
+    ct_float64_float32.test(LOC, false, Float64, Float32, (double)3, (float)3);
+    ct_float64_float32.test(LOC, false, Float64, Float32, (double)std::numeric_limits<float>::min(), (float)std::numeric_limits<float>::min());
+    ct_float64_float32.test(LOC, false, Float64, Float32, (double)std::numeric_limits<float>::max(), (float)std::numeric_limits<float>::max());
+}
+TEST(omrgenExtension, ConvertFloat64ToFloat64) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef double (FuncProtoFloat64)(double);
+    ConvertToFunc<FuncProtoFloat64, double, double> ct_float64_float64(LOC, "ConvertFloat64ToFloat64", c, false);
+    ct_float64_float64.test(LOC, true, Float64, Float64, (double)0, (double)0);
+    ct_float64_float64.test(LOC, false, Float64, Float64, (double)3, (double)3);
+    ct_float64_float64.test(LOC, false, Float64, Float64, (double)std::numeric_limits<double>::min(), (double)std::numeric_limits<double>::min());
+    ct_float64_float64.test(LOC, false, Float64, Float64, (double)std::numeric_limits<double>::max(), (double)std::numeric_limits<double>::max());
+}
+
+// Test returning the value of a paramater that has a pointer type using LoadAt
+template<typename FuncPrototype, typename cType>
+class ReturnPointerParameterFunc : public TestFunc {
+public:
+    ReturnPointerParameterFunc(LOCATION, String name, Compiler *compiler, bool log)
+        : TestFunc(PASSLOC, compiler, log)
+        , _type(NULL)
+        , _value(0) {
+
+        DefineName(name);
+        DefineFile(__FILE__);
+        DefineLine(LINETOSTR(__LINE__));
+    }
+    void run(LOCATION) {
+        FuncPrototype *f = body()->template nativeEntryPoint<FuncPrototype>();
+        EXPECT_NE(f, nullptr);
+        cType *pValue = &this->_value;
+        EXPECT_EQ(f(pValue), _value) << "Compiled f(" << _value << ") returns " << _value;
+    }
+    void test(LOCATION, const Type *type, cType value) {
+        _type = type;
+        _value = value;
+        compile(PASSLOC);
+        run(PASSLOC);
+    }
+
+protected:
+    virtual bool buildContext(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
+        ctx->DefineParameter("value", bx()->PointerTo(PASSLOC, comp, _type));
+        ctx->DefineReturnType(_type);
+        return true;
+    }
+    virtual bool buildIL(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
+        Builder *entry = scope->entryPoint<BuilderEntry>(0)->builder();
+        auto parmSym=ctx->LookupLocal("value"); 
+        Value *addr = fx()->Load(LOC, entry, parmSym);
+        Value *v = bx()->LoadAt(LOC, entry, addr);
+        fx()->Return(LOC, entry, v);
+        return true;
+    }
+
+protected:
+    const Type *_type;
+    cType _value;
+};
+
+TEST(omrgenExtension, ReturnPointerParam_pInt8) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int8_t *);
+    ReturnPointerParameterFunc<FuncProto, int8_t> rpp_int8(LOC, "ReturnPointerParam_pInt8", c, false);
+    rpp_int8.test(LOC, Int8, static_cast<int8_t>(0));
+    rpp_int8.test(LOC, Int8, static_cast<int8_t>(3));
+    rpp_int8.test(LOC, Int8, std::numeric_limits<int8_t>::min());
+    rpp_int8.test(LOC, Int8, std::numeric_limits<int8_t>::min());
+}
+TEST(omrgenExtension, ReturnPointerParam_pInt16) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int16_t (FuncProto)(int16_t *);
+    ReturnPointerParameterFunc<FuncProto, int16_t> rpp_int16(LOC, "ReturnPointerParam_pInt16", c, false);
+    rpp_int16.test(LOC, Int16, static_cast<int16_t>(0));
+    rpp_int16.test(LOC, Int16, static_cast<int16_t>(3));
+    rpp_int16.test(LOC, Int16, std::numeric_limits<int16_t>::min());
+    rpp_int16.test(LOC, Int16, std::numeric_limits<int16_t>::min());
+}
+TEST(omrgenExtension, ReturnPointerParam_pInt32) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int32_t (FuncProto)(int32_t *);
+    ReturnPointerParameterFunc<FuncProto, int32_t> rpp_int32(LOC, "ReturnPointerParam_pInt32", c, false);
+    rpp_int32.test(LOC, Int32, static_cast<int32_t>(0));
+    rpp_int32.test(LOC, Int32, static_cast<int32_t>(3));
+    rpp_int32.test(LOC, Int32, std::numeric_limits<int32_t>::min());
+    rpp_int32.test(LOC, Int32, std::numeric_limits<int32_t>::min());
+}
+TEST(omrgenExtension, ReturnPointerParam_pInt64) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int64_t (FuncProto)(int64_t *);
+    ReturnPointerParameterFunc<FuncProto, int64_t> rpp_int64(LOC, "ReturnPointerParam_pInt64", c, false);
+    rpp_int64.test(LOC, Int64, static_cast<int64_t>(0));
+    rpp_int64.test(LOC, Int64, static_cast<int64_t>(3));
+    rpp_int64.test(LOC, Int64, std::numeric_limits<int64_t>::min());
+    rpp_int64.test(LOC, Int64, std::numeric_limits<int64_t>::min());
+}
+TEST(omrgenExtension, ReturnPointerParam_pFloat32) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef float (FuncProto)(float *);
+    ReturnPointerParameterFunc<FuncProto, float> rpp_float32(LOC, "ReturnPointerParam_pFloat32", c, false);
+    rpp_float32.test(LOC, Float32, static_cast<float>(0));
+    rpp_float32.test(LOC, Float32, static_cast<float>(3));
+    rpp_float32.test(LOC, Float32, std::numeric_limits<float>::min());
+    rpp_float32.test(LOC, Float32, std::numeric_limits<float>::min());
+}
+TEST(omrgenExtension, ReturnPointerParam_pDouble) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef double (FuncProto)(double *);
+    ReturnPointerParameterFunc<FuncProto, double> rpp_float64(LOC, "ReturnPointerParam_pFloat64", c, false);
+    rpp_float64.test(LOC, Float64, static_cast<double>(0));
+    rpp_float64.test(LOC, Float64, static_cast<double>(3));
+    rpp_float64.test(LOC, Float64, std::numeric_limits<double>::min());
+    rpp_float64.test(LOC, Float64, std::numeric_limits<double>::min());
+}
+TEST(omrgenExtension, ReturnPointerParam_pAddress) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef uintptr_t (FuncProto)(uintptr_t *);
+    ReturnPointerParameterFunc<FuncProto, uintptr_t> rpp_address(LOC, "ReturnPointerParam_pAddress", c, false);
+    rpp_address.test(LOC, Address, std::numeric_limits<uintptr_t>::min());
+    rpp_address.test(LOC, Address, std::numeric_limits<uintptr_t>::min());
+    rpp_address.test(LOC, Address, reinterpret_cast<uintptr_t>(Address));
+}
+
+// Test returning the value of a paramater that has a pointer to pointer type using LoadAt
+template<typename FuncPrototype, typename cType>
+class ReturnPointerToPointerParameterFunc : public TestFunc {
+public:
+    ReturnPointerToPointerParameterFunc(LOCATION, String name, Compiler *compiler, bool log)
+        : TestFunc(PASSLOC, compiler, log)
+        , _type(NULL)
+        , _value(0) {
+
+        DefineName(name);
+        DefineFile(__FILE__);
+        DefineLine(LINETOSTR(__LINE__));
+    }
+    void run(LOCATION) {
+        FuncPrototype *f = body()->template nativeEntryPoint<FuncPrototype>();
+        EXPECT_NE(f, nullptr);
+        cType *pValue = &this->_value;
+        EXPECT_EQ(f(&pValue), pValue) << "Compiled f(" << (intptr_t)(&pValue) << ") returns " << (intptr_t)(pValue);
+        EXPECT_EQ((*pValue), _value) << "and (*" << (intptr_t)(pValue) << ") is still " << _value;
+    }
+    void test(LOCATION, const Type *type, cType value) {
+        _type = type;
+        _value = value;
+        compile(PASSLOC);
+        run(PASSLOC);
+    }
+
+protected:
+    virtual bool buildContext(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
+        const Type *pType = bx()->PointerTo(PASSLOC, comp, _type);
+        ctx->DefineParameter("value", bx()->PointerTo(PASSLOC, comp, pType));
+        ctx->DefineReturnType(pType);
+        return true;
+    }
+    virtual bool buildIL(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
+        Builder *entry = scope->entryPoint<BuilderEntry>(0)->builder();
+        auto parmSym=ctx->LookupLocal("value"); 
+        Value *addr = fx()->Load(LOC, entry, parmSym);
+        Value *v = bx()->LoadAt(LOC, entry, addr);
+        fx()->Return(LOC, entry, v);
+        return true;
+    }
+
+protected:
+    const Type *_type;
+    cType _value;
+};
+
+TEST(omrgenExtension, ReturnPointerToPointerParam_ppInt8) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t *(FuncProto)(int8_t **);
+    ReturnPointerToPointerParameterFunc<FuncProto, int8_t> rpp_int8(LOC, "ReturnPointerToPointerParam_ppInt8", c, false);
+    rpp_int8.test(LOC, Int8, static_cast<int16_t>(0));
+    rpp_int8.test(LOC, Int8, static_cast<int16_t>(3));
+    rpp_int8.test(LOC, Int8, std::numeric_limits<int8_t>::min());
+    rpp_int8.test(LOC, Int8, std::numeric_limits<int8_t>::min());
+}
+TEST(omrgenExtension, ReturnPointerToPointerParam_ppInt16) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int16_t *(FuncProto)(int16_t **);
+    ReturnPointerToPointerParameterFunc<FuncProto, int16_t> rpp_int16(LOC, "ReturnPointerToPointerParam_ppInt16", c, false);
+    rpp_int16.test(LOC, Int16, static_cast<int16_t>(0));
+    rpp_int16.test(LOC, Int16, static_cast<int16_t>(3));
+    rpp_int16.test(LOC, Int16, std::numeric_limits<int16_t>::min());
+    rpp_int16.test(LOC, Int16, std::numeric_limits<int16_t>::min());
+}
+TEST(omrgenExtension, ReturnPointerToPointerParam_ppInt32) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int32_t *(FuncProto)(int32_t **);
+    ReturnPointerToPointerParameterFunc<FuncProto, int32_t> rpp_int32(LOC, "ReturnPointerToPointerParam_ppInt32", c, false);
+    rpp_int32.test(LOC, Int32, static_cast<int32_t>(0));
+    rpp_int32.test(LOC, Int32, static_cast<int32_t>(3));
+    rpp_int32.test(LOC, Int32, std::numeric_limits<int32_t>::min());
+    rpp_int32.test(LOC, Int32, std::numeric_limits<int32_t>::min());
+}
+TEST(omrgenExtension, ReturnPointerToPointerParam_ppInt64) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int64_t *(FuncProto)(int64_t **);
+    ReturnPointerToPointerParameterFunc<FuncProto, int64_t> rpp_int64(LOC, "ReturnPointerToPointerParam_ppInt64", c, false);
+    rpp_int64.test(LOC, Int64, static_cast<int64_t>(0));
+    rpp_int64.test(LOC, Int64, static_cast<int64_t>(3));
+    rpp_int64.test(LOC, Int64, std::numeric_limits<int64_t>::min());
+    rpp_int64.test(LOC, Int64, std::numeric_limits<int64_t>::min());
+}
+TEST(omrgenExtension, ReturnPointerToPointerParam_ppFloat32) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef float *(FuncProto)(float **);
+    ReturnPointerToPointerParameterFunc<FuncProto, float> rpp_float32(LOC, "ReturnPointerToPointerParam_ppFloat32", c, false);
+    rpp_float32.test(LOC, Float32, static_cast<float>(0));
+    rpp_float32.test(LOC, Float32, static_cast<float>(3));
+    rpp_float32.test(LOC, Float32, std::numeric_limits<float>::min());
+    rpp_float32.test(LOC, Float32, std::numeric_limits<float>::min());
+}
+TEST(omrgenExtension, ReturnPointerToPointerParam_ppDouble) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef double *(FuncProto)(double **);
+    ReturnPointerToPointerParameterFunc<FuncProto, double> rpp_float64(LOC, "ReturnPointerToPointerParam_ppFloat64", c, false);
+    rpp_float64.test(LOC, Float64, static_cast<double>(0));
+    rpp_float64.test(LOC, Float64, static_cast<double>(3));
+    rpp_float64.test(LOC, Float64, std::numeric_limits<double>::min());
+    rpp_float64.test(LOC, Float64, std::numeric_limits<double>::min());
+}
+TEST(omrgenExtension, ReturnPointerToPointerParam_ppAddress) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef uintptr_t *(FuncProto)(uintptr_t **);
+    ReturnPointerToPointerParameterFunc<FuncProto, uintptr_t> rpp_address(LOC, "ReturnPointerToPointerParam_ppAddress", c, false);
+    rpp_address.test(LOC, Address, std::numeric_limits<uintptr_t>::min());
+    rpp_address.test(LOC, Address, std::numeric_limits<uintptr_t>::min());
+    rpp_address.test(LOC, Address, reinterpret_cast<uintptr_t>(Address));
+}
