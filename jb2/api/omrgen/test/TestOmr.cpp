@@ -1172,4 +1172,136 @@ TEST(omrgenExtension, AddInt8s) {
     add_int8s.test(LOC, Int8, static_cast<int8_t>(0), Int8, std::numeric_limits<int8_t>::min(), Int8, std::numeric_limits<int8_t>::min());
     add_int8s.test(LOC, Int8, std::numeric_limits<int8_t>::max(), Int8, static_cast<int8_t>(0), Int8, std::numeric_limits<int8_t>::max());
     add_int8s.test(LOC, Int8, static_cast<int8_t>(0), Int8, std::numeric_limits<int8_t>::max(), Int8, std::numeric_limits<int8_t>::max());
+    add_int8s.test(LOC, Int8, std::numeric_limits<int8_t>::min(), Int8, static_cast<int8_t>(-1), Int8, std::numeric_limits<int8_t>::max());
+    add_int8s.test(LOC, Int8, std::numeric_limits<int8_t>::max(), Int8, static_cast<int8_t>(1), Int8, std::numeric_limits<int8_t>::min());
+}
+TEST(omrgenExtension, AddInt16s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int16_t (FuncProto)(int16_t, int16_t);
+    AddFunc<FuncProto, int16_t, int16_t, int16_t> add_int16s(LOC, "add_int16s", c, false);
+    add_int16s.test(LOC, Int16, static_cast<int16_t>(0), Int16, static_cast<int16_t>(0), Int16, static_cast<int16_t>(0));
+    add_int16s.test(LOC, Int16, static_cast<int16_t>(0), Int16, static_cast<int16_t>(3), Int16, static_cast<int16_t>(3));
+    add_int16s.test(LOC, Int16, static_cast<int16_t>(3), Int16, static_cast<int16_t>(0), Int16, static_cast<int16_t>(3));
+    add_int16s.test(LOC, Int16, static_cast<int16_t>(-3), Int16, static_cast<int16_t>(3), Int16, static_cast<int16_t>(0));
+    add_int16s.test(LOC, Int16, static_cast<int16_t>(3), Int16, static_cast<int16_t>(-3), Int16, static_cast<int16_t>(0));
+    add_int16s.test(LOC, Int16, static_cast<int16_t>(-3), Int16, static_cast<int16_t>(-3), Int16, static_cast<int16_t>(-6));
+    add_int16s.test(LOC, Int16, std::numeric_limits<int16_t>::min(), Int16, static_cast<int16_t>(0), Int16, std::numeric_limits<int16_t>::min());
+    add_int16s.test(LOC, Int16, static_cast<int16_t>(0), Int16, std::numeric_limits<int16_t>::min(), Int16, std::numeric_limits<int16_t>::min());
+    add_int16s.test(LOC, Int16, std::numeric_limits<int16_t>::max(), Int16, static_cast<int16_t>(0), Int16, std::numeric_limits<int16_t>::max());
+    add_int16s.test(LOC, Int16, static_cast<int16_t>(0), Int16, std::numeric_limits<int16_t>::max(), Int16, std::numeric_limits<int16_t>::max());
+    add_int16s.test(LOC, Int16, std::numeric_limits<int16_t>::min(), Int16, static_cast<int16_t>(-1), Int16, std::numeric_limits<int16_t>::max());
+    add_int16s.test(LOC, Int16, std::numeric_limits<int16_t>::max(), Int16, static_cast<int16_t>(1), Int16, std::numeric_limits<int16_t>::min());
+}
+TEST(omrgenExtension, AddInt32s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int32_t (FuncProto)(int32_t, int32_t);
+    AddFunc<FuncProto, int32_t, int32_t, int32_t> add_int32s(LOC, "add_int32s", c, false);
+    add_int32s.test(LOC, Int32, static_cast<int32_t>(0), Int32, static_cast<int32_t>(0), Int32, static_cast<int32_t>(0));
+    add_int32s.test(LOC, Int32, static_cast<int32_t>(0), Int32, static_cast<int32_t>(3), Int32, static_cast<int32_t>(3));
+    add_int32s.test(LOC, Int32, static_cast<int32_t>(3), Int32, static_cast<int32_t>(0), Int32, static_cast<int32_t>(3));
+    add_int32s.test(LOC, Int32, static_cast<int32_t>(-3), Int32, static_cast<int32_t>(3), Int32, static_cast<int32_t>(0));
+    add_int32s.test(LOC, Int32, static_cast<int32_t>(3), Int32, static_cast<int32_t>(-3), Int32, static_cast<int32_t>(0));
+    add_int32s.test(LOC, Int32, static_cast<int32_t>(-3), Int32, static_cast<int32_t>(-3), Int32, static_cast<int32_t>(-6));
+    add_int32s.test(LOC, Int32, std::numeric_limits<int32_t>::min(), Int32, static_cast<int32_t>(0), Int32, std::numeric_limits<int32_t>::min());
+    add_int32s.test(LOC, Int32, static_cast<int32_t>(0), Int32, std::numeric_limits<int32_t>::min(), Int32, std::numeric_limits<int32_t>::min());
+    add_int32s.test(LOC, Int32, std::numeric_limits<int32_t>::max(), Int32, static_cast<int32_t>(0), Int32, std::numeric_limits<int32_t>::max());
+    add_int32s.test(LOC, Int32, static_cast<int32_t>(0), Int32, std::numeric_limits<int32_t>::max(), Int32, std::numeric_limits<int32_t>::max());
+    add_int32s.test(LOC, Int32, std::numeric_limits<int32_t>::min(), Int32, static_cast<int32_t>(-1), Int32, std::numeric_limits<int32_t>::max());
+    add_int32s.test(LOC, Int32, std::numeric_limits<int32_t>::max(), Int32, static_cast<int32_t>(1), Int32, std::numeric_limits<int32_t>::min());
+}
+TEST(omrgenExtension, AddInt64s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int64_t (FuncProto)(int64_t, int64_t);
+    AddFunc<FuncProto, int64_t, int64_t, int64_t> add_int64s(LOC, "add_int64s", c, false);
+    add_int64s.test(LOC, Int64, static_cast<int64_t>(0), Int64, static_cast<int64_t>(0), Int64, static_cast<int64_t>(0));
+    add_int64s.test(LOC, Int64, static_cast<int64_t>(0), Int64, static_cast<int64_t>(3), Int64, static_cast<int64_t>(3));
+    add_int64s.test(LOC, Int64, static_cast<int64_t>(3), Int64, static_cast<int64_t>(0), Int64, static_cast<int64_t>(3));
+    add_int64s.test(LOC, Int64, static_cast<int64_t>(-3), Int64, static_cast<int64_t>(3), Int64, static_cast<int64_t>(0));
+    add_int64s.test(LOC, Int64, static_cast<int64_t>(3), Int64, static_cast<int64_t>(-3), Int64, static_cast<int64_t>(0));
+    add_int64s.test(LOC, Int64, static_cast<int64_t>(-3), Int64, static_cast<int64_t>(-3), Int64, static_cast<int64_t>(-6));
+    add_int64s.test(LOC, Int64, std::numeric_limits<int64_t>::min(), Int64, static_cast<int64_t>(0), Int64, std::numeric_limits<int64_t>::min());
+    add_int64s.test(LOC, Int64, static_cast<int64_t>(0), Int64, std::numeric_limits<int64_t>::min(), Int64, std::numeric_limits<int64_t>::min());
+    add_int64s.test(LOC, Int64, std::numeric_limits<int64_t>::max(), Int64, static_cast<int64_t>(0), Int64, std::numeric_limits<int64_t>::max());
+    add_int64s.test(LOC, Int64, static_cast<int64_t>(0), Int64, std::numeric_limits<int64_t>::max(), Int64, std::numeric_limits<int64_t>::max());
+    add_int64s.test(LOC, Int64, std::numeric_limits<int64_t>::min(), Int64, static_cast<int64_t>(-1), Int64, std::numeric_limits<int64_t>::max());
+    add_int64s.test(LOC, Int64, std::numeric_limits<int64_t>::max(), Int64, static_cast<int64_t>(1), Int64, std::numeric_limits<int64_t>::min());
+}
+TEST(omrgenExtension, AddFloat32s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef float (FuncProto)(float, float);
+    AddFunc<FuncProto, float, float, float> add_floats(LOC, "add_float", c, false);
+    add_floats.test(LOC, Float32, static_cast<float>(0), Float32, static_cast<float>(0), Float32, static_cast<float>(0));
+    add_floats.test(LOC, Float32, static_cast<float>(0), Float32, static_cast<float>(3), Float32, static_cast<float>(3));
+    add_floats.test(LOC, Float32, static_cast<float>(3), Float32, static_cast<float>(0), Float32, static_cast<float>(3));
+    add_floats.test(LOC, Float32, static_cast<float>(-3), Float32, static_cast<float>(3), Float32, static_cast<float>(0));
+    add_floats.test(LOC, Float32, static_cast<float>(3), Float32, static_cast<float>(-3), Float32, static_cast<float>(0));
+    add_floats.test(LOC, Float32, static_cast<float>(-3), Float32, static_cast<float>(-3), Float32, static_cast<float>(-6));
+    add_floats.test(LOC, Float32, std::numeric_limits<float>::min(), Float32, static_cast<float>(0), Float32, std::numeric_limits<float>::min());
+    add_floats.test(LOC, Float32, static_cast<float>(0), Float32, std::numeric_limits<float>::min(), Float32, std::numeric_limits<float>::min());
+    add_floats.test(LOC, Float32, std::numeric_limits<float>::max(), Float32, static_cast<float>(0), Float32, std::numeric_limits<float>::max());
+    add_floats.test(LOC, Float32, static_cast<float>(0), Float32, std::numeric_limits<float>::max(), Float32, std::numeric_limits<float>::max());
+}
+TEST(omrgenExtension, AddFloat64s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef double (FuncProto)(double, double);
+    AddFunc<FuncProto, double, double, double> add_doubles(LOC, "add_double", c, false);
+    add_doubles.test(LOC, Float64, static_cast<double>(0), Float64, static_cast<double>(0), Float64, static_cast<double>(0));
+    add_doubles.test(LOC, Float64, static_cast<double>(0), Float64, static_cast<double>(3), Float64, static_cast<double>(3));
+    add_doubles.test(LOC, Float64, static_cast<double>(3), Float64, static_cast<double>(0), Float64, static_cast<double>(3));
+    add_doubles.test(LOC, Float64, static_cast<double>(-3), Float64, static_cast<double>(3), Float64, static_cast<double>(0));
+    add_doubles.test(LOC, Float64, static_cast<double>(3), Float64, static_cast<double>(-3), Float64, static_cast<double>(0));
+    add_doubles.test(LOC, Float64, static_cast<double>(-3), Float64, static_cast<double>(-3), Float64, static_cast<double>(-6));
+    add_doubles.test(LOC, Float64, std::numeric_limits<double>::min(), Float64, static_cast<double>(0), Float64, std::numeric_limits<double>::min());
+    add_doubles.test(LOC, Float64, static_cast<double>(0), Float64, std::numeric_limits<double>::min(), Float64, std::numeric_limits<double>::min());
+    add_doubles.test(LOC, Float64, std::numeric_limits<double>::max(), Float64, static_cast<double>(0), Float64, std::numeric_limits<double>::max());
+    add_doubles.test(LOC, Float64, static_cast<double>(0), Float64, std::numeric_limits<double>::max(), Float64, std::numeric_limits<double>::max());
+}
+TEST(omrgenExtension, AddAddressAndInt) {
+    TextLogger lgr(std::cout, String("    "));
+    if (c->platformWordSize() == 32) {
+        typedef intptr_t (FuncProto)(intptr_t, int32_t);
+        AddFunc<FuncProto, intptr_t, int32_t, intptr_t> add_addressint32s(LOC, "add_addressint32s", c, false);
+        add_addressint32s.test(LOC, Address, static_cast<intptr_t>(NULL), Int32, static_cast<int32_t>(0), Address, static_cast<intptr_t>(NULL));
+        add_addressint32s.test(LOC, Address, static_cast<intptr_t>(NULL), Int32, static_cast<int32_t>(4), Address, static_cast<intptr_t>(4));
+        add_addressint32s.test(LOC, Address, static_cast<intptr_t>(0xdeadbeef), Int32, static_cast<int32_t>(0), Address, static_cast<intptr_t>(0xdeadbeef));
+        add_addressint32s.test(LOC, Address, static_cast<intptr_t>(0xdeadbeef), Int32, static_cast<int32_t>(16), Address, static_cast<intptr_t>(0xdeadbeef+16));
+        add_addressint32s.test(LOC, Address, std::numeric_limits<intptr_t>::max(), Int32, static_cast<int32_t>(0), Address, std::numeric_limits<intptr_t>::max());
+        add_addressint32s.test(LOC, Address, static_cast<intptr_t>(0), Int32, std::numeric_limits<int32_t>::max(), Address, static_cast<intptr_t>(std::numeric_limits<int32_t>::max()));
+        add_addressint32s.test(LOC, Address, static_cast<intptr_t>(0), Int32, std::numeric_limits<int32_t>::min(), Address, static_cast<intptr_t>(std::numeric_limits<int32_t>::min()));
+    } else if (c->platformWordSize() == 64) {
+        typedef intptr_t (FuncProto)(intptr_t, int64_t);
+        AddFunc<FuncProto, intptr_t, int64_t, intptr_t> add_addressint64s(LOC, "add_addressint64s", c, false);
+        add_addressint64s.test(LOC, Address, static_cast<intptr_t>(NULL), Int64, static_cast<int64_t>(0), Address, static_cast<intptr_t>(NULL));
+        add_addressint64s.test(LOC, Address, static_cast<intptr_t>(NULL), Int64, static_cast<int64_t>(4), Address, static_cast<intptr_t>(4));
+        add_addressint64s.test(LOC, Address, static_cast<intptr_t>(0xdeadbeef), Int64, static_cast<int64_t>(0), Address, static_cast<intptr_t>(0xdeadbeef));
+        add_addressint64s.test(LOC, Address, static_cast<intptr_t>(0xdeadbeef), Int64, static_cast<int64_t>(16), Address, static_cast<intptr_t>(0xdeadbeef+16));
+        add_addressint64s.test(LOC, Address, std::numeric_limits<intptr_t>::max(), Int64, static_cast<int64_t>(0), Address, std::numeric_limits<intptr_t>::max());
+        add_addressint64s.test(LOC, Address, static_cast<intptr_t>(0), Int64, std::numeric_limits<int64_t>::max(), Address, static_cast<intptr_t>(std::numeric_limits<int64_t>::max()));
+        add_addressint64s.test(LOC, Address, static_cast<intptr_t>(0), Int64, std::numeric_limits<int64_t>::min(), Address, static_cast<intptr_t>(std::numeric_limits<int64_t>::min()));
+
+    }
+}
+TEST(omrgenExtension, AddIntAndAddress) {
+    TextLogger lgr(std::cout, String("    "));
+    if (c->platformWordSize() == 32) {
+        typedef intptr_t (FuncProto)(int32_t, intptr_t);
+        AddFunc<FuncProto, int32_t, intptr_t, intptr_t> add_int32addresses(LOC, "add_int32addresses", c, false);
+        add_int32addresses.test(LOC, Int32, static_cast<int32_t>(0), Address, static_cast<intptr_t>(NULL), Address, static_cast<intptr_t>(NULL));
+        add_int32addresses.test(LOC, Int32, static_cast<int32_t>(4), Address, static_cast<intptr_t>(NULL), Address, static_cast<intptr_t>(4));
+        add_int32addresses.test(LOC, Int32, static_cast<int32_t>(0), Address, static_cast<intptr_t>(0xdeadbeef), Address, static_cast<intptr_t>(0xdeadbeef));
+        add_int32addresses.test(LOC, Int32, static_cast<int32_t>(16), Address, static_cast<intptr_t>(0xdeadbeef), Address, static_cast<intptr_t>(0xdeadbeef+16));
+        add_int32addresses.test(LOC, Int32, static_cast<int32_t>(0), Address, std::numeric_limits<intptr_t>::max(), Address, std::numeric_limits<intptr_t>::max());
+        add_int32addresses.test(LOC, Int32, std::numeric_limits<int32_t>::max(), Address, static_cast<intptr_t>(0), Address, static_cast<intptr_t>(std::numeric_limits<int32_t>::max()));
+        add_int32addresses.test(LOC, Int32, std::numeric_limits<int32_t>::max(), Address, static_cast<intptr_t>(0), Address, static_cast<intptr_t>(std::numeric_limits<int32_t>::min()));
+    } else if (c->platformWordSize() == 64) {
+        typedef intptr_t (FuncRevProto)(intptr_t, int64_t);
+        AddFunc<FuncRevProto, intptr_t, int64_t, intptr_t> add_int64addresses(LOC, "add_int64addresses", c, false);
+        add_int64addresses.test(LOC, Int64, static_cast<int64_t>(0), Address, static_cast<intptr_t>(NULL), Address, static_cast<intptr_t>(NULL));
+        add_int64addresses.test(LOC, Int64, static_cast<int64_t>(4), Address, static_cast<intptr_t>(NULL), Address, static_cast<intptr_t>(4));
+        add_int64addresses.test(LOC, Int64, static_cast<int64_t>(0), Address, static_cast<intptr_t>(0xdeadbeef), Address, static_cast<intptr_t>(0xdeadbeef));
+        add_int64addresses.test(LOC, Int64, static_cast<int64_t>(16), Address, static_cast<intptr_t>(0xdeadbeef), Address, static_cast<intptr_t>(0xdeadbeef+16));
+        add_int64addresses.test(LOC, Int64, static_cast<int64_t>(0), Address, std::numeric_limits<intptr_t>::max(), Address, std::numeric_limits<intptr_t>::max());
+        add_int64addresses.test(LOC, Int64, std::numeric_limits<int64_t>::max(), Address, static_cast<intptr_t>(0), Address, static_cast<intptr_t>(std::numeric_limits<int64_t>::max()));
+        add_int64addresses.test(LOC, Int64, std::numeric_limits<int64_t>::min(), Address, static_cast<intptr_t>(0), Address, static_cast<intptr_t>(std::numeric_limits<int64_t>::min()));
+    }
 }
