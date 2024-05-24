@@ -1040,8 +1040,8 @@ TEST(omrgenExtension, ReturnPointerToPointerParam_ppInt8) {
     TextLogger lgr(std::cout, String("    "));
     typedef int8_t *(FuncProto)(int8_t **);
     ReturnPointerToPointerParameterFunc<FuncProto, int8_t> rpp_int8(LOC, "ReturnPointerToPointerParam_ppInt8", c, false);
-    rpp_int8.test(LOC, Int8, static_cast<int16_t>(0));
-    rpp_int8.test(LOC, Int8, static_cast<int16_t>(3));
+    rpp_int8.test(LOC, Int8, static_cast<int8_t>(0));
+    rpp_int8.test(LOC, Int8, static_cast<int8_t>(3));
     rpp_int8.test(LOC, Int8, std::numeric_limits<int8_t>::min());
     rpp_int8.test(LOC, Int8, std::numeric_limits<int8_t>::min());
 }
@@ -1097,4 +1097,79 @@ TEST(omrgenExtension, ReturnPointerToPointerParam_ppAddress) {
     rpp_address.test(LOC, Address, std::numeric_limits<uintptr_t>::min());
     rpp_address.test(LOC, Address, std::numeric_limits<uintptr_t>::min());
     rpp_address.test(LOC, Address, reinterpret_cast<uintptr_t>(Address));
+}
+
+
+// Test adding two numbers together of the same time
+template<typename FuncPrototype, typename left_cType, typename right_cType, typename result_cType>
+class AddFunc : public TestFunc {
+public:
+    AddFunc(LOCATION, String name, Compiler *compiler, bool log)
+        : TestFunc(PASSLOC, compiler, log)
+        , _leftType(NULL)
+        , _leftValue(0)
+        , _rightType(NULL)
+        , _rightValue(0) {
+
+        DefineName(name);
+        DefineFile(__FILE__);
+        DefineLine(LINETOSTR(__LINE__));
+    }
+    void run(LOCATION) {
+        FuncPrototype *f = body()->template nativeEntryPoint<FuncPrototype>();
+        EXPECT_NE(f, nullptr);
+        EXPECT_EQ(f(_leftValue,_rightValue), _resultValue) << "Compiled f(" << _leftValue << ", " << _rightValue << ") returns " << _resultValue;
+    }
+    void test(LOCATION, const Type *leftType, left_cType leftValue, const Type *rightType, right_cType rightValue, const Type *resultType, result_cType resultValue) {
+        _leftType = leftType;
+        _leftValue = leftValue;
+        _rightType = rightType;
+        _rightValue = rightValue;
+        _resultType = resultType;
+        _resultValue = resultValue;
+        compile(PASSLOC);
+        run(PASSLOC);
+    }
+
+protected:
+    virtual bool buildContext(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
+        ctx->DefineParameter("left", _leftType);
+        ctx->DefineParameter("right", _rightType);
+        ctx->DefineReturnType(_resultType);
+        return true;
+    }
+    virtual bool buildIL(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
+        Builder *entry = scope->entryPoint<BuilderEntry>(0)->builder();
+        auto leftSym=ctx->LookupLocal("left"); 
+        Value *leftValue = fx()->Load(LOC, entry, leftSym);
+        auto rightSym=ctx->LookupLocal("right"); 
+        Value *rightValue = fx()->Load(LOC, entry, rightSym);
+        Value *result = bx()->Add(LOC, entry, leftValue, rightValue);
+        fx()->Return(LOC, entry, result);
+        return true;
+    }
+
+protected:
+    const Type *_leftType;
+    left_cType _leftValue;
+    const Type *_rightType;
+    right_cType _rightValue;
+    const Type *_resultType;
+    result_cType _resultValue;
+};
+
+TEST(omrgenExtension, AddInt8s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int8_t, int8_t);
+    AddFunc<FuncProto, int8_t, int8_t, int8_t> add_int8s(LOC, "add_int8s", c, false);
+    add_int8s.test(LOC, Int8, static_cast<int8_t>(0), Int8, static_cast<int8_t>(0), Int8, static_cast<int8_t>(0));
+    add_int8s.test(LOC, Int8, static_cast<int8_t>(0), Int8, static_cast<int8_t>(3), Int8, static_cast<int8_t>(3));
+    add_int8s.test(LOC, Int8, static_cast<int8_t>(3), Int8, static_cast<int8_t>(0), Int8, static_cast<int8_t>(3));
+    add_int8s.test(LOC, Int8, static_cast<int8_t>(-3), Int8, static_cast<int8_t>(3), Int8, static_cast<int8_t>(0));
+    add_int8s.test(LOC, Int8, static_cast<int8_t>(3), Int8, static_cast<int8_t>(-3), Int8, static_cast<int8_t>(0));
+    add_int8s.test(LOC, Int8, static_cast<int8_t>(-3), Int8, static_cast<int8_t>(-3), Int8, static_cast<int8_t>(-6));
+    add_int8s.test(LOC, Int8, std::numeric_limits<int8_t>::min(), Int8, static_cast<int8_t>(0), Int8, std::numeric_limits<int8_t>::min());
+    add_int8s.test(LOC, Int8, static_cast<int8_t>(0), Int8, std::numeric_limits<int8_t>::min(), Int8, std::numeric_limits<int8_t>::min());
+    add_int8s.test(LOC, Int8, std::numeric_limits<int8_t>::max(), Int8, static_cast<int8_t>(0), Int8, std::numeric_limits<int8_t>::max());
+    add_int8s.test(LOC, Int8, static_cast<int8_t>(0), Int8, std::numeric_limits<int8_t>::max(), Int8, std::numeric_limits<int8_t>::max());
 }

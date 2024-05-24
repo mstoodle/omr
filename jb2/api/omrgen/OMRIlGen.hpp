@@ -26,6 +26,7 @@
 #include "JBCore.hpp"
 #include "ilgen/IlGen.hpp"
 #include "il/DataTypes.hpp"
+#include "il/ILOpCodes.hpp"
 
 class TR_FrontEnd;
 namespace TR { class Block; }
@@ -43,6 +44,8 @@ namespace JitBuilder {
 namespace omrgen {
 
 class OMRCodeGenerator;
+
+typedef TR::ILOpCodes (*OpCodeMapper)(TR::DataType);
 
 class OMRIlGen : public TR_IlGenerator {
 public:
@@ -91,6 +94,7 @@ public:
     void literalDouble(Value *resultValue, double v);
     void literalAddress(Value *resultValue, uintptr_t v);
 
+    void add(Location *location, Value *result, Value *left, Value *right);
     void convertTo(Location *location, Value *result, const Type *type, Value *value, bool needsUnsigned);
     void load(Location *location, Value *result, Symbol *sym);
     void loadAt(Location *location, Value *result, Value *addrValue, const Type *baseType);
@@ -123,6 +127,8 @@ protected:
     void defineValue(Value *v, TR::Node *n);
     TR::Node * useValue(Value *v);
     TR::Node * convertNodeTo(TR::DataType typeTo, TR::Node *n, bool needUnsigned);
+    TR::Node * binaryOpNodeFromNodes(TR::ILOpCodes op, TR::Node *leftNode, TR::Node *rightNode);
+    TR::Node * binaryOpFromOpMap(OpCodeMapper mapOp, TR::Node *leftNode, TR::Node *rightNode);
 
     TR::Compilation * _comp;
     TR_FrontEnd * _fe;
