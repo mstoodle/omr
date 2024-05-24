@@ -161,7 +161,7 @@ OMRCodeGeneratorForBase::gencode(Operation *op) {
 Builder *
 OMRCodeGeneratorForBase::gencodeAdd(Operation *op) {
     assert(op->action() == _bx->aAdd);
-    assert(0); // TODO
+    ilgen()->add(op->location(), op->result(), op->operand(0), op->operand(1));
     return NULL;
 }
 
@@ -412,7 +412,6 @@ OMRCodeGeneratorForBase::gencodeConst(Operation *op) {
     (this->*f)(op->location(), op->parent(), op->result(), op->literal());
     return NULL;
 }
-
 
 void
 OMRCodeGeneratorForBase::genconstInt8(Location *loc, Builder *b, Value *result, Literal *lv) {

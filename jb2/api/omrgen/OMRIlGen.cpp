@@ -551,6 +551,58 @@ OMRIlGen::convertNodeTo(TR::DataType typeTo, TR::Node *n, bool needUnsigned) {
     return convertedValue;
 }
 
+TR::Node *
+OMRIlGen::binaryOpNodeFromNodes(TR::ILOpCodes op, TR::Node *leftNode, TR::Node *rightNode) {
+    TR::DataType leftType = leftNode->getDataType();
+    TR::DataType rightType = rightNode->getDataType();
+    bool isAddressBump = ((leftType == TR::Address) &&
+                          (rightType == TR::Int32 || rightType == TR::Int64));
+    bool isRevAddressBump = ((rightType == TR::Address) &&
+                             (leftType == TR::Int32 || leftType == TR::Int64));
+    TR_ASSERT_FATAL(leftType == rightType || isAddressBump || isRevAddressBump, "binaryOp requires both left and right operands to have same type or one is address and other is Int32/64");
+
+    if (isRevAddressBump) { // swap them
+        TR::Node *save = leftNode;
+        leftNode = rightNode;
+        rightNode = save;
+    }
+
+    return TR::Node::create(op, 2, leftNode, rightNode);
+}
+
+TR::Node *
+OMRIlGen::binaryOpFromOpMap(OpCodeMapper mapOp, TR::Node *leftNode, TR::Node *rightNode) {
+    TR::DataType leftType = leftNode->getDataType();
+    return binaryOpNodeFromNodes(mapOp(leftType), leftNode, rightNode);
+}
+
+static TR::ILOpCodes addOpCode(TR::DataType type) {
+    return TR::ILOpCode::addOpCode(type, TR::Compiler->target.is64Bit());
+}
+
+void
+OMRIlGen::add(Location *location, Value *result, Value *left, Value *right) {
+    TR::DataTypes leftType = mapType(left->type());
+    TR::Node *leftNode = useValue(left);
+    TR::DataTypes rightType = mapType(right->type());
+    TR::Node *rightNode = useValue(right);
+
+    TR::Node *resultNode = NULL;
+    if (leftType == TR::Address) {
+        if (TR::Compiler->target.is64Bit() && rightType == TR::Int32) {
+            rightNode = TR::Node::create(TR::i2l, 1, rightNode);
+        }
+        else if (TR::Compiler->target.is32Bit() && rightType == TR::Int64) {
+            rightNode = TR::Node::create(TR::l2i, 1, rightNode);
+        }
+        resultNode = binaryOpNodeFromNodes(TR::Compiler->target.is32Bit() ? TR::aiadd : TR::aladd, leftNode, rightNode);
+    } else {
+        resultNode = binaryOpFromOpMap(addOpCode, leftNode, rightNode);
+    }
+    //TraceIL("IlBuilder[ %p ]::%d is Add %d + %d\n", this, returnValue->getID(), left->getID(), right->getID());
+    defineValue(result, resultNode);
+}
+
 void
 OMRIlGen::convertTo(Location *location, Value *result, const Type *typeTo, Value *value, bool needUnsigned) {
     TR::Node *valueNode = useValue(value);
