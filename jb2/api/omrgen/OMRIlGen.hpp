@@ -102,6 +102,7 @@ public:
     void returnNoValue(Location *location);
     void store(Location *location, Symbol *sy, Value *value);
     void storeAt(Location *location, Value *addrValue, const Type *baseType, Value *valueValue);
+    void sub(Location *location, Value *result, Value *left, Value *right);
 
 protected:
     typedef struct ValueInfo {
