@@ -631,6 +631,16 @@ OMRIlGen::loadAt(Location *location, Value *result, Value *addrValue, const Type
 }
 
 void
+OMRIlGen::mul(Location *location, Value *result, Value *left, Value *right) {
+    TR::DataTypes leftType = mapType(left->type());
+    TR::Node *leftNode = useValue(left);
+    TR::DataTypes rightType = mapType(right->type());
+    TR::Node *rightNode = useValue(right);
+    TR::Node *resultNode = resultNode = binaryOpFromOpMap(TR::ILOpCode::multiplyOpCode, leftNode, rightNode);
+    defineValue(result, resultNode);
+}
+
+void
 OMRIlGen::returnValue(Location *location, Value *value) {
     TR::Node *valueNode = useValue(value);
     assert(valueNode != NULL);

@@ -1444,3 +1444,134 @@ TEST(omrgenExtension, SubAddressAndInt) {
 
     }
 }
+template<typename FuncPrototype, typename left_cType, typename right_cType, typename result_cType>
+class MulFunc : public BinaryOpFunc<FuncPrototype, left_cType, right_cType, result_cType> {
+public:
+    MulFunc(LOCATION, String name, Compiler *compiler, bool log)
+        : BinaryOpFunc<FuncPrototype, left_cType, right_cType, result_cType>(PASSLOC, name, compiler, log) { }
+protected:
+    virtual Value *doBinaryOp(LOCATION, Builder *b, Value *left, Value *right) {
+        return this->bx()->Mul(PASSLOC, b, left, right);
+    }
+};
+
+TEST(omrgenExtension, MulInt8s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int8_t, int8_t);
+    MulFunc<FuncProto, int8_t, int8_t, int8_t> mul_int8s(LOC, "mul_int8s", c, false);
+    mul_int8s.test(LOC, Int8, static_cast<int8_t>(0), Int8, static_cast<int8_t>(0), Int8, static_cast<int8_t>(0));
+    mul_int8s.test(LOC, Int8, static_cast<int8_t>(0), Int8, static_cast<int8_t>(3), Int8, static_cast<int8_t>(0));
+    mul_int8s.test(LOC, Int8, static_cast<int8_t>(3), Int8, static_cast<int8_t>(0), Int8, static_cast<int8_t>(0));
+    mul_int8s.test(LOC, Int8, static_cast<int8_t>(1), Int8, static_cast<int8_t>(1), Int8, static_cast<int8_t>(1));
+    mul_int8s.test(LOC, Int8, static_cast<int8_t>(-1), Int8, static_cast<int8_t>(1), Int8, static_cast<int8_t>(-1));
+    mul_int8s.test(LOC, Int8, static_cast<int8_t>(1), Int8, static_cast<int8_t>(-1), Int8, static_cast<int8_t>(-1));
+    mul_int8s.test(LOC, Int8, static_cast<int8_t>(-1), Int8, static_cast<int8_t>(-1), Int8, static_cast<int8_t>(1));
+    mul_int8s.test(LOC, Int8, static_cast<int8_t>(3), Int8, static_cast<int8_t>(3), Int8, static_cast<int8_t>(9));
+    mul_int8s.test(LOC, Int8, static_cast<int8_t>(-3), Int8, static_cast<int8_t>(3), Int8, static_cast<int8_t>(-9));
+    mul_int8s.test(LOC, Int8, static_cast<int8_t>(3), Int8, static_cast<int8_t>(-3), Int8, static_cast<int8_t>(-9));
+    mul_int8s.test(LOC, Int8, static_cast<int8_t>(-3), Int8, static_cast<int8_t>(-3), Int8, static_cast<int8_t>(9));
+    mul_int8s.test(LOC, Int8, std::numeric_limits<int8_t>::min(), Int8, static_cast<int8_t>(1), Int8, std::numeric_limits<int8_t>::min());
+    mul_int8s.test(LOC, Int8, static_cast<int8_t>(1), Int8, std::numeric_limits<int8_t>::min(), Int8, std::numeric_limits<int8_t>::min());
+    mul_int8s.test(LOC, Int8, std::numeric_limits<int8_t>::max(), Int8, static_cast<int8_t>(1), Int8, std::numeric_limits<int8_t>::max());
+    mul_int8s.test(LOC, Int8, static_cast<int8_t>(1), Int8, std::numeric_limits<int8_t>::max(), Int8, std::numeric_limits<int8_t>::max());
+}
+TEST(omrgenExtension, MulInt16s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int16_t (FuncProto)(int16_t, int16_t);
+    MulFunc<FuncProto, int16_t, int16_t, int16_t> mul_int16s(LOC, "mul_int16s", c, false);
+    mul_int16s.test(LOC, Int16, static_cast<int16_t>(0), Int16, static_cast<int16_t>(0), Int16, static_cast<int16_t>(0));
+    mul_int16s.test(LOC, Int16, static_cast<int16_t>(0), Int16, static_cast<int16_t>(3), Int16, static_cast<int16_t>(0));
+    mul_int16s.test(LOC, Int16, static_cast<int16_t>(3), Int16, static_cast<int16_t>(0), Int16, static_cast<int16_t>(0));
+    mul_int16s.test(LOC, Int16, static_cast<int16_t>(1), Int16, static_cast<int16_t>(1), Int16, static_cast<int16_t>(1));
+    mul_int16s.test(LOC, Int16, static_cast<int16_t>(-1), Int16, static_cast<int16_t>(1), Int16, static_cast<int16_t>(-1));
+    mul_int16s.test(LOC, Int16, static_cast<int16_t>(1), Int16, static_cast<int16_t>(-1), Int16, static_cast<int16_t>(-1));
+    mul_int16s.test(LOC, Int16, static_cast<int16_t>(-1), Int16, static_cast<int16_t>(-1), Int16, static_cast<int16_t>(1));
+    mul_int16s.test(LOC, Int16, static_cast<int16_t>(3), Int16, static_cast<int16_t>(3), Int16, static_cast<int16_t>(9));
+    mul_int16s.test(LOC, Int16, static_cast<int16_t>(-3), Int16, static_cast<int16_t>(3), Int16, static_cast<int16_t>(-9));
+    mul_int16s.test(LOC, Int16, static_cast<int16_t>(3), Int16, static_cast<int16_t>(-3), Int16, static_cast<int16_t>(-9));
+    mul_int16s.test(LOC, Int16, static_cast<int16_t>(-3), Int16, static_cast<int16_t>(-3), Int16, static_cast<int16_t>(9));
+    mul_int16s.test(LOC, Int16, std::numeric_limits<int16_t>::min(), Int16, static_cast<int16_t>(1), Int16, std::numeric_limits<int16_t>::min());
+    mul_int16s.test(LOC, Int16, static_cast<int16_t>(1), Int16, std::numeric_limits<int16_t>::min(), Int16, std::numeric_limits<int16_t>::min());
+    mul_int16s.test(LOC, Int16, std::numeric_limits<int16_t>::max(), Int16, static_cast<int16_t>(1), Int16, std::numeric_limits<int16_t>::max());
+    mul_int16s.test(LOC, Int16, static_cast<int16_t>(1), Int16, std::numeric_limits<int16_t>::max(), Int16, std::numeric_limits<int16_t>::max());
+}
+TEST(omrgenExtension, MulInt32s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int32_t (FuncProto)(int32_t, int32_t);
+    MulFunc<FuncProto, int32_t, int32_t, int32_t> mul_int32s(LOC, "mul_int32s", c, false);
+    mul_int32s.test(LOC, Int32, static_cast<int32_t>(0), Int32, static_cast<int32_t>(0), Int32, static_cast<int32_t>(0));
+    mul_int32s.test(LOC, Int32, static_cast<int32_t>(0), Int32, static_cast<int32_t>(3), Int32, static_cast<int32_t>(0));
+    mul_int32s.test(LOC, Int32, static_cast<int32_t>(3), Int32, static_cast<int32_t>(0), Int32, static_cast<int32_t>(0));
+    mul_int32s.test(LOC, Int32, static_cast<int32_t>(1), Int32, static_cast<int32_t>(1), Int32, static_cast<int32_t>(1));
+    mul_int32s.test(LOC, Int32, static_cast<int32_t>(-1), Int32, static_cast<int32_t>(1), Int32, static_cast<int32_t>(-1));
+    mul_int32s.test(LOC, Int32, static_cast<int32_t>(1), Int32, static_cast<int32_t>(-1), Int32, static_cast<int32_t>(-1));
+    mul_int32s.test(LOC, Int32, static_cast<int32_t>(-1), Int32, static_cast<int32_t>(-1), Int32, static_cast<int32_t>(1));
+    mul_int32s.test(LOC, Int32, static_cast<int32_t>(3), Int32, static_cast<int32_t>(3), Int32, static_cast<int32_t>(9));
+    mul_int32s.test(LOC, Int32, static_cast<int32_t>(-3), Int32, static_cast<int32_t>(3), Int32, static_cast<int32_t>(-9));
+    mul_int32s.test(LOC, Int32, static_cast<int32_t>(3), Int32, static_cast<int32_t>(-3), Int32, static_cast<int32_t>(-9));
+    mul_int32s.test(LOC, Int32, static_cast<int32_t>(-3), Int32, static_cast<int32_t>(-3), Int32, static_cast<int32_t>(9));
+    mul_int32s.test(LOC, Int32, std::numeric_limits<int32_t>::min(), Int32, static_cast<int32_t>(1), Int32, std::numeric_limits<int32_t>::min());
+    mul_int32s.test(LOC, Int32, static_cast<int32_t>(1), Int32, std::numeric_limits<int32_t>::min(), Int32, std::numeric_limits<int32_t>::min());
+    mul_int32s.test(LOC, Int32, std::numeric_limits<int32_t>::max(), Int32, static_cast<int32_t>(1), Int32, std::numeric_limits<int32_t>::max());
+    mul_int32s.test(LOC, Int32, static_cast<int32_t>(1), Int32, std::numeric_limits<int32_t>::max(), Int32, std::numeric_limits<int32_t>::max());
+}
+TEST(omrgenExtension, MulInt64s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int64_t (FuncProto)(int64_t, int64_t);
+    MulFunc<FuncProto, int64_t, int64_t, int64_t> mul_int64s(LOC, "mul_int64s", c, false);
+    mul_int64s.test(LOC, Int64, static_cast<int64_t>(0), Int64, static_cast<int64_t>(0), Int64, static_cast<int64_t>(0));
+    mul_int64s.test(LOC, Int64, static_cast<int64_t>(0), Int64, static_cast<int64_t>(3), Int64, static_cast<int64_t>(0));
+    mul_int64s.test(LOC, Int64, static_cast<int64_t>(3), Int64, static_cast<int64_t>(0), Int64, static_cast<int64_t>(0));
+    mul_int64s.test(LOC, Int64, static_cast<int64_t>(1), Int64, static_cast<int64_t>(1), Int64, static_cast<int64_t>(1));
+    mul_int64s.test(LOC, Int64, static_cast<int64_t>(-1), Int64, static_cast<int64_t>(1), Int64, static_cast<int64_t>(-1));
+    mul_int64s.test(LOC, Int64, static_cast<int64_t>(1), Int64, static_cast<int64_t>(-1), Int64, static_cast<int64_t>(-1));
+    mul_int64s.test(LOC, Int64, static_cast<int64_t>(-1), Int64, static_cast<int64_t>(-1), Int64, static_cast<int64_t>(1));
+    mul_int64s.test(LOC, Int64, static_cast<int64_t>(3), Int64, static_cast<int64_t>(3), Int64, static_cast<int64_t>(9));
+    mul_int64s.test(LOC, Int64, static_cast<int64_t>(-3), Int64, static_cast<int64_t>(3), Int64, static_cast<int64_t>(-9));
+    mul_int64s.test(LOC, Int64, static_cast<int64_t>(3), Int64, static_cast<int64_t>(-3), Int64, static_cast<int64_t>(-9));
+    mul_int64s.test(LOC, Int64, static_cast<int64_t>(-3), Int64, static_cast<int64_t>(-3), Int64, static_cast<int64_t>(9));
+    mul_int64s.test(LOC, Int64, std::numeric_limits<int64_t>::min(), Int64, static_cast<int64_t>(1), Int64, std::numeric_limits<int64_t>::min());
+    mul_int64s.test(LOC, Int64, static_cast<int64_t>(1), Int64, std::numeric_limits<int64_t>::min(), Int64, std::numeric_limits<int64_t>::min());
+    mul_int64s.test(LOC, Int64, std::numeric_limits<int64_t>::max(), Int64, static_cast<int64_t>(1), Int64, std::numeric_limits<int64_t>::max());
+    mul_int64s.test(LOC, Int64, static_cast<int64_t>(1), Int64, std::numeric_limits<int64_t>::max(), Int64, std::numeric_limits<int64_t>::max());
+}
+TEST(omrgenExtension, MulFloat32s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef float (FuncProto)(float, float);
+    MulFunc<FuncProto, float, float, float> mul_floats(LOC, "mul_float", c, false);
+    mul_floats.test(LOC, Float32, static_cast<float>(0), Float32, static_cast<float>(0), Float32, static_cast<float>(0));
+    mul_floats.test(LOC, Float32, static_cast<float>(0), Float32, static_cast<float>(3), Float32, static_cast<float>(0));
+    mul_floats.test(LOC, Float32, static_cast<float>(3), Float32, static_cast<float>(0), Float32, static_cast<float>(0));
+    mul_floats.test(LOC, Float32, static_cast<float>(1), Float32, static_cast<float>(1), Float32, static_cast<float>(1));
+    mul_floats.test(LOC, Float32, static_cast<float>(-1), Float32, static_cast<float>(1), Float32, static_cast<float>(-1));
+    mul_floats.test(LOC, Float32, static_cast<float>(1), Float32, static_cast<float>(-1), Float32, static_cast<float>(-1));
+    mul_floats.test(LOC, Float32, static_cast<float>(-1), Float32, static_cast<float>(-1), Float32, static_cast<float>(1));
+    mul_floats.test(LOC, Float32, static_cast<float>(3), Float32, static_cast<float>(3), Float32, static_cast<float>(9));
+    mul_floats.test(LOC, Float32, static_cast<float>(-3), Float32, static_cast<float>(3), Float32, static_cast<float>(-9));
+    mul_floats.test(LOC, Float32, static_cast<float>(3), Float32, static_cast<float>(-3), Float32, static_cast<float>(-9));
+    mul_floats.test(LOC, Float32, static_cast<float>(-3), Float32, static_cast<float>(-3), Float32, static_cast<float>(9));
+    mul_floats.test(LOC, Float32, std::numeric_limits<float>::min(), Float32, static_cast<float>(1), Float32, std::numeric_limits<float>::min());
+    mul_floats.test(LOC, Float32, static_cast<float>(1), Float32, std::numeric_limits<float>::min(), Float32, std::numeric_limits<float>::min());
+    mul_floats.test(LOC, Float32, std::numeric_limits<float>::max(), Float32, static_cast<float>(1), Float32, std::numeric_limits<float>::max());
+    mul_floats.test(LOC, Float32, static_cast<float>(1), Float32, std::numeric_limits<float>::max(), Float32, std::numeric_limits<float>::max());
+}
+TEST(omrgenExtension, MulFloat64s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef double (FuncProto)(double, double);
+    MulFunc<FuncProto, double, double, double> mul_doubles(LOC, "mul_double", c, false);
+    mul_doubles.test(LOC, Float64, static_cast<double>(0), Float64, static_cast<double>(0), Float64, static_cast<double>(0));
+    mul_doubles.test(LOC, Float64, static_cast<double>(0), Float64, static_cast<double>(3), Float64, static_cast<double>(0));
+    mul_doubles.test(LOC, Float64, static_cast<double>(3), Float64, static_cast<double>(0), Float64, static_cast<double>(0));
+    mul_doubles.test(LOC, Float64, static_cast<double>(1), Float64, static_cast<double>(1), Float64, static_cast<double>(1));
+    mul_doubles.test(LOC, Float64, static_cast<double>(-1), Float64, static_cast<double>(1), Float64, static_cast<double>(-1));
+    mul_doubles.test(LOC, Float64, static_cast<double>(1), Float64, static_cast<double>(-1), Float64, static_cast<double>(-1));
+    mul_doubles.test(LOC, Float64, static_cast<double>(-1), Float64, static_cast<double>(-1), Float64, static_cast<double>(1));
+    mul_doubles.test(LOC, Float64, static_cast<double>(3), Float64, static_cast<double>(3), Float64, static_cast<double>(9));
+    mul_doubles.test(LOC, Float64, static_cast<double>(-3), Float64, static_cast<double>(3), Float64, static_cast<double>(-9));
+    mul_doubles.test(LOC, Float64, static_cast<double>(3), Float64, static_cast<double>(-3), Float64, static_cast<double>(-9));
+    mul_doubles.test(LOC, Float64, static_cast<double>(-3), Float64, static_cast<double>(-3), Float64, static_cast<double>(9));
+    mul_doubles.test(LOC, Float64, std::numeric_limits<double>::min(), Float64, static_cast<double>(1), Float64, std::numeric_limits<double>::min());
+    mul_doubles.test(LOC, Float64, static_cast<double>(1), Float64, std::numeric_limits<double>::min(), Float64, std::numeric_limits<double>::min());
+    mul_doubles.test(LOC, Float64, std::numeric_limits<double>::max(), Float64, static_cast<double>(1), Float64, std::numeric_limits<double>::max());
+    mul_doubles.test(LOC, Float64, static_cast<double>(1), Float64, std::numeric_limits<double>::max(), Float64, std::numeric_limits<double>::max());
+}

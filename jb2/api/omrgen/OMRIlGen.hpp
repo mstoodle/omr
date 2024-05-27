@@ -98,6 +98,7 @@ public:
     void convertTo(Location *location, Value *result, const Type *type, Value *value, bool needsUnsigned);
     void load(Location *location, Value *result, Symbol *sym);
     void loadAt(Location *location, Value *result, Value *addrValue, const Type *baseType);
+    void mul(Location *location, Value *result, Value *left, Value *right);
     void returnValue(Location *location, Value *value);
     void returnNoValue(Location *location);
     void store(Location *location, Symbol *sy, Value *value);
