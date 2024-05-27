@@ -182,7 +182,7 @@ OMRCodeGeneratorForBase::gencodeMul(Operation *op) {
 Builder *
 OMRCodeGeneratorForBase::gencodeSub(Operation *op) {
     assert(op->action() == _bx->aSub);
-    assert(0); // TODO
+    ilgen()->sub(op->location(), op->result(), op->operand(0), op->operand(1));
     return NULL;
 }
 
