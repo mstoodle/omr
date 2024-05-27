@@ -175,7 +175,7 @@ OMRCodeGeneratorForBase::gencodeConvertTo(Operation *op) {
 Builder *
 OMRCodeGeneratorForBase::gencodeMul(Operation *op) {
     assert(op->action() == _bx->aMul);
-    assert(0); // TODO
+    ilgen()->mul(op->location(), op->result(), op->operand(0), op->operand(1));
     return NULL;
 }
 
