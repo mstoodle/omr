@@ -677,6 +677,46 @@ OMRIlGen::storeAt(Location *location, Value *addrValue, const Type *baseType, Va
     genNode(storeNode, true);
 }
 
+void
+OMRIlGen::sub(Location *location, Value *result, Value *left, Value *right) {
+    TR::Node *leftNode = useValue(left);
+    TR::DataType leftType = leftNode->getDataType();
+    TR::Node *rightNode = useValue(right);
+    TR::DataType rightType = leftNode->getDataType();
+    TR::Node *resultNode = NULL;
+
+    if (leftType == TR::Address) {
+        TR::ILOpCodes op;
+        bool needSub=true;
+        if (TR::Compiler->target.is64Bit()) {
+            op = TR::aladd;
+            if (rightType == TR::Int32) {
+                rightNode = TR::Node::create(TR::i2l, 1, rightNode);
+                rightNode = TR::Node::create(TR::lsub, 2, TR::Node::lconst(0), rightNode);
+            } else if (rightType == TR::Address) {
+                leftNode = TR::Node::create(TR::a2l, 1, leftNode);
+                rightNode = TR::Node::create(TR::a2l, 1, rightNode);
+                op = TR::lsub;
+            }
+        } else if (TR::Compiler->target.is32Bit()) {
+            op = TR::aiadd;
+            if (rightType == TR::Int64) {
+                rightNode = TR::Node::create(TR::l2i, 1, rightNode);
+                rightNode = TR::Node::create(TR::isub, 2, TR::Node::iconst(0), rightNode);
+            } else if (rightType == TR::Address) {
+                leftNode = TR::Node::create(TR::a2i, 1, leftNode);
+                rightNode = TR::Node::create(TR::a2i, 1, rightNode);
+                op = TR::isub;
+            }
+        }
+      resultNode = binaryOpNodeFromNodes(op, leftNode, rightNode);
+    } else {
+        resultNode = binaryOpFromOpMap(TR::ILOpCode::subtractOpCode, leftNode, rightNode);
+    }
+
+    defineValue(result, resultNode);
+}
+
 } // namespace omrgen
 } // namespace JitBuilder
 } // namespace OMR
