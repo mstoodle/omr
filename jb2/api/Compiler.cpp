@@ -200,6 +200,24 @@ Compiler::~Compiler() {
 
 }
 
+bool
+Compiler::platformImplements8bCompares() const {
+    #if defined(AARCH64)
+        return false;
+    #else
+        return true;
+    #endif
+}
+
+bool
+Compiler::platformImplements16bCompares() const {
+    #if defined(AARCH64)
+        return false;
+    #else
+        return true;
+    #endif
+}
+
 const char *
 Compiler::platformLibrarySuffix() const {
     #if defined(OSX)

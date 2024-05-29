@@ -26,6 +26,7 @@
 #include "JBCore.hpp"
 #include "ilgen/IlGen.hpp"
 #include "il/DataTypes.hpp"
+#include "il/ILHelpers.hpp"
 #include "il/ILOpCodes.hpp"
 
 class TR_FrontEnd;
@@ -81,10 +82,9 @@ public:
     void createLocalSymbol(Symbol *localSym);
     void createFunctionSymbol(Symbol *funcSym);
 
-    TR::DataTypes mapType(const Type *type);
-
     void entryPoint(Builder *b);
     void genBuilder(Builder *b);
+    TR::DataTypes mapType(const Type *type);
 
     void literalInt8(Value *resultValue, int8_t v);
     void literalInt16(Value *resultValue, int16_t v);
@@ -96,6 +96,15 @@ public:
 
     void add(Location *location, Value *result, Value *left, Value *right);
     void convertTo(Location *location, Value *result, const Type *type, Value *value, bool needsUnsigned);
+    void goto_(Location *location, Builder *target);
+    void ifCmpEqual(Location *location, Builder *target, Value *left, Value *right);
+    void ifCmpEqualZero(Location *location, Builder *target, Value *v);
+    void ifCmpGreaterThan(Location *location, Builder *target, Value *left, Value *right, bool isUnsigned);
+    void ifCmpGreaterOrEqual(Location *location, Builder *target, Value *left, Value *right, bool isUnsigned);
+    void ifCmpLessThan(Location *location, Builder *target, Value *left, Value *right, bool isUnsigned);
+    void ifCmpLessOrEqual(Location *location, Builder *target, Value *left, Value *right, bool isUnsigned);
+    void ifCmpNotEqual(Location *location, Builder *target, Value *left, Value *right);
+    void ifCmpNotEqualZero(Location *location, Builder *target, Value *v);
     void load(Location *location, Value *result, Symbol *sym);
     void loadAt(Location *location, Value *result, Value *addrValue, const Type *baseType);
     void mul(Location *location, Value *result, Value *left, Value *right);
@@ -113,8 +122,11 @@ protected:
         bool _usedRemotely; // true if probably used from different block
     } ValueInfo;
 
+    Compiler *compiler() const;
     TR::CFG *cfg() const;
     TR::SymbolReferenceTable *symRefTab() const;
+
+    TR::Block * mapBuilder(Builder *b);
 
     bool endsBlock(TR::Node *n);
     TR::TreeTop * insertAsTreeTop(TR::TreeTop *tt, TR::Node *n);
@@ -131,6 +143,8 @@ protected:
     TR::Node * convertNodeTo(TR::DataType typeTo, TR::Node *n, bool needUnsigned);
     TR::Node * binaryOpNodeFromNodes(TR::ILOpCodes op, TR::Node *leftNode, TR::Node *rightNode);
     TR::Node * binaryOpFromOpMap(OpCodeMapper mapOp, TR::Node *leftNode, TR::Node *rightNode);
+    void ifCmpCondition(TR_ComparisonTypes ct, bool isUnsignedCmp, TR::Node *leftNode, TR::Node *rightNode, TR::Block *targetBlock);
+    TR::Node *zeroForType(TR::DataType dt);
 
     TR::Compilation * _comp;
     TR_FrontEnd * _fe;
@@ -146,8 +160,10 @@ protected:
     TR::Block *_exitBlock;
     TR::Block *_currentBlock;
     TR::TreeTop *_lastTree;
+    TR::TreeTop *_otherBlockTrees;
 
     std::map<BuilderID,TR::Block *> _builderEntries;
+    
     std::map<TypeID,TR::DataTypes> _types;
     BitVector _builderInTrees;
 

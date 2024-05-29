@@ -173,12 +173,16 @@ OMRCodeGenerator::gencode(Operation *op) {
 #endif
 
 void
+OMRCodeGenerator::visitBuilderPreOps(Builder *b) {
+    ilgen()->genBuilder(b);
+}
+
+void
 OMRCodeGenerator::visitBuilderPostOps(Builder *b) {
     CodeGeneratorForExtension *cgForExt = b->ext()->addon<OMRCodeGeneratorExtensionAddon>()->cgForExtension();
     if (cgForExt) {
         cgForExt->connectsuccessors(b);
     }
-    ilgen()->genBuilder(b);
 }
 
 void

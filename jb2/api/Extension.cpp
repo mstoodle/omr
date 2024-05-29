@@ -154,6 +154,8 @@ Extension::ExitBuilder(LOCATION, IR *ir, Scope *scope, String name) {
 
 Builder *
 Extension::OrphanBuilder(LOCATION, Builder *parent, Scope *scope, String name) {
+    if (scope == NULL)
+        scope = parent->scope();
     Allocator *mem = parent->ir()->mem();
     Builder *b = new (mem) Builder(mem, this, parent, scope, name);
     this->registerBuilder(parent->ir(), b);

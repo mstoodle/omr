@@ -127,6 +127,8 @@ public:
 
     uint8_t platformWordSize() const { return 64; } // should test _targetPlatform!
     const char *platformLibrarySuffix() const;
+    bool platformImplements8bCompares() const;
+    bool platformImplements16bCompares() const;
 
     bool hasErrorCondition() const { return _errorCondition != NULL; }
     CompilationException *errorCondition() const { return _errorCondition; } 

@@ -224,7 +224,7 @@ String::operator<(const String & other) const {
 String
 String::to_string(Allocator *dataAllocator, size_t v) {
     char digits[25];
-    snprintf(digits, 25, "%ld", v);
+    snprintf(digits, 25, "%zu", v);
     String str(dataAllocator, digits);
     return str;
 }
@@ -233,7 +233,7 @@ String::to_string(Allocator *dataAllocator, size_t v) {
 String
 String::to_string(Allocator *dataAllocator, int64_t v) {
     char digits[25];
-    snprintf(digits, 25, "%ld", v);
+    snprintf(digits, 25, "%lld", v);
     String str(dataAllocator, digits);
     return str;
 }
@@ -241,7 +241,7 @@ String::to_string(Allocator *dataAllocator, int64_t v) {
 String
 String::to_string(Allocator *dataAllocator, uint64_t v) {
     char digits[25];
-    snprintf(digits, 25, "%lu", v);
+    snprintf(digits, 25, "%llu", v);
     String str(dataAllocator, digits);
     return str;
 }

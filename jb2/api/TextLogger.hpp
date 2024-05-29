@@ -82,7 +82,7 @@ public:
     }
     #endif
     friend TextLogger &operator<<(TextLogger &log, const void * v) {
-        log._os << v;
+        log._os << std::hex << v << std::dec;
         return log;
     }
     friend TextLogger &operator<<(TextLogger &log, const float v) {

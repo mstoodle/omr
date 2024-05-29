@@ -48,6 +48,7 @@ static const Type *Int64 = getCompiler()->lookupExtension<Base::BaseExtension>()
 static const Type *Float32 = getCompiler()->lookupExtension<Base::BaseExtension>()->Float32;
 static const Type *Float64 = getCompiler()->lookupExtension<Base::BaseExtension>()->Float64;
 static const Type *Address = getCompiler()->lookupExtension<Base::BaseExtension>()->Address;
+static const Type *Word = getCompiler()->lookupExtension<Base::BaseExtension>()->Word;
 
 static Compiler *getCompiler() {
     if (!initialized) {
@@ -1100,7 +1101,7 @@ TEST(omrgenExtension, ReturnPointerToPointerParam_ppAddress) {
 }
 
 
-// Test adding two numbers together of the given types
+// Base class for operating on two numbers together of the given types producing the given type
 template<typename FuncPrototype, typename left_cType, typename right_cType, typename result_cType>
 class BinaryOpFunc : public TestFunc {
 public:
@@ -1160,6 +1161,7 @@ protected:
     result_cType _resultValue;
 };
 
+// Test adding two numbers together of the given types
 template<typename FuncPrototype, typename left_cType, typename right_cType, typename result_cType>
 class AddFunc : public BinaryOpFunc<FuncPrototype, left_cType, right_cType, result_cType> {
 public:
@@ -1444,6 +1446,7 @@ TEST(omrgenExtension, SubAddressAndInt) {
 
     }
 }
+
 template<typename FuncPrototype, typename left_cType, typename right_cType, typename result_cType>
 class MulFunc : public BinaryOpFunc<FuncPrototype, left_cType, right_cType, result_cType> {
 public:
@@ -1575,3 +1578,1490 @@ TEST(omrgenExtension, MulFloat64s) {
     mul_doubles.test(LOC, Float64, std::numeric_limits<double>::max(), Float64, static_cast<double>(1), Float64, std::numeric_limits<double>::max());
     mul_doubles.test(LOC, Float64, static_cast<double>(1), Float64, std::numeric_limits<double>::max(), Float64, std::numeric_limits<double>::max());
 }
+
+class GotoOpFunc : public TestFunc {
+public:
+    GotoOpFunc(LOCATION, String name, Compiler *compiler, bool log)
+        : TestFunc(PASSLOC, compiler, log) {
+
+        DefineName(name);
+        DefineFile(__FILE__);
+        DefineLine(LINETOSTR(__LINE__));
+    }
+    void run(LOCATION) {
+        typedef int8_t (FuncPrototype)(int8_t);
+        FuncPrototype *f = body()->template nativeEntryPoint<FuncPrototype>();
+        EXPECT_NE(f, nullptr);
+        EXPECT_EQ(f(_value), _resultValue) << "Compiled f(" << _value << ") returns " << _resultValue;
+    }
+    void test(LOCATION, int8_t value, int8_t resultValue) {
+        _value = value;
+        _resultValue = resultValue;
+        run(PASSLOC);
+    }
+
+protected:
+    virtual bool buildContext(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
+        ctx->DefineParameter("value", Int8);
+        ctx->DefineReturnType(Int8);
+        return true;
+    }
+    virtual bool buildIL(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
+        Builder *entry = scope->entryPoint<BuilderEntry>(0)->builder();
+        auto valueSym=ctx->LookupLocal("value"); 
+        Value *value = fx()->Load(LOC, entry, valueSym);
+        Builder *mergeBuilder = cx()->OrphanBuilder(LOC, entry);
+        Builder *otherBuilder = cx()->OrphanBuilder(LOC, entry);
+        bx()->IfCmpEqualZero(LOC, entry, otherBuilder, value);
+        bx()->Goto(LOC, entry, mergeBuilder);
+        bx()->Goto(LOC, otherBuilder, mergeBuilder);
+        fx()->Return(LOC, mergeBuilder, bx()->ConstInt8(LOC, mergeBuilder, 3));
+        return true;
+    }
+
+protected:
+    int8_t _value;
+    int8_t _resultValue;
+};
+
+TEST(omrgenExtension, Goto) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int8_t);
+    GotoOpFunc gotoFunc(LOC, "gotoFunc", c, false);
+    gotoFunc.compile(LOC);
+    gotoFunc.test(LOC, static_cast<int8_t>(0), static_cast<int8_t>(3));
+    gotoFunc.test(LOC, static_cast<int8_t>(1), static_cast<int8_t>(3));
+    gotoFunc.test(LOC, static_cast<int8_t>(-1), static_cast<int8_t>(3));
+    gotoFunc.test(LOC, std::numeric_limits<int8_t>::min(), static_cast<int8_t>(3));
+    gotoFunc.test(LOC, std::numeric_limits<int8_t>::max(), static_cast<int8_t>(3));
+}
+
+// Base test class for IfCmp<condition> opcodes to evalute whether fall-through or taken path occurs
+// Compiled code returns int8_t: 0 if fall-through path, 1 if taken path
+template<typename FuncPrototype, typename condition_cType>
+class IfCmpToZeroBaseFunc : public TestFunc {
+public:
+    IfCmpToZeroBaseFunc(LOCATION, String name, Compiler *compiler, bool log)
+        : TestFunc(PASSLOC, compiler, log)
+        , _conditionType(NULL)
+        , _conditionValue(0) {
+
+        DefineName(name);
+        DefineFile(__FILE__);
+        DefineLine(LINETOSTR(__LINE__));
+    }
+    void run(LOCATION) {
+        FuncPrototype *f = body()->template nativeEntryPoint<FuncPrototype>();
+        EXPECT_NE(f, nullptr);
+        EXPECT_EQ(f(_conditionValue), _resultValue) << "Compiled f(" << _conditionValue << ") returns " << _resultValue;
+    }
+    void compile(LOCATION, const Type *conditionType) {
+        _conditionType = conditionType;
+        this->TestFunc::compile(PASSLOC);
+    }
+
+    void test(LOCATION, const Type *conditionType, condition_cType conditionValue, int8_t resultValue) {
+        _conditionValue = conditionValue;
+        _resultValue = resultValue;
+        run(PASSLOC);
+    }
+
+protected:
+    virtual bool buildContext(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
+        ctx->DefineParameter("condition", _conditionType);
+        ctx->DefineReturnType(Int8);
+        return true;
+    }
+    virtual bool buildIL(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
+        Builder *entry = scope->entryPoint<BuilderEntry>(0)->builder();
+        auto conditionSym=ctx->LookupLocal("condition"); 
+        Value *conditionValue = fx()->Load(LOC, entry, conditionSym);
+        Builder *otherPath = cx()->OrphanBuilder(LOC, entry);
+        doIfCmpZero(PASSLOC, entry, otherPath, conditionValue);
+        fx()->Return(LOC, entry, bx()->ConstInt8(PASSLOC, entry, 0));
+        fx()->Return(LOC, otherPath, bx()->ConstInt8(PASSLOC, otherPath, 1));
+        return true;
+    }
+
+protected:
+    virtual void doIfCmpZero(LOCATION, Builder *b, Builder *target, Value *condition)=0;
+
+    const Type *_conditionType;
+    condition_cType _conditionValue;
+    int8_t _resultValue;
+};
+
+template<typename FuncPrototype, typename condition_cType>
+class IfCmpZeroFunc : public IfCmpToZeroBaseFunc<FuncPrototype, condition_cType> {
+public:
+    IfCmpZeroFunc(LOCATION, String name, Compiler *compiler, bool log)
+        : IfCmpToZeroBaseFunc<FuncPrototype, condition_cType>(PASSLOC, name, compiler, log) { }
+protected:
+    virtual void doIfCmpZero(LOCATION, Builder *b, Builder *target, Value *condition) {
+        return this->bx()->IfCmpEqualZero(PASSLOC, b, target, condition);
+    }
+};
+
+TEST(omrgenExtension, IfCmpZeroInt8s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int8_t);
+    IfCmpZeroFunc<FuncProto, int8_t> cmpzero_int8(LOC, "cmpzero_int8", c, false);
+    cmpzero_int8.compile(LOC, Int8);
+    cmpzero_int8.test(LOC, Int8, static_cast<int8_t>(0), static_cast<int8_t>(1));
+    cmpzero_int8.test(LOC, Int8, static_cast<int8_t>(1), static_cast<int8_t>(0));
+    cmpzero_int8.test(LOC, Int8, static_cast<int8_t>(-1), static_cast<int8_t>(0));
+    cmpzero_int8.test(LOC, Int8, std::numeric_limits<int8_t>::min(), static_cast<int8_t>(0));
+    cmpzero_int8.test(LOC, Int8, std::numeric_limits<int8_t>::max(), static_cast<int8_t>(0));
+}
+TEST(omrgenExtension, IfCmpZeroInt16s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int16_t);
+    IfCmpZeroFunc<FuncProto, int16_t> cmpzero_int16(LOC, "cmpzero_int16", c, false);
+    cmpzero_int16.compile(LOC, Int16);
+    cmpzero_int16.test(LOC, Int16, static_cast<int16_t>(0), static_cast<int8_t>(1));
+    cmpzero_int16.test(LOC, Int16, static_cast<int16_t>(1), static_cast<int8_t>(0));
+    cmpzero_int16.test(LOC, Int16, static_cast<int16_t>(-1), static_cast<int8_t>(0));
+    cmpzero_int16.test(LOC, Int16, std::numeric_limits<int16_t>::min(), static_cast<int8_t>(0));
+    cmpzero_int16.test(LOC, Int16, std::numeric_limits<int16_t>::max(), static_cast<int8_t>(0));
+}
+TEST(omrgenExtension, IfCmpZeroInt32s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int32_t);
+    IfCmpZeroFunc<FuncProto, int32_t> cmpzero_int32(LOC, "cmpzero_int32", c, false);
+    cmpzero_int32.compile(LOC, Int32);
+    cmpzero_int32.test(LOC, Int32, static_cast<int32_t>(0), static_cast<int8_t>(1));
+    cmpzero_int32.test(LOC, Int32, static_cast<int32_t>(1), static_cast<int8_t>(0));
+    cmpzero_int32.test(LOC, Int32, static_cast<int32_t>(-1), static_cast<int8_t>(0));
+    cmpzero_int32.test(LOC, Int32, std::numeric_limits<int32_t>::min(), static_cast<int8_t>(0));
+    cmpzero_int32.test(LOC, Int32, std::numeric_limits<int32_t>::max(), static_cast<int8_t>(0));
+}
+TEST(omrgenExtension, IfCmpZeroInt64s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int64_t);
+    IfCmpZeroFunc<FuncProto, int64_t> cmpzero_int64(LOC, "cmpzero_int64", c, false);
+    cmpzero_int64.compile(LOC, Int64);
+    cmpzero_int64.test(LOC, Int64, static_cast<int64_t>(0), static_cast<int8_t>(1));
+    cmpzero_int64.test(LOC, Int64, static_cast<int64_t>(1), static_cast<int8_t>(0));
+    cmpzero_int64.test(LOC, Int64, static_cast<int64_t>(-1), static_cast<int8_t>(0));
+    cmpzero_int64.test(LOC, Int64, std::numeric_limits<int64_t>::min(), static_cast<int8_t>(0));
+    cmpzero_int64.test(LOC, Int64, std::numeric_limits<int64_t>::max(), static_cast<int8_t>(0));
+}
+TEST(omrgenExtension, IfCmpZeroFloat32s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(float);
+    IfCmpZeroFunc<FuncProto, float> cmpzero_float(LOC, "cmpzero_float", c, false);
+    cmpzero_float.compile(LOC, Float32);
+    cmpzero_float.test(LOC, Float32, static_cast<float>(0), static_cast<int8_t>(1));
+    cmpzero_float.test(LOC, Float32, static_cast<float>(1), static_cast<int8_t>(0));
+    cmpzero_float.test(LOC, Float32, static_cast<float>(-1), static_cast<int8_t>(0));
+    cmpzero_float.test(LOC, Float32, std::numeric_limits<float>::min(), static_cast<int8_t>(0));
+    cmpzero_float.test(LOC, Float32, std::numeric_limits<float>::max(), static_cast<int8_t>(0));
+}
+TEST(omrgenExtension, IfCmpZeroFloat64s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(double);
+    IfCmpZeroFunc<FuncProto, double> cmpzero_double(LOC, "cmpzero_double", c, false);
+    cmpzero_double.compile(LOC, Float64);
+    cmpzero_double.test(LOC, Float64, static_cast<double>(0), static_cast<int8_t>(1));
+    cmpzero_double.test(LOC, Float64, static_cast<double>(1), static_cast<int8_t>(0));
+    cmpzero_double.test(LOC, Float64, static_cast<double>(-1), static_cast<int8_t>(0));
+    cmpzero_double.test(LOC, Float64, std::numeric_limits<double>::min(), static_cast<int8_t>(0));
+    cmpzero_double.test(LOC, Float64, std::numeric_limits<double>::max(), static_cast<int8_t>(0));
+}
+TEST(omrgenExtension, IfCmpZeroAddresses) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(uintptr_t);
+    IfCmpZeroFunc<FuncProto, uintptr_t> cmpzero_uintptr(LOC, "cmpzero_uintptr", c, false);
+    cmpzero_uintptr.compile(LOC, Address);
+    cmpzero_uintptr.test(LOC, Address, static_cast<uintptr_t>(0), static_cast<int8_t>(1));
+    cmpzero_uintptr.test(LOC, Address, static_cast<uintptr_t>(1), static_cast<int8_t>(0));
+    cmpzero_uintptr.test(LOC, Address, static_cast<uintptr_t>(-1), static_cast<int8_t>(0));
+    cmpzero_uintptr.test(LOC, Address, std::numeric_limits<uintptr_t>::min(), static_cast<int8_t>(1));
+    cmpzero_uintptr.test(LOC, Address, std::numeric_limits<uintptr_t>::max(), static_cast<int8_t>(0));
+}
+
+template<typename FuncPrototype, typename condition_cType>
+class IfCmpNotZeroFunc : public IfCmpToZeroBaseFunc<FuncPrototype, condition_cType> {
+public:
+    IfCmpNotZeroFunc(LOCATION, String name, Compiler *compiler, bool log)
+        : IfCmpToZeroBaseFunc<FuncPrototype, condition_cType>(PASSLOC, name, compiler, log) { }
+protected:
+    virtual void doIfCmpZero(LOCATION, Builder *b, Builder *target, Value *condition) {
+        return this->bx()->IfCmpNotEqualZero(PASSLOC, b, target, condition);
+    }
+};
+
+TEST(omrgenExtension, IfCmpNotZeroInt8s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int8_t);
+    IfCmpNotZeroFunc<FuncProto, int8_t> cmpnotzero_int8(LOC, "cmpnotzero_int8", c, false);
+    cmpnotzero_int8.compile(LOC, Int8);
+    cmpnotzero_int8.test(LOC, Int8, static_cast<int8_t>(0), static_cast<int8_t>(0));
+    cmpnotzero_int8.test(LOC, Int8, static_cast<int8_t>(1), static_cast<int8_t>(1));
+    cmpnotzero_int8.test(LOC, Int8, static_cast<int8_t>(-1), static_cast<int8_t>(1));
+    cmpnotzero_int8.test(LOC, Int8, std::numeric_limits<int8_t>::min(), static_cast<int8_t>(1));
+    cmpnotzero_int8.test(LOC, Int8, std::numeric_limits<int8_t>::max(), static_cast<int8_t>(1));
+}
+TEST(omrgenExtension, IfCmpNotZeroInt16s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int16_t);
+    IfCmpNotZeroFunc<FuncProto, int16_t> cmpnotzero_int16(LOC, "cmpnotzero_int16", c, false);
+    cmpnotzero_int16.compile(LOC, Int16);
+    cmpnotzero_int16.test(LOC, Int16, static_cast<int16_t>(0), static_cast<int8_t>(0));
+    cmpnotzero_int16.test(LOC, Int16, static_cast<int16_t>(1), static_cast<int8_t>(1));
+    cmpnotzero_int16.test(LOC, Int16, static_cast<int16_t>(-1), static_cast<int8_t>(1));
+    cmpnotzero_int16.test(LOC, Int16, std::numeric_limits<int16_t>::min(), static_cast<int8_t>(1));
+    cmpnotzero_int16.test(LOC, Int16, std::numeric_limits<int16_t>::max(), static_cast<int8_t>(1));
+}
+TEST(omrgenExtension, IfCmpNotZeroInt32s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int32_t);
+    IfCmpNotZeroFunc<FuncProto, int32_t> cmpnotzero_int32(LOC, "cmpnotzero_int32", c, false);
+    cmpnotzero_int32.compile(LOC, Int32);
+    cmpnotzero_int32.test(LOC, Int32, static_cast<int32_t>(0), static_cast<int8_t>(0));
+    cmpnotzero_int32.test(LOC, Int32, static_cast<int32_t>(1), static_cast<int8_t>(1));
+    cmpnotzero_int32.test(LOC, Int32, static_cast<int32_t>(-1), static_cast<int8_t>(1));
+    cmpnotzero_int32.test(LOC, Int32, std::numeric_limits<int32_t>::min(), static_cast<int8_t>(1));
+    cmpnotzero_int32.test(LOC, Int32, std::numeric_limits<int32_t>::max(), static_cast<int8_t>(1));
+}
+TEST(omrgenExtension, IfCmpNotZeroInt64s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int64_t);
+    IfCmpNotZeroFunc<FuncProto, int64_t> cmpnotzero_int64(LOC, "cmpnotzero_int64", c, false);
+    cmpnotzero_int64.compile(LOC, Int64);
+    cmpnotzero_int64.test(LOC, Int64, static_cast<int64_t>(0), static_cast<int8_t>(0));
+    cmpnotzero_int64.test(LOC, Int64, static_cast<int64_t>(1), static_cast<int8_t>(1));
+    cmpnotzero_int64.test(LOC, Int64, static_cast<int64_t>(-1), static_cast<int8_t>(1));
+    cmpnotzero_int64.test(LOC, Int64, std::numeric_limits<int64_t>::min(), static_cast<int8_t>(1));
+    cmpnotzero_int64.test(LOC, Int64, std::numeric_limits<int64_t>::max(), static_cast<int8_t>(1));
+}
+TEST(omrgenExtension, IfCmpNotZeroFloat32s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(float);
+    IfCmpNotZeroFunc<FuncProto, float> cmpnotzero_float(LOC, "cmpnotzero_float", c, false);
+    cmpnotzero_float.compile(LOC, Float32);
+    cmpnotzero_float.test(LOC, Float32, static_cast<float>(0), static_cast<int8_t>(0));
+    cmpnotzero_float.test(LOC, Float32, static_cast<float>(1), static_cast<int8_t>(1));
+    cmpnotzero_float.test(LOC, Float32, static_cast<float>(-1), static_cast<int8_t>(1));
+    cmpnotzero_float.test(LOC, Float32, std::numeric_limits<float>::min(), static_cast<int8_t>(1));
+    cmpnotzero_float.test(LOC, Float32, std::numeric_limits<float>::max(), static_cast<int8_t>(1));
+}
+TEST(omrgenExtension, IfCmpNotZeroFloat64s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(double);
+    IfCmpNotZeroFunc<FuncProto, double> cmpnotzero_double(LOC, "cmpnotzero_double", c, false);
+    cmpnotzero_double.compile(LOC, Float64);
+    cmpnotzero_double.test(LOC, Float64, static_cast<double>(0), static_cast<int8_t>(0));
+    cmpnotzero_double.test(LOC, Float64, static_cast<double>(1), static_cast<int8_t>(1));
+    cmpnotzero_double.test(LOC, Float64, static_cast<double>(-1), static_cast<int8_t>(1));
+    cmpnotzero_double.test(LOC, Float64, std::numeric_limits<double>::min(), static_cast<int8_t>(1));
+    cmpnotzero_double.test(LOC, Float64, std::numeric_limits<double>::max(), static_cast<int8_t>(1));
+}
+TEST(omrgenExtension, IfCmpNotZeroAddresses) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(uintptr_t);
+    IfCmpNotZeroFunc<FuncProto, uintptr_t> cmpnotzero_uintptr(LOC, "cmpnotzero_uintptr", c, false);
+    cmpnotzero_uintptr.compile(LOC, Address);
+    cmpnotzero_uintptr.test(LOC, Address, static_cast<uintptr_t>(0), static_cast<int8_t>(0));
+    cmpnotzero_uintptr.test(LOC, Address, static_cast<uintptr_t>(1), static_cast<int8_t>(1));
+    cmpnotzero_uintptr.test(LOC, Address, static_cast<uintptr_t>(-1), static_cast<int8_t>(1));
+    cmpnotzero_uintptr.test(LOC, Address, std::numeric_limits<uintptr_t>::min(), static_cast<int8_t>(0));
+    cmpnotzero_uintptr.test(LOC, Address, std::numeric_limits<uintptr_t>::max(), static_cast<int8_t>(1));
+}
+
+// Base test class for IfCmp<condition> opcodes to evalute whether fall-through or taken path occurs
+// Compiled code returns int8_t: 0 if fall-through path, 1 if taken path
+template<typename FuncPrototype, typename cType>
+class IfCmpOpBaseFunc : public TestFunc {
+public:
+    IfCmpOpBaseFunc(LOCATION, String name, Compiler *compiler, bool log)
+        : TestFunc(PASSLOC, compiler, log)
+        , _type(NULL)
+        , _leftValue(0)
+        , _rightValue(0) {
+
+        DefineName(name);
+        DefineFile(__FILE__);
+        DefineLine(LINETOSTR(__LINE__));
+    }
+    void run(LOCATION) {
+        FuncPrototype *f = body()->template nativeEntryPoint<FuncPrototype>();
+        EXPECT_NE(f, nullptr);
+        EXPECT_EQ(f(_leftValue,_rightValue), _resultValue) << "Compiled f(" << _leftValue << ", " << _rightValue << ") returns " << _resultValue;
+    }
+    void compile(LOCATION, const Type *type) {
+        _type = type;
+        this->TestFunc::compile(PASSLOC);
+    }
+    void test(LOCATION, const Type *type, cType leftValue, cType rightValue, int8_t resultValue) {
+        _type = type;
+        _leftValue = leftValue;
+        _rightValue = rightValue;
+        _resultValue = resultValue;
+        run(PASSLOC);
+    }
+
+protected:
+    virtual bool buildContext(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
+        ctx->DefineParameter("left", _type);
+        ctx->DefineParameter("right", _type);
+        ctx->DefineReturnType(Int8);
+        return true;
+    }
+    virtual bool buildIL(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
+        Builder *entry = scope->entryPoint<BuilderEntry>(0)->builder();
+        auto leftSym=ctx->LookupLocal("left"); 
+        Value *leftValue = fx()->Load(LOC, entry, leftSym);
+        auto rightSym=ctx->LookupLocal("right"); 
+        Value *rightValue = fx()->Load(LOC, entry, rightSym);
+        Builder *otherPath = cx()->OrphanBuilder(LOC, entry);
+        doIfCmpOp(PASSLOC, entry, otherPath, leftValue, rightValue);
+        fx()->Return(LOC, entry, bx()->ConstInt8(LOC, entry, 0));
+        fx()->Return(LOC, otherPath, bx()->ConstInt8(LOC, otherPath, 1));
+        return true;
+    }
+
+protected:
+    virtual void doIfCmpOp(LOCATION, Builder *b, Builder *target, Value *left, Value *right)=0;
+
+    const Type *_type;
+    cType _leftValue;
+    cType _rightValue;
+    int8_t _resultValue;
+};
+
+template<typename FuncPrototype, typename cType>
+class IfCmpEqualFunc : public IfCmpOpBaseFunc<FuncPrototype, cType> {
+public:
+    IfCmpEqualFunc(LOCATION, String name, Compiler *compiler, bool log)
+        : IfCmpOpBaseFunc<FuncPrototype, cType>(PASSLOC, name, compiler, log) { }
+protected:
+    virtual void doIfCmpOp(LOCATION, Builder *b, Builder *target, Value *left, Value *right) {
+        this->bx()->IfCmpEqual(PASSLOC, b, target, left, right);
+    }
+};
+
+TEST(omrgenExtension, IfCmpEqualInt8s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int8_t, int8_t);
+    IfCmpEqualFunc<FuncProto, int8_t> cmpequal_int8(LOC, "cmpequal_int8", c, false);
+    cmpequal_int8.compile(LOC, Int8);
+    cmpequal_int8.test(LOC, Int8, static_cast<int8_t>(0), static_cast<int8_t>(0), static_cast<int8_t>(1));
+    cmpequal_int8.test(LOC, Int8, static_cast<int8_t>(1), static_cast<int8_t>(0), static_cast<int8_t>(0));
+    cmpequal_int8.test(LOC, Int8, static_cast<int8_t>(0), static_cast<int8_t>(1), static_cast<int8_t>(0));
+    cmpequal_int8.test(LOC, Int8, static_cast<int8_t>(1), static_cast<int8_t>(1), static_cast<int8_t>(1));
+    cmpequal_int8.test(LOC, Int8, static_cast<int8_t>(-1), static_cast<int8_t>(1), static_cast<int8_t>(0));
+    cmpequal_int8.test(LOC, Int8, static_cast<int8_t>(1), static_cast<int8_t>(-1), static_cast<int8_t>(0));
+    cmpequal_int8.test(LOC, Int8, std::numeric_limits<int8_t>::min(), std::numeric_limits<int8_t>::min(), static_cast<int8_t>(1));
+    cmpequal_int8.test(LOC, Int8, std::numeric_limits<int8_t>::min(), std::numeric_limits<int8_t>::max(), static_cast<int8_t>(0));
+    cmpequal_int8.test(LOC, Int8, std::numeric_limits<int8_t>::max(), std::numeric_limits<int8_t>::min(), static_cast<int8_t>(0));
+    cmpequal_int8.test(LOC, Int8, std::numeric_limits<int8_t>::max(), std::numeric_limits<int8_t>::max(), static_cast<int8_t>(1));
+}
+TEST(omrgenExtension, IfCmpEqualInt16s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int16_t, int16_t);
+    IfCmpEqualFunc<FuncProto, int16_t> cmpequal_int16(LOC, "cmpequal_int16", c, false);
+    cmpequal_int16.compile(LOC, Int16);
+    cmpequal_int16.test(LOC, Int16, static_cast<int16_t>(0), static_cast<int16_t>(0), static_cast<int8_t>(1));
+    cmpequal_int16.test(LOC, Int16, static_cast<int16_t>(1), static_cast<int16_t>(0), static_cast<int8_t>(0));
+    cmpequal_int16.test(LOC, Int16, static_cast<int16_t>(0), static_cast<int16_t>(1), static_cast<int8_t>(0));
+    cmpequal_int16.test(LOC, Int16, static_cast<int16_t>(1), static_cast<int16_t>(1), static_cast<int8_t>(1));
+    cmpequal_int16.test(LOC, Int16, static_cast<int16_t>(-1), static_cast<int16_t>(1), static_cast<int8_t>(0));
+    cmpequal_int16.test(LOC, Int16, static_cast<int16_t>(1), static_cast<int16_t>(-1), static_cast<int8_t>(0));
+    cmpequal_int16.test(LOC, Int16, std::numeric_limits<int16_t>::min(), std::numeric_limits<int16_t>::min(), static_cast<int8_t>(1));
+    cmpequal_int16.test(LOC, Int16, std::numeric_limits<int16_t>::min(), std::numeric_limits<int16_t>::max(), static_cast<int8_t>(0));
+    cmpequal_int16.test(LOC, Int16, std::numeric_limits<int16_t>::max(), std::numeric_limits<int16_t>::min(), static_cast<int8_t>(0));
+    cmpequal_int16.test(LOC, Int16, std::numeric_limits<int16_t>::max(), std::numeric_limits<int16_t>::max(), static_cast<int8_t>(1));
+}
+TEST(omrgenExtension, IfCmpEqualInt32s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int32_t, int32_t);
+    IfCmpEqualFunc<FuncProto, int32_t> cmpequal_int32(LOC, "cmpequal_int32", c, false);
+    cmpequal_int32.compile(LOC, Int32);
+    cmpequal_int32.test(LOC, Int32, static_cast<int32_t>(0), static_cast<int32_t>(0), static_cast<int8_t>(1));
+    cmpequal_int32.test(LOC, Int32, static_cast<int32_t>(1), static_cast<int32_t>(0), static_cast<int8_t>(0));
+    cmpequal_int32.test(LOC, Int32, static_cast<int32_t>(0), static_cast<int32_t>(1), static_cast<int8_t>(0));
+    cmpequal_int32.test(LOC, Int32, static_cast<int32_t>(1), static_cast<int32_t>(1), static_cast<int8_t>(1));
+    cmpequal_int32.test(LOC, Int32, static_cast<int32_t>(-1), static_cast<int32_t>(1), static_cast<int8_t>(0));
+    cmpequal_int32.test(LOC, Int32, static_cast<int32_t>(1), static_cast<int32_t>(-1), static_cast<int8_t>(0));
+    cmpequal_int32.test(LOC, Int32, std::numeric_limits<int32_t>::min(), std::numeric_limits<int32_t>::min(), static_cast<int8_t>(1));
+    cmpequal_int32.test(LOC, Int32, std::numeric_limits<int32_t>::min(), std::numeric_limits<int32_t>::max(), static_cast<int8_t>(0));
+    cmpequal_int32.test(LOC, Int32, std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::min(), static_cast<int8_t>(0));
+    cmpequal_int32.test(LOC, Int32, std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::max(), static_cast<int8_t>(1));
+}
+TEST(omrgenExtension, IfCmpEqualInt64s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int64_t, int64_t);
+    IfCmpEqualFunc<FuncProto, int64_t> cmpequal_int64(LOC, "cmpequal_int64", c, false);
+    cmpequal_int64.compile(LOC, Int64);
+    cmpequal_int64.test(LOC, Int64, static_cast<int64_t>(0), static_cast<int64_t>(0), static_cast<int8_t>(1));
+    cmpequal_int64.test(LOC, Int64, static_cast<int64_t>(1), static_cast<int64_t>(0), static_cast<int8_t>(0));
+    cmpequal_int64.test(LOC, Int64, static_cast<int64_t>(0), static_cast<int64_t>(1), static_cast<int8_t>(0));
+    cmpequal_int64.test(LOC, Int64, static_cast<int64_t>(1), static_cast<int64_t>(1), static_cast<int8_t>(1));
+    cmpequal_int64.test(LOC, Int64, static_cast<int64_t>(-1), static_cast<int64_t>(1), static_cast<int8_t>(0));
+    cmpequal_int64.test(LOC, Int64, static_cast<int64_t>(1), static_cast<int64_t>(-1), static_cast<int8_t>(0));
+    cmpequal_int64.test(LOC, Int64, std::numeric_limits<int64_t>::min(), std::numeric_limits<int64_t>::min(), static_cast<int8_t>(1));
+    cmpequal_int64.test(LOC, Int64, std::numeric_limits<int64_t>::min(), std::numeric_limits<int64_t>::max(), static_cast<int8_t>(0));
+    cmpequal_int64.test(LOC, Int64, std::numeric_limits<int64_t>::max(), std::numeric_limits<int64_t>::min(), static_cast<int8_t>(0));
+    cmpequal_int64.test(LOC, Int64, std::numeric_limits<int64_t>::max(), std::numeric_limits<int64_t>::max(), static_cast<int8_t>(1));
+}
+TEST(omrgenExtension, IfCmpEqualFloat32s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(float, float);
+    IfCmpEqualFunc<FuncProto, float> cmpequal_float(LOC, "cmpequal_float", c, false);
+    cmpequal_float.compile(LOC, Float32);
+    cmpequal_float.test(LOC, Float32, static_cast<float>(0), static_cast<float>(0), static_cast<int8_t>(1));
+    cmpequal_float.test(LOC, Float32, static_cast<float>(1), static_cast<float>(0), static_cast<int8_t>(0));
+    cmpequal_float.test(LOC, Float32, static_cast<float>(0), static_cast<float>(1), static_cast<int8_t>(0));
+    cmpequal_float.test(LOC, Float32, static_cast<float>(1), static_cast<float>(1), static_cast<int8_t>(1));
+    cmpequal_float.test(LOC, Float32, static_cast<float>(-1), static_cast<float>(1), static_cast<int8_t>(0));
+    cmpequal_float.test(LOC, Float32, static_cast<float>(1), static_cast<float>(-1), static_cast<int8_t>(0));
+    cmpequal_float.test(LOC, Float32, std::numeric_limits<float>::min(), std::numeric_limits<float>::min(), static_cast<int8_t>(1));
+    cmpequal_float.test(LOC, Float32, std::numeric_limits<float>::min(), std::numeric_limits<float>::max(), static_cast<int8_t>(0));
+    cmpequal_float.test(LOC, Float32, std::numeric_limits<float>::max(), std::numeric_limits<float>::min(), static_cast<int8_t>(0));
+    cmpequal_float.test(LOC, Float32, std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), static_cast<int8_t>(1));
+}
+TEST(omrgenExtension, IfCmpEqualFloat64s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(double, double);
+    IfCmpEqualFunc<FuncProto, double> cmpequal_double(LOC, "cmpequal_double", c, false);
+    cmpequal_double.compile(LOC, Float64);
+    cmpequal_double.test(LOC, Float64, static_cast<double>(0), static_cast<double>(0), static_cast<int8_t>(1));
+    cmpequal_double.test(LOC, Float64, static_cast<double>(1), static_cast<double>(0), static_cast<int8_t>(0));
+    cmpequal_double.test(LOC, Float64, static_cast<double>(0), static_cast<double>(1), static_cast<int8_t>(0));
+    cmpequal_double.test(LOC, Float64, static_cast<double>(1), static_cast<double>(1), static_cast<int8_t>(1));
+    cmpequal_double.test(LOC, Float64, static_cast<double>(-1), static_cast<double>(1), static_cast<int8_t>(0));
+    cmpequal_double.test(LOC, Float64, static_cast<double>(1), static_cast<double>(-1), static_cast<int8_t>(0));
+    cmpequal_double.test(LOC, Float64, std::numeric_limits<double>::min(), std::numeric_limits<double>::min(), static_cast<int8_t>(1));
+    cmpequal_double.test(LOC, Float64, std::numeric_limits<double>::min(), std::numeric_limits<double>::max(), static_cast<int8_t>(0));
+    cmpequal_double.test(LOC, Float64, std::numeric_limits<double>::max(), std::numeric_limits<double>::min(), static_cast<int8_t>(0));
+    cmpequal_double.test(LOC, Float64, std::numeric_limits<double>::max(), std::numeric_limits<double>::max(), static_cast<int8_t>(1));
+}
+TEST(omrgenExtension, IfCmpEqualAddresses) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(intptr_t, intptr_t);
+    IfCmpEqualFunc<FuncProto, intptr_t> cmpequal_address(LOC, "cmpequal_address", c, false);
+    cmpequal_address.compile(LOC, Address);
+    cmpequal_address.test(LOC, Address, static_cast<intptr_t>(0), static_cast<intptr_t>(0), static_cast<int8_t>(1));
+    cmpequal_address.test(LOC, Address, static_cast<intptr_t>(4), static_cast<intptr_t>(0), static_cast<int8_t>(0));
+    cmpequal_address.test(LOC, Address, static_cast<intptr_t>(0), static_cast<intptr_t>(4), static_cast<int8_t>(0));
+    cmpequal_address.test(LOC, Address, static_cast<intptr_t>(4), static_cast<intptr_t>(4), static_cast<int8_t>(1));
+    cmpequal_address.test(LOC, Address, std::numeric_limits<intptr_t>::min(), std::numeric_limits<intptr_t>::min(), static_cast<int8_t>(1));
+    cmpequal_address.test(LOC, Address, std::numeric_limits<intptr_t>::min(), std::numeric_limits<intptr_t>::max(), static_cast<int8_t>(0));
+    cmpequal_address.test(LOC, Address, std::numeric_limits<intptr_t>::max(), std::numeric_limits<intptr_t>::min(), static_cast<int8_t>(0));
+    cmpequal_address.test(LOC, Address, std::numeric_limits<intptr_t>::max(), std::numeric_limits<intptr_t>::max(), static_cast<int8_t>(1));
+}
+
+template<typename FuncPrototype, typename cType>
+class IfCmpNotEqualFunc : public IfCmpOpBaseFunc<FuncPrototype, cType> {
+public:
+    IfCmpNotEqualFunc(LOCATION, String name, Compiler *compiler, bool log)
+        : IfCmpOpBaseFunc<FuncPrototype, cType>(PASSLOC, name, compiler, log) { }
+protected:
+    virtual void doIfCmpOp(LOCATION, Builder *b, Builder *target, Value *left, Value *right) {
+        this->bx()->IfCmpNotEqual(PASSLOC, b, target, left, right);
+    }
+};
+
+TEST(omrgenExtension, IfCmpNotEqualInt8s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int8_t, int8_t);
+    IfCmpNotEqualFunc<FuncProto, int8_t> cmpnotequal_int8(LOC, "cmpnotequal_int8", c, false);
+    cmpnotequal_int8.compile(LOC, Int8);
+    cmpnotequal_int8.test(LOC, Int8, static_cast<int8_t>(0), static_cast<int8_t>(0), static_cast<int8_t>(0));
+    cmpnotequal_int8.test(LOC, Int8, static_cast<int8_t>(1), static_cast<int8_t>(0), static_cast<int8_t>(1));
+    cmpnotequal_int8.test(LOC, Int8, static_cast<int8_t>(0), static_cast<int8_t>(1), static_cast<int8_t>(1));
+    cmpnotequal_int8.test(LOC, Int8, static_cast<int8_t>(1), static_cast<int8_t>(1), static_cast<int8_t>(0));
+    cmpnotequal_int8.test(LOC, Int8, static_cast<int8_t>(-1), static_cast<int8_t>(1), static_cast<int8_t>(1));
+    cmpnotequal_int8.test(LOC, Int8, static_cast<int8_t>(1), static_cast<int8_t>(-1), static_cast<int8_t>(1));
+    cmpnotequal_int8.test(LOC, Int8, std::numeric_limits<int8_t>::min(), std::numeric_limits<int8_t>::min(), static_cast<int8_t>(0));
+    cmpnotequal_int8.test(LOC, Int8, std::numeric_limits<int8_t>::min(), std::numeric_limits<int8_t>::max(), static_cast<int8_t>(1));
+    cmpnotequal_int8.test(LOC, Int8, std::numeric_limits<int8_t>::max(), std::numeric_limits<int8_t>::min(), static_cast<int8_t>(1));
+    cmpnotequal_int8.test(LOC, Int8, std::numeric_limits<int8_t>::max(), std::numeric_limits<int8_t>::max(), static_cast<int8_t>(0));
+}
+TEST(omrgenExtension, IfCmpNotEqualInt16s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int16_t, int16_t);
+    IfCmpNotEqualFunc<FuncProto, int16_t> cmpnotequal_int16(LOC, "cmpnotequal_int16", c, false);
+    cmpnotequal_int16.compile(LOC, Int16);
+    cmpnotequal_int16.test(LOC, Int16, static_cast<int16_t>(0), static_cast<int16_t>(0), static_cast<int8_t>(0));
+    cmpnotequal_int16.test(LOC, Int16, static_cast<int16_t>(1), static_cast<int16_t>(0), static_cast<int8_t>(1));
+    cmpnotequal_int16.test(LOC, Int16, static_cast<int16_t>(0), static_cast<int16_t>(1), static_cast<int8_t>(1));
+    cmpnotequal_int16.test(LOC, Int16, static_cast<int16_t>(1), static_cast<int16_t>(1), static_cast<int8_t>(0));
+    cmpnotequal_int16.test(LOC, Int16, static_cast<int16_t>(-1), static_cast<int16_t>(1), static_cast<int8_t>(1));
+    cmpnotequal_int16.test(LOC, Int16, static_cast<int16_t>(1), static_cast<int16_t>(-1), static_cast<int8_t>(1));
+    cmpnotequal_int16.test(LOC, Int16, std::numeric_limits<int16_t>::min(), std::numeric_limits<int16_t>::min(), static_cast<int8_t>(0));
+    cmpnotequal_int16.test(LOC, Int16, std::numeric_limits<int16_t>::min(), std::numeric_limits<int16_t>::max(), static_cast<int8_t>(1));
+    cmpnotequal_int16.test(LOC, Int16, std::numeric_limits<int16_t>::max(), std::numeric_limits<int16_t>::min(), static_cast<int8_t>(1));
+    cmpnotequal_int16.test(LOC, Int16, std::numeric_limits<int16_t>::max(), std::numeric_limits<int16_t>::max(), static_cast<int8_t>(0));
+}
+TEST(omrgenExtension, IfCmpNotEqualInt32s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int32_t, int32_t);
+    IfCmpNotEqualFunc<FuncProto, int32_t> cmpnotequal_int32(LOC, "cmpnotequal_int32", c, false);
+    cmpnotequal_int32.compile(LOC, Int32);
+    cmpnotequal_int32.test(LOC, Int32, static_cast<int32_t>(0), static_cast<int32_t>(0), static_cast<int8_t>(0));
+    cmpnotequal_int32.test(LOC, Int32, static_cast<int32_t>(1), static_cast<int32_t>(0), static_cast<int8_t>(1));
+    cmpnotequal_int32.test(LOC, Int32, static_cast<int32_t>(0), static_cast<int32_t>(1), static_cast<int8_t>(1));
+    cmpnotequal_int32.test(LOC, Int32, static_cast<int32_t>(1), static_cast<int32_t>(1), static_cast<int8_t>(0));
+    cmpnotequal_int32.test(LOC, Int32, static_cast<int32_t>(-1), static_cast<int32_t>(1), static_cast<int8_t>(1));
+    cmpnotequal_int32.test(LOC, Int32, static_cast<int32_t>(1), static_cast<int32_t>(-1), static_cast<int8_t>(1));
+    cmpnotequal_int32.test(LOC, Int32, std::numeric_limits<int32_t>::min(), std::numeric_limits<int32_t>::min(), static_cast<int8_t>(0));
+    cmpnotequal_int32.test(LOC, Int32, std::numeric_limits<int32_t>::min(), std::numeric_limits<int32_t>::max(), static_cast<int8_t>(1));
+    cmpnotequal_int32.test(LOC, Int32, std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::min(), static_cast<int8_t>(1));
+    cmpnotequal_int32.test(LOC, Int32, std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::max(), static_cast<int8_t>(0));
+}
+TEST(omrgenExtension, IfCmpNotEqualInt64s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int64_t, int64_t);
+    IfCmpNotEqualFunc<FuncProto, int64_t> cmpnotequal_int64(LOC, "cmpnotequal_int64", c, false);
+    cmpnotequal_int64.compile(LOC, Int64);
+    cmpnotequal_int64.test(LOC, Int64, static_cast<int64_t>(0), static_cast<int64_t>(0), static_cast<int8_t>(0));
+    cmpnotequal_int64.test(LOC, Int64, static_cast<int64_t>(1), static_cast<int64_t>(0), static_cast<int8_t>(1));
+    cmpnotequal_int64.test(LOC, Int64, static_cast<int64_t>(0), static_cast<int64_t>(1), static_cast<int8_t>(1));
+    cmpnotequal_int64.test(LOC, Int64, static_cast<int64_t>(1), static_cast<int64_t>(1), static_cast<int8_t>(0));
+    cmpnotequal_int64.test(LOC, Int64, static_cast<int64_t>(-1), static_cast<int64_t>(1), static_cast<int8_t>(1));
+    cmpnotequal_int64.test(LOC, Int64, static_cast<int64_t>(1), static_cast<int64_t>(-1), static_cast<int8_t>(1));
+    cmpnotequal_int64.test(LOC, Int64, std::numeric_limits<int64_t>::min(), std::numeric_limits<int64_t>::min(), static_cast<int8_t>(0));
+    cmpnotequal_int64.test(LOC, Int64, std::numeric_limits<int64_t>::min(), std::numeric_limits<int64_t>::max(), static_cast<int8_t>(1));
+    cmpnotequal_int64.test(LOC, Int64, std::numeric_limits<int64_t>::max(), std::numeric_limits<int64_t>::min(), static_cast<int8_t>(1));
+    cmpnotequal_int64.test(LOC, Int64, std::numeric_limits<int64_t>::max(), std::numeric_limits<int64_t>::max(), static_cast<int8_t>(0));
+}
+TEST(omrgenExtension, IfCmpNotEqualFloat32s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(float, float);
+    IfCmpNotEqualFunc<FuncProto, float> cmpnotequal_float(LOC, "cmpnotequal_float", c, false);
+    cmpnotequal_float.compile(LOC, Float32);
+    cmpnotequal_float.test(LOC, Float32, static_cast<float>(0), static_cast<float>(0), static_cast<int8_t>(0));
+    cmpnotequal_float.test(LOC, Float32, static_cast<float>(1), static_cast<float>(0), static_cast<int8_t>(1));
+    cmpnotequal_float.test(LOC, Float32, static_cast<float>(0), static_cast<float>(1), static_cast<int8_t>(1));
+    cmpnotequal_float.test(LOC, Float32, static_cast<float>(1), static_cast<float>(1), static_cast<int8_t>(0));
+    cmpnotequal_float.test(LOC, Float32, static_cast<float>(-1), static_cast<float>(1), static_cast<int8_t>(1));
+    cmpnotequal_float.test(LOC, Float32, static_cast<float>(1), static_cast<float>(-1), static_cast<int8_t>(1));
+    cmpnotequal_float.test(LOC, Float32, std::numeric_limits<float>::min(), std::numeric_limits<float>::min(), static_cast<int8_t>(0));
+    cmpnotequal_float.test(LOC, Float32, std::numeric_limits<float>::min(), std::numeric_limits<float>::max(), static_cast<int8_t>(1));
+    cmpnotequal_float.test(LOC, Float32, std::numeric_limits<float>::max(), std::numeric_limits<float>::min(), static_cast<int8_t>(1));
+    cmpnotequal_float.test(LOC, Float32, std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), static_cast<int8_t>(0));
+}
+TEST(omrgenExtension, IfCmpNotEqualFloat64s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(double, double);
+    IfCmpNotEqualFunc<FuncProto, double> cmpnotequal_double(LOC, "cmpnotequal_double", c, false);
+    cmpnotequal_double.compile(LOC, Float64);
+    cmpnotequal_double.test(LOC, Float64, static_cast<double>(0), static_cast<double>(0), static_cast<int8_t>(0));
+    cmpnotequal_double.test(LOC, Float64, static_cast<double>(1), static_cast<double>(0), static_cast<int8_t>(1));
+    cmpnotequal_double.test(LOC, Float64, static_cast<double>(0), static_cast<double>(1), static_cast<int8_t>(1));
+    cmpnotequal_double.test(LOC, Float64, static_cast<double>(1), static_cast<double>(1), static_cast<int8_t>(0));
+    cmpnotequal_double.test(LOC, Float64, static_cast<double>(-1), static_cast<double>(1), static_cast<int8_t>(1));
+    cmpnotequal_double.test(LOC, Float64, static_cast<double>(1), static_cast<double>(-1), static_cast<int8_t>(1));
+    cmpnotequal_double.test(LOC, Float64, std::numeric_limits<double>::min(), std::numeric_limits<double>::min(), static_cast<int8_t>(0));
+    cmpnotequal_double.test(LOC, Float64, std::numeric_limits<double>::min(), std::numeric_limits<double>::max(), static_cast<int8_t>(1));
+    cmpnotequal_double.test(LOC, Float64, std::numeric_limits<double>::max(), std::numeric_limits<double>::min(), static_cast<int8_t>(1));
+    cmpnotequal_double.test(LOC, Float64, std::numeric_limits<double>::max(), std::numeric_limits<double>::max(), static_cast<int8_t>(0));
+}
+TEST(omrgenExtension, IfCmpNotEqualAddresses) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(intptr_t, intptr_t);
+    IfCmpNotEqualFunc<FuncProto, intptr_t> cmpnotequal_address(LOC, "cmpnotequal_address", c, false);
+    cmpnotequal_address.compile(LOC, Address);
+    cmpnotequal_address.test(LOC, Address, static_cast<intptr_t>(0), static_cast<intptr_t>(0), static_cast<int8_t>(0));
+    cmpnotequal_address.test(LOC, Address, static_cast<intptr_t>(4), static_cast<intptr_t>(0), static_cast<int8_t>(1));
+    cmpnotequal_address.test(LOC, Address, static_cast<intptr_t>(0), static_cast<intptr_t>(4), static_cast<int8_t>(1));
+    cmpnotequal_address.test(LOC, Address, static_cast<intptr_t>(4), static_cast<intptr_t>(4), static_cast<int8_t>(0));
+    cmpnotequal_address.test(LOC, Address, std::numeric_limits<intptr_t>::min(), std::numeric_limits<intptr_t>::min(), static_cast<int8_t>(0));
+    cmpnotequal_address.test(LOC, Address, std::numeric_limits<intptr_t>::min(), std::numeric_limits<intptr_t>::max(), static_cast<int8_t>(1));
+    cmpnotequal_address.test(LOC, Address, std::numeric_limits<intptr_t>::max(), std::numeric_limits<intptr_t>::min(), static_cast<int8_t>(1));
+    cmpnotequal_address.test(LOC, Address, std::numeric_limits<intptr_t>::max(), std::numeric_limits<intptr_t>::max(), static_cast<int8_t>(0));
+}
+
+template<typename FuncPrototype, typename cType>
+class IfCmpGreaterThanFunc : public IfCmpOpBaseFunc<FuncPrototype, cType> {
+public:
+    IfCmpGreaterThanFunc(LOCATION, String name, Compiler *compiler, bool log)
+        : IfCmpOpBaseFunc<FuncPrototype, cType>(PASSLOC, name, compiler, log) { }
+protected:
+    virtual void doIfCmpOp(LOCATION, Builder *b, Builder *target, Value *left, Value *right) {
+        this->bx()->IfCmpGreaterThan(PASSLOC, b, target, left, right);
+    }
+};
+
+TEST(omrgenExtension, IfCmpGreaterThanInt8s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int8_t, int8_t);
+    IfCmpGreaterThanFunc<FuncProto, int8_t> cmpgreaterthan_int8(LOC, "cmpgreaterthan_int8", c, false);
+    cmpgreaterthan_int8.compile(LOC, Int8);
+    cmpgreaterthan_int8.test(LOC, Int8, static_cast<int8_t>(0), static_cast<int8_t>(0), static_cast<int8_t>(0));
+    cmpgreaterthan_int8.test(LOC, Int8, static_cast<int8_t>(1), static_cast<int8_t>(0), static_cast<int8_t>(1));
+    cmpgreaterthan_int8.test(LOC, Int8, static_cast<int8_t>(0), static_cast<int8_t>(1), static_cast<int8_t>(0));
+    cmpgreaterthan_int8.test(LOC, Int8, static_cast<int8_t>(1), static_cast<int8_t>(1), static_cast<int8_t>(0));
+    cmpgreaterthan_int8.test(LOC, Int8, static_cast<int8_t>(-1), static_cast<int8_t>(1), static_cast<int8_t>(0));
+    cmpgreaterthan_int8.test(LOC, Int8, static_cast<int8_t>(1), static_cast<int8_t>(-1), static_cast<int8_t>(1));
+    cmpgreaterthan_int8.test(LOC, Int8, std::numeric_limits<int8_t>::min(), std::numeric_limits<int8_t>::min(), static_cast<int8_t>(0));
+    cmpgreaterthan_int8.test(LOC, Int8, std::numeric_limits<int8_t>::min(), std::numeric_limits<int8_t>::max(), static_cast<int8_t>(0));
+    cmpgreaterthan_int8.test(LOC, Int8, std::numeric_limits<int8_t>::max(), std::numeric_limits<int8_t>::min(), static_cast<int8_t>(1));
+    cmpgreaterthan_int8.test(LOC, Int8, std::numeric_limits<int8_t>::max(), std::numeric_limits<int8_t>::max(), static_cast<int8_t>(0));
+}
+TEST(omrgenExtension, IfCmpGreaterThanInt16s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int16_t, int16_t);
+    IfCmpGreaterThanFunc<FuncProto, int16_t> cmpgreaterthan_int16(LOC, "cmpgreaterthan_int16", c, false);
+    cmpgreaterthan_int16.compile(LOC, Int16);
+    cmpgreaterthan_int16.test(LOC, Int16, static_cast<int16_t>(0), static_cast<int16_t>(0), static_cast<int8_t>(0));
+    cmpgreaterthan_int16.test(LOC, Int16, static_cast<int16_t>(1), static_cast<int16_t>(0), static_cast<int8_t>(1));
+    cmpgreaterthan_int16.test(LOC, Int16, static_cast<int16_t>(0), static_cast<int16_t>(1), static_cast<int8_t>(0));
+    cmpgreaterthan_int16.test(LOC, Int16, static_cast<int16_t>(1), static_cast<int16_t>(1), static_cast<int8_t>(0));
+    cmpgreaterthan_int16.test(LOC, Int16, static_cast<int16_t>(-1), static_cast<int16_t>(1), static_cast<int8_t>(0));
+    cmpgreaterthan_int16.test(LOC, Int16, static_cast<int16_t>(1), static_cast<int16_t>(-1), static_cast<int8_t>(1));
+    cmpgreaterthan_int16.test(LOC, Int16, std::numeric_limits<int16_t>::min(), std::numeric_limits<int16_t>::min(), static_cast<int8_t>(0));
+    cmpgreaterthan_int16.test(LOC, Int16, std::numeric_limits<int16_t>::min(), std::numeric_limits<int16_t>::max(), static_cast<int8_t>(0));
+    cmpgreaterthan_int16.test(LOC, Int16, std::numeric_limits<int16_t>::max(), std::numeric_limits<int16_t>::min(), static_cast<int8_t>(1));
+    cmpgreaterthan_int16.test(LOC, Int16, std::numeric_limits<int16_t>::max(), std::numeric_limits<int16_t>::max(), static_cast<int8_t>(0));
+}
+TEST(omrgenExtension, IfCmpGreaterThanInt32s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int32_t, int32_t);
+    IfCmpGreaterThanFunc<FuncProto, int32_t> cmpgreaterthan_int32(LOC, "cmpgreaterthan_int32", c, false);
+    cmpgreaterthan_int32.compile(LOC, Int32);
+    cmpgreaterthan_int32.test(LOC, Int32, static_cast<int32_t>(0), static_cast<int32_t>(0), static_cast<int8_t>(0));
+    cmpgreaterthan_int32.test(LOC, Int32, static_cast<int32_t>(1), static_cast<int32_t>(0), static_cast<int8_t>(1));
+    cmpgreaterthan_int32.test(LOC, Int32, static_cast<int32_t>(0), static_cast<int32_t>(1), static_cast<int8_t>(0));
+    cmpgreaterthan_int32.test(LOC, Int32, static_cast<int32_t>(1), static_cast<int32_t>(1), static_cast<int8_t>(0));
+    cmpgreaterthan_int32.test(LOC, Int32, static_cast<int32_t>(-1), static_cast<int32_t>(1), static_cast<int8_t>(0));
+    cmpgreaterthan_int32.test(LOC, Int32, static_cast<int32_t>(1), static_cast<int32_t>(-1), static_cast<int8_t>(1));
+    cmpgreaterthan_int32.test(LOC, Int32, std::numeric_limits<int32_t>::min(), std::numeric_limits<int32_t>::min(), static_cast<int8_t>(0));
+    cmpgreaterthan_int32.test(LOC, Int32, std::numeric_limits<int32_t>::min(), std::numeric_limits<int32_t>::max(), static_cast<int8_t>(0));
+    cmpgreaterthan_int32.test(LOC, Int32, std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::min(), static_cast<int8_t>(1));
+    cmpgreaterthan_int32.test(LOC, Int32, std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::max(), static_cast<int8_t>(0));
+}
+TEST(omrgenExtension, IfCmpGreaterThanInt64s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int64_t, int64_t);
+    IfCmpGreaterThanFunc<FuncProto, int64_t> cmpgreaterthan_int64(LOC, "cmpgreaterthan_int64", c, false);
+    cmpgreaterthan_int64.compile(LOC, Int64);
+    cmpgreaterthan_int64.test(LOC, Int64, static_cast<int64_t>(0), static_cast<int64_t>(0), static_cast<int8_t>(0));
+    cmpgreaterthan_int64.test(LOC, Int64, static_cast<int64_t>(1), static_cast<int64_t>(0), static_cast<int8_t>(1));
+    cmpgreaterthan_int64.test(LOC, Int64, static_cast<int64_t>(0), static_cast<int64_t>(1), static_cast<int8_t>(0));
+    cmpgreaterthan_int64.test(LOC, Int64, static_cast<int64_t>(1), static_cast<int64_t>(1), static_cast<int8_t>(0));
+    cmpgreaterthan_int64.test(LOC, Int64, static_cast<int64_t>(-1), static_cast<int64_t>(1), static_cast<int8_t>(0));
+    cmpgreaterthan_int64.test(LOC, Int64, static_cast<int64_t>(1), static_cast<int64_t>(-1), static_cast<int8_t>(1));
+    cmpgreaterthan_int64.test(LOC, Int64, std::numeric_limits<int64_t>::min(), std::numeric_limits<int64_t>::min(), static_cast<int8_t>(0));
+    cmpgreaterthan_int64.test(LOC, Int64, std::numeric_limits<int64_t>::min(), std::numeric_limits<int64_t>::max(), static_cast<int8_t>(0));
+    cmpgreaterthan_int64.test(LOC, Int64, std::numeric_limits<int64_t>::max(), std::numeric_limits<int64_t>::min(), static_cast<int8_t>(1));
+    cmpgreaterthan_int64.test(LOC, Int64, std::numeric_limits<int64_t>::max(), std::numeric_limits<int64_t>::max(), static_cast<int8_t>(0));
+}
+TEST(omrgenExtension, IfCmpGreaterThanFloat32s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(float, float);
+    IfCmpGreaterThanFunc<FuncProto, float> cmpgreaterthan_float(LOC, "cmpgreaterthan_float", c, false);
+    cmpgreaterthan_float.compile(LOC, Float32);
+    cmpgreaterthan_float.test(LOC, Float32, static_cast<float>(0), static_cast<float>(0), static_cast<int8_t>(0));
+    cmpgreaterthan_float.test(LOC, Float32, static_cast<float>(1), static_cast<float>(0), static_cast<int8_t>(1));
+    cmpgreaterthan_float.test(LOC, Float32, static_cast<float>(0), static_cast<float>(1), static_cast<int8_t>(0));
+    cmpgreaterthan_float.test(LOC, Float32, static_cast<float>(1), static_cast<float>(1), static_cast<int8_t>(0));
+    cmpgreaterthan_float.test(LOC, Float32, static_cast<float>(-1), static_cast<float>(1), static_cast<int8_t>(0));
+    cmpgreaterthan_float.test(LOC, Float32, static_cast<float>(1), static_cast<float>(-1), static_cast<int8_t>(1));
+    cmpgreaterthan_float.test(LOC, Float32, std::numeric_limits<float>::min(), std::numeric_limits<float>::min(), static_cast<int8_t>(0));
+    cmpgreaterthan_float.test(LOC, Float32, std::numeric_limits<float>::min(), std::numeric_limits<float>::max(), static_cast<int8_t>(0));
+    cmpgreaterthan_float.test(LOC, Float32, std::numeric_limits<float>::max(), std::numeric_limits<float>::min(), static_cast<int8_t>(1));
+    cmpgreaterthan_float.test(LOC, Float32, std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), static_cast<int8_t>(0));
+}
+TEST(omrgenExtension, IfCmpGreaterThanFloat64s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(double, double);
+    IfCmpGreaterThanFunc<FuncProto, double> cmpgreaterthan_double(LOC, "cmpgreaterthan_double", c, false);
+    cmpgreaterthan_double.compile(LOC, Float64);
+    cmpgreaterthan_double.test(LOC, Float64, static_cast<double>(0), static_cast<double>(0), static_cast<int8_t>(0));
+    cmpgreaterthan_double.test(LOC, Float64, static_cast<double>(1), static_cast<double>(0), static_cast<int8_t>(1));
+    cmpgreaterthan_double.test(LOC, Float64, static_cast<double>(0), static_cast<double>(1), static_cast<int8_t>(0));
+    cmpgreaterthan_double.test(LOC, Float64, static_cast<double>(1), static_cast<double>(1), static_cast<int8_t>(0));
+    cmpgreaterthan_double.test(LOC, Float64, static_cast<double>(-1), static_cast<double>(1), static_cast<int8_t>(0));
+    cmpgreaterthan_double.test(LOC, Float64, static_cast<double>(1), static_cast<double>(-1), static_cast<int8_t>(1));
+    cmpgreaterthan_double.test(LOC, Float64, std::numeric_limits<double>::min(), std::numeric_limits<double>::min(), static_cast<int8_t>(0));
+    cmpgreaterthan_double.test(LOC, Float64, std::numeric_limits<double>::min(), std::numeric_limits<double>::max(), static_cast<int8_t>(0));
+    cmpgreaterthan_double.test(LOC, Float64, std::numeric_limits<double>::max(), std::numeric_limits<double>::min(), static_cast<int8_t>(1));
+    cmpgreaterthan_double.test(LOC, Float64, std::numeric_limits<double>::max(), std::numeric_limits<double>::max(), static_cast<int8_t>(0));
+}
+TEST(omrgenExtension, IfCmpGreaterThanAddresses) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(uintptr_t, uintptr_t);
+    IfCmpGreaterThanFunc<FuncProto, uintptr_t> cmpgreaterthan_address(LOC, "cmpgreaterthan_address", c, false);
+    cmpgreaterthan_address.compile(LOC, Address);
+    cmpgreaterthan_address.test(LOC, Address, static_cast<uintptr_t>(0), static_cast<uintptr_t>(0), static_cast<int8_t>(0));
+    cmpgreaterthan_address.test(LOC, Address, static_cast<uintptr_t>(4), static_cast<uintptr_t>(0), static_cast<int8_t>(1));
+    cmpgreaterthan_address.test(LOC, Address, static_cast<uintptr_t>(0), static_cast<uintptr_t>(4), static_cast<int8_t>(0));
+    cmpgreaterthan_address.test(LOC, Address, static_cast<uintptr_t>(4), static_cast<uintptr_t>(4), static_cast<int8_t>(0));
+    cmpgreaterthan_address.test(LOC, Address, std::numeric_limits<uintptr_t>::min(), std::numeric_limits<uintptr_t>::min(), static_cast<int8_t>(0));
+    cmpgreaterthan_address.test(LOC, Address, std::numeric_limits<uintptr_t>::min(), std::numeric_limits<uintptr_t>::max(), static_cast<int8_t>(0));
+    cmpgreaterthan_address.test(LOC, Address, std::numeric_limits<uintptr_t>::max(), std::numeric_limits<uintptr_t>::min(), static_cast<int8_t>(1));
+    cmpgreaterthan_address.test(LOC, Address, std::numeric_limits<uintptr_t>::max(), std::numeric_limits<uintptr_t>::max(), static_cast<int8_t>(0));
+}
+
+template<typename FuncPrototype, typename cType>
+class IfCmpGreaterOrEqualFunc : public IfCmpOpBaseFunc<FuncPrototype, cType> {
+public:
+    IfCmpGreaterOrEqualFunc(LOCATION, String name, Compiler *compiler, bool log)
+        : IfCmpOpBaseFunc<FuncPrototype, cType>(PASSLOC, name, compiler, log) { }
+protected:
+    virtual void doIfCmpOp(LOCATION, Builder *b, Builder *target, Value *left, Value *right) {
+        this->bx()->IfCmpGreaterOrEqual(PASSLOC, b, target, left, right);
+    }
+};
+
+TEST(omrgenExtension, IfCmpGreaterOrEqualInt8s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int8_t, int8_t);
+    IfCmpGreaterOrEqualFunc<FuncProto, int8_t> cmpgreaterorequal_int8(LOC, "cmpgreaterorequal_int8", c, false);
+    cmpgreaterorequal_int8.compile(LOC, Int8);
+    cmpgreaterorequal_int8.test(LOC, Int8, static_cast<int8_t>(0), static_cast<int8_t>(0), static_cast<int8_t>(1));
+    cmpgreaterorequal_int8.test(LOC, Int8, static_cast<int8_t>(1), static_cast<int8_t>(0), static_cast<int8_t>(1));
+    cmpgreaterorequal_int8.test(LOC, Int8, static_cast<int8_t>(0), static_cast<int8_t>(1), static_cast<int8_t>(0));
+    cmpgreaterorequal_int8.test(LOC, Int8, static_cast<int8_t>(1), static_cast<int8_t>(1), static_cast<int8_t>(1));
+    cmpgreaterorequal_int8.test(LOC, Int8, static_cast<int8_t>(-1), static_cast<int8_t>(1), static_cast<int8_t>(0));
+    cmpgreaterorequal_int8.test(LOC, Int8, static_cast<int8_t>(1), static_cast<int8_t>(-1), static_cast<int8_t>(1));
+    cmpgreaterorequal_int8.test(LOC, Int8, std::numeric_limits<int8_t>::min(), std::numeric_limits<int8_t>::min(), static_cast<int8_t>(1));
+    cmpgreaterorequal_int8.test(LOC, Int8, std::numeric_limits<int8_t>::min(), std::numeric_limits<int8_t>::max(), static_cast<int8_t>(0));
+    cmpgreaterorequal_int8.test(LOC, Int8, std::numeric_limits<int8_t>::max(), std::numeric_limits<int8_t>::min(), static_cast<int8_t>(1));
+    cmpgreaterorequal_int8.test(LOC, Int8, std::numeric_limits<int8_t>::max(), std::numeric_limits<int8_t>::max(), static_cast<int8_t>(1));
+}
+TEST(omrgenExtension, IfCmpGreaterOrEqualInt16s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int16_t, int16_t);
+    IfCmpGreaterOrEqualFunc<FuncProto, int16_t> cmpgreaterorequal_int16(LOC, "cmpgreaterorequal_int16", c, false);
+    cmpgreaterorequal_int16.compile(LOC, Int16);
+    cmpgreaterorequal_int16.test(LOC, Int16, static_cast<int16_t>(0), static_cast<int16_t>(0), static_cast<int8_t>(1));
+    cmpgreaterorequal_int16.test(LOC, Int16, static_cast<int16_t>(1), static_cast<int16_t>(0), static_cast<int8_t>(1));
+    cmpgreaterorequal_int16.test(LOC, Int16, static_cast<int16_t>(0), static_cast<int16_t>(1), static_cast<int8_t>(0));
+    cmpgreaterorequal_int16.test(LOC, Int16, static_cast<int16_t>(1), static_cast<int16_t>(1), static_cast<int8_t>(1));
+    cmpgreaterorequal_int16.test(LOC, Int16, static_cast<int16_t>(-1), static_cast<int16_t>(1), static_cast<int8_t>(0));
+    cmpgreaterorequal_int16.test(LOC, Int16, static_cast<int16_t>(1), static_cast<int16_t>(-1), static_cast<int8_t>(1));
+    cmpgreaterorequal_int16.test(LOC, Int16, std::numeric_limits<int16_t>::min(), std::numeric_limits<int16_t>::min(), static_cast<int8_t>(1));
+    cmpgreaterorequal_int16.test(LOC, Int16, std::numeric_limits<int16_t>::min(), std::numeric_limits<int16_t>::max(), static_cast<int8_t>(0));
+    cmpgreaterorequal_int16.test(LOC, Int16, std::numeric_limits<int16_t>::max(), std::numeric_limits<int16_t>::min(), static_cast<int8_t>(1));
+    cmpgreaterorequal_int16.test(LOC, Int16, std::numeric_limits<int16_t>::max(), std::numeric_limits<int16_t>::max(), static_cast<int8_t>(1));
+}
+TEST(omrgenExtension, IfCmpGreaterOrEqualInt32s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int32_t, int32_t);
+    IfCmpGreaterOrEqualFunc<FuncProto, int32_t> cmpgreaterorequal_int32(LOC, "cmpgreaterorequal_int32", c, false);
+    cmpgreaterorequal_int32.compile(LOC, Int32);
+    cmpgreaterorequal_int32.test(LOC, Int32, static_cast<int32_t>(0), static_cast<int32_t>(0), static_cast<int8_t>(1));
+    cmpgreaterorequal_int32.test(LOC, Int32, static_cast<int32_t>(1), static_cast<int32_t>(0), static_cast<int8_t>(1));
+    cmpgreaterorequal_int32.test(LOC, Int32, static_cast<int32_t>(0), static_cast<int32_t>(1), static_cast<int8_t>(0));
+    cmpgreaterorequal_int32.test(LOC, Int32, static_cast<int32_t>(1), static_cast<int32_t>(1), static_cast<int8_t>(1));
+    cmpgreaterorequal_int32.test(LOC, Int32, static_cast<int32_t>(-1), static_cast<int32_t>(1), static_cast<int8_t>(0));
+    cmpgreaterorequal_int32.test(LOC, Int32, static_cast<int32_t>(1), static_cast<int32_t>(-1), static_cast<int8_t>(1));
+    cmpgreaterorequal_int32.test(LOC, Int32, std::numeric_limits<int32_t>::min(), std::numeric_limits<int32_t>::min(), static_cast<int8_t>(1));
+    cmpgreaterorequal_int32.test(LOC, Int32, std::numeric_limits<int32_t>::min(), std::numeric_limits<int32_t>::max(), static_cast<int8_t>(0));
+    cmpgreaterorequal_int32.test(LOC, Int32, std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::min(), static_cast<int8_t>(1));
+    cmpgreaterorequal_int32.test(LOC, Int32, std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::max(), static_cast<int8_t>(1));
+}
+TEST(omrgenExtension, IfCmpGreaterOrEqualInt64s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int64_t, int64_t);
+    IfCmpGreaterOrEqualFunc<FuncProto, int64_t> cmpgreaterorequal_int64(LOC, "cmpgreaterorequal_int64", c, false);
+    cmpgreaterorequal_int64.compile(LOC, Int64);
+    cmpgreaterorequal_int64.test(LOC, Int64, static_cast<int64_t>(0), static_cast<int64_t>(0), static_cast<int8_t>(1));
+    cmpgreaterorequal_int64.test(LOC, Int64, static_cast<int64_t>(1), static_cast<int64_t>(0), static_cast<int8_t>(1));
+    cmpgreaterorequal_int64.test(LOC, Int64, static_cast<int64_t>(0), static_cast<int64_t>(1), static_cast<int8_t>(0));
+    cmpgreaterorequal_int64.test(LOC, Int64, static_cast<int64_t>(1), static_cast<int64_t>(1), static_cast<int8_t>(1));
+    cmpgreaterorequal_int64.test(LOC, Int64, static_cast<int64_t>(-1), static_cast<int64_t>(1), static_cast<int8_t>(0));
+    cmpgreaterorequal_int64.test(LOC, Int64, static_cast<int64_t>(1), static_cast<int64_t>(-1), static_cast<int8_t>(1));
+    cmpgreaterorequal_int64.test(LOC, Int64, std::numeric_limits<int64_t>::min(), std::numeric_limits<int64_t>::min(), static_cast<int8_t>(1));
+    cmpgreaterorequal_int64.test(LOC, Int64, std::numeric_limits<int64_t>::min(), std::numeric_limits<int64_t>::max(), static_cast<int8_t>(0));
+    cmpgreaterorequal_int64.test(LOC, Int64, std::numeric_limits<int64_t>::max(), std::numeric_limits<int64_t>::min(), static_cast<int8_t>(1));
+    cmpgreaterorequal_int64.test(LOC, Int64, std::numeric_limits<int64_t>::max(), std::numeric_limits<int64_t>::max(), static_cast<int8_t>(1));
+}
+TEST(omrgenExtension, IfCmpGreaterOrEqualFloat32s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(float, float);
+    IfCmpGreaterOrEqualFunc<FuncProto, float> cmpgreaterorequal_float(LOC, "cmpgreaterorequal_float", c, false);
+    cmpgreaterorequal_float.compile(LOC, Float32);
+    cmpgreaterorequal_float.test(LOC, Float32, static_cast<float>(0), static_cast<float>(0), static_cast<int8_t>(1));
+    cmpgreaterorequal_float.test(LOC, Float32, static_cast<float>(1), static_cast<float>(0), static_cast<int8_t>(1));
+    cmpgreaterorequal_float.test(LOC, Float32, static_cast<float>(0), static_cast<float>(1), static_cast<int8_t>(0));
+    cmpgreaterorequal_float.test(LOC, Float32, static_cast<float>(1), static_cast<float>(1), static_cast<int8_t>(1));
+    cmpgreaterorequal_float.test(LOC, Float32, static_cast<float>(-1), static_cast<float>(1), static_cast<int8_t>(0));
+    cmpgreaterorequal_float.test(LOC, Float32, static_cast<float>(1), static_cast<float>(-1), static_cast<int8_t>(1));
+    cmpgreaterorequal_float.test(LOC, Float32, std::numeric_limits<float>::min(), std::numeric_limits<float>::min(), static_cast<int8_t>(1));
+    cmpgreaterorequal_float.test(LOC, Float32, std::numeric_limits<float>::min(), std::numeric_limits<float>::max(), static_cast<int8_t>(0));
+    cmpgreaterorequal_float.test(LOC, Float32, std::numeric_limits<float>::max(), std::numeric_limits<float>::min(), static_cast<int8_t>(1));
+    cmpgreaterorequal_float.test(LOC, Float32, std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), static_cast<int8_t>(1));
+}
+TEST(omrgenExtension, IfCmpGreaterOrEqualFloat64s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(double, double);
+    IfCmpGreaterOrEqualFunc<FuncProto, double> cmpgreaterorequal_double(LOC, "cmpgreaterorequal_double", c, false);
+    cmpgreaterorequal_double.compile(LOC, Float64);
+    cmpgreaterorequal_double.test(LOC, Float64, static_cast<double>(0), static_cast<double>(0), static_cast<int8_t>(1));
+    cmpgreaterorequal_double.test(LOC, Float64, static_cast<double>(1), static_cast<double>(0), static_cast<int8_t>(1));
+    cmpgreaterorequal_double.test(LOC, Float64, static_cast<double>(0), static_cast<double>(1), static_cast<int8_t>(0));
+    cmpgreaterorequal_double.test(LOC, Float64, static_cast<double>(1), static_cast<double>(1), static_cast<int8_t>(1));
+    cmpgreaterorequal_double.test(LOC, Float64, static_cast<double>(-1), static_cast<double>(1), static_cast<int8_t>(0));
+    cmpgreaterorequal_double.test(LOC, Float64, static_cast<double>(1), static_cast<double>(-1), static_cast<int8_t>(1));
+    cmpgreaterorequal_double.test(LOC, Float64, std::numeric_limits<double>::min(), std::numeric_limits<double>::min(), static_cast<int8_t>(1));
+    cmpgreaterorequal_double.test(LOC, Float64, std::numeric_limits<double>::min(), std::numeric_limits<double>::max(), static_cast<int8_t>(0));
+    cmpgreaterorequal_double.test(LOC, Float64, std::numeric_limits<double>::max(), std::numeric_limits<double>::min(), static_cast<int8_t>(1));
+    cmpgreaterorequal_double.test(LOC, Float64, std::numeric_limits<double>::max(), std::numeric_limits<double>::max(), static_cast<int8_t>(1));
+}
+TEST(omrgenExtension, IfCmpGreaterOrEqualAddresses) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(uintptr_t, uintptr_t);
+    IfCmpGreaterOrEqualFunc<FuncProto, uintptr_t> cmpgreaterorequal_address(LOC, "cmpgreaterorequal_address", c, false);
+    cmpgreaterorequal_address.compile(LOC, Address);
+    cmpgreaterorequal_address.test(LOC, Address, static_cast<uintptr_t>(0), static_cast<uintptr_t>(0), static_cast<int8_t>(1));
+    cmpgreaterorequal_address.test(LOC, Address, static_cast<uintptr_t>(4), static_cast<uintptr_t>(0), static_cast<int8_t>(1));
+    cmpgreaterorequal_address.test(LOC, Address, static_cast<uintptr_t>(0), static_cast<uintptr_t>(4), static_cast<int8_t>(0));
+    cmpgreaterorequal_address.test(LOC, Address, static_cast<uintptr_t>(4), static_cast<uintptr_t>(4), static_cast<int8_t>(1));
+    cmpgreaterorequal_address.test(LOC, Address, std::numeric_limits<uintptr_t>::min(), std::numeric_limits<uintptr_t>::min(), static_cast<int8_t>(1));
+    cmpgreaterorequal_address.test(LOC, Address, std::numeric_limits<uintptr_t>::min(), std::numeric_limits<uintptr_t>::max(), static_cast<int8_t>(0));
+    cmpgreaterorequal_address.test(LOC, Address, std::numeric_limits<uintptr_t>::max(), std::numeric_limits<uintptr_t>::min(), static_cast<int8_t>(1));
+    cmpgreaterorequal_address.test(LOC, Address, std::numeric_limits<uintptr_t>::max(), std::numeric_limits<uintptr_t>::max(), static_cast<int8_t>(1));
+}
+
+template<typename FuncPrototype, typename cType>
+class IfCmpLessThanFunc : public IfCmpOpBaseFunc<FuncPrototype, cType> {
+public:
+    IfCmpLessThanFunc(LOCATION, String name, Compiler *compiler, bool log)
+        : IfCmpOpBaseFunc<FuncPrototype, cType>(PASSLOC, name, compiler, log) { }
+protected:
+    virtual void doIfCmpOp(LOCATION, Builder *b, Builder *target, Value *left, Value *right) {
+        this->bx()->IfCmpLessThan(PASSLOC, b, target, left, right);
+    }
+};
+
+TEST(omrgenExtension, IfCmpLessThanInt8s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int8_t, int8_t);
+    IfCmpLessThanFunc<FuncProto, int8_t> cmplessthan_int8(LOC, "cmplessthan_int8", c, false);
+    cmplessthan_int8.compile(LOC, Int8);
+    cmplessthan_int8.test(LOC, Int8, static_cast<int8_t>(0), static_cast<int8_t>(0), static_cast<int8_t>(0));
+    cmplessthan_int8.test(LOC, Int8, static_cast<int8_t>(1), static_cast<int8_t>(0), static_cast<int8_t>(0));
+    cmplessthan_int8.test(LOC, Int8, static_cast<int8_t>(0), static_cast<int8_t>(1), static_cast<int8_t>(1));
+    cmplessthan_int8.test(LOC, Int8, static_cast<int8_t>(1), static_cast<int8_t>(1), static_cast<int8_t>(0));
+    cmplessthan_int8.test(LOC, Int8, static_cast<int8_t>(-1), static_cast<int8_t>(1), static_cast<int8_t>(1));
+    cmplessthan_int8.test(LOC, Int8, static_cast<int8_t>(1), static_cast<int8_t>(-1), static_cast<int8_t>(0));
+    cmplessthan_int8.test(LOC, Int8, std::numeric_limits<int8_t>::min(), std::numeric_limits<int8_t>::min(), static_cast<int8_t>(0));
+    cmplessthan_int8.test(LOC, Int8, std::numeric_limits<int8_t>::min(), std::numeric_limits<int8_t>::max(), static_cast<int8_t>(1));
+    cmplessthan_int8.test(LOC, Int8, std::numeric_limits<int8_t>::max(), std::numeric_limits<int8_t>::min(), static_cast<int8_t>(0));
+    cmplessthan_int8.test(LOC, Int8, std::numeric_limits<int8_t>::max(), std::numeric_limits<int8_t>::max(), static_cast<int8_t>(0));
+}
+TEST(omrgenExtension, IfCmpLessThanInt16s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int16_t, int16_t);
+    IfCmpLessThanFunc<FuncProto, int16_t> cmplessthan_int16(LOC, "cmplessthan_int16", c, false);
+    cmplessthan_int16.compile(LOC, Int16);
+    cmplessthan_int16.test(LOC, Int16, static_cast<int16_t>(0), static_cast<int16_t>(0), static_cast<int8_t>(0));
+    cmplessthan_int16.test(LOC, Int16, static_cast<int16_t>(1), static_cast<int16_t>(0), static_cast<int8_t>(0));
+    cmplessthan_int16.test(LOC, Int16, static_cast<int16_t>(0), static_cast<int16_t>(1), static_cast<int8_t>(1));
+    cmplessthan_int16.test(LOC, Int16, static_cast<int16_t>(1), static_cast<int16_t>(1), static_cast<int8_t>(0));
+    cmplessthan_int16.test(LOC, Int16, static_cast<int16_t>(-1), static_cast<int16_t>(1), static_cast<int8_t>(1));
+    cmplessthan_int16.test(LOC, Int16, static_cast<int16_t>(1), static_cast<int16_t>(-1), static_cast<int8_t>(0));
+    cmplessthan_int16.test(LOC, Int16, std::numeric_limits<int16_t>::min(), std::numeric_limits<int16_t>::min(), static_cast<int8_t>(0));
+    cmplessthan_int16.test(LOC, Int16, std::numeric_limits<int16_t>::min(), std::numeric_limits<int16_t>::max(), static_cast<int8_t>(1));
+    cmplessthan_int16.test(LOC, Int16, std::numeric_limits<int16_t>::max(), std::numeric_limits<int16_t>::min(), static_cast<int8_t>(0));
+    cmplessthan_int16.test(LOC, Int16, std::numeric_limits<int16_t>::max(), std::numeric_limits<int16_t>::max(), static_cast<int8_t>(0));
+}
+TEST(omrgenExtension, IfCmpLessThanInt32s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int32_t, int32_t);
+    IfCmpLessThanFunc<FuncProto, int32_t> cmplessthan_int32(LOC, "cmplessthan_int32", c, false);
+    cmplessthan_int32.compile(LOC, Int32);
+    cmplessthan_int32.test(LOC, Int32, static_cast<int32_t>(0), static_cast<int32_t>(0), static_cast<int8_t>(0));
+    cmplessthan_int32.test(LOC, Int32, static_cast<int32_t>(1), static_cast<int32_t>(0), static_cast<int8_t>(0));
+    cmplessthan_int32.test(LOC, Int32, static_cast<int32_t>(0), static_cast<int32_t>(1), static_cast<int8_t>(1));
+    cmplessthan_int32.test(LOC, Int32, static_cast<int32_t>(1), static_cast<int32_t>(1), static_cast<int8_t>(0));
+    cmplessthan_int32.test(LOC, Int32, static_cast<int32_t>(-1), static_cast<int32_t>(1), static_cast<int8_t>(1));
+    cmplessthan_int32.test(LOC, Int32, static_cast<int32_t>(1), static_cast<int32_t>(-1), static_cast<int8_t>(0));
+    cmplessthan_int32.test(LOC, Int32, std::numeric_limits<int32_t>::min(), std::numeric_limits<int32_t>::min(), static_cast<int8_t>(0));
+    cmplessthan_int32.test(LOC, Int32, std::numeric_limits<int32_t>::min(), std::numeric_limits<int32_t>::max(), static_cast<int8_t>(1));
+    cmplessthan_int32.test(LOC, Int32, std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::min(), static_cast<int8_t>(0));
+    cmplessthan_int32.test(LOC, Int32, std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::max(), static_cast<int8_t>(0));
+}
+TEST(omrgenExtension, IfCmpLessThanInt64s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int64_t, int64_t);
+    IfCmpLessThanFunc<FuncProto, int64_t> cmplessthan_int64(LOC, "cmplessthan_int64", c, false);
+    cmplessthan_int64.compile(LOC, Int64);
+    cmplessthan_int64.test(LOC, Int64, static_cast<int64_t>(0), static_cast<int64_t>(0), static_cast<int8_t>(0));
+    cmplessthan_int64.test(LOC, Int64, static_cast<int64_t>(1), static_cast<int64_t>(0), static_cast<int8_t>(0));
+    cmplessthan_int64.test(LOC, Int64, static_cast<int64_t>(0), static_cast<int64_t>(1), static_cast<int8_t>(1));
+    cmplessthan_int64.test(LOC, Int64, static_cast<int64_t>(1), static_cast<int64_t>(1), static_cast<int8_t>(0));
+    cmplessthan_int64.test(LOC, Int64, static_cast<int64_t>(-1), static_cast<int64_t>(1), static_cast<int8_t>(1));
+    cmplessthan_int64.test(LOC, Int64, static_cast<int64_t>(1), static_cast<int64_t>(-1), static_cast<int8_t>(0));
+    cmplessthan_int64.test(LOC, Int64, std::numeric_limits<int64_t>::min(), std::numeric_limits<int64_t>::min(), static_cast<int8_t>(0));
+    cmplessthan_int64.test(LOC, Int64, std::numeric_limits<int64_t>::min(), std::numeric_limits<int64_t>::max(), static_cast<int8_t>(1));
+    cmplessthan_int64.test(LOC, Int64, std::numeric_limits<int64_t>::max(), std::numeric_limits<int64_t>::min(), static_cast<int8_t>(0));
+    cmplessthan_int64.test(LOC, Int64, std::numeric_limits<int64_t>::max(), std::numeric_limits<int64_t>::max(), static_cast<int8_t>(0));
+}
+TEST(omrgenExtension, IfCmpLessThanFloat32s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(float, float);
+    IfCmpLessThanFunc<FuncProto, float> cmplessthan_float(LOC, "cmplessthan_float", c, false);
+    cmplessthan_float.compile(LOC, Float32);
+    cmplessthan_float.test(LOC, Float32, static_cast<float>(0), static_cast<float>(0), static_cast<int8_t>(0));
+    cmplessthan_float.test(LOC, Float32, static_cast<float>(1), static_cast<float>(0), static_cast<int8_t>(0));
+    cmplessthan_float.test(LOC, Float32, static_cast<float>(0), static_cast<float>(1), static_cast<int8_t>(1));
+    cmplessthan_float.test(LOC, Float32, static_cast<float>(1), static_cast<float>(1), static_cast<int8_t>(0));
+    cmplessthan_float.test(LOC, Float32, static_cast<float>(-1), static_cast<float>(1), static_cast<int8_t>(1));
+    cmplessthan_float.test(LOC, Float32, static_cast<float>(1), static_cast<float>(-1), static_cast<int8_t>(0));
+    cmplessthan_float.test(LOC, Float32, std::numeric_limits<float>::min(), std::numeric_limits<float>::min(), static_cast<int8_t>(0));
+    cmplessthan_float.test(LOC, Float32, std::numeric_limits<float>::min(), std::numeric_limits<float>::max(), static_cast<int8_t>(1));
+    cmplessthan_float.test(LOC, Float32, std::numeric_limits<float>::max(), std::numeric_limits<float>::min(), static_cast<int8_t>(0));
+    cmplessthan_float.test(LOC, Float32, std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), static_cast<int8_t>(0));
+}
+TEST(omrgenExtension, IfCmpLessThanFloat64s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(double, double);
+    IfCmpLessThanFunc<FuncProto, double> cmplessthan_double(LOC, "cmplessthan_double", c, false);
+    cmplessthan_double.compile(LOC, Float64);
+    cmplessthan_double.test(LOC, Float64, static_cast<double>(0), static_cast<double>(0), static_cast<int8_t>(0));
+    cmplessthan_double.test(LOC, Float64, static_cast<double>(1), static_cast<double>(0), static_cast<int8_t>(0));
+    cmplessthan_double.test(LOC, Float64, static_cast<double>(0), static_cast<double>(1), static_cast<int8_t>(1));
+    cmplessthan_double.test(LOC, Float64, static_cast<double>(1), static_cast<double>(1), static_cast<int8_t>(0));
+    cmplessthan_double.test(LOC, Float64, static_cast<double>(-1), static_cast<double>(1), static_cast<int8_t>(1));
+    cmplessthan_double.test(LOC, Float64, static_cast<double>(1), static_cast<double>(-1), static_cast<int8_t>(0));
+    cmplessthan_double.test(LOC, Float64, std::numeric_limits<double>::min(), std::numeric_limits<double>::min(), static_cast<int8_t>(0));
+    cmplessthan_double.test(LOC, Float64, std::numeric_limits<double>::min(), std::numeric_limits<double>::max(), static_cast<int8_t>(1));
+    cmplessthan_double.test(LOC, Float64, std::numeric_limits<double>::max(), std::numeric_limits<double>::min(), static_cast<int8_t>(0));
+    cmplessthan_double.test(LOC, Float64, std::numeric_limits<double>::max(), std::numeric_limits<double>::max(), static_cast<int8_t>(0));
+}
+TEST(omrgenExtension, IfCmpLessThanAddresses) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(uintptr_t, uintptr_t);
+    IfCmpLessThanFunc<FuncProto, uintptr_t> cmplessthan_address(LOC, "cmplessthan_address", c, false);
+    cmplessthan_address.compile(LOC, Address);
+    cmplessthan_address.test(LOC, Address, static_cast<uintptr_t>(0), static_cast<uintptr_t>(0), static_cast<int8_t>(0));
+    cmplessthan_address.test(LOC, Address, static_cast<uintptr_t>(4), static_cast<uintptr_t>(0), static_cast<int8_t>(0));
+    cmplessthan_address.test(LOC, Address, static_cast<uintptr_t>(0), static_cast<uintptr_t>(4), static_cast<int8_t>(1));
+    cmplessthan_address.test(LOC, Address, static_cast<uintptr_t>(4), static_cast<uintptr_t>(4), static_cast<int8_t>(0));
+    cmplessthan_address.test(LOC, Address, std::numeric_limits<uintptr_t>::min(), std::numeric_limits<uintptr_t>::min(), static_cast<int8_t>(0));
+    cmplessthan_address.test(LOC, Address, std::numeric_limits<uintptr_t>::min(), std::numeric_limits<uintptr_t>::max(), static_cast<int8_t>(1));
+    cmplessthan_address.test(LOC, Address, std::numeric_limits<uintptr_t>::max(), std::numeric_limits<uintptr_t>::min(), static_cast<int8_t>(0));
+    cmplessthan_address.test(LOC, Address, std::numeric_limits<uintptr_t>::max(), std::numeric_limits<uintptr_t>::max(), static_cast<int8_t>(0));
+}
+
+template<typename FuncPrototype, typename cType>
+class IfCmpLessOrEqualFunc : public IfCmpOpBaseFunc<FuncPrototype, cType> {
+public:
+    IfCmpLessOrEqualFunc(LOCATION, String name, Compiler *compiler, bool log)
+        : IfCmpOpBaseFunc<FuncPrototype, cType>(PASSLOC, name, compiler, log) { }
+protected:
+    virtual void doIfCmpOp(LOCATION, Builder *b, Builder *target, Value *left, Value *right) {
+        this->bx()->IfCmpLessOrEqual(PASSLOC, b, target, left, right);
+    }
+};
+
+TEST(omrgenExtension, IfCmpLessOrEqualInt8s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int8_t, int8_t);
+    IfCmpLessOrEqualFunc<FuncProto, int8_t> cmplessorequal_int8(LOC, "cmplessorequal_int8", c, false);
+    cmplessorequal_int8.compile(LOC, Int8);
+    cmplessorequal_int8.test(LOC, Int8, static_cast<int8_t>(0), static_cast<int8_t>(0), static_cast<int8_t>(1));
+    cmplessorequal_int8.test(LOC, Int8, static_cast<int8_t>(1), static_cast<int8_t>(0), static_cast<int8_t>(0));
+    cmplessorequal_int8.test(LOC, Int8, static_cast<int8_t>(0), static_cast<int8_t>(1), static_cast<int8_t>(1));
+    cmplessorequal_int8.test(LOC, Int8, static_cast<int8_t>(1), static_cast<int8_t>(1), static_cast<int8_t>(1));
+    cmplessorequal_int8.test(LOC, Int8, static_cast<int8_t>(-1), static_cast<int8_t>(1), static_cast<int8_t>(1));
+    cmplessorequal_int8.test(LOC, Int8, static_cast<int8_t>(1), static_cast<int8_t>(-1), static_cast<int8_t>(0));
+    cmplessorequal_int8.test(LOC, Int8, std::numeric_limits<int8_t>::min(), std::numeric_limits<int8_t>::min(), static_cast<int8_t>(1));
+    cmplessorequal_int8.test(LOC, Int8, std::numeric_limits<int8_t>::min(), std::numeric_limits<int8_t>::max(), static_cast<int8_t>(1));
+    cmplessorequal_int8.test(LOC, Int8, std::numeric_limits<int8_t>::max(), std::numeric_limits<int8_t>::min(), static_cast<int8_t>(0));
+    cmplessorequal_int8.test(LOC, Int8, std::numeric_limits<int8_t>::max(), std::numeric_limits<int8_t>::max(), static_cast<int8_t>(1));
+}
+TEST(omrgenExtension, IfCmpLessOrEqualInt16s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int16_t, int16_t);
+    IfCmpLessOrEqualFunc<FuncProto, int16_t> cmplessorequal_int16(LOC, "cmplessorequal_int16", c, false);
+    cmplessorequal_int16.compile(LOC, Int16);
+    cmplessorequal_int16.test(LOC, Int16, static_cast<int16_t>(0), static_cast<int16_t>(0), static_cast<int8_t>(1));
+    cmplessorequal_int16.test(LOC, Int16, static_cast<int16_t>(1), static_cast<int16_t>(0), static_cast<int8_t>(0));
+    cmplessorequal_int16.test(LOC, Int16, static_cast<int16_t>(0), static_cast<int16_t>(1), static_cast<int8_t>(1));
+    cmplessorequal_int16.test(LOC, Int16, static_cast<int16_t>(1), static_cast<int16_t>(1), static_cast<int8_t>(1));
+    cmplessorequal_int16.test(LOC, Int16, static_cast<int16_t>(-1), static_cast<int16_t>(1), static_cast<int8_t>(1));
+    cmplessorequal_int16.test(LOC, Int16, static_cast<int16_t>(1), static_cast<int16_t>(-1), static_cast<int8_t>(0));
+    cmplessorequal_int16.test(LOC, Int16, std::numeric_limits<int16_t>::min(), std::numeric_limits<int16_t>::min(), static_cast<int8_t>(1));
+    cmplessorequal_int16.test(LOC, Int16, std::numeric_limits<int16_t>::min(), std::numeric_limits<int16_t>::max(), static_cast<int8_t>(1));
+    cmplessorequal_int16.test(LOC, Int16, std::numeric_limits<int16_t>::max(), std::numeric_limits<int16_t>::min(), static_cast<int8_t>(0));
+    cmplessorequal_int16.test(LOC, Int16, std::numeric_limits<int16_t>::max(), std::numeric_limits<int16_t>::max(), static_cast<int8_t>(1));
+}
+TEST(omrgenExtension, IfCmpLessOrEqualInt32s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int32_t, int32_t);
+    IfCmpLessOrEqualFunc<FuncProto, int32_t> cmplessorequal_int32(LOC, "cmplessorequal_int32", c, false);
+    cmplessorequal_int32.compile(LOC, Int32);
+    cmplessorequal_int32.test(LOC, Int32, static_cast<int32_t>(0), static_cast<int32_t>(0), static_cast<int8_t>(1));
+    cmplessorequal_int32.test(LOC, Int32, static_cast<int32_t>(1), static_cast<int32_t>(0), static_cast<int8_t>(0));
+    cmplessorequal_int32.test(LOC, Int32, static_cast<int32_t>(0), static_cast<int32_t>(1), static_cast<int8_t>(1));
+    cmplessorequal_int32.test(LOC, Int32, static_cast<int32_t>(1), static_cast<int32_t>(1), static_cast<int8_t>(1));
+    cmplessorequal_int32.test(LOC, Int32, static_cast<int32_t>(-1), static_cast<int32_t>(1), static_cast<int8_t>(1));
+    cmplessorequal_int32.test(LOC, Int32, static_cast<int32_t>(1), static_cast<int32_t>(-1), static_cast<int8_t>(0));
+    cmplessorequal_int32.test(LOC, Int32, std::numeric_limits<int32_t>::min(), std::numeric_limits<int32_t>::min(), static_cast<int8_t>(1));
+    cmplessorequal_int32.test(LOC, Int32, std::numeric_limits<int32_t>::min(), std::numeric_limits<int32_t>::max(), static_cast<int8_t>(1));
+    cmplessorequal_int32.test(LOC, Int32, std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::min(), static_cast<int8_t>(0));
+    cmplessorequal_int32.test(LOC, Int32, std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::max(), static_cast<int8_t>(1));
+}
+TEST(omrgenExtension, IfCmpLessOrEqualInt64s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int64_t, int64_t);
+    IfCmpLessOrEqualFunc<FuncProto, int64_t> cmplessorequal_int64(LOC, "cmplessorequal_int64", c, false);
+    cmplessorequal_int64.compile(LOC, Int64);
+    cmplessorequal_int64.test(LOC, Int64, static_cast<int64_t>(0), static_cast<int64_t>(0), static_cast<int8_t>(1));
+    cmplessorequal_int64.test(LOC, Int64, static_cast<int64_t>(1), static_cast<int64_t>(0), static_cast<int8_t>(0));
+    cmplessorequal_int64.test(LOC, Int64, static_cast<int64_t>(0), static_cast<int64_t>(1), static_cast<int8_t>(1));
+    cmplessorequal_int64.test(LOC, Int64, static_cast<int64_t>(1), static_cast<int64_t>(1), static_cast<int8_t>(1));
+    cmplessorequal_int64.test(LOC, Int64, static_cast<int64_t>(-1), static_cast<int64_t>(1), static_cast<int8_t>(1));
+    cmplessorequal_int64.test(LOC, Int64, static_cast<int64_t>(1), static_cast<int64_t>(-1), static_cast<int8_t>(0));
+    cmplessorequal_int64.test(LOC, Int64, std::numeric_limits<int64_t>::min(), std::numeric_limits<int64_t>::min(), static_cast<int8_t>(1));
+    cmplessorequal_int64.test(LOC, Int64, std::numeric_limits<int64_t>::min(), std::numeric_limits<int64_t>::max(), static_cast<int8_t>(1));
+    cmplessorequal_int64.test(LOC, Int64, std::numeric_limits<int64_t>::max(), std::numeric_limits<int64_t>::min(), static_cast<int8_t>(0));
+    cmplessorequal_int64.test(LOC, Int64, std::numeric_limits<int64_t>::max(), std::numeric_limits<int64_t>::max(), static_cast<int8_t>(1));
+}
+TEST(omrgenExtension, IfCmpLessOrEqualFloat32s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(float, float);
+    IfCmpLessOrEqualFunc<FuncProto, float> cmplessorequal_float(LOC, "cmplessorequal_float", c, false);
+    cmplessorequal_float.compile(LOC, Float32);
+    cmplessorequal_float.test(LOC, Float32, static_cast<float>(0), static_cast<float>(0), static_cast<int8_t>(1));
+    cmplessorequal_float.test(LOC, Float32, static_cast<float>(1), static_cast<float>(0), static_cast<int8_t>(0));
+    cmplessorequal_float.test(LOC, Float32, static_cast<float>(0), static_cast<float>(1), static_cast<int8_t>(1));
+    cmplessorequal_float.test(LOC, Float32, static_cast<float>(1), static_cast<float>(1), static_cast<int8_t>(1));
+    cmplessorequal_float.test(LOC, Float32, static_cast<float>(-1), static_cast<float>(1), static_cast<int8_t>(1));
+    cmplessorequal_float.test(LOC, Float32, static_cast<float>(1), static_cast<float>(-1), static_cast<int8_t>(0));
+    cmplessorequal_float.test(LOC, Float32, std::numeric_limits<float>::min(), std::numeric_limits<float>::min(), static_cast<int8_t>(1));
+    cmplessorequal_float.test(LOC, Float32, std::numeric_limits<float>::min(), std::numeric_limits<float>::max(), static_cast<int8_t>(1));
+    cmplessorequal_float.test(LOC, Float32, std::numeric_limits<float>::max(), std::numeric_limits<float>::min(), static_cast<int8_t>(0));
+    cmplessorequal_float.test(LOC, Float32, std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), static_cast<int8_t>(1));
+}
+TEST(omrgenExtension, IfCmpLessOrEqualFloat64s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(double, double);
+    IfCmpLessOrEqualFunc<FuncProto, double> cmplessorequal_double(LOC, "cmplessorequal_double", c, false);
+    cmplessorequal_double.compile(LOC, Float64);
+    cmplessorequal_double.test(LOC, Float64, static_cast<double>(0), static_cast<double>(0), static_cast<int8_t>(1));
+    cmplessorequal_double.test(LOC, Float64, static_cast<double>(1), static_cast<double>(0), static_cast<int8_t>(0));
+    cmplessorequal_double.test(LOC, Float64, static_cast<double>(0), static_cast<double>(1), static_cast<int8_t>(1));
+    cmplessorequal_double.test(LOC, Float64, static_cast<double>(1), static_cast<double>(1), static_cast<int8_t>(1));
+    cmplessorequal_double.test(LOC, Float64, static_cast<double>(-1), static_cast<double>(1), static_cast<int8_t>(1));
+    cmplessorequal_double.test(LOC, Float64, static_cast<double>(1), static_cast<double>(-1), static_cast<int8_t>(0));
+    cmplessorequal_double.test(LOC, Float64, std::numeric_limits<double>::min(), std::numeric_limits<double>::min(), static_cast<int8_t>(1));
+    cmplessorequal_double.test(LOC, Float64, std::numeric_limits<double>::min(), std::numeric_limits<double>::max(), static_cast<int8_t>(1));
+    cmplessorequal_double.test(LOC, Float64, std::numeric_limits<double>::max(), std::numeric_limits<double>::min(), static_cast<int8_t>(0));
+    cmplessorequal_double.test(LOC, Float64, std::numeric_limits<double>::max(), std::numeric_limits<double>::max(), static_cast<int8_t>(1));
+}
+TEST(omrgenExtension, IfCmpLessOrEqualAddresses) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(uintptr_t, uintptr_t);
+    IfCmpLessOrEqualFunc<FuncProto, uintptr_t> cmplessorequal_address(LOC, "cmplessorequal_address", c, false);
+    cmplessorequal_address.compile(LOC, Address);
+    cmplessorequal_address.test(LOC, Address, static_cast<uintptr_t>(0), static_cast<uintptr_t>(0), static_cast<int8_t>(1));
+    cmplessorequal_address.test(LOC, Address, static_cast<uintptr_t>(4), static_cast<uintptr_t>(0), static_cast<int8_t>(0));
+    cmplessorequal_address.test(LOC, Address, static_cast<uintptr_t>(0), static_cast<uintptr_t>(4), static_cast<int8_t>(1));
+    cmplessorequal_address.test(LOC, Address, static_cast<uintptr_t>(4), static_cast<uintptr_t>(4), static_cast<int8_t>(1));
+    cmplessorequal_address.test(LOC, Address, std::numeric_limits<uintptr_t>::min(), std::numeric_limits<uintptr_t>::min(), static_cast<int8_t>(1));
+    cmplessorequal_address.test(LOC, Address, std::numeric_limits<uintptr_t>::min(), std::numeric_limits<uintptr_t>::max(), static_cast<int8_t>(1));
+    cmplessorequal_address.test(LOC, Address, std::numeric_limits<uintptr_t>::max(), std::numeric_limits<uintptr_t>::min(), static_cast<int8_t>(0));
+    cmplessorequal_address.test(LOC, Address, std::numeric_limits<uintptr_t>::max(), std::numeric_limits<uintptr_t>::max(), static_cast<int8_t>(1));
+}
+
+template<typename FuncPrototype, typename cType>
+class IfCmpUnsignedGreaterThanFunc : public IfCmpOpBaseFunc<FuncPrototype, cType> {
+public:
+    IfCmpUnsignedGreaterThanFunc(LOCATION, String name, Compiler *compiler, bool log)
+        : IfCmpOpBaseFunc<FuncPrototype, cType>(PASSLOC, name, compiler, log) { }
+protected:
+    virtual void doIfCmpOp(LOCATION, Builder *b, Builder *target, Value *left, Value *right) {
+        this->bx()->IfCmpUnsignedGreaterThan(PASSLOC, b, target, left, right);
+    }
+};
+
+TEST(omrgenExtension, IfCmpUnsignedGreaterThanInt8s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int8_t, int8_t);
+    IfCmpUnsignedGreaterThanFunc<FuncProto, int8_t> cmpunsignedgreaterthan_int8(LOC, "cmpunsignedgreaterthan_int8", c, false);
+    cmpunsignedgreaterthan_int8.compile(LOC, Int8);
+    cmpunsignedgreaterthan_int8.test(LOC, Int8, static_cast<int8_t>(0), static_cast<int8_t>(0), static_cast<int8_t>(0));
+    cmpunsignedgreaterthan_int8.test(LOC, Int8, static_cast<int8_t>(1), static_cast<int8_t>(0), static_cast<int8_t>(1));
+    cmpunsignedgreaterthan_int8.test(LOC, Int8, static_cast<int8_t>(0), static_cast<int8_t>(1), static_cast<int8_t>(0));
+    cmpunsignedgreaterthan_int8.test(LOC, Int8, static_cast<int8_t>(1), static_cast<int8_t>(1), static_cast<int8_t>(0));
+    cmpunsignedgreaterthan_int8.test(LOC, Int8, static_cast<int8_t>(-1), static_cast<int8_t>(1), static_cast<int8_t>(1));
+    cmpunsignedgreaterthan_int8.test(LOC, Int8, static_cast<int8_t>(1), static_cast<int8_t>(-1), static_cast<int8_t>(0));
+    cmpunsignedgreaterthan_int8.test(LOC, Int8, std::numeric_limits<int8_t>::min(), std::numeric_limits<int8_t>::min(), static_cast<int8_t>(0));
+    cmpunsignedgreaterthan_int8.test(LOC, Int8, std::numeric_limits<int8_t>::min(), std::numeric_limits<int8_t>::max(), static_cast<int8_t>(1));
+    cmpunsignedgreaterthan_int8.test(LOC, Int8, std::numeric_limits<int8_t>::max(), std::numeric_limits<int8_t>::min(), static_cast<int8_t>(0));
+    cmpunsignedgreaterthan_int8.test(LOC, Int8, std::numeric_limits<int8_t>::max(), std::numeric_limits<int8_t>::max(), static_cast<int8_t>(0));
+}
+TEST(omrgenExtension, IfCmpUnsignedGreaterThanInt16s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int16_t, int16_t);
+    IfCmpUnsignedGreaterThanFunc<FuncProto, int16_t> cmpunsignedgreaterthan_int16(LOC, "cmpunsignedgreaterthan_int16", c, false);
+    cmpunsignedgreaterthan_int16.compile(LOC, Int16);
+    cmpunsignedgreaterthan_int16.test(LOC, Int16, static_cast<int16_t>(0), static_cast<int16_t>(0), static_cast<int8_t>(0));
+    cmpunsignedgreaterthan_int16.test(LOC, Int16, static_cast<int16_t>(1), static_cast<int16_t>(0), static_cast<int8_t>(1));
+    cmpunsignedgreaterthan_int16.test(LOC, Int16, static_cast<int16_t>(0), static_cast<int16_t>(1), static_cast<int8_t>(0));
+    cmpunsignedgreaterthan_int16.test(LOC, Int16, static_cast<int16_t>(1), static_cast<int16_t>(1), static_cast<int8_t>(0));
+    cmpunsignedgreaterthan_int16.test(LOC, Int16, static_cast<int16_t>(-1), static_cast<int16_t>(1), static_cast<int8_t>(1));
+    cmpunsignedgreaterthan_int16.test(LOC, Int16, static_cast<int16_t>(1), static_cast<int16_t>(-1), static_cast<int8_t>(0));
+    cmpunsignedgreaterthan_int16.test(LOC, Int16, std::numeric_limits<int16_t>::min(), std::numeric_limits<int16_t>::min(), static_cast<int8_t>(0));
+    cmpunsignedgreaterthan_int16.test(LOC, Int16, std::numeric_limits<int16_t>::min(), std::numeric_limits<int16_t>::max(), static_cast<int8_t>(1));
+    cmpunsignedgreaterthan_int16.test(LOC, Int16, std::numeric_limits<int16_t>::max(), std::numeric_limits<int16_t>::min(), static_cast<int8_t>(0));
+    cmpunsignedgreaterthan_int16.test(LOC, Int16, std::numeric_limits<int16_t>::max(), std::numeric_limits<int16_t>::max(), static_cast<int8_t>(0));
+}
+TEST(omrgenExtension, IfCmpUnsignedGreaterThanInt32s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int32_t, int32_t);
+    IfCmpUnsignedGreaterThanFunc<FuncProto, int32_t> cmpunsignedgreaterthan_int32(LOC, "cmpunsignedgreaterthan_int32", c, false);
+    cmpunsignedgreaterthan_int32.compile(LOC, Int32);
+    cmpunsignedgreaterthan_int32.test(LOC, Int32, static_cast<int32_t>(0), static_cast<int32_t>(0), static_cast<int8_t>(0));
+    cmpunsignedgreaterthan_int32.test(LOC, Int32, static_cast<int32_t>(1), static_cast<int32_t>(0), static_cast<int8_t>(1));
+    cmpunsignedgreaterthan_int32.test(LOC, Int32, static_cast<int32_t>(0), static_cast<int32_t>(1), static_cast<int8_t>(0));
+    cmpunsignedgreaterthan_int32.test(LOC, Int32, static_cast<int32_t>(1), static_cast<int32_t>(1), static_cast<int8_t>(0));
+    cmpunsignedgreaterthan_int32.test(LOC, Int32, static_cast<int32_t>(-1), static_cast<int32_t>(1), static_cast<int8_t>(1));
+    cmpunsignedgreaterthan_int32.test(LOC, Int32, static_cast<int32_t>(1), static_cast<int32_t>(-1), static_cast<int8_t>(0));
+    cmpunsignedgreaterthan_int32.test(LOC, Int32, std::numeric_limits<int32_t>::min(), std::numeric_limits<int32_t>::min(), static_cast<int8_t>(0));
+    cmpunsignedgreaterthan_int32.test(LOC, Int32, std::numeric_limits<int32_t>::min(), std::numeric_limits<int32_t>::max(), static_cast<int8_t>(1));
+    cmpunsignedgreaterthan_int32.test(LOC, Int32, std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::min(), static_cast<int8_t>(0));
+    cmpunsignedgreaterthan_int32.test(LOC, Int32, std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::max(), static_cast<int8_t>(0));
+}
+TEST(omrgenExtension, IfCmpUnsignedGreaterThanInt64s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int64_t, int64_t);
+    IfCmpUnsignedGreaterThanFunc<FuncProto, int64_t> cmpunsignedgreaterthan_int64(LOC, "cmpunsignedgreaterthan_int64", c, false);
+    cmpunsignedgreaterthan_int64.compile(LOC, Int64);
+    cmpunsignedgreaterthan_int64.test(LOC, Int64, static_cast<int64_t>(0), static_cast<int64_t>(0), static_cast<int8_t>(0));
+    cmpunsignedgreaterthan_int64.test(LOC, Int64, static_cast<int64_t>(1), static_cast<int64_t>(0), static_cast<int8_t>(1));
+    cmpunsignedgreaterthan_int64.test(LOC, Int64, static_cast<int64_t>(0), static_cast<int64_t>(1), static_cast<int8_t>(0));
+    cmpunsignedgreaterthan_int64.test(LOC, Int64, static_cast<int64_t>(1), static_cast<int64_t>(1), static_cast<int8_t>(0));
+    cmpunsignedgreaterthan_int64.test(LOC, Int64, static_cast<int64_t>(-1), static_cast<int64_t>(1), static_cast<int8_t>(1));
+    cmpunsignedgreaterthan_int64.test(LOC, Int64, static_cast<int64_t>(1), static_cast<int64_t>(-1), static_cast<int8_t>(0));
+    cmpunsignedgreaterthan_int64.test(LOC, Int64, std::numeric_limits<int64_t>::min(), std::numeric_limits<int64_t>::min(), static_cast<int8_t>(0));
+    cmpunsignedgreaterthan_int64.test(LOC, Int64, std::numeric_limits<int64_t>::min(), std::numeric_limits<int64_t>::max(), static_cast<int8_t>(1));
+    cmpunsignedgreaterthan_int64.test(LOC, Int64, std::numeric_limits<int64_t>::max(), std::numeric_limits<int64_t>::min(), static_cast<int8_t>(0));
+    cmpunsignedgreaterthan_int64.test(LOC, Int64, std::numeric_limits<int64_t>::max(), std::numeric_limits<int64_t>::max(), static_cast<int8_t>(0));
+}
+// no unsigned comparisons for Float32,Float64,Address
+
+template<typename FuncPrototype, typename cType>
+class IfCmpUnsignedGreaterOrEqualFunc : public IfCmpOpBaseFunc<FuncPrototype, cType> {
+public:
+    IfCmpUnsignedGreaterOrEqualFunc(LOCATION, String name, Compiler *compiler, bool log)
+        : IfCmpOpBaseFunc<FuncPrototype, cType>(PASSLOC, name, compiler, log) { }
+protected:
+    virtual void doIfCmpOp(LOCATION, Builder *b, Builder *target, Value *left, Value *right) {
+        this->bx()->IfCmpUnsignedGreaterOrEqual(PASSLOC, b, target, left, right);
+    }
+};
+
+TEST(omrgenExtension, IfCmpUnsignedGreaterOrEqualInt8s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int8_t, int8_t);
+    IfCmpUnsignedGreaterOrEqualFunc<FuncProto, int8_t> cmpunsignedgreaterorequal_int8(LOC, "cmpunsignedgreaterorequal_int8", c, false);
+    cmpunsignedgreaterorequal_int8.compile(LOC, Int8);
+    cmpunsignedgreaterorequal_int8.test(LOC, Int8, static_cast<int8_t>(0), static_cast<int8_t>(0), static_cast<int8_t>(1));
+    cmpunsignedgreaterorequal_int8.test(LOC, Int8, static_cast<int8_t>(1), static_cast<int8_t>(0), static_cast<int8_t>(1));
+    cmpunsignedgreaterorequal_int8.test(LOC, Int8, static_cast<int8_t>(0), static_cast<int8_t>(1), static_cast<int8_t>(0));
+    cmpunsignedgreaterorequal_int8.test(LOC, Int8, static_cast<int8_t>(1), static_cast<int8_t>(1), static_cast<int8_t>(1));
+    cmpunsignedgreaterorequal_int8.test(LOC, Int8, static_cast<int8_t>(-1), static_cast<int8_t>(1), static_cast<int8_t>(1));
+    cmpunsignedgreaterorequal_int8.test(LOC, Int8, static_cast<int8_t>(1), static_cast<int8_t>(-1), static_cast<int8_t>(0));
+    cmpunsignedgreaterorequal_int8.test(LOC, Int8, std::numeric_limits<int8_t>::min(), std::numeric_limits<int8_t>::min(), static_cast<int8_t>(1));
+    cmpunsignedgreaterorequal_int8.test(LOC, Int8, std::numeric_limits<int8_t>::min(), std::numeric_limits<int8_t>::max(), static_cast<int8_t>(1));
+    cmpunsignedgreaterorequal_int8.test(LOC, Int8, std::numeric_limits<int8_t>::max(), std::numeric_limits<int8_t>::min(), static_cast<int8_t>(0));
+    cmpunsignedgreaterorequal_int8.test(LOC, Int8, std::numeric_limits<int8_t>::max(), std::numeric_limits<int8_t>::max(), static_cast<int8_t>(1));
+}
+TEST(omrgenExtension, IfCmpUnsignedGreaterOrEqualInt16s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int16_t, int16_t);
+    IfCmpUnsignedGreaterOrEqualFunc<FuncProto, int16_t> cmpunsignedgreaterorequal_int16(LOC, "cmpunsignedgreaterorequal_int16", c, false);
+    cmpunsignedgreaterorequal_int16.compile(LOC, Int16);
+    cmpunsignedgreaterorequal_int16.test(LOC, Int16, static_cast<int16_t>(0), static_cast<int16_t>(0), static_cast<int8_t>(1));
+    cmpunsignedgreaterorequal_int16.test(LOC, Int16, static_cast<int16_t>(1), static_cast<int16_t>(0), static_cast<int8_t>(1));
+    cmpunsignedgreaterorequal_int16.test(LOC, Int16, static_cast<int16_t>(0), static_cast<int16_t>(1), static_cast<int8_t>(0));
+    cmpunsignedgreaterorequal_int16.test(LOC, Int16, static_cast<int16_t>(1), static_cast<int16_t>(1), static_cast<int8_t>(1));
+    cmpunsignedgreaterorequal_int16.test(LOC, Int16, static_cast<int16_t>(-1), static_cast<int16_t>(1), static_cast<int8_t>(1));
+    cmpunsignedgreaterorequal_int16.test(LOC, Int16, static_cast<int16_t>(1), static_cast<int16_t>(-1), static_cast<int8_t>(0));
+    cmpunsignedgreaterorequal_int16.test(LOC, Int16, std::numeric_limits<int16_t>::min(), std::numeric_limits<int16_t>::min(), static_cast<int8_t>(1));
+    cmpunsignedgreaterorequal_int16.test(LOC, Int16, std::numeric_limits<int16_t>::min(), std::numeric_limits<int16_t>::max(), static_cast<int8_t>(1));
+    cmpunsignedgreaterorequal_int16.test(LOC, Int16, std::numeric_limits<int16_t>::max(), std::numeric_limits<int16_t>::min(), static_cast<int8_t>(0));
+    cmpunsignedgreaterorequal_int16.test(LOC, Int16, std::numeric_limits<int16_t>::max(), std::numeric_limits<int16_t>::max(), static_cast<int8_t>(1));
+}
+TEST(omrgenExtension, IfCmpUnsignedGreaterOrEqualInt32s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int32_t, int32_t);
+    IfCmpUnsignedGreaterOrEqualFunc<FuncProto, int32_t> cmpunsignedgreaterorequal_int32(LOC, "cmpunsignedgreaterorequal_int32", c, false);
+    cmpunsignedgreaterorequal_int32.compile(LOC, Int32);
+    cmpunsignedgreaterorequal_int32.test(LOC, Int32, static_cast<int32_t>(0), static_cast<int32_t>(0), static_cast<int8_t>(1));
+    cmpunsignedgreaterorequal_int32.test(LOC, Int32, static_cast<int32_t>(1), static_cast<int32_t>(0), static_cast<int8_t>(1));
+    cmpunsignedgreaterorequal_int32.test(LOC, Int32, static_cast<int32_t>(0), static_cast<int32_t>(1), static_cast<int8_t>(0));
+    cmpunsignedgreaterorequal_int32.test(LOC, Int32, static_cast<int32_t>(1), static_cast<int32_t>(1), static_cast<int8_t>(1));
+    cmpunsignedgreaterorequal_int32.test(LOC, Int32, static_cast<int32_t>(-1), static_cast<int32_t>(1), static_cast<int8_t>(1));
+    cmpunsignedgreaterorequal_int32.test(LOC, Int32, static_cast<int32_t>(1), static_cast<int32_t>(-1), static_cast<int8_t>(0));
+    cmpunsignedgreaterorequal_int32.test(LOC, Int32, std::numeric_limits<int32_t>::min(), std::numeric_limits<int32_t>::min(), static_cast<int8_t>(1));
+    cmpunsignedgreaterorequal_int32.test(LOC, Int32, std::numeric_limits<int32_t>::min(), std::numeric_limits<int32_t>::max(), static_cast<int8_t>(1));
+    cmpunsignedgreaterorequal_int32.test(LOC, Int32, std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::min(), static_cast<int8_t>(0));
+    cmpunsignedgreaterorequal_int32.test(LOC, Int32, std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::max(), static_cast<int8_t>(1));
+}
+TEST(omrgenExtension, IfCmpUnsignedGreaterOrEqualInt64s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int64_t, int64_t);
+    IfCmpUnsignedGreaterOrEqualFunc<FuncProto, int64_t> cmpunsignedgreaterorequal_int64(LOC, "cmpunsignedgreaterorequal_int64", c, false);
+    cmpunsignedgreaterorequal_int64.compile(LOC, Int64);
+    cmpunsignedgreaterorequal_int64.test(LOC, Int64, static_cast<int64_t>(0), static_cast<int64_t>(0), static_cast<int8_t>(1));
+    cmpunsignedgreaterorequal_int64.test(LOC, Int64, static_cast<int64_t>(1), static_cast<int64_t>(0), static_cast<int8_t>(1));
+    cmpunsignedgreaterorequal_int64.test(LOC, Int64, static_cast<int64_t>(0), static_cast<int64_t>(1), static_cast<int8_t>(0));
+    cmpunsignedgreaterorequal_int64.test(LOC, Int64, static_cast<int64_t>(1), static_cast<int64_t>(1), static_cast<int8_t>(1));
+    cmpunsignedgreaterorequal_int64.test(LOC, Int64, static_cast<int64_t>(-1), static_cast<int64_t>(1), static_cast<int8_t>(1));
+    cmpunsignedgreaterorequal_int64.test(LOC, Int64, static_cast<int64_t>(1), static_cast<int64_t>(-1), static_cast<int8_t>(0));
+    cmpunsignedgreaterorequal_int64.test(LOC, Int64, std::numeric_limits<int64_t>::min(), std::numeric_limits<int64_t>::min(), static_cast<int8_t>(1));
+    cmpunsignedgreaterorequal_int64.test(LOC, Int64, std::numeric_limits<int64_t>::min(), std::numeric_limits<int64_t>::max(), static_cast<int8_t>(1));
+    cmpunsignedgreaterorequal_int64.test(LOC, Int64, std::numeric_limits<int64_t>::max(), std::numeric_limits<int64_t>::min(), static_cast<int8_t>(0));
+    cmpunsignedgreaterorequal_int64.test(LOC, Int64, std::numeric_limits<int64_t>::max(), std::numeric_limits<int64_t>::max(), static_cast<int8_t>(1));
+}
+// no unsigned comparisons for Float32,Float64,Address
+
+template<typename FuncPrototype, typename cType>
+class IfCmpUnsignedLessThanFunc : public IfCmpOpBaseFunc<FuncPrototype, cType> {
+public:
+    IfCmpUnsignedLessThanFunc(LOCATION, String name, Compiler *compiler, bool log)
+        : IfCmpOpBaseFunc<FuncPrototype, cType>(PASSLOC, name, compiler, log) { }
+protected:
+    virtual void doIfCmpOp(LOCATION, Builder *b, Builder *target, Value *left, Value *right) {
+        this->bx()->IfCmpUnsignedLessThan(PASSLOC, b, target, left, right);
+    }
+};
+
+TEST(omrgenExtension, IfCmpUnsignedLessThanInt8s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int8_t, int8_t);
+    IfCmpUnsignedLessThanFunc<FuncProto, int8_t> cmpunsignedlessthan_int8(LOC, "cmpunsignedlessthan_int8", c, false);
+    cmpunsignedlessthan_int8.compile(LOC, Int8);
+    cmpunsignedlessthan_int8.test(LOC, Int8, static_cast<int8_t>(0), static_cast<int8_t>(0), static_cast<int8_t>(0));
+    cmpunsignedlessthan_int8.test(LOC, Int8, static_cast<int8_t>(1), static_cast<int8_t>(0), static_cast<int8_t>(0));
+    cmpunsignedlessthan_int8.test(LOC, Int8, static_cast<int8_t>(0), static_cast<int8_t>(1), static_cast<int8_t>(1));
+    cmpunsignedlessthan_int8.test(LOC, Int8, static_cast<int8_t>(1), static_cast<int8_t>(1), static_cast<int8_t>(0));
+    cmpunsignedlessthan_int8.test(LOC, Int8, static_cast<int8_t>(-1), static_cast<int8_t>(1), static_cast<int8_t>(0));
+    cmpunsignedlessthan_int8.test(LOC, Int8, static_cast<int8_t>(1), static_cast<int8_t>(-1), static_cast<int8_t>(1));
+    cmpunsignedlessthan_int8.test(LOC, Int8, std::numeric_limits<int8_t>::min(), std::numeric_limits<int8_t>::min(), static_cast<int8_t>(0));
+    cmpunsignedlessthan_int8.test(LOC, Int8, std::numeric_limits<int8_t>::min(), std::numeric_limits<int8_t>::max(), static_cast<int8_t>(0));
+    cmpunsignedlessthan_int8.test(LOC, Int8, std::numeric_limits<int8_t>::max(), std::numeric_limits<int8_t>::min(), static_cast<int8_t>(1));
+    cmpunsignedlessthan_int8.test(LOC, Int8, std::numeric_limits<int8_t>::max(), std::numeric_limits<int8_t>::max(), static_cast<int8_t>(0));
+}
+TEST(omrgenExtension, IfCmpUnsignedLessThanInt16s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int16_t, int16_t);
+    IfCmpUnsignedLessThanFunc<FuncProto, int16_t> cmpunsignedlessthan_int16(LOC, "cmpunsignedlessthan_int16", c, false);
+    cmpunsignedlessthan_int16.compile(LOC, Int16);
+    cmpunsignedlessthan_int16.test(LOC, Int16, static_cast<int16_t>(0), static_cast<int16_t>(0), static_cast<int8_t>(0));
+    cmpunsignedlessthan_int16.test(LOC, Int16, static_cast<int16_t>(1), static_cast<int16_t>(0), static_cast<int8_t>(0));
+    cmpunsignedlessthan_int16.test(LOC, Int16, static_cast<int16_t>(0), static_cast<int16_t>(1), static_cast<int8_t>(1));
+    cmpunsignedlessthan_int16.test(LOC, Int16, static_cast<int16_t>(1), static_cast<int16_t>(1), static_cast<int8_t>(0));
+    cmpunsignedlessthan_int16.test(LOC, Int16, static_cast<int16_t>(-1), static_cast<int16_t>(1), static_cast<int8_t>(0));
+    cmpunsignedlessthan_int16.test(LOC, Int16, static_cast<int16_t>(1), static_cast<int16_t>(-1), static_cast<int8_t>(1));
+    cmpunsignedlessthan_int16.test(LOC, Int16, std::numeric_limits<int16_t>::min(), std::numeric_limits<int16_t>::min(), static_cast<int8_t>(0));
+    cmpunsignedlessthan_int16.test(LOC, Int16, std::numeric_limits<int16_t>::min(), std::numeric_limits<int16_t>::max(), static_cast<int8_t>(0));
+    cmpunsignedlessthan_int16.test(LOC, Int16, std::numeric_limits<int16_t>::max(), std::numeric_limits<int16_t>::min(), static_cast<int8_t>(1));
+    cmpunsignedlessthan_int16.test(LOC, Int16, std::numeric_limits<int16_t>::max(), std::numeric_limits<int16_t>::max(), static_cast<int8_t>(0));
+}
+TEST(omrgenExtension, IfCmpUnsignedLessThanInt32s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int32_t, int32_t);
+    IfCmpUnsignedLessThanFunc<FuncProto, int32_t> cmpunsignedlessthan_int32(LOC, "cmpunsignedlessthan_int32", c, false);
+    cmpunsignedlessthan_int32.compile(LOC, Int32);
+    cmpunsignedlessthan_int32.test(LOC, Int32, static_cast<int32_t>(0), static_cast<int32_t>(0), static_cast<int8_t>(0));
+    cmpunsignedlessthan_int32.test(LOC, Int32, static_cast<int32_t>(1), static_cast<int32_t>(0), static_cast<int8_t>(0));
+    cmpunsignedlessthan_int32.test(LOC, Int32, static_cast<int32_t>(0), static_cast<int32_t>(1), static_cast<int8_t>(1));
+    cmpunsignedlessthan_int32.test(LOC, Int32, static_cast<int32_t>(1), static_cast<int32_t>(1), static_cast<int8_t>(0));
+    cmpunsignedlessthan_int32.test(LOC, Int32, static_cast<int32_t>(-1), static_cast<int32_t>(1), static_cast<int8_t>(0));
+    cmpunsignedlessthan_int32.test(LOC, Int32, static_cast<int32_t>(1), static_cast<int32_t>(-1), static_cast<int8_t>(1));
+    cmpunsignedlessthan_int32.test(LOC, Int32, std::numeric_limits<int32_t>::min(), std::numeric_limits<int32_t>::min(), static_cast<int8_t>(0));
+    cmpunsignedlessthan_int32.test(LOC, Int32, std::numeric_limits<int32_t>::min(), std::numeric_limits<int32_t>::max(), static_cast<int8_t>(0));
+    cmpunsignedlessthan_int32.test(LOC, Int32, std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::min(), static_cast<int8_t>(1));
+    cmpunsignedlessthan_int32.test(LOC, Int32, std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::max(), static_cast<int8_t>(0));
+}
+TEST(omrgenExtension, IfCmpUnsignedLessThanInt64s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int64_t, int64_t);
+    IfCmpUnsignedLessThanFunc<FuncProto, int64_t> cmpunsignedlessthan_int64(LOC, "cmpunsignedlessthan_int64", c, false);
+    cmpunsignedlessthan_int64.compile(LOC, Int64);
+    cmpunsignedlessthan_int64.test(LOC, Int64, static_cast<int64_t>(0), static_cast<int64_t>(0), static_cast<int8_t>(0));
+    cmpunsignedlessthan_int64.test(LOC, Int64, static_cast<int64_t>(1), static_cast<int64_t>(0), static_cast<int8_t>(0));
+    cmpunsignedlessthan_int64.test(LOC, Int64, static_cast<int64_t>(0), static_cast<int64_t>(1), static_cast<int8_t>(1));
+    cmpunsignedlessthan_int64.test(LOC, Int64, static_cast<int64_t>(1), static_cast<int64_t>(1), static_cast<int8_t>(0));
+    cmpunsignedlessthan_int64.test(LOC, Int64, static_cast<int64_t>(-1), static_cast<int64_t>(1), static_cast<int8_t>(0));
+    cmpunsignedlessthan_int64.test(LOC, Int64, static_cast<int64_t>(1), static_cast<int64_t>(-1), static_cast<int8_t>(1));
+    cmpunsignedlessthan_int64.test(LOC, Int64, std::numeric_limits<int64_t>::min(), std::numeric_limits<int64_t>::min(), static_cast<int8_t>(0));
+    cmpunsignedlessthan_int64.test(LOC, Int64, std::numeric_limits<int64_t>::min(), std::numeric_limits<int64_t>::max(), static_cast<int8_t>(0));
+    cmpunsignedlessthan_int64.test(LOC, Int64, std::numeric_limits<int64_t>::max(), std::numeric_limits<int64_t>::min(), static_cast<int8_t>(1));
+    cmpunsignedlessthan_int64.test(LOC, Int64, std::numeric_limits<int64_t>::max(), std::numeric_limits<int64_t>::max(), static_cast<int8_t>(0));
+}
+// no unsigned comparisons for Float32,Float64,Address
+
+template<typename FuncPrototype, typename cType>
+class IfCmpUnsignedLessOrEqualFunc : public IfCmpOpBaseFunc<FuncPrototype, cType> {
+public:
+    IfCmpUnsignedLessOrEqualFunc(LOCATION, String name, Compiler *compiler, bool log)
+        : IfCmpOpBaseFunc<FuncPrototype, cType>(PASSLOC, name, compiler, log) { }
+protected:
+    virtual void doIfCmpOp(LOCATION, Builder *b, Builder *target, Value *left, Value *right) {
+        this->bx()->IfCmpUnsignedLessOrEqual(PASSLOC, b, target, left, right);
+    }
+};
+
+TEST(omrgenExtension, IfCmpUnsignedLessOrEqualInt8s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int8_t, int8_t);
+    IfCmpUnsignedLessOrEqualFunc<FuncProto, int8_t> cmpunsignedlessorequal_int8(LOC, "cmpunsignedlessorequal_int8", c, false);
+    cmpunsignedlessorequal_int8.compile(LOC, Int8);
+    cmpunsignedlessorequal_int8.test(LOC, Int8, static_cast<int8_t>(0), static_cast<int8_t>(0), static_cast<int8_t>(1));
+    cmpunsignedlessorequal_int8.test(LOC, Int8, static_cast<int8_t>(1), static_cast<int8_t>(0), static_cast<int8_t>(0));
+    cmpunsignedlessorequal_int8.test(LOC, Int8, static_cast<int8_t>(0), static_cast<int8_t>(1), static_cast<int8_t>(1));
+    cmpunsignedlessorequal_int8.test(LOC, Int8, static_cast<int8_t>(1), static_cast<int8_t>(1), static_cast<int8_t>(1));
+    cmpunsignedlessorequal_int8.test(LOC, Int8, static_cast<int8_t>(-1), static_cast<int8_t>(1), static_cast<int8_t>(0));
+    cmpunsignedlessorequal_int8.test(LOC, Int8, static_cast<int8_t>(1), static_cast<int8_t>(-1), static_cast<int8_t>(1));
+    cmpunsignedlessorequal_int8.test(LOC, Int8, std::numeric_limits<int8_t>::min(), std::numeric_limits<int8_t>::min(), static_cast<int8_t>(1));
+    cmpunsignedlessorequal_int8.test(LOC, Int8, std::numeric_limits<int8_t>::min(), std::numeric_limits<int8_t>::max(), static_cast<int8_t>(0));
+    cmpunsignedlessorequal_int8.test(LOC, Int8, std::numeric_limits<int8_t>::max(), std::numeric_limits<int8_t>::min(), static_cast<int8_t>(1));
+    cmpunsignedlessorequal_int8.test(LOC, Int8, std::numeric_limits<int8_t>::max(), std::numeric_limits<int8_t>::max(), static_cast<int8_t>(1));
+}
+TEST(omrgenExtension, IfCmpUnsignedLessOrEqualInt16s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int16_t, int16_t);
+    IfCmpUnsignedLessOrEqualFunc<FuncProto, int16_t> cmpunsignedlessorequal_int16(LOC, "cmpunsignedlessorequal_int16", c, false);
+    cmpunsignedlessorequal_int16.compile(LOC, Int16);
+    cmpunsignedlessorequal_int16.test(LOC, Int16, static_cast<int16_t>(0), static_cast<int16_t>(0), static_cast<int8_t>(1));
+    cmpunsignedlessorequal_int16.test(LOC, Int16, static_cast<int16_t>(1), static_cast<int16_t>(0), static_cast<int8_t>(0));
+    cmpunsignedlessorequal_int16.test(LOC, Int16, static_cast<int16_t>(0), static_cast<int16_t>(1), static_cast<int8_t>(1));
+    cmpunsignedlessorequal_int16.test(LOC, Int16, static_cast<int16_t>(1), static_cast<int16_t>(1), static_cast<int8_t>(1));
+    cmpunsignedlessorequal_int16.test(LOC, Int16, static_cast<int16_t>(-1), static_cast<int16_t>(1), static_cast<int8_t>(0));
+    cmpunsignedlessorequal_int16.test(LOC, Int16, static_cast<int16_t>(1), static_cast<int16_t>(-1), static_cast<int8_t>(1));
+    cmpunsignedlessorequal_int16.test(LOC, Int16, std::numeric_limits<int16_t>::min(), std::numeric_limits<int16_t>::min(), static_cast<int8_t>(1));
+    cmpunsignedlessorequal_int16.test(LOC, Int16, std::numeric_limits<int16_t>::min(), std::numeric_limits<int16_t>::max(), static_cast<int8_t>(0));
+    cmpunsignedlessorequal_int16.test(LOC, Int16, std::numeric_limits<int16_t>::max(), std::numeric_limits<int16_t>::min(), static_cast<int8_t>(1));
+    cmpunsignedlessorequal_int16.test(LOC, Int16, std::numeric_limits<int16_t>::max(), std::numeric_limits<int16_t>::max(), static_cast<int8_t>(1));
+}
+TEST(omrgenExtension, IfCmpUnsignedLessOrEqualInt32s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int32_t, int32_t);
+    IfCmpUnsignedLessOrEqualFunc<FuncProto, int32_t> cmpunsignedlessorequal_int32(LOC, "cmpunsignedlessorequal_int32", c, false);
+    cmpunsignedlessorequal_int32.compile(LOC, Int32);
+    cmpunsignedlessorequal_int32.test(LOC, Int32, static_cast<int32_t>(0), static_cast<int32_t>(0), static_cast<int8_t>(1));
+    cmpunsignedlessorequal_int32.test(LOC, Int32, static_cast<int32_t>(1), static_cast<int32_t>(0), static_cast<int8_t>(0));
+    cmpunsignedlessorequal_int32.test(LOC, Int32, static_cast<int32_t>(0), static_cast<int32_t>(1), static_cast<int8_t>(1));
+    cmpunsignedlessorequal_int32.test(LOC, Int32, static_cast<int32_t>(1), static_cast<int32_t>(1), static_cast<int8_t>(1));
+    cmpunsignedlessorequal_int32.test(LOC, Int32, static_cast<int32_t>(-1), static_cast<int32_t>(1), static_cast<int8_t>(0));
+    cmpunsignedlessorequal_int32.test(LOC, Int32, static_cast<int32_t>(1), static_cast<int32_t>(-1), static_cast<int8_t>(1));
+    cmpunsignedlessorequal_int32.test(LOC, Int32, std::numeric_limits<int32_t>::min(), std::numeric_limits<int32_t>::min(), static_cast<int8_t>(1));
+    cmpunsignedlessorequal_int32.test(LOC, Int32, std::numeric_limits<int32_t>::min(), std::numeric_limits<int32_t>::max(), static_cast<int8_t>(0));
+    cmpunsignedlessorequal_int32.test(LOC, Int32, std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::min(), static_cast<int8_t>(1));
+    cmpunsignedlessorequal_int32.test(LOC, Int32, std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::max(), static_cast<int8_t>(1));
+}
+TEST(omrgenExtension, IfCmpUnsignedLessOrEqualInt64s) {
+    TextLogger lgr(std::cout, String("    "));
+    typedef int8_t (FuncProto)(int64_t, int64_t);
+    IfCmpUnsignedLessOrEqualFunc<FuncProto, int64_t> cmpunsignedlessorequal_int64(LOC, "cmpunsignedlessorequal_int64", c, false);
+    cmpunsignedlessorequal_int64.compile(LOC, Int64);
+    cmpunsignedlessorequal_int64.test(LOC, Int64, static_cast<int64_t>(0), static_cast<int64_t>(0), static_cast<int8_t>(1));
+    cmpunsignedlessorequal_int64.test(LOC, Int64, static_cast<int64_t>(1), static_cast<int64_t>(0), static_cast<int8_t>(0));
+    cmpunsignedlessorequal_int64.test(LOC, Int64, static_cast<int64_t>(0), static_cast<int64_t>(1), static_cast<int8_t>(1));
+    cmpunsignedlessorequal_int64.test(LOC, Int64, static_cast<int64_t>(1), static_cast<int64_t>(1), static_cast<int8_t>(1));
+    cmpunsignedlessorequal_int64.test(LOC, Int64, static_cast<int64_t>(-1), static_cast<int64_t>(1), static_cast<int8_t>(0));
+    cmpunsignedlessorequal_int64.test(LOC, Int64, static_cast<int64_t>(1), static_cast<int64_t>(-1), static_cast<int8_t>(1));
+    cmpunsignedlessorequal_int64.test(LOC, Int64, std::numeric_limits<int64_t>::min(), std::numeric_limits<int64_t>::min(), static_cast<int8_t>(1));
+    cmpunsignedlessorequal_int64.test(LOC, Int64, std::numeric_limits<int64_t>::min(), std::numeric_limits<int64_t>::max(), static_cast<int8_t>(0));
+    cmpunsignedlessorequal_int64.test(LOC, Int64, std::numeric_limits<int64_t>::max(), std::numeric_limits<int64_t>::min(), static_cast<int8_t>(1));
+    cmpunsignedlessorequal_int64.test(LOC, Int64, std::numeric_limits<int64_t>::max(), std::numeric_limits<int64_t>::max(), static_cast<int8_t>(1));
+}
+// no unsigned comparisons for Float32,Float64,Address
+
+// Test class to validate simple Goto opcode
+
+// Test class for nested IfCmp opcodes to evalute more complicated conditional structures
+// Since all the basic IfCmp opcodes work (earlier tests) just use IfCmpGreaterThan with Int64
+// Compiled code returns int8_t and a different number for each of the possible paths.
+class NestedControlFlowTest : public TestFunc {
+public:
+    NestedControlFlowTest(LOCATION, String name, Compiler *compiler, bool log)
+        : TestFunc(PASSLOC, compiler, log)
+        , _numLeaves(0)
+        , _numInternal(0)
+        , _internalNodes(NULL)
+        , _resultValue(0) {
+
+        DefineName(name);
+        DefineFile(__FILE__);
+        DefineLine(LINETOSTR(__LINE__));
+    }
+    void run(LOCATION) {
+        typedef int8_t (FuncPrototype)(size_t);
+        FuncPrototype *f = body()->template nativeEntryPoint<FuncPrototype>();
+        EXPECT_NE(f, nullptr);
+        EXPECT_EQ(f(_path), _resultValue) << "Compiled f(" << _path << ") returns " << _resultValue;
+    }
+    void compile(LOCATION, int8_t numLeaves, int8_t numInternal, size_t *internalNodes) {
+        _numLeaves = numLeaves;
+        _numInternal = numInternal;
+        _internalNodes = internalNodes;
+        this->TestFunc::compile(PASSLOC);
+    }
+    void test(LOCATION, size_t path, int8_t resultValue) {
+        _path = path;
+        _resultValue = resultValue;
+        run(PASSLOC);
+    }
+
+protected:
+    virtual bool buildContext(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
+        ctx->DefineParameter("path", Int64);
+        ctx->DefineReturnType(Int8);
+        return true;
+    }
+
+    // used to assemble the conditional nest from leaves to root
+    typedef struct Node {
+        Builder *_b;
+        size_t _label;
+    } Node;
+
+    virtual bool buildIL(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
+        Builder *entry = scope->entryPoint<BuilderEntry>(0)->builder();
+        auto pathSym=ctx->LookupLocal("path"); 
+        Value *pathValue = fx()->Load(LOC, entry, pathSym);
+
+        Allocator *mem = comp->mem();
+        List<Node *> nodes(mem);
+        for (int8_t l=0;l < _numLeaves;l++) {
+            Builder *leafBuilder = cx()->OrphanBuilder(LOC, entry);
+            Value *leafValue = bx()->ConstInt8(LOC, leafBuilder, l);
+            fx()->Return(LOC, leafBuilder, leafValue);
+            Node *leafNode = mem->allocate<Node>(1);
+            leafNode->_b = leafBuilder;
+            leafNode->_label = l;
+            nodes.push_back(leafNode);
+        }
+        for (int8_t i=0;i < _numInternal;i++) {
+            size_t nextLabel = _internalNodes[i];
+            for (auto it=nodes.fwdIterator();it.hasTwoItems();it++) {
+                Node *n1 = it.item();
+                Node *n2 = it.secondItem();
+                if (nextLabel == n1->_label + n2->_label) {
+                    Builder *nodeBuilder = cx()->OrphanBuilder(LOC, entry);
+                    Value *thresholdValue = bx()->ConstInt64(LOC, nodeBuilder, n2->_label);
+                    bx()->IfCmpGreaterOrEqual(LOC, nodeBuilder, n2->_b, pathValue, thresholdValue);
+                    bx()->Goto(LOC, nodeBuilder, n1->_b);
+
+                    Node *newNode = mem->allocate<Node>(1);
+                    newNode->_b = nodeBuilder;
+                    newNode->_label = nextLabel;
+                    nodes.insertBefore(newNode, it);
+                    nodes.removeTwo(it);
+                    break;
+                }
+            }
+        }
+        return true;
+    }
+
+protected:
+    int8_t _numLeaves;
+    int8_t _numInternal;
+    size_t *_internalNodes;
+    size_t _path;
+    size_t _resultValue;
+};

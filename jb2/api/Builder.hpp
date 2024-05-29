@@ -77,7 +77,7 @@ public:
     Operation * boundToOperation() const                { assert(_isBound); return _boundToOperation; }
 
     bool isTarget() const                               { return _isTarget; }
-    Builder * setTarget(bool v=true);
+    Builder * setTarget(bool v=true)                    { _isTarget = v; return this; }
 
     bool controlReachesEnd() const                      { return _controlReachesEnd; }
     Builder * setControlReachesEnd(bool v=true)         { _controlReachesEnd = v; return this; }
