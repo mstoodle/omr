@@ -71,6 +71,16 @@ protected:
             _prev = _next = NULL;
             return this;
         }
+        List<T>::Item *removeTwo() {
+            assert(_next);
+            if (_prev)
+                _prev->_next = _next->_next;
+            if (_next->_next)
+                _next->_next->_prev = _prev;
+            _next->_next = NULL;
+            _prev = NULL;
+            return this;
+        }
     protected:
         T _item;
         List<T>::Item *_prev;
@@ -129,6 +139,7 @@ public:
         // forward iteration
         void reset()               { _cursor = _list->_head; }
         bool hasItem()             { if (detectChange()) return false; return (_cursor != NULL); }
+        bool hasTwoItems()         { if (detectChange()) return false; return (_cursor != NULL && _cursor->_next != NULL); }
         void operator++(int32_t) {
             assert(_cursor != NULL && !detectChange());
             //while (i > 0 && _cursor != NULL) {
@@ -137,7 +148,8 @@ public:
             //}
             //assert(i == 0);
         }
-        T item()                   { assert(_cursor != NULL && !detectChange()); return _cursor->_item; };
+        T item()                   { assert(_cursor != NULL && !detectChange()); return _cursor->_item; }
+        T secondItem()             { assert(_cursor != NULL && _cursor->_next != NULL && !detectChange()); return _cursor->_next->_item; }
 
         // backward iteration
         void resetEnd()            { _cursor = _list->_tail; }
@@ -417,12 +429,12 @@ public:
     }
     void insertAfter(T v, List<T>::Iterator cursor) {
         List<T>::Item *newItem = new (_itemAllocator) List<T>::Item(_itemAllocator, v);
-        cursor.current()->insertAfter(newItem);
+        cursor._cursor->insertAfter(newItem);
         change(1);
     }
     void insertBefore(T v, List<T>::Iterator cursor) { 
         List<T>::Item *newItem = new (_itemAllocator) List<T>::Item(_itemAllocator, v);
-        cursor.current()->insertBefore(newItem);
+        cursor._cursor->insertBefore(newItem);
         change(1);
     }
 
@@ -441,6 +453,18 @@ public:
             _head = current->_next;
         if (current == _tail)
             _tail = current->_prev;
+        delete current->remove();
+        change(-1);
+    }
+    void removeTwo(List<T>::Iterator cursor) {
+        List<T>::Item *current = cursor._cursor;
+        assert(current != NULL && current->_next != NULL);
+        List<T>::Item *after = current->_next->_next;
+        if (current == _head)
+            _head = after;
+        if (after == NULL)
+            _tail = current->_prev;
+        delete current->_next->remove();
         delete current->remove();
         change(-1);
     }

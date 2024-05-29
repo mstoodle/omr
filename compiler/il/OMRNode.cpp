@@ -20,6 +20,7 @@
  *******************************************************************************/
 
 #include "il/Node.hpp"
+#include "il/DataTypes.hpp"
 
 #include <stddef.h>
 #include <stdint.h>

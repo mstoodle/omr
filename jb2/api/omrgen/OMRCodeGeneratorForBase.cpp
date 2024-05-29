@@ -196,91 +196,91 @@ OMRCodeGeneratorForBase::gencodeForLoopUp(Operation *op) {
 Builder *
 OMRCodeGeneratorForBase::gencodeGoto(Operation *op) {
     assert(op->action() == _bx->aGoto);
-    assert(0); // TODO
+    ilgen()->goto_(op->location(), op->builder());
     return NULL;
 }
 
 Builder *
 OMRCodeGeneratorForBase::gencodeIfCmpEqual(Operation *op) {
     assert(op->action() == _bx->aIfCmpEqual);
-    assert(0); // TODO
+    ilgen()->ifCmpEqual(op->location(), op->builder(), op->operand(0), op->operand(1));
     return NULL;
 }
 
 Builder *
 OMRCodeGeneratorForBase::gencodeIfCmpEqualZero(Operation *op) {
     assert(op->action() == _bx->aIfCmpEqualZero);
-    assert(0); // TODO
+    ilgen()->ifCmpEqualZero(op->location(), op->builder(), op->operand());
     return NULL;
 }
 
 Builder *
 OMRCodeGeneratorForBase::gencodeIfCmpGreaterThan(Operation *op) {
     assert(op->action() == _bx->aIfCmpGreaterThan);
-    assert(0); // TODO
+    ilgen()->ifCmpGreaterThan(op->location(), op->builder(), op->operand(0), op->operand(1), false);
     return NULL;
 }
 
 Builder *
 OMRCodeGeneratorForBase::gencodeIfCmpGreaterOrEqual(Operation *op) {
     assert(op->action() == _bx->aIfCmpGreaterOrEqual);
-    assert(0); // TODO
+    ilgen()->ifCmpGreaterOrEqual(op->location(), op->builder(), op->operand(0), op->operand(1), false);
     return NULL;
 }
 
 Builder *
 OMRCodeGeneratorForBase::gencodeIfCmpLessThan(Operation *op) {
     assert(op->action() == _bx->aIfCmpLessThan);
-    assert(0); // TODO
+    ilgen()->ifCmpLessThan(op->location(), op->builder(), op->operand(0), op->operand(1), false);
     return NULL;
 }
 
 Builder *
 OMRCodeGeneratorForBase::gencodeIfCmpLessOrEqual(Operation *op) {
     assert(op->action() == _bx->aIfCmpLessOrEqual);
-    assert(0); // TODO
+    ilgen()->ifCmpLessOrEqual(op->location(), op->builder(), op->operand(0), op->operand(1), false);
     return NULL;
 }
 
 Builder *
 OMRCodeGeneratorForBase::gencodeIfCmpNotEqual(Operation *op) {
     assert(op->action() == _bx->aIfCmpNotEqual);
-    assert(0); // TODO
+    ilgen()->ifCmpNotEqual(op->location(), op->builder(), op->operand(0), op->operand(1));
     return NULL;
 }
 
 Builder *
 OMRCodeGeneratorForBase::gencodeIfCmpNotEqualZero(Operation *op) {
     assert(op->action() == _bx->aIfCmpNotEqualZero);
-    assert(0); // TODO
+    ilgen()->ifCmpNotEqualZero(op->location(), op->builder(), op->operand());
     return NULL;
 }
 
 Builder *
 OMRCodeGeneratorForBase::gencodeIfCmpUnsignedGreaterThan(Operation *op) {
     assert(op->action() == _bx->aIfCmpUnsignedGreaterThan);
-    assert(0); // TODO
+    ilgen()->ifCmpGreaterThan(op->location(), op->builder(), op->operand(0), op->operand(1), true);
     return NULL;
 }
 
 Builder *
 OMRCodeGeneratorForBase::gencodeIfCmpUnsignedGreaterOrEqual(Operation *op) {
     assert(op->action() == _bx->aIfCmpUnsignedGreaterOrEqual);
-    assert(0); // TODO
+    ilgen()->ifCmpGreaterOrEqual(op->location(), op->builder(), op->operand(0), op->operand(1), true);
     return NULL;
 }
 
 Builder *
 OMRCodeGeneratorForBase::gencodeIfCmpUnsignedLessThan(Operation *op) {
     assert(op->action() == _bx->aIfCmpUnsignedLessThan);
-    assert(0); // TODO
+    ilgen()->ifCmpLessThan(op->location(), op->builder(), op->operand(0), op->operand(1), true);
     return NULL;
 }
 
 Builder *
 OMRCodeGeneratorForBase::gencodeIfCmpUnsignedLessOrEqual(Operation *op) {
     assert(op->action() == _bx->aIfCmpUnsignedLessOrEqual);
-    assert(0); // TODO
+    ilgen()->ifCmpLessOrEqual(op->location(), op->builder(), op->operand(0), op->operand(1), true);
     return NULL;
 }
 

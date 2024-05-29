@@ -487,6 +487,8 @@ void
 BaseExtension::Goto(LOCATION, Builder *b, Builder *target) {
     Allocator *mem = b->ir()->mem();
     addOperation(b, new (mem) Op_Goto(MEM_PASSLOC(mem), this, b, this->aGoto, target));
+    target->setTarget(true);
+    b->setControlReachesEnd(false);
 }
 
 
@@ -502,6 +504,25 @@ BaseExtensionChecker::validateIfCmp(LOCATION, Builder *b, Builder *target, Value
      || lType == _base->Float32
      || lType == _base->Float64
      || lType == _base->Address) {
+        if (rType != lType)
+            failValidateIfCmp(PASSLOC, b, target, left, right, failCode, opCodeName);
+        return true;
+    }
+
+    // operation is declared by this extension, so if we can't validate it we have to fail it
+    failValidateIfCmp(PASSLOC, b, target, left, right, failCode, opCodeName);
+    return true;
+}
+
+bool
+BaseExtensionChecker::validateIfCmpUnsigned(LOCATION, Builder *b, Builder *target, Value *left, Value *right, CompilerReturnCode failCode, String opCodeName) {
+    const Type *lType = left->type();
+    const Type *rType = right->type();
+
+    if (lType == _base->Int8
+     || lType == _base->Int16
+     || lType == _base->Int32
+     || lType == _base->Int64) {
         if (rType != lType)
             failValidateIfCmp(PASSLOC, b, target, left, right, failCode, opCodeName);
         return true;
@@ -567,6 +588,7 @@ BaseExtension::IfCmpEqual(LOCATION, Builder *b, Builder *target, Value *left, Va
 
     Allocator *mem = b->ir()->mem();
     addOperation(b, new (mem) Op_IfCmpEqual(MEM_PASSLOC(mem), this, b, aIfCmpEqual, target, left, right));
+    target->setTarget(true);
 }
 
 void
@@ -579,6 +601,7 @@ BaseExtension::IfCmpEqualZero(LOCATION, Builder *b, Builder *target, Value *valu
 
     Allocator *mem = b->ir()->mem();
     addOperation(b, new (mem) Op_IfCmpEqualZero(MEM_PASSLOC(mem), this, b, aIfCmpEqualZero, target, value));
+    target->setTarget(true);
 }
 
 void
@@ -591,6 +614,7 @@ BaseExtension::IfCmpGreaterThan(LOCATION, Builder *b, Builder *target, Value *le
 
     Allocator *mem = b->ir()->mem();
     addOperation(b, new (mem) Op_IfCmpGreaterThan(MEM_PASSLOC(mem), this, b, aIfCmpGreaterThan, target, left, right));
+    target->setTarget(true);
 }
 
 void
@@ -603,6 +627,7 @@ BaseExtension::IfCmpGreaterOrEqual(LOCATION, Builder *b, Builder *target, Value 
 
     Allocator *mem = b->ir()->mem();
     addOperation(b, new (mem) Op_IfCmpGreaterOrEqual(MEM_PASSLOC(mem), this, b, aIfCmpGreaterOrEqual, target, left, right));
+    target->setTarget(true);
 }
 
 void
@@ -615,6 +640,7 @@ BaseExtension::IfCmpLessThan(LOCATION, Builder *b, Builder *target, Value *left,
 
     Allocator *mem = b->ir()->mem();
     addOperation(b, new (mem) Op_IfCmpLessThan(MEM_PASSLOC(mem), this, b, aIfCmpLessThan, target, left, right));
+    target->setTarget(true);
 }
 
 void
@@ -627,6 +653,7 @@ BaseExtension::IfCmpLessOrEqual(LOCATION, Builder *b, Builder *target, Value *le
 
     Allocator *mem = b->ir()->mem();
     addOperation(b, new (mem) Op_IfCmpLessOrEqual(MEM_PASSLOC(mem), this, b, aIfCmpLessOrEqual, target, left, right));
+    target->setTarget(true);
 }
 
 void
@@ -639,6 +666,7 @@ BaseExtension::IfCmpNotEqual(LOCATION, Builder *b, Builder *target, Value *left,
 
     Allocator *mem = b->ir()->mem();
     addOperation(b, new (mem) Op_IfCmpNotEqual(MEM_PASSLOC(mem), this, b, aIfCmpNotEqual, target, left, right));
+    target->setTarget(true);
 }
 
 void
@@ -651,54 +679,59 @@ BaseExtension::IfCmpNotEqualZero(LOCATION, Builder *b, Builder *target, Value *v
 
     Allocator *mem = b->ir()->mem();
     addOperation(b, new (mem) Op_IfCmpNotEqualZero(MEM_PASSLOC(mem), this, b, aIfCmpNotEqualZero, target, value));
+    target->setTarget(true);
 }
 
 void
 BaseExtension::IfCmpUnsignedGreaterThan(LOCATION, Builder *b, Builder *target, Value *left, Value *right) {
     for (auto it = _checkers.iterator(); it.hasItem(); it++) {
         BaseExtensionChecker *checker = it.item();
-        if (checker->validateIfCmp(PASSLOC, b, target, left, right, CompileFail_BadInputTypes_IfCmpUnsignedGreaterThan, "IfCmpUnsignedGreaterThan"))
+        if (checker->validateIfCmpUnsigned(PASSLOC, b, target, left, right, CompileFail_BadInputTypes_IfCmpUnsignedGreaterThan, "IfCmpUnsignedGreaterThan"))
             break;
     }
 
     Allocator *mem = b->ir()->mem();
     addOperation(b, new (mem) Op_IfCmpUnsignedGreaterThan(MEM_PASSLOC(mem), this, b, aIfCmpUnsignedGreaterThan, target, left, right));
+    target->setTarget(true);
 }
 
 void
 BaseExtension::IfCmpUnsignedGreaterOrEqual(LOCATION, Builder *b, Builder *target, Value *left, Value *right) {
     for (auto it = _checkers.iterator(); it.hasItem(); it++) {
         BaseExtensionChecker *checker = it.item();
-        if (checker->validateIfCmp(PASSLOC, b, target, left, right, CompileFail_BadInputTypes_IfCmpUnsignedGreaterOrEqual, "IfCmpUnsignedGreaterOrEqual"))
+        if (checker->validateIfCmpUnsigned(PASSLOC, b, target, left, right, CompileFail_BadInputTypes_IfCmpUnsignedGreaterOrEqual, "IfCmpUnsignedGreaterOrEqual"))
             break;
     }
 
     Allocator *mem = b->ir()->mem();
     addOperation(b, new (mem) Op_IfCmpUnsignedGreaterOrEqual(MEM_PASSLOC(mem), this, b, aIfCmpUnsignedGreaterOrEqual, target, left, right));
+    target->setTarget(true);
 }
 
 void
 BaseExtension::IfCmpUnsignedLessThan(LOCATION, Builder *b, Builder *target, Value *left, Value *right) {
     for (auto it = _checkers.iterator(); it.hasItem(); it++) {
         BaseExtensionChecker *checker = it.item();
-        if (checker->validateIfCmp(PASSLOC, b, target, left, right, CompileFail_BadInputTypes_IfCmpUnsignedLessThan, "IfCmpUnsignedLessThan"))
+        if (checker->validateIfCmpUnsigned(PASSLOC, b, target, left, right, CompileFail_BadInputTypes_IfCmpUnsignedLessThan, "IfCmpUnsignedLessThan"))
             break;
     }
 
     Allocator *mem = b->ir()->mem();
     addOperation(b, new (mem) Op_IfCmpUnsignedLessThan(MEM_PASSLOC(mem), this, b, aIfCmpUnsignedLessThan, target, left, right));
+    target->setTarget(true);
 }
 
 void
 BaseExtension::IfCmpUnsignedLessOrEqual(LOCATION, Builder *b, Builder *target, Value *left, Value *right) {
     for (auto it = _checkers.iterator(); it.hasItem(); it++) {
         BaseExtensionChecker *checker = it.item();
-        if (checker->validateIfCmp(PASSLOC, b, target, left, right, CompileFail_BadInputTypes_IfCmpUnsignedLessOrEqual, "IfCmpUnsignedLessOrEqual"))
+        if (checker->validateIfCmpUnsigned(PASSLOC, b, target, left, right, CompileFail_BadInputTypes_IfCmpUnsignedLessOrEqual, "IfCmpUnsignedLessOrEqual"))
             break;
     }
 
     Allocator *mem = b->ir()->mem();
     addOperation(b, new (mem) Op_IfCmpUnsignedLessOrEqual(MEM_PASSLOC(mem), this, b, aIfCmpUnsignedLessOrEqual, target, left, right));
+    target->setTarget(true);
 }
 
 IfThenElseBuilder
