@@ -62,6 +62,7 @@ OMRIlGen::OMRIlGen(Compilation *jb2comp, OMRCodeGenerator *jb2cg)
     , _exitBlock(NULL)
     , _currentBlock(NULL)
     , _lastTree(NULL)
+    , _otherBlockTrees(NULL)
     , _builderInTrees(jb2comp->mem(), jb2comp->ir()->maxBuilderID())
     , _platformWordType(TR::NoType)
     , _floatingNodes(NULL, jb2comp->mem())
@@ -106,6 +107,11 @@ OMRIlGen::OMRIlGen(Compilation *jb2comp, OMRCodeGenerator *jb2cg)
     }
 }
 
+Compiler *
+OMRIlGen::compiler() const {
+    return _jb2comp->compiler();
+}
+
 bool
 OMRIlGen::genIL() {
     _comp->reportILGeneratorPhase();
@@ -115,22 +121,45 @@ OMRIlGen::genIL() {
     _comp->setCurrentIlGenerator(this);
     _jb2cg->Visitor::start(_jb2comp);
 
-    for (auto i=0;i < _jb2comp->ir()->maxBuilderID();i ++) {
+    TR::Block *b = _entryBlock;
+    TR::TreeTop *lastTree = b->getExit();
+    while (lastTree->getNextTreeTop() != NULL) {
+        b = lastTree->getNextTreeTop()->getNode()->getBlock();
+        lastTree = b->getExit();
+    }
+
+    TextLogger *lgr = _jb2comp->logger();
+    if (lgr) lgr->indent() << "Connecting trees" << lgr->endl();
+    if (lgr) lgr->indentIn();
+    for (auto i=1;i <= _jb2comp->ir()->maxBuilderID();i ++) {
+        if (lgr) lgr->indent() << "Builder b" << i << ":" << lgr->endl();
+        if (lgr) lgr->indentIn();
         if (_builderEntries[i] != NULL && _builderInTrees[i] != true) {
             _builderInTrees.setBit(i);
-            _lastTree->setNextTreeTop(_builderEntries[i]->getEntry());
             TR::Block *b = _builderEntries[i];
+            TR::TreeTop *entry = b->getEntry();
+            if (lgr) lgr->indent() << "Tacking entry " << (void *) entry->getNode() << " after lastTree " << (void *) lastTree->getNode() << lgr->endl();
+            lastTree->setNextTreeTop(entry);
+            entry->setPrevTreeTop(lastTree);
             TR::TreeTop *lastTT = b->getExit();
+            if (lgr) lgr->indent() << "Block ends with lastTT " << (void *) lastTT->getNode() << lgr->endl();
             while (lastTT->getNextTreeTop() != NULL) {
-                b = lastTT->getNextTreeTop()->getNode()->getBlock();
+                TR::TreeTop *nextTT = lastTT->getNextTreeTop();
+                b = nextTT->getNode()->getBlock();
+                if (lgr) lgr->indent() << "Found following block BB" << b->getNumber() << lgr->endl();
                 lastTT = b->getExit();
+                if (lgr) lgr->indent() << "ends at TT " << lastTT->getNode() << lgr->endl();
             }
-            _lastTree = lastTT;
+            lastTree = lastTT;
+            if (lgr) lgr->indent() << "Updated lastTree " << (void *) lastTree->getNode() << lgr->endl();
         }
+        if (lgr) lgr->indentOut();
     }
+    if (lgr) lgr->indentOut();
     if (_exitBlock) {
-        _lastTree->setNextTreeTop(_exitBlock->getEntry());
-        _lastTree = _exitBlock->getExit();
+        lastTree->setNextTreeTop(_exitBlock->getEntry());
+        _exitBlock->getEntry()->setPrevTreeTop(lastTree);
+        lastTree = _exitBlock->getExit();
     }
 
     _comp->setCurrentIlGenerator(0);
@@ -241,7 +270,7 @@ void
 OMRIlGen::registerInt32(const Type * t) {
     assert(_types.find(t->id()) == _types.end());
     _types[t->id()] = TR::DataTypes::Int32;
-    if (_jb2comp->compiler()->platformWordSize() == 32)
+    if (compiler()->platformWordSize() == 32)
         _platformWordType = TR::DataTypes::Int32;
 }
 
@@ -249,7 +278,7 @@ void
 OMRIlGen::registerInt64(const Type * t) {
     assert(_types.find(t->id()) == _types.end());
     _types[t->id()] = TR::DataTypes::Int64;
-    if (_jb2comp->compiler()->platformWordSize() == 64)
+    if (compiler()->platformWordSize() == 64)
         _platformWordType = TR::DataTypes::Int64;
 }
 
@@ -269,6 +298,14 @@ void
 OMRIlGen::registerAddress(const Type * t) {
     assert(_types.find(t->id()) == _types.end());
     _types[t->id()] = TR::DataTypes::Address;
+}
+
+TR::Block *
+OMRIlGen::mapBuilder(Builder *b) {
+    auto it = _builderEntries.find(b->id());
+    if (it == _builderEntries.end())
+        return NULL;
+    return it->second;
 }
 
 TR::DataTypes
@@ -313,10 +350,12 @@ OMRIlGen::createParameterSymbol(Symbol *parameterSym, int32_t parameterIndex) {
 
 void
 OMRIlGen::genBuilder(Builder *b) {
-    BuilderID id = b->id();
-    auto it = _builderEntries.find(id);
-    assert (it != _builderEntries.end());
-    _currentBlock = it->second;
+    _currentBlock = mapBuilder(b);
+    assert(_currentBlock != NULL);
+
+    TextLogger *lgr = _jb2comp->logger();
+    if (lgr)
+        lgr->indent() << "Generating builder " << b << " [ to TR::Block BB" << _currentBlock->getNumber() << "]" << lgr->endl();
 }
 
 //
@@ -345,7 +384,10 @@ OMRIlGen::genBuilder(Builder *b) {
 
 bool
 OMRIlGen::endsBlock(TR::Node *n) {
-    return false; // wrong initial answer
+    return (n->getOpCode().isReturn() ||
+        n->getOpCode().isBranch() ||
+        n->getOpCode().isIf() ||
+        n->getOpCode().isGoto());
 }
 
 TR::TreeTop *
@@ -382,6 +424,7 @@ OMRIlGen::genBlock(TR::TreeTop *tt) {
     // allocate a new empty block and append to this one and then set as current
     TR::Block *b = newBlock();
     _currentBlock->getExit()->join(b->getEntry());
+    cfg()->addEdge(_currentBlock, b);
     _currentBlock = b;
 }
 
@@ -466,15 +509,12 @@ void
 OMRIlGen::entryPoint(Builder *b) {
     assert(_entryBlock == NULL);
 
-    BuilderID id = b->id();
-    auto it = _builderEntries.find(id);
-    assert (it != _builderEntries.end());
-    _entryBlock = it->second;
+    _entryBlock = mapBuilder(b);
+    assert(_entryBlock != NULL);
     cfg()->addEdge(cfg()->getStart(), _entryBlock);
     _methodSymbol->setFirstTreeTop(_entryBlock->getEntry());
 
     _currentBlock = _entryBlock;
-    _lastTree = _currentBlock->getExit();
 
     _builderInTrees.setBit(b->id());
 }
@@ -589,10 +629,10 @@ OMRIlGen::add(Location *location, Value *result, Value *left, Value *right) {
 
     TR::Node *resultNode = NULL;
     if (leftType == TR::Address) {
-        if (TR::Compiler->target.is64Bit() && rightType == TR::Int32) {
+        if (compiler()->platformWordSize() == 64 && rightType == TR::Int32) {
             rightNode = TR::Node::create(TR::i2l, 1, rightNode);
         }
-        else if (TR::Compiler->target.is32Bit() && rightType == TR::Int64) {
+        else if (compiler()->platformWordSize() == 32 && rightType == TR::Int64) {
             rightNode = TR::Node::create(TR::l2i, 1, rightNode);
         }
         resultNode = binaryOpNodeFromNodes(TR::Compiler->target.is32Bit() ? TR::aiadd : TR::aladd, leftNode, rightNode);
@@ -608,6 +648,117 @@ OMRIlGen::convertTo(Location *location, Value *result, const Type *typeTo, Value
     TR::Node *valueNode = useValue(value);
     TR::Node *convertedValue = convertNodeTo(mapType(typeTo), valueNode, needUnsigned);
     defineValue(result, convertedValue);
+}
+
+void
+OMRIlGen::goto_(Location *location, Builder *target) {
+    TR::Block *targetBlock = mapBuilder(target);
+    TR::Node *gotoNode = TR::Node::create(NULL, TR::Goto);
+    gotoNode->setBranchDestination(targetBlock->getEntry());
+    cfg()->addEdge(_currentBlock, targetBlock);
+    genTreeTop(gotoNode, false);
+}
+
+TR::Node *
+OMRIlGen::zeroForType(TR::DataType dt) {
+    switch (dt) {
+        case TR::Int8 :  return TR::Node::bconst(0);
+        case TR::Int16 : return TR::Node::sconst(0);
+        case TR::Int32 : return TR::Node::iconst(0);
+        case TR::Int64 : return TR::Node::lconst(0);
+        case TR::Float : {
+            TR::Node *constZero = TR::Node::create(TR::fconst, 0);
+            constZero->setFloatBits(FLOAT_POS_ZERO);
+            return constZero;
+        }
+        case TR::Double : {
+            TR::Node *constZero = TR::Node::create(TR::dconst, 0);
+            constZero->setUnsignedLongInt(DOUBLE_POS_ZERO);
+        }
+        case TR::Address : return TR::Node::aconst(0);
+        default: TR_ASSERT_FATAL(0, "should not reach here");
+    }
+}
+
+void
+OMRIlGen::ifCmpCondition(TR_ComparisonTypes ct, bool isUnsigned, TR::Node *leftNode, TR::Node *rightNode, TR::Block *targetBlock) {
+    TR::DataType dt = leftNode->getDataType();
+    TR::ILOpCode cmpOpCode(TR::ILOpCode::compareOpCode(dt, ct, isUnsigned));
+
+    // some unpleasantness because not all platforms currently implement all(any?) 8 or 16 bit ifcmp opcodes
+    if ((dt == TR::Int8 && !compiler()->platformImplements8bCompares()) ||
+        (dt == TR::Int16 && !compiler()->platformImplements16bCompares())) {
+
+        leftNode = convertNodeTo(TR::Int32, leftNode, isUnsigned);
+        rightNode = convertNodeTo(TR::Int32, rightNode, isUnsigned);
+        cmpOpCode = TR::ILOpCode::compareOpCode(TR::Int32, ct, isUnsigned);
+    }
+
+    cfg()->addEdge(_currentBlock, targetBlock);
+    TR::Node *ifNode = TR::Node::createif(cmpOpCode.convertCmpToIfCmp(), leftNode, rightNode, targetBlock->getEntry());
+    genTreeTop(ifNode, true);
+}
+
+void
+OMRIlGen::ifCmpEqual(Location *location, Builder *target, Value *left, Value *right) {
+    TR::Node *leftNode = useValue(left);
+    TR::Node *rightNode = useValue(right);
+    TR::Block *targetBlock = mapBuilder(target);
+    ifCmpCondition(TR_cmpEQ, false, leftNode, rightNode, targetBlock);
+}
+
+void
+OMRIlGen::ifCmpEqualZero(Location *location, Builder *target, Value *v) {
+    TR::Node *condition = useValue(v);
+    TR::Block *targetBlock = mapBuilder(target);
+    ifCmpCondition(TR_cmpEQ, false, condition, zeroForType(condition->getDataType()), targetBlock);
+}
+
+void
+OMRIlGen::ifCmpGreaterThan(Location *location, Builder *target, Value *left, Value *right, bool isUnsigned) {
+    TR::Node *leftNode = useValue(left);
+    TR::Node *rightNode = useValue(right);
+    TR::Block *targetBlock = mapBuilder(target);
+    ifCmpCondition(TR_cmpGT, isUnsigned, leftNode, rightNode, targetBlock);
+}
+
+void
+OMRIlGen::ifCmpGreaterOrEqual(Location *location, Builder *target, Value *left, Value *right, bool isUnsigned) {
+    TR::Node *leftNode = useValue(left);
+    TR::Node *rightNode = useValue(right);
+    TR::Block *targetBlock = mapBuilder(target);
+    ifCmpCondition(TR_cmpGE, isUnsigned, leftNode, rightNode, targetBlock);
+}
+
+void
+OMRIlGen::ifCmpLessThan(Location *location, Builder *target, Value *left, Value *right, bool isUnsigned) {
+    TR::Node *leftNode = useValue(left);
+    TR::Node *rightNode = useValue(right);
+    TR::Block *targetBlock = mapBuilder(target);
+    ifCmpCondition(TR_cmpLT, isUnsigned, leftNode, rightNode, targetBlock);
+}
+
+void
+OMRIlGen::ifCmpLessOrEqual(Location *location, Builder *target, Value *left, Value *right, bool isUnsigned) {
+    TR::Node *leftNode = useValue(left);
+    TR::Node *rightNode = useValue(right);
+    TR::Block *targetBlock = mapBuilder(target);
+    ifCmpCondition(TR_cmpLE, isUnsigned, leftNode, rightNode, targetBlock);
+}
+
+void
+OMRIlGen::ifCmpNotEqual(Location *location, Builder *target, Value *left, Value *right) {
+    TR::Node *leftNode = useValue(left);
+    TR::Node *rightNode = useValue(right);
+    TR::Block *targetBlock = mapBuilder(target);
+    ifCmpCondition(TR_cmpNE, false, leftNode, rightNode, targetBlock);
+}
+
+void
+OMRIlGen::ifCmpNotEqualZero(Location *location, Builder *target, Value *v) {
+    TR::Node *condition = useValue(v);
+    TR::Block *targetBlock = mapBuilder(target);
+    ifCmpCondition(TR_cmpNE, false, condition, zeroForType(condition->getDataType()), targetBlock);
 }
 
 void

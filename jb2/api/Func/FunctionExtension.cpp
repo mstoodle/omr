@@ -185,12 +185,14 @@ void
 FunctionExtension::Return(LOCATION, Builder *b) {
     Allocator *mem = b->ir()->mem();
     addOperation(b, new (mem) Op_ReturnVoid(MEM_PASSLOC(mem), this, b, this->aReturnVoid));
+    b->setControlReachesEnd(false);
 }
 
 void
 FunctionExtension::Return(LOCATION, Builder *b, Value *v) {
     Allocator *mem = b->ir()->mem();
     addOperation(b, new (mem) Op_Return(MEM_PASSLOC(mem), this, b, this->aReturn, v));
+    b->setControlReachesEnd(false);
 }
 
 const FunctionType *

@@ -102,30 +102,16 @@ public:
 
 protected:
     virtual void visitPreCompilation(Compilation * comp);
+    virtual void visitBuilderPreOps(Builder * b);
     virtual void visitBuilderPostOps(Builder * b);
     virtual void visitOperation(Operation * op);
     virtual void visitPostCompilation(Compilation *comp);
-
-    virtual int32_t currentByteCodeIndex() { return _currentByteCodeIndex; }
-    virtual int32_t currentCallSiteIndex() { return _currentCallSiteIndex; }
-    virtual TR::Block *getCurrentBlock() { return _currentBlock; }
-    virtual TR::ResolvedMethodSymbol *methodSymbol() const { return _methodSymbol; }
-
-    virtual void setCurrentByteCodeIndex(int32_t bci) { _currentByteCodeIndex = bci; }
-    virtual void setCurrentCallSiteIndex(int32_t csi) { _currentCallSiteIndex = csi; }
-    virtual void setCurrentBlock(TR::Block *block) { _currentBlock = block; }
-    virtual void setMethodSymbol(TR::ResolvedMethodSymbol * symbol) { _methodSymbol = symbol; }
 
     void setIlGen(OMRIlGen *ilgen);
 
     OMRIlGen *_ilgen;
     int32_t _omrCompileReturnCode;
     CompilerReturnCode _compileReturnCode;
-
-    int32_t _currentByteCodeIndex;
-    int32_t _currentCallSiteIndex;
-    TR::Block * _currentBlock;
-    TR::ResolvedMethodSymbol *_methodSymbol;
 
     SUBCLASS_KINDSERVICE_DECL(Extensible,OMRCodeGenerator);
 };
@@ -134,4 +120,4 @@ protected:
 } // namespace JitBuilder
 } // namespace OMR
 
-#endif // !defined(OMBGENCODEGENERATOR_INCL)
+#endif // !defined(OMRGENCODEGENERATOR_INCL)
