@@ -59,6 +59,7 @@ MISSING_CG_OP_HANDLER(CodeGeneratorForBase,)
 
 MISSING_CG_OP_HANDLER(CodeGeneratorForBase, Const)
 MISSING_CG_OP_HANDLER(CodeGeneratorForBase, Add)
+MISSING_CG_OP_HANDLER(CodeGeneratorForBase, And)
 MISSING_CG_OP_HANDLER(CodeGeneratorForBase, ConvertTo)
 MISSING_CG_OP_HANDLER(CodeGeneratorForBase, Mul)
 MISSING_CG_OP_HANDLER(CodeGeneratorForBase, Sub)

@@ -163,6 +163,13 @@ JBCodeGeneratorForBase::gencodeAdd(Operation *op) {
 }
 
 Builder *
+JBCodeGeneratorForBase::gencodeAnd(Operation *op) {
+    assert(op->action() == _bx->aAnd);
+    jbmb()->And(op->location(), op->parent(), op->result(), op->operand(0), op->operand(1));
+    return NULL;
+}
+
+Builder *
 JBCodeGeneratorForBase::gencodeConvertTo(Operation *op) {
     assert(op->action() == _bx->aConvertTo);
     jbmb()->ConvertTo(op->location(), op->parent(), op->result(), op->type(), op->operand());

@@ -45,6 +45,7 @@ namespace Base {
     typedef Builder * (C::*gencodeFunction)(Operation *op); \
     Builder * gencodeConst(Operation *op); \
     Builder * gencodeAdd(Operation *op); \
+    Builder * gencodeAnd(Operation *op); \
     Builder * gencodeConvertTo(Operation *op); \
     Builder * gencodeMul(Operation *op); \
     Builder * gencodeSub(Operation *op); \
@@ -128,6 +129,7 @@ namespace Base {
     _gencodeVFT.assign(bx->aMul, &C::gencodeMul); \
     _gencodeVFT.assign(bx->aConvertTo, &C::gencodeConvertTo); \
     _gencodeVFT.assign(bx->aAdd, &C::gencodeAdd); \
+    _gencodeVFT.assign(bx->aAnd, &C::gencodeAnd); \
     _gencodeVFT.assign(bx->aConst, &C::gencodeConst); \
     _genconstVFT.assign(bx->Address->id(), &C::genconstAddress); \
     _genconstVFT.assign(bx->Float64->id(), &C::genconstFloat64); \

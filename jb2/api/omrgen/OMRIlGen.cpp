@@ -644,6 +644,16 @@ OMRIlGen::add(Location *location, Value *result, Value *left, Value *right) {
 }
 
 void
+OMRIlGen::and_(Location *location, Value *result, Value *left, Value *right) {
+    TR::Node *leftNode = useValue(left);
+    TR::Node *rightNode = useValue(right);
+
+    TR::Node *resultNode = NULL;
+    resultNode = binaryOpFromOpMap(TR::ILOpCode::andOpCode, leftNode, rightNode);
+    defineValue(result, resultNode);
+}
+
+void
 OMRIlGen::convertTo(Location *location, Value *result, const Type *typeTo, Value *value, bool needUnsigned) {
     TR::Node *valueNode = useValue(value);
     TR::Node *convertedValue = convertNodeTo(mapType(typeTo), valueNode, needUnsigned);

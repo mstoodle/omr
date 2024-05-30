@@ -31,6 +31,7 @@ namespace JitBuilder {
 namespace omrgen {
 
 class OMRCodeGenerator;
+class OMRIlGen;
 
 class OMRCodeGeneratorForBase : public Base::CodeGeneratorForBase {
     JBALLOC_(OMRCodeGeneratorForBase)
