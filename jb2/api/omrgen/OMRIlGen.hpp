@@ -95,6 +95,7 @@ public:
     void literalAddress(Value *resultValue, uintptr_t v);
 
     void add(Location *location, Value *result, Value *left, Value *right);
+    void and_(Location *location, Value *result, Value *left, Value *right);
     void convertTo(Location *location, Value *result, const Type *type, Value *value, bool needsUnsigned);
     void goto_(Location *location, Builder *target);
     void ifCmpEqual(Location *location, Builder *target, Value *left, Value *right);
