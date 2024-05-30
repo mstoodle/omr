@@ -99,6 +99,7 @@ public:
 
     // Arithmetic actions
     const ActionID aAdd;
+    const ActionID aAnd;
     const ActionID aConvertTo;
     const ActionID aMul;
     const ActionID aSub;
@@ -140,6 +141,7 @@ public:
     //
 
     const CompilerReturnCode CompileFail_BadInputTypes_Add;
+    const CompilerReturnCode CompileFail_BadInputTypes_And;
     const CompilerReturnCode CompileFail_BadInputTypes_ConvertTo;
     const CompilerReturnCode CompileFail_BadInputTypes_Mul;
     const CompilerReturnCode CompileFail_BadInputTypes_Sub;
@@ -174,6 +176,7 @@ public:
 
     // Arithmetic operations
     Value * Add(LOCATION, Builder *b, Value *left, Value *right);
+    Value * And(LOCATION, Builder *b, Value *left, Value *right);
     Value * ConvertTo(LOCATION, Builder *b, const Type *type, Value *value);
     Value * Mul(LOCATION, Builder *b, Value *left, Value *right);
     Value * Sub(LOCATION, Builder *b, Value *left, Value *right);
@@ -254,6 +257,7 @@ public:
     }
 
     virtual bool validateAdd(LOCATION, Builder *b, Value *left, Value *right);
+    virtual bool validateAnd(LOCATION, Builder *b, Value *left, Value *right);
     virtual bool validateConvertTo(LOCATION, Builder *b, const Type *type, Value *value);
     virtual bool validateMul(LOCATION, Builder *b, Value *left, Value *right);
     virtual bool validateSub(LOCATION, Builder *b, Value *left, Value *right);
@@ -264,6 +268,7 @@ public:
 
 protected:
     virtual void failValidateAdd(LOCATION, Builder *b, Value *left, Value *right);
+    virtual void failValidateAnd(LOCATION, Builder *b, Value *left, Value *right);
     virtual void failValidateConvertTo(LOCATION, Builder *b, const Type *type, Value *value);
     virtual void failValidateMul(LOCATION, Builder *b, Value *left, Value *right);
     virtual void failValidateSub(LOCATION, Builder *b, Value *left, Value *right);

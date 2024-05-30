@@ -32,6 +32,10 @@ DECL_OPERATION_CLASS(Op_Add, OperationR1V2, BaseExtension,
     Op_Add(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aAdd, Value *result, Value *left, Value *right);
 )
 
+DECL_OPERATION_CLASS(Op_And, OperationR1V2, BaseExtension,
+    Op_And(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aAnd, Value *result, Value *left, Value *right);
+)
+
 DECL_OPERATION_CLASS(Op_ConvertTo, OperationR1T1V1, BaseExtension,
     Op_ConvertTo(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aConvertTo, Value *result, const Type *type, Value *value);
 )
