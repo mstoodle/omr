@@ -1241,6 +1241,80 @@ TEST(omrgenExtension, AddIntAndAddress) {
     }
 }
 
+// Test anding two numbers together of the given types
+template<typename FuncPrototype, typename left_cType, typename right_cType, typename result_cType>
+class AndFunc : public BinaryOpFunc<FuncPrototype, left_cType, right_cType, result_cType> {
+public:
+    AndFunc(LOCATION, String name, Compiler *compiler, bool log)
+        : BinaryOpFunc<FuncPrototype, left_cType, right_cType, result_cType>(PASSLOC, name, compiler, log) { }
+protected:
+    virtual Value *doBinaryOp(LOCATION, Builder *b, Value *left, Value *right) {
+        return this->bx()->And(PASSLOC, b, left, right);
+    }
+};
+
+TEST(omrgenExtension, AndInt8s) {
+    typedef int8_t (FuncProto)(int8_t, int8_t);
+    AndFunc<FuncProto, int8_t, int8_t, int8_t> and_int8s(LOC, "and_int8s", c, false);
+    and_int8s.test(LOC, Int8, static_cast<int8_t>(0), Int8, static_cast<int8_t>(0), Int8, static_cast<int8_t>(0));
+    and_int8s.test(LOC, Int8, static_cast<int8_t>(0), Int8, static_cast<int8_t>(3), Int8, static_cast<int8_t>(0));
+    and_int8s.test(LOC, Int8, static_cast<int8_t>(3), Int8, static_cast<int8_t>(0), Int8, static_cast<int8_t>(0));
+    and_int8s.test(LOC, Int8, static_cast<int8_t>(3), Int8, static_cast<int8_t>(3), Int8, static_cast<int8_t>(3));
+    and_int8s.test(LOC, Int8, static_cast<int8_t>(12), Int8, static_cast<int8_t>(4), Int8, static_cast<int8_t>(4));
+    and_int8s.test(LOC, Int8, std::numeric_limits<int8_t>::min(), Int8, static_cast<int8_t>(0), Int8, static_cast<int8_t>(0));
+    and_int8s.test(LOC, Int8, static_cast<int8_t>(0), Int8, std::numeric_limits<int8_t>::min(), Int8, static_cast<int8_t>(0));
+    and_int8s.test(LOC, Int8, std::numeric_limits<int8_t>::min(), Int8, std::numeric_limits<int8_t>::min(), Int8, std::numeric_limits<int8_t>::min());
+    and_int8s.test(LOC, Int8, std::numeric_limits<int8_t>::max(), Int8, static_cast<int8_t>(0), Int8, static_cast<int8_t>(0));
+    and_int8s.test(LOC, Int8, static_cast<int8_t>(0), Int8, std::numeric_limits<int8_t>::max(), Int8, static_cast<int8_t>(0));
+    and_int8s.test(LOC, Int8, std::numeric_limits<int8_t>::max(), Int8, std::numeric_limits<int8_t>::max(), Int8, std::numeric_limits<int8_t>::max());
+}
+TEST(omrgenExtension, AndInt16s) {
+    typedef int16_t (FuncProto)(int16_t, int16_t);
+    AndFunc<FuncProto, int16_t, int16_t, int16_t> and_int16s(LOC, "and_int16s", c, false);
+    and_int16s.test(LOC, Int16, static_cast<int16_t>(0), Int16, static_cast<int16_t>(0), Int16, static_cast<int16_t>(0));
+    and_int16s.test(LOC, Int16, static_cast<int16_t>(0), Int16, static_cast<int16_t>(3), Int16, static_cast<int16_t>(0));
+    and_int16s.test(LOC, Int16, static_cast<int16_t>(3), Int16, static_cast<int16_t>(0), Int16, static_cast<int16_t>(0));
+    and_int16s.test(LOC, Int16, static_cast<int16_t>(3), Int16, static_cast<int16_t>(3), Int16, static_cast<int16_t>(3));
+    and_int16s.test(LOC, Int16, static_cast<int16_t>(12), Int16, static_cast<int16_t>(4), Int16, static_cast<int16_t>(4));
+    and_int16s.test(LOC, Int16, std::numeric_limits<int16_t>::min(), Int16, static_cast<int16_t>(0), Int16, static_cast<int16_t>(0));
+    and_int16s.test(LOC, Int16, static_cast<int16_t>(0), Int16, std::numeric_limits<int16_t>::min(), Int16, static_cast<int16_t>(0));
+    and_int16s.test(LOC, Int16, std::numeric_limits<int16_t>::min(), Int16, std::numeric_limits<int16_t>::min(), Int16, std::numeric_limits<int16_t>::min());
+    and_int16s.test(LOC, Int16, std::numeric_limits<int16_t>::max(), Int16, static_cast<int16_t>(0), Int16, static_cast<int16_t>(0));
+    and_int16s.test(LOC, Int16, static_cast<int16_t>(0), Int16, std::numeric_limits<int16_t>::max(), Int16, static_cast<int16_t>(0));
+    and_int16s.test(LOC, Int16, std::numeric_limits<int16_t>::max(), Int16, std::numeric_limits<int16_t>::max(), Int16, std::numeric_limits<int16_t>::max());
+}
+TEST(omrgenExtension, AndInt32s) {
+    typedef int32_t (FuncProto)(int32_t, int32_t);
+    AndFunc<FuncProto, int32_t, int32_t, int32_t> and_int32s(LOC, "and_int32s", c, false);
+    and_int32s.test(LOC, Int32, static_cast<int32_t>(0), Int32, static_cast<int32_t>(0), Int32, static_cast<int32_t>(0));
+    and_int32s.test(LOC, Int32, static_cast<int32_t>(0), Int32, static_cast<int32_t>(3), Int32, static_cast<int32_t>(0));
+    and_int32s.test(LOC, Int32, static_cast<int32_t>(3), Int32, static_cast<int32_t>(0), Int32, static_cast<int32_t>(0));
+    and_int32s.test(LOC, Int32, static_cast<int32_t>(3), Int32, static_cast<int32_t>(3), Int32, static_cast<int32_t>(3));
+    and_int32s.test(LOC, Int32, static_cast<int32_t>(12), Int32, static_cast<int32_t>(4), Int32, static_cast<int32_t>(4));
+    and_int32s.test(LOC, Int32, std::numeric_limits<int32_t>::min(), Int32, static_cast<int32_t>(0), Int32, static_cast<int32_t>(0));
+    and_int32s.test(LOC, Int32, static_cast<int32_t>(0), Int32, std::numeric_limits<int32_t>::min(), Int32, static_cast<int32_t>(0));
+    and_int32s.test(LOC, Int32, std::numeric_limits<int32_t>::min(), Int32, std::numeric_limits<int32_t>::min(), Int32, std::numeric_limits<int32_t>::min());
+    and_int32s.test(LOC, Int32, std::numeric_limits<int32_t>::max(), Int32, static_cast<int32_t>(0), Int32, static_cast<int32_t>(0));
+    and_int32s.test(LOC, Int32, static_cast<int32_t>(0), Int32, std::numeric_limits<int32_t>::max(), Int32, static_cast<int32_t>(0));
+    and_int32s.test(LOC, Int32, std::numeric_limits<int32_t>::max(), Int32, std::numeric_limits<int32_t>::max(), Int32, std::numeric_limits<int32_t>::max());
+}
+TEST(omrgenExtension, AndInt64s) {
+    typedef int64_t (FuncProto)(int64_t, int64_t);
+    AndFunc<FuncProto, int64_t, int64_t, int64_t> and_int64s(LOC, "and_int64s", c, false);
+    and_int64s.test(LOC, Int64, static_cast<int64_t>(0), Int64, static_cast<int64_t>(0), Int64, static_cast<int64_t>(0));
+    and_int64s.test(LOC, Int64, static_cast<int64_t>(0), Int64, static_cast<int64_t>(3), Int64, static_cast<int64_t>(0));
+    and_int64s.test(LOC, Int64, static_cast<int64_t>(3), Int64, static_cast<int64_t>(0), Int64, static_cast<int64_t>(0));
+    and_int64s.test(LOC, Int64, static_cast<int64_t>(3), Int64, static_cast<int64_t>(3), Int64, static_cast<int64_t>(3));
+    and_int64s.test(LOC, Int64, static_cast<int64_t>(12), Int64, static_cast<int64_t>(4), Int64, static_cast<int64_t>(4));
+    and_int64s.test(LOC, Int64, std::numeric_limits<int64_t>::min(), Int64, static_cast<int64_t>(0), Int64, static_cast<int64_t>(0));
+    and_int64s.test(LOC, Int64, static_cast<int64_t>(0), Int64, std::numeric_limits<int64_t>::min(), Int64, static_cast<int64_t>(0));
+    and_int64s.test(LOC, Int64, std::numeric_limits<int64_t>::min(), Int64, std::numeric_limits<int64_t>::min(), Int64, std::numeric_limits<int64_t>::min());
+    and_int64s.test(LOC, Int64, std::numeric_limits<int64_t>::max(), Int64, static_cast<int64_t>(0), Int64, static_cast<int64_t>(0));
+    and_int64s.test(LOC, Int64, static_cast<int64_t>(0), Int64, std::numeric_limits<int64_t>::max(), Int64, static_cast<int64_t>(0));
+    and_int64s.test(LOC, Int64, std::numeric_limits<int64_t>::max(), Int64, std::numeric_limits<int64_t>::max(), Int64, std::numeric_limits<int64_t>::max());
+}
+
+
 // Test subtracting two numbers of the given types
 template<typename FuncPrototype, typename left_cType, typename right_cType, typename result_cType>
 class SubFunc : public BinaryOpFunc<FuncPrototype, left_cType, right_cType, result_cType> {
