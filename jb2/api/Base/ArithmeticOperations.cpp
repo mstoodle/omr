@@ -52,6 +52,27 @@ Op_Add::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
 
 
 //
+// And
+//
+INIT_JBALLOC_REUSECAT(Op_And, Operation)
+
+Op_And::Op_And(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aAnd, Value *result, Value *left, Value *right)
+    : OperationR1V2(MEM_PASSLOC(a), aAnd, ext, parent, result, left, right) {
+
+}
+
+Op_And::~Op_And() {
+
+}
+
+Operation *
+Op_And::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
+    Allocator *mem = b->ir()->mem();
+    return new (mem) Op_And(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->result(), cloner->operand(0), cloner->operand(1));
+}
+
+
+//
 // ConvertTo
 //
 INIT_JBALLOC_REUSECAT(Op_ConvertTo, Operation)
