@@ -69,6 +69,7 @@ BaseExtension::BaseExtension(MEM_LOCATION(a), Compiler *compiler, bool extended,
     , Word(compiler->platformWordSize() == 64 ? static_cast<const Type *>(this->Int64) : static_cast<const Type *>(this->Int32))
     , aConst(registerAction(String(a, "Const")))
     , aAdd(registerAction(String(a, "Add")))
+    , aAnd(registerAction(String(a, "And")))
     , aConvertTo(registerAction(String(a, "ConvertTo")))
     , aMul(registerAction(String(a, "Mul")))
     , aSub(registerAction(String(a, "Sub")))
@@ -100,6 +101,7 @@ BaseExtension::BaseExtension(MEM_LOCATION(a), Compiler *compiler, bool extended,
     , aIfThenElse(registerAction(String(a, "IfThenElse")))
     , aSwitch(registerAction(String(a, "Switch")))
     , CompileFail_BadInputTypes_Add(registerReturnCode(String(a, "CompileFail_BadInputTypes_Add")))
+    , CompileFail_BadInputTypes_And(registerReturnCode(String(a, "CompileFail_BadInputTypes_Add")))
     , CompileFail_BadInputTypes_ConvertTo(registerReturnCode(String(a, "CompileFail_BadInputTypes_ConvertTo")))
     , CompileFail_BadInputTypes_Mul(registerReturnCode(String(a, "CompileFail_BadInputTypes_Mul")))
     , CompileFail_BadInputTypes_Sub(registerReturnCode(String(a, "CompileFail_BadInputTypes_Sub")))
@@ -225,6 +227,25 @@ BaseExtensionChecker::validateAdd(LOCATION, Builder *b, Value *left, Value *righ
     return true;
 }
 
+bool
+BaseExtensionChecker::validateAnd(LOCATION, Builder *b, Value *left, Value *right) {
+    const Type *lType = left->type();
+    const Type *rType = right->type();
+
+    if (lType == _base->Int8
+     || lType == _base->Int16
+     || lType == _base->Int32
+     || lType == _base->Int64) {
+        if (rType != lType)
+            failValidateAnd(PASSLOC, b, left, right);
+        return true;
+    }
+
+    // we defined this operation, so if we can't validate it we have to fail it
+    failValidateAnd(PASSLOC, b, left, right);
+    return true;
+}
+
 void
 BaseExtensionChecker::failValidateAdd(LOCATION, Builder *b, Value *left, Value *right) {
     CompilationException e(PASSLOC, _base->compiler(), _base->CompileFail_BadInputTypes_Add);
@@ -234,8 +255,21 @@ BaseExtensionChecker::failValidateAdd(LOCATION, Builder *b, Value *left, Value *
     e.setMessageLine(String(mem, "Add: invalid input types"))
      .appendMessageLine(String(mem, "    left ").append(lType->to_string(mem)))
      .appendMessageLine(String(mem, "   right ").append(rType->to_string(mem)))
-     .appendMessageLine(String(mem, "Left and right types are expected to be the same for integer types (Int8,Int16,Int32,Int64,Float32,Float64)"))
+     .appendMessageLine(String(mem, "Left and right types are expected to be the same for numeric types (Int8,Int16,Int32,Int64,Float32,Float64)"))
      .appendMessageLine(String(mem, "If left/right type is Address then the right/left (respectively) type must be Word"));
+    throw e;
+}
+
+void
+BaseExtensionChecker::failValidateAnd(LOCATION, Builder *b, Value *left, Value *right) {
+    CompilationException e(PASSLOC, _base->compiler(), _base->CompileFail_BadInputTypes_And);
+    const Type *lType = left->type();
+    const Type *rType = right->type();
+    Allocator *mem = _base->compiler()->mem();
+    e.setMessageLine(String(mem, "And: invalid input types"))
+     .appendMessageLine(String(mem, "    left ").append(lType->to_string(mem)))
+     .appendMessageLine(String(mem, "   right ").append(rType->to_string(mem)))
+     .appendMessageLine(String(mem, "Left and right types are expected to be the same for integer types (Int8,Int16,Int32,Int64)"));
     throw e;
 }
 
@@ -256,6 +290,20 @@ BaseExtension::Add(LOCATION, Builder *b, Value *left, Value *right) {
     Allocator *mem = b->ir()->mem();
     Value *result = createValue(b, left->type());
     addOperation(b, new (mem) Op_Add(MEM_PASSLOC(mem), this, b, aAdd, result, left, right));
+    return result;
+}
+
+Value *
+BaseExtension::And(LOCATION, Builder *b, Value *left, Value *right) {
+    for (auto it = _checkers.iterator(); it.hasItem(); it++) {
+        BaseExtensionChecker *checker = it.item();
+        if (checker->validateAnd(PASSLOC, b, left, right))
+            break;
+    }
+
+    Allocator *mem = b->ir()->mem();
+    Value *result = createValue(b, left->type());
+    addOperation(b, new (mem) Op_And(MEM_PASSLOC(mem), this, b, aAnd, result, left, right));
     return result;
 }
 
