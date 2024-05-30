@@ -348,6 +348,13 @@ JBMethodBuilder::Add(Location *loc, Builder *b, Value *result, Value *left, Valu
 }
 
 void
+JBMethodBuilder::And(Location *loc, Builder *b, Value *result, Value *left, Value *right) {
+    TR::IlBuilder *omr_b = map(b);
+    omr_b->setBCIndex(loc->bcIndex())->SetCurrentIlGenerator();
+    registerValue(result, omr_b->And(map(left), map(right)));
+}
+
+void
 JBMethodBuilder::ConvertTo(Location *loc, Builder *b, Value *result, const Type *type, Value *value) {
     TR::IlBuilder *omr_b = map(b);
     omr_b->setBCIndex(loc->bcIndex())->SetCurrentIlGenerator();

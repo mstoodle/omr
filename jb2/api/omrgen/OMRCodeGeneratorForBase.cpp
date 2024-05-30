@@ -166,6 +166,13 @@ OMRCodeGeneratorForBase::gencodeAdd(Operation *op) {
 }
 
 Builder *
+OMRCodeGeneratorForBase::gencodeAnd(Operation *op) {
+    assert(op->action() == _bx->aAnd);
+    ilgen()->and_(op->location(), op->result(), op->operand(0), op->operand(1));
+    return NULL;
+}
+
+Builder *
 OMRCodeGeneratorForBase::gencodeConvertTo(Operation *op) {
     assert(op->action() == _bx->aConvertTo);
     ilgen()->convertTo(op->location(), op->result(), op->type(0), op->operand(0), false);
