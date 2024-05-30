@@ -56,11 +56,15 @@ protected:
         void insertAfter(List<T>::Item *item) {
             item->_next = _next;
             item->_prev = this;
+            if (_next)
+                _next->_prev = item;
             _next = item;
         }
         void insertBefore(List<T>::Item *item) {
             item->_next = this;
             item->_prev = _prev;
+            if (_prev)
+                _prev->_next = item;
             _prev = item;
         }
         List<T>::Item *remove() {
@@ -427,14 +431,18 @@ public:
         delete item;
         return v;
     }
-    void insertAfter(T v, List<T>::Iterator cursor) {
+    void insertAfter(T v, List<T>::Iterator &cursor) {
         List<T>::Item *newItem = new (_itemAllocator) List<T>::Item(_itemAllocator, v);
         cursor._cursor->insertAfter(newItem);
+        if (cursor._cursor == _tail)
+            _tail = cursor._cursor->_next;
         change(1);
     }
-    void insertBefore(T v, List<T>::Iterator cursor) { 
+    void insertBefore(T v, List<T>::Iterator &cursor) { 
         List<T>::Item *newItem = new (_itemAllocator) List<T>::Item(_itemAllocator, v);
         cursor._cursor->insertBefore(newItem);
+        if (cursor._cursor == _head)
+            _head = cursor._cursor->_prev;
         change(1);
     }
 
@@ -447,7 +455,7 @@ public:
     }
 
     // this doesn't work...need to return a new iterator!
-    void remove(List<T>::Iterator cursor) {
+    void remove(List<T>::Iterator &cursor) {
         List<T>::Item *current = cursor._cursor;
         if (current == _head)
             _head = current->_next;
@@ -456,7 +464,7 @@ public:
         delete current->remove();
         change(-1);
     }
-    void removeTwo(List<T>::Iterator cursor) {
+    void removeTwo(List<T>::Iterator &cursor) {
         List<T>::Item *current = cursor._cursor;
         assert(current != NULL && current->_next != NULL);
         List<T>::Item *after = current->_next->_next;
