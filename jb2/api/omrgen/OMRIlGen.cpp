@@ -661,6 +661,26 @@ OMRIlGen::convertTo(Location *location, Value *result, const Type *typeTo, Value
 }
 
 void
+OMRIlGen::createlocalarray(Location *location, Value *result, Literal *numElementsLV, const Type *elementType) {
+    size_t numElements = numElementsLV->getInteger();
+    size_t elementSize = elementType->size() / 8;
+    size_t size = static_cast<size_t>(numElements * elementSize);
+    TR::SymbolReference *localArraySymRef = symRefTab()->createLocalPrimArray(size,
+                                                                             methodSymbol(),
+                                                                             8 /*FIXME: JVM-specific - byte*/);
+    size_t len = (11+10+1) * sizeof(char); // 11 ("&localarray") + max 10 digits + trailing zero
+    char *name = (char *) _comp->trMemory()->allocateHeapMemory(len);
+    snprintf(name, len, "&localArray%u", localArraySymRef->getCPIndex());
+    localArraySymRef->getSymbol()->getAutoSymbol()->setName(name);
+    localArraySymRef->setStackAllocatedArrayAccess();
+    if (methodSymbol()->getFirstJitTempIndex() > methodSymbol()->getTempIndex())
+        methodSymbol()->setFirstJitTempIndex(methodSymbol()->getTempIndex());
+
+    TR::Node *arrayAddress = TR::Node::createWithSymRef(TR::loadaddr, 0, localArraySymRef);
+    defineValue(result, arrayAddress);
+}
+
+void
 OMRIlGen::div(Location *location, Value *result, Value *left, Value *right) {
     TR::DataTypes leftType = mapType(left->type());
     TR::Node *leftNode = useValue(left);

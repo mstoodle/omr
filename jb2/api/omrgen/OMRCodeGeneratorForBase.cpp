@@ -394,7 +394,8 @@ OMRCodeGeneratorForBase::gencodeStoreFieldAt(Operation *op) {
 Builder *
 OMRCodeGeneratorForBase::gencodeCreateLocalArray(Operation *op) {
     assert(op->action() == _bx->aCreateLocalArray);
-    assert(0); // TODO
+    const Type *elementType = op->type()->refine<Base::PointerType>()->baseType();
+    ilgen()->createlocalarray(op->location(), op->result(), op->literal(), elementType);
     return NULL;
 }
 
