@@ -3001,3 +3001,223 @@ TEST(omrgenExtension, NestedControlFlow6) {
     int64_t nodes[5] = { 6, 14, 48, 62, 63 };
     nest6.compileAndRun(LOC, 6, 5, nodes);
 }
+
+// Base class for IndexAt
+template<typename FuncPrototype, typename index_cType>
+class IndexAtFunc : public TestFunc {
+public:
+    IndexAtFunc(LOCATION, String name, Compiler *compiler, bool log)
+        : TestFunc(PASSLOC, compiler, log)
+        , _elementType(NULL)
+        , _baseValue(0)
+        , _baseType(0)
+        , _indexType(NULL)
+        , _indexValue(0) {
+
+        DefineName(name);
+        DefineFile(__FILE__);
+        DefineLine(LINETOSTR(__LINE__));
+    }
+    void run(LOCATION) {
+        FuncPrototype *f = body()->template nativeEntryPoint<FuncPrototype>();
+        EXPECT_NE(f, nullptr);
+        EXPECT_EQ(f(_baseValue,_indexValue), _resultValue) << "Compiled f(" << _baseValue << ", " << (int64_t)_indexValue << ") returns " << _resultValue;
+    }
+    void test(LOCATION, const Type *elementType, uintptr_t baseValue, const Type *indexType, index_cType indexValue, uintptr_t resultValue) {
+        _elementType = elementType;
+        _baseValue = baseValue;
+        _indexType = indexType;
+        _indexValue = indexValue;
+        _resultValue = resultValue;
+        compile(PASSLOC);
+        run(PASSLOC);
+    }
+
+protected:
+    virtual bool buildContext(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
+        _baseType = bx()->PointerTo(PASSLOC, comp, _elementType);
+        ctx->DefineParameter("base", _baseType);
+        ctx->DefineParameter("index", _indexType);
+        ctx->DefineReturnType(_baseType);
+        return true;
+    }
+    virtual bool buildIL(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
+        Builder *entry = scope->entryPoint<BuilderEntry>(0)->builder();
+        auto baseSym=ctx->LookupLocal("base"); 
+        Value *baseValue = fx()->Load(LOC, entry, baseSym);
+        auto indexSym=ctx->LookupLocal("index"); 
+        Value *indexValue = fx()->Load(LOC, entry, indexSym);
+        Value *result = bx()->IndexAt(PASSLOC, entry, baseValue, indexValue);
+        fx()->Return(LOC, entry, result);
+        return true;
+    }
+
+protected:
+    const Type *_elementType;
+    const Type *_baseType;
+    uintptr_t _baseValue;
+    const Type *_indexType;
+    index_cType _indexValue;
+    uintptr_t _resultValue;
+};
+
+TEST(omrgenExtension, IndexAtInt8byInt8) {
+    typedef uintptr_t (FuncProto)(uintptr_t, int8_t);
+    IndexAtFunc<FuncProto, int8_t> indexat_int8_int8(LOC, "indexat_int8_int8", c, false);
+    char array[4];
+    indexat_int8_int8.test(LOC, Int8, static_cast<uintptr_t>(0), Int8, static_cast<int8_t>(0), static_cast<uintptr_t>(0));
+    indexat_int8_int8.test(LOC, Int8, static_cast<uintptr_t>(4), Int8, static_cast<int8_t>(4), static_cast<uintptr_t>(8));
+    indexat_int8_int8.test(LOC, Int8, static_cast<uintptr_t>(8), Int8, static_cast<int8_t>(-4), static_cast<uintptr_t>(4));
+    indexat_int8_int8.test(LOC, Int8, reinterpret_cast<uintptr_t>(array), Int8, static_cast<int8_t>(4), reinterpret_cast<uintptr_t>(array+4));
+    indexat_int8_int8.test(LOC, Int8, static_cast<uintptr_t>(0), Int8, std::numeric_limits<int8_t>::max(), static_cast<uintptr_t>(std::numeric_limits<int8_t>::max()));
+}
+TEST(omrgenExtension, IndexAtInt8byInt16) {
+    typedef uintptr_t (FuncProto)(uintptr_t, int16_t);
+    IndexAtFunc<FuncProto, int16_t> indexat_int8_int16(LOC, "indexat_int8_int16", c, false);
+    char array[4];
+    indexat_int8_int16.test(LOC, Int8, static_cast<uintptr_t>(0), Int16, static_cast<int16_t>(0), static_cast<uintptr_t>(0));
+    indexat_int8_int16.test(LOC, Int8, static_cast<uintptr_t>(4), Int16, static_cast<int16_t>(4), static_cast<uintptr_t>(8));
+    indexat_int8_int16.test(LOC, Int8, static_cast<uintptr_t>(8), Int16, static_cast<int16_t>(-4), static_cast<uintptr_t>(4));
+    indexat_int8_int16.test(LOC, Int8, reinterpret_cast<uintptr_t>(array), Int16, static_cast<int16_t>(4), reinterpret_cast<uintptr_t>(array+4));
+    indexat_int8_int16.test(LOC, Int8, static_cast<uintptr_t>(0), Int16, std::numeric_limits<int16_t>::max(), static_cast<uintptr_t>(std::numeric_limits<int16_t>::max()));
+}
+TEST(omrgenExtension, IndexAtInt8byInt32) {
+    typedef uintptr_t (FuncProto)(uintptr_t, int32_t);
+    IndexAtFunc<FuncProto, int32_t> indexat_int8_int32(LOC, "indexat_int8_int32", c, false);
+    char array[4];
+    indexat_int8_int32.test(LOC, Int8, static_cast<uintptr_t>(0), Int32, static_cast<int32_t>(0), static_cast<uintptr_t>(0));
+    indexat_int8_int32.test(LOC, Int8, static_cast<uintptr_t>(4), Int32, static_cast<int32_t>(4), static_cast<uintptr_t>(8));
+    indexat_int8_int32.test(LOC, Int8, static_cast<uintptr_t>(8), Int32, static_cast<int32_t>(-4), static_cast<uintptr_t>(4));
+    indexat_int8_int32.test(LOC, Int8, reinterpret_cast<uintptr_t>(array), Int32, static_cast<int32_t>(4), reinterpret_cast<uintptr_t>(array+4));
+    indexat_int8_int32.test(LOC, Int8, static_cast<uintptr_t>(0), Int32, std::numeric_limits<int32_t>::max(), static_cast<uintptr_t>(std::numeric_limits<int32_t>::max()));
+}
+TEST(omrgenExtension, IndexAtInt8byInt64) {
+    typedef uintptr_t (FuncProto)(uintptr_t, int64_t);
+    IndexAtFunc<FuncProto, int64_t> indexat_int8_int64(LOC, "indexat_int8_int64", c, false);
+    char array[4];
+    indexat_int8_int64.test(LOC, Int8, static_cast<uintptr_t>(0), Int64, static_cast<int64_t>(0), static_cast<uintptr_t>(0));
+    indexat_int8_int64.test(LOC, Int8, static_cast<uintptr_t>(4), Int64, static_cast<int64_t>(4), static_cast<uintptr_t>(8));
+    indexat_int8_int64.test(LOC, Int8, static_cast<uintptr_t>(8), Int64, static_cast<int64_t>(-4), static_cast<uintptr_t>(4));
+    indexat_int8_int64.test(LOC, Int8, reinterpret_cast<uintptr_t>(array), Int64, static_cast<int64_t>(4), reinterpret_cast<uintptr_t>(array+4));
+    indexat_int8_int64.test(LOC, Int8, static_cast<uintptr_t>(0), Int64, std::numeric_limits<int64_t>::max(), static_cast<uintptr_t>(std::numeric_limits<int64_t>::max()));
+}
+TEST(omrgenExtension, IndexAtInt16byInt8) {
+    typedef uintptr_t (FuncProto)(uintptr_t, int8_t);
+    IndexAtFunc<FuncProto, int8_t> indexat_int16_int8(LOC, "indexat_int16_int8", c, false);
+    uint16_t array[4];
+    indexat_int16_int8.test(LOC, Int16, static_cast<uintptr_t>(0), Int8, static_cast<int8_t>(0), static_cast<uintptr_t>(0));
+    indexat_int16_int8.test(LOC, Int16, static_cast<uintptr_t>(4), Int8, static_cast<int8_t>(4), static_cast<uintptr_t>(12));
+    indexat_int16_int8.test(LOC, Int16, static_cast<uintptr_t>(8), Int8, static_cast<int8_t>(-4), static_cast<uintptr_t>(0));
+    indexat_int16_int8.test(LOC, Int16, reinterpret_cast<uintptr_t>(array), Int8, static_cast<int8_t>(4), reinterpret_cast<uintptr_t>(array+4));
+    indexat_int16_int8.test(LOC, Int16, static_cast<uintptr_t>(0), Int8, std::numeric_limits<int8_t>::max(), static_cast<uintptr_t>(std::numeric_limits<int8_t>::max()) << 1);
+}
+TEST(omrgenExtension, IndexAtInt16byInt16) {
+    typedef uintptr_t (FuncProto)(uintptr_t, int16_t);
+    IndexAtFunc<FuncProto, int16_t> indexat_int16_int16(LOC, "indexat_int16_int16", c, false);
+    uint16_t array[4];
+    indexat_int16_int16.test(LOC, Int16, static_cast<uintptr_t>(0), Int16, static_cast<int16_t>(0), static_cast<uintptr_t>(0));
+    indexat_int16_int16.test(LOC, Int16, static_cast<uintptr_t>(4), Int16, static_cast<int16_t>(4), static_cast<uintptr_t>(12));
+    indexat_int16_int16.test(LOC, Int16, static_cast<uintptr_t>(8), Int16, static_cast<int16_t>(-4), static_cast<uintptr_t>(0));
+    indexat_int16_int16.test(LOC, Int16, reinterpret_cast<uintptr_t>(array), Int16, static_cast<int16_t>(4), reinterpret_cast<uintptr_t>(array+4));
+    indexat_int16_int16.test(LOC, Int16, static_cast<uintptr_t>(0), Int16, std::numeric_limits<int16_t>::max(), static_cast<uintptr_t>(std::numeric_limits<int16_t>::max()) << 1);
+}
+TEST(omrgenExtension, IndexAtInt16byInt32) {
+    typedef uintptr_t (FuncProto)(uintptr_t, int32_t);
+    IndexAtFunc<FuncProto, int32_t> indexat_int16_int32(LOC, "indexat_int16_int32", c, false);
+    uint16_t array[4];
+    indexat_int16_int32.test(LOC, Int16, static_cast<uintptr_t>(0), Int32, static_cast<int32_t>(0), static_cast<uintptr_t>(0));
+    indexat_int16_int32.test(LOC, Int16, static_cast<uintptr_t>(4), Int32, static_cast<int32_t>(4), static_cast<uintptr_t>(12));
+    indexat_int16_int32.test(LOC, Int16, static_cast<uintptr_t>(8), Int32, static_cast<int32_t>(-4), static_cast<uintptr_t>(0));
+    indexat_int16_int32.test(LOC, Int16, reinterpret_cast<uintptr_t>(array), Int32, static_cast<int32_t>(4), reinterpret_cast<uintptr_t>(array+4));
+    indexat_int16_int32.test(LOC, Int16, static_cast<uintptr_t>(0), Int32, std::numeric_limits<int32_t>::max(), static_cast<uintptr_t>(std::numeric_limits<int32_t>::max()) << 1);
+}
+TEST(omrgenExtension, IndexAtInt16byInt64) {
+    typedef uintptr_t (FuncProto)(uintptr_t, int64_t);
+    IndexAtFunc<FuncProto, int64_t> indexat_int16_int64(LOC, "indexat_int16_int64", c, false);
+    uint16_t array[4];
+    indexat_int16_int64.test(LOC, Int16, static_cast<uintptr_t>(0), Int64, static_cast<int64_t>(0), static_cast<uintptr_t>(0));
+    indexat_int16_int64.test(LOC, Int16, static_cast<uintptr_t>(4), Int64, static_cast<int64_t>(4), static_cast<uintptr_t>(12));
+    indexat_int16_int64.test(LOC, Int16, static_cast<uintptr_t>(8), Int64, static_cast<int64_t>(-4), static_cast<uintptr_t>(0));
+    indexat_int16_int64.test(LOC, Int16, reinterpret_cast<uintptr_t>(array), Int64, static_cast<int64_t>(4), reinterpret_cast<uintptr_t>(array+4));
+    indexat_int16_int64.test(LOC, Int16, static_cast<uintptr_t>(0), Int64, std::numeric_limits<int64_t>::max() >> 1, static_cast<uintptr_t>((std::numeric_limits<int64_t>::max() >> 1) << 1));
+}
+TEST(omrgenExtension, IndexAtInt32byInt8) {
+    typedef uintptr_t (FuncProto)(uintptr_t, int8_t);
+    IndexAtFunc<FuncProto, int8_t> indexat_int32_int8(LOC, "indexat_int32_int8", c, false);
+    uint32_t array[4];
+    indexat_int32_int8.test(LOC, Int32, static_cast<uintptr_t>(0), Int8, static_cast<int8_t>(0), static_cast<uintptr_t>(0));
+    indexat_int32_int8.test(LOC, Int32, static_cast<uintptr_t>(4), Int8, static_cast<int8_t>(4), static_cast<uintptr_t>(20));
+    indexat_int32_int8.test(LOC, Int32, static_cast<uintptr_t>(20), Int8, static_cast<int8_t>(-4), static_cast<uintptr_t>(4));
+    indexat_int32_int8.test(LOC, Int32, reinterpret_cast<uintptr_t>(array), Int8, static_cast<int8_t>(4), reinterpret_cast<uintptr_t>(array+4));
+    indexat_int32_int8.test(LOC, Int32, static_cast<uintptr_t>(0), Int8, std::numeric_limits<int8_t>::max(), static_cast<uintptr_t>(std::numeric_limits<int8_t>::max()) << 2);
+}
+TEST(omrgenExtension, IndexAtInt32byInt16) {
+    typedef uintptr_t (FuncProto)(uintptr_t, int16_t);
+    IndexAtFunc<FuncProto, int16_t> indexat_int32_int16(LOC, "indexat_int32_int16", c, false);
+    uint32_t array[4];
+    indexat_int32_int16.test(LOC, Int32, static_cast<uintptr_t>(0), Int16, static_cast<int16_t>(0), static_cast<uintptr_t>(0));
+    indexat_int32_int16.test(LOC, Int32, static_cast<uintptr_t>(4), Int16, static_cast<int16_t>(4), static_cast<uintptr_t>(20));
+    indexat_int32_int16.test(LOC, Int32, static_cast<uintptr_t>(20), Int16, static_cast<int16_t>(-4), static_cast<uintptr_t>(4));
+    indexat_int32_int16.test(LOC, Int32, reinterpret_cast<uintptr_t>(array), Int16, static_cast<int16_t>(4), reinterpret_cast<uintptr_t>(array+4));
+    indexat_int32_int16.test(LOC, Int32, static_cast<uintptr_t>(0), Int16, std::numeric_limits<int16_t>::max(), static_cast<uintptr_t>(std::numeric_limits<int16_t>::max()) << 2);
+}
+TEST(omrgenExtension, IndexAtInt32byInt32) {
+    typedef uintptr_t (FuncProto)(uintptr_t, int32_t);
+    IndexAtFunc<FuncProto, int32_t> indexat_int32_int32(LOC, "indexat_int32_int32", c, false);
+    uint32_t array[4];
+    indexat_int32_int32.test(LOC, Int32, static_cast<uintptr_t>(0), Int32, static_cast<int32_t>(0), static_cast<uintptr_t>(0));
+    indexat_int32_int32.test(LOC, Int32, static_cast<uintptr_t>(4), Int32, static_cast<int32_t>(4), static_cast<uintptr_t>(20));
+    indexat_int32_int32.test(LOC, Int32, static_cast<uintptr_t>(20), Int32, static_cast<int32_t>(-4), static_cast<uintptr_t>(4));
+    indexat_int32_int32.test(LOC, Int32, reinterpret_cast<uintptr_t>(array), Int32, static_cast<int32_t>(4), reinterpret_cast<uintptr_t>(array+4));
+    indexat_int32_int32.test(LOC, Int32, static_cast<uintptr_t>(0), Int32, std::numeric_limits<int32_t>::max(), static_cast<uintptr_t>(std::numeric_limits<int32_t>::max()) << 2);
+}
+TEST(omrgenExtension, IndexAtInt32byInt64) {
+    typedef uintptr_t (FuncProto)(uintptr_t, int64_t);
+    IndexAtFunc<FuncProto, int64_t> indexat_int32_int64(LOC, "indexat_int32_int64", c, false);
+    uint32_t array[4];
+    indexat_int32_int64.test(LOC, Int32, static_cast<uintptr_t>(0), Int64, static_cast<int64_t>(0), static_cast<uintptr_t>(0));
+    indexat_int32_int64.test(LOC, Int32, static_cast<uintptr_t>(4), Int64, static_cast<int64_t>(4), static_cast<uintptr_t>(20));
+    indexat_int32_int64.test(LOC, Int32, static_cast<uintptr_t>(20), Int64, static_cast<int64_t>(-4), static_cast<uintptr_t>(4));
+    indexat_int32_int64.test(LOC, Int32, reinterpret_cast<uintptr_t>(array), Int64, static_cast<int64_t>(4), reinterpret_cast<uintptr_t>(array+4));
+    indexat_int32_int64.test(LOC, Int32, static_cast<uintptr_t>(0), Int64, std::numeric_limits<int64_t>::max() >> 2, static_cast<uintptr_t>((std::numeric_limits<int64_t>::max() >> 2) << 2));
+}
+TEST(omrgenExtension, IndexAtInt64byInt8) {
+    typedef uintptr_t (FuncProto)(uintptr_t, int8_t);
+    IndexAtFunc<FuncProto, int8_t> indexat_int64_int8(LOC, "indexat_int64_int8", c, false);
+    uint64_t array[4];
+    indexat_int64_int8.test(LOC, Int64, static_cast<uintptr_t>(0), Int8, static_cast<int8_t>(0), static_cast<uintptr_t>(0));
+    indexat_int64_int8.test(LOC, Int64, static_cast<uintptr_t>(4), Int8, static_cast<int8_t>(4), static_cast<uintptr_t>(36));
+    indexat_int64_int8.test(LOC, Int64, static_cast<uintptr_t>(36), Int8, static_cast<int8_t>(-4), static_cast<uintptr_t>(4));
+    indexat_int64_int8.test(LOC, Int64, reinterpret_cast<uintptr_t>(array), Int8, static_cast<int8_t>(4), reinterpret_cast<uintptr_t>(array+4));
+    indexat_int64_int8.test(LOC, Int64, static_cast<uintptr_t>(0), Int8, std::numeric_limits<int8_t>::max(), static_cast<uintptr_t>(std::numeric_limits<int8_t>::max()) << 3);
+}
+TEST(omrgenExtension, IndexAtInt64byInt16) {
+    typedef uintptr_t (FuncProto)(uintptr_t, int16_t);
+    IndexAtFunc<FuncProto, int16_t> indexat_int64_int16(LOC, "indexat_int64_int16", c, false);
+    uint64_t array[4];
+    indexat_int64_int16.test(LOC, Int64, static_cast<uintptr_t>(0), Int16, static_cast<int16_t>(0), static_cast<uintptr_t>(0));
+    indexat_int64_int16.test(LOC, Int64, static_cast<uintptr_t>(4), Int16, static_cast<int16_t>(4), static_cast<uintptr_t>(36));
+    indexat_int64_int16.test(LOC, Int64, static_cast<uintptr_t>(36), Int16, static_cast<int16_t>(-4), static_cast<uintptr_t>(4));
+    indexat_int64_int16.test(LOC, Int64, reinterpret_cast<uintptr_t>(array), Int16, static_cast<int16_t>(4), reinterpret_cast<uintptr_t>(array+4));
+    indexat_int64_int16.test(LOC, Int64, static_cast<uintptr_t>(0), Int16, std::numeric_limits<int16_t>::max(), static_cast<uintptr_t>(std::numeric_limits<int16_t>::max()) << 3);
+}
+TEST(omrgenExtension, IndexAtInt64byInt32) {
+    typedef uintptr_t (FuncProto)(uintptr_t, int32_t);
+    IndexAtFunc<FuncProto, int32_t> indexat_int64_int32(LOC, "indexat_int64_int32", c, false);
+    uint64_t array[4];
+    indexat_int64_int32.test(LOC, Int64, static_cast<uintptr_t>(0), Int32, static_cast<int32_t>(0), static_cast<uintptr_t>(0));
+    indexat_int64_int32.test(LOC, Int64, static_cast<uintptr_t>(4), Int32, static_cast<int32_t>(4), static_cast<uintptr_t>(36));
+    indexat_int64_int32.test(LOC, Int64, static_cast<uintptr_t>(36), Int32, static_cast<int32_t>(-4), static_cast<uintptr_t>(4));
+    indexat_int64_int32.test(LOC, Int64, reinterpret_cast<uintptr_t>(array), Int32, static_cast<int32_t>(4), reinterpret_cast<uintptr_t>(array+4));
+    indexat_int64_int32.test(LOC, Int64, static_cast<uintptr_t>(0), Int32, std::numeric_limits<int32_t>::max(), static_cast<uintptr_t>(std::numeric_limits<int32_t>::max()) << 3);
+}
+TEST(omrgenExtension, IndexAtInt64byInt64) {
+    typedef uintptr_t (FuncProto)(uintptr_t, int64_t);
+    IndexAtFunc<FuncProto, int64_t> indexat_int64_int64(LOC, "indexat_int64_int64", c, false);
+    uint64_t array[4];
+    indexat_int64_int64.test(LOC, Int64, static_cast<uintptr_t>(0), Int64, static_cast<int64_t>(0), static_cast<uintptr_t>(0));
+    indexat_int64_int64.test(LOC, Int64, static_cast<uintptr_t>(4), Int64, static_cast<int64_t>(4), static_cast<uintptr_t>(36));
+    indexat_int64_int64.test(LOC, Int64, static_cast<uintptr_t>(36), Int64, static_cast<int64_t>(-4), static_cast<uintptr_t>(4));
+    indexat_int64_int64.test(LOC, Int64, reinterpret_cast<uintptr_t>(array), Int64, static_cast<int64_t>(4), reinterpret_cast<uintptr_t>(array+4));
+    indexat_int64_int64.test(LOC, Int64, static_cast<uintptr_t>(0), Int64, std::numeric_limits<int64_t>::max() >> 3, static_cast<uintptr_t>((std::numeric_limits<int64_t>::max() >> 3) << 3));
+}
