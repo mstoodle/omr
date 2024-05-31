@@ -772,6 +772,37 @@ OMRIlGen::ifCmpNotEqualZero(Location *location, Builder *target, Value *v) {
 }
 
 void
+OMRIlGen::indexAt(Location *location, Value *result, Value *base, const Type *elementType, Value *index) {
+    TR::Node *baseNode = useValue(base);
+    TR::Node *indexNode = useValue(index);
+    TR::Node *elemSizeNode;
+    TR::ILOpCodes addOp, mulOp;
+    TR::DataType indexType = indexNode->getDataType();
+    if (_jb2comp->compiler()->platformWordSize() == 64) {
+        if (indexType != TR::Int64) {
+            TR::ILOpCodes op = TR::ILOpCode::getDataTypeConversion(indexType, TR::Int64);
+            indexNode = TR::Node::create(op, 1, indexNode);
+        }
+        elemSizeNode = TR::Node::lconst(elementType->size() / 8);
+        addOp = TR::aladd;
+        mulOp = TR::lmul;
+    } else {
+        TR::DataType targetType = TR::Int32;
+        if (indexType != targetType) {
+            TR::ILOpCodes op = TR::ILOpCode::getDataTypeConversion(indexType, targetType);
+            indexNode = TR::Node::create(op, 1, indexNode);
+        }
+        elemSizeNode = TR::Node::iconst(static_cast<int32_t>(elementType->size() / 8));
+        addOp = TR::aiadd;
+        mulOp = TR::imul;
+    }
+
+    TR::Node *offsetNode = TR::Node::create(mulOp, 2, indexNode, elemSizeNode);
+    TR::Node *addrNode = TR::Node::create(addOp, 2, baseNode, offsetNode);
+    defineValue(result, addrNode);
+}
+
+void
 OMRIlGen::load(Location *location, Value *result, Symbol *sym) {
     TR::SymbolReference *symref = _symrefs[sym->id()];
     assert(symref != NULL);
