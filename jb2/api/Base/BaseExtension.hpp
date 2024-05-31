@@ -101,6 +101,7 @@ public:
     const ActionID aAdd;
     const ActionID aAnd;
     const ActionID aConvertTo;
+    const ActionID aDiv;
     const ActionID aMul;
     const ActionID aSub;
 
@@ -143,6 +144,7 @@ public:
     const CompilerReturnCode CompileFail_BadInputTypes_Add;
     const CompilerReturnCode CompileFail_BadInputTypes_And;
     const CompilerReturnCode CompileFail_BadInputTypes_ConvertTo;
+    const CompilerReturnCode CompileFail_BadInputTypes_Div;
     const CompilerReturnCode CompileFail_BadInputTypes_Mul;
     const CompilerReturnCode CompileFail_BadInputTypes_Sub;
     const CompilerReturnCode CompileFail_BadInputTypes_IfCmpEqual;
@@ -178,6 +180,7 @@ public:
     Value * Add(LOCATION, Builder *b, Value *left, Value *right);
     Value * And(LOCATION, Builder *b, Value *left, Value *right);
     Value * ConvertTo(LOCATION, Builder *b, const Type *type, Value *value);
+    Value * Div(LOCATION, Builder *b, Value *left, Value *right);
     Value * Mul(LOCATION, Builder *b, Value *left, Value *right);
     Value * Sub(LOCATION, Builder *b, Value *left, Value *right);
 
@@ -259,6 +262,7 @@ public:
     virtual bool validateAdd(LOCATION, Builder *b, Value *left, Value *right);
     virtual bool validateAnd(LOCATION, Builder *b, Value *left, Value *right);
     virtual bool validateConvertTo(LOCATION, Builder *b, const Type *type, Value *value);
+    virtual bool validateDiv(LOCATION, Builder *b, Value *left, Value *right);
     virtual bool validateMul(LOCATION, Builder *b, Value *left, Value *right);
     virtual bool validateSub(LOCATION, Builder *b, Value *left, Value *right);
     virtual bool validateIfCmp(LOCATION, Builder *b, Builder *target, Value *left, Value *right, CompilerReturnCode failCode, String opCodeName);
@@ -270,6 +274,7 @@ protected:
     virtual void failValidateAdd(LOCATION, Builder *b, Value *left, Value *right);
     virtual void failValidateAnd(LOCATION, Builder *b, Value *left, Value *right);
     virtual void failValidateConvertTo(LOCATION, Builder *b, const Type *type, Value *value);
+    virtual void failValidateDiv(LOCATION, Builder *b, Value *left, Value *right);
     virtual void failValidateMul(LOCATION, Builder *b, Value *left, Value *right);
     virtual void failValidateSub(LOCATION, Builder *b, Value *left, Value *right);
     virtual void failValidateIfCmp(LOCATION, Builder *b, Builder *target, Value *left, Value *right, CompilerReturnCode failCode, String opCodeName);

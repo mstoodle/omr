@@ -180,6 +180,13 @@ OMRCodeGeneratorForBase::gencodeConvertTo(Operation *op) {
 }
 
 Builder *
+OMRCodeGeneratorForBase::gencodeDiv(Operation *op) {
+    assert(op->action() == _bx->aDiv);
+    ilgen()->div(op->location(), op->result(), op->operand(0), op->operand(1));
+    return NULL;
+}
+
+Builder *
 OMRCodeGeneratorForBase::gencodeMul(Operation *op) {
     assert(op->action() == _bx->aMul);
     ilgen()->mul(op->location(), op->result(), op->operand(0), op->operand(1));

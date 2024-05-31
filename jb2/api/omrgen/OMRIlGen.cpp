@@ -661,6 +661,16 @@ OMRIlGen::convertTo(Location *location, Value *result, const Type *typeTo, Value
 }
 
 void
+OMRIlGen::div(Location *location, Value *result, Value *left, Value *right) {
+    TR::DataTypes leftType = mapType(left->type());
+    TR::Node *leftNode = useValue(left);
+    TR::DataTypes rightType = mapType(right->type());
+    TR::Node *rightNode = useValue(right);
+    TR::Node *resultNode = resultNode = binaryOpFromOpMap(TR::ILOpCode::divideOpCode, leftNode, rightNode);
+    defineValue(result, resultNode);
+}
+
+void
 OMRIlGen::goto_(Location *location, Builder *target) {
     TR::Block *targetBlock = mapBuilder(target);
     TR::Node *gotoNode = TR::Node::create(NULL, TR::Goto);

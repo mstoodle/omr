@@ -1434,6 +1434,134 @@ TEST(omrgenExtension, SubAddressAndInt) {
     }
 }
 
+
+template<typename FuncPrototype, typename left_cType, typename right_cType, typename result_cType>
+class DivFunc : public BinaryOpFunc<FuncPrototype, left_cType, right_cType, result_cType> {
+public:
+    DivFunc(LOCATION, String name, Compiler *compiler, bool log)
+        : BinaryOpFunc<FuncPrototype, left_cType, right_cType, result_cType>(PASSLOC, name, compiler, log) { }
+protected:
+    virtual Value *doBinaryOp(LOCATION, Builder *b, Value *left, Value *right) {
+        return this->bx()->Div(PASSLOC, b, left, right);
+    }
+};
+
+TEST(omrgenExtension, DivInt8s) {
+    typedef int8_t (FuncProto)(int8_t, int8_t);
+    DivFunc<FuncProto, int8_t, int8_t, int8_t> div_int8s(LOC, "div_int8s", c, false);
+    //div_int8s.test(LOC, Int8, static_cast<int8_t>(0), Int8, static_cast<int8_t>(0), Int8, static_cast<int8_t>(0));
+    div_int8s.test(LOC, Int8, static_cast<int8_t>(0), Int8, static_cast<int8_t>(3), Int8, static_cast<int8_t>(0));
+    //div_int8s.test(LOC, Int8, static_cast<int8_t>(3), Int8, static_cast<int8_t>(0), Int8, static_cast<int8_t>(0));
+    div_int8s.test(LOC, Int8, static_cast<int8_t>(1), Int8, static_cast<int8_t>(1), Int8, static_cast<int8_t>(1));
+    div_int8s.test(LOC, Int8, static_cast<int8_t>(-1), Int8, static_cast<int8_t>(1), Int8, static_cast<int8_t>(-1));
+    div_int8s.test(LOC, Int8, static_cast<int8_t>(1), Int8, static_cast<int8_t>(-1), Int8, static_cast<int8_t>(-1));
+    div_int8s.test(LOC, Int8, static_cast<int8_t>(-1), Int8, static_cast<int8_t>(-1), Int8, static_cast<int8_t>(1));
+    div_int8s.test(LOC, Int8, static_cast<int8_t>(9), Int8, static_cast<int8_t>(3), Int8, static_cast<int8_t>(3));
+    div_int8s.test(LOC, Int8, static_cast<int8_t>(-9), Int8, static_cast<int8_t>(3), Int8, static_cast<int8_t>(-3));
+    div_int8s.test(LOC, Int8, static_cast<int8_t>(9), Int8, static_cast<int8_t>(-3), Int8, static_cast<int8_t>(-3));
+    div_int8s.test(LOC, Int8, static_cast<int8_t>(-9), Int8, static_cast<int8_t>(-3), Int8, static_cast<int8_t>(3));
+    div_int8s.test(LOC, Int8, std::numeric_limits<int8_t>::min(), Int8, static_cast<int8_t>(1), Int8, std::numeric_limits<int8_t>::min());
+    div_int8s.test(LOC, Int8, static_cast<int8_t>(1), Int8, std::numeric_limits<int8_t>::min(), Int8, static_cast<int8_t>(0));
+    div_int8s.test(LOC, Int8, std::numeric_limits<int8_t>::max(), Int8, static_cast<int8_t>(1), Int8, std::numeric_limits<int8_t>::max());
+    div_int8s.test(LOC, Int8, static_cast<int8_t>(1), Int8, std::numeric_limits<int8_t>::max(), Int8, static_cast<int8_t>(0));
+}
+TEST(omrgenExtension, DivInt16s) {
+    typedef int16_t (FuncProto)(int16_t, int16_t);
+    DivFunc<FuncProto, int16_t, int16_t, int16_t> div_int16s(LOC, "div_int16s", c, false);
+    //div_int16s.test(LOC, Int16, static_cast<int16_t>(0), Int16, static_cast<int16_t>(0), Int16, static_cast<int16_t>(0));
+    div_int16s.test(LOC, Int16, static_cast<int16_t>(0), Int16, static_cast<int16_t>(3), Int16, static_cast<int16_t>(0));
+    //div_int16s.test(LOC, Int16, static_cast<int16_t>(3), Int16, static_cast<int16_t>(0), Int16, static_cast<int16_t>(0));
+    div_int16s.test(LOC, Int16, static_cast<int16_t>(1), Int16, static_cast<int16_t>(1), Int16, static_cast<int16_t>(1));
+    div_int16s.test(LOC, Int16, static_cast<int16_t>(-1), Int16, static_cast<int16_t>(1), Int16, static_cast<int16_t>(-1));
+    div_int16s.test(LOC, Int16, static_cast<int16_t>(1), Int16, static_cast<int16_t>(-1), Int16, static_cast<int16_t>(-1));
+    div_int16s.test(LOC, Int16, static_cast<int16_t>(-1), Int16, static_cast<int16_t>(-1), Int16, static_cast<int16_t>(1));
+    div_int16s.test(LOC, Int16, static_cast<int16_t>(9), Int16, static_cast<int16_t>(3), Int16, static_cast<int16_t>(3));
+    div_int16s.test(LOC, Int16, static_cast<int16_t>(-9), Int16, static_cast<int16_t>(3), Int16, static_cast<int16_t>(-3));
+    div_int16s.test(LOC, Int16, static_cast<int16_t>(9), Int16, static_cast<int16_t>(-3), Int16, static_cast<int16_t>(-3));
+    div_int16s.test(LOC, Int16, static_cast<int16_t>(-9), Int16, static_cast<int16_t>(-3), Int16, static_cast<int16_t>(3));
+    div_int16s.test(LOC, Int16, std::numeric_limits<int16_t>::min(), Int16, static_cast<int16_t>(1), Int16, std::numeric_limits<int16_t>::min());
+    div_int16s.test(LOC, Int16, static_cast<int16_t>(1), Int16, std::numeric_limits<int16_t>::min(), Int16, static_cast<int16_t>(0));
+    div_int16s.test(LOC, Int16, std::numeric_limits<int16_t>::max(), Int16, static_cast<int16_t>(1), Int16, std::numeric_limits<int16_t>::max());
+    div_int16s.test(LOC, Int16, static_cast<int16_t>(1), Int16, std::numeric_limits<int16_t>::max(), Int16, static_cast<int16_t>(0));
+}
+TEST(omrgenExtension, DivInt32s) {
+    typedef int32_t (FuncProto)(int32_t, int32_t);
+    DivFunc<FuncProto, int32_t, int32_t, int32_t> div_int32s(LOC, "div_int32s", c, false);
+    //div_int32s.test(LOC, Int32, static_cast<int32_t>(0), Int32, static_cast<int32_t>(0), Int32, static_cast<int32_t>(0));
+    div_int32s.test(LOC, Int32, static_cast<int32_t>(0), Int32, static_cast<int32_t>(3), Int32, static_cast<int32_t>(0));
+    //div_int32s.test(LOC, Int32, static_cast<int32_t>(3), Int32, static_cast<int32_t>(0), Int32, static_cast<int32_t>(0));
+    div_int32s.test(LOC, Int32, static_cast<int32_t>(1), Int32, static_cast<int32_t>(1), Int32, static_cast<int32_t>(1));
+    div_int32s.test(LOC, Int32, static_cast<int32_t>(-1), Int32, static_cast<int32_t>(1), Int32, static_cast<int32_t>(-1));
+    div_int32s.test(LOC, Int32, static_cast<int32_t>(1), Int32, static_cast<int32_t>(-1), Int32, static_cast<int32_t>(-1));
+    div_int32s.test(LOC, Int32, static_cast<int32_t>(-1), Int32, static_cast<int32_t>(-1), Int32, static_cast<int32_t>(1));
+    div_int32s.test(LOC, Int32, static_cast<int32_t>(9), Int32, static_cast<int32_t>(3), Int32, static_cast<int32_t>(3));
+    div_int32s.test(LOC, Int32, static_cast<int32_t>(-9), Int32, static_cast<int32_t>(3), Int32, static_cast<int32_t>(-3));
+    div_int32s.test(LOC, Int32, static_cast<int32_t>(9), Int32, static_cast<int32_t>(-3), Int32, static_cast<int32_t>(-3));
+    div_int32s.test(LOC, Int32, static_cast<int32_t>(-9), Int32, static_cast<int32_t>(-3), Int32, static_cast<int32_t>(3));
+    div_int32s.test(LOC, Int32, std::numeric_limits<int32_t>::min(), Int32, static_cast<int32_t>(1), Int32, std::numeric_limits<int32_t>::min());
+    div_int32s.test(LOC, Int32, static_cast<int32_t>(1), Int32, std::numeric_limits<int32_t>::min(), Int32, static_cast<int32_t>(0));
+    div_int32s.test(LOC, Int32, std::numeric_limits<int32_t>::max(), Int32, static_cast<int32_t>(1), Int32, std::numeric_limits<int32_t>::max());
+    div_int32s.test(LOC, Int32, static_cast<int32_t>(1), Int32, std::numeric_limits<int32_t>::max(), Int32, static_cast<int32_t>(0));
+}
+TEST(omrgenExtension, DivInt64s) {
+    typedef int64_t (FuncProto)(int64_t, int64_t);
+    DivFunc<FuncProto, int64_t, int64_t, int64_t> div_int64s(LOC, "div_int64s", c, false);
+    //div_int64s.test(LOC, Int64, static_cast<int64_t>(0), Int64, static_cast<int64_t>(0), Int64, static_cast<int64_t>(0));
+    div_int64s.test(LOC, Int64, static_cast<int64_t>(0), Int64, static_cast<int64_t>(3), Int64, static_cast<int64_t>(0));
+    //div_int64s.test(LOC, Int64, static_cast<int64_t>(3), Int64, static_cast<int64_t>(0), Int64, static_cast<int64_t>(0));
+    div_int64s.test(LOC, Int64, static_cast<int64_t>(1), Int64, static_cast<int64_t>(1), Int64, static_cast<int64_t>(1));
+    div_int64s.test(LOC, Int64, static_cast<int64_t>(-1), Int64, static_cast<int64_t>(1), Int64, static_cast<int64_t>(-1));
+    div_int64s.test(LOC, Int64, static_cast<int64_t>(1), Int64, static_cast<int64_t>(-1), Int64, static_cast<int64_t>(-1));
+    div_int64s.test(LOC, Int64, static_cast<int64_t>(-1), Int64, static_cast<int64_t>(-1), Int64, static_cast<int64_t>(1));
+    div_int64s.test(LOC, Int64, static_cast<int64_t>(9), Int64, static_cast<int64_t>(3), Int64, static_cast<int64_t>(3));
+    div_int64s.test(LOC, Int64, static_cast<int64_t>(-9), Int64, static_cast<int64_t>(3), Int64, static_cast<int64_t>(-3));
+    div_int64s.test(LOC, Int64, static_cast<int64_t>(9), Int64, static_cast<int64_t>(-3), Int64, static_cast<int64_t>(-3));
+    div_int64s.test(LOC, Int64, static_cast<int64_t>(-9), Int64, static_cast<int64_t>(-3), Int64, static_cast<int64_t>(3));
+    div_int64s.test(LOC, Int64, std::numeric_limits<int64_t>::min(), Int64, static_cast<int64_t>(1), Int64, std::numeric_limits<int64_t>::min());
+    div_int64s.test(LOC, Int64, static_cast<int64_t>(1), Int64, std::numeric_limits<int64_t>::min(), Int64, static_cast<int64_t>(0));
+    div_int64s.test(LOC, Int64, std::numeric_limits<int64_t>::max(), Int64, static_cast<int64_t>(1), Int64, std::numeric_limits<int64_t>::max());
+    div_int64s.test(LOC, Int64, static_cast<int64_t>(1), Int64, std::numeric_limits<int64_t>::max(), Int64, static_cast<int64_t>(0));
+}
+TEST(omrgenExtension, DivFloat32s) {
+    typedef float (FuncProto)(float, float);
+    DivFunc<FuncProto, float, float, float> div_floats(LOC, "div_float", c, false);
+    //div_floats.test(LOC, Float32, static_cast<float>(0), Float32, static_cast<float>(0), Float32, static_cast<float>(0));
+    div_floats.test(LOC, Float32, static_cast<float>(0), Float32, static_cast<float>(3), Float32, static_cast<float>(0));
+    //div_floats.test(LOC, Float32, static_cast<float>(3), Float32, static_cast<float>(0), Float32, static_cast<float>(0));
+    div_floats.test(LOC, Float32, static_cast<float>(1), Float32, static_cast<float>(1), Float32, static_cast<float>(1));
+    div_floats.test(LOC, Float32, static_cast<float>(-1), Float32, static_cast<float>(1), Float32, static_cast<float>(-1));
+    div_floats.test(LOC, Float32, static_cast<float>(1), Float32, static_cast<float>(-1), Float32, static_cast<float>(-1));
+    div_floats.test(LOC, Float32, static_cast<float>(-1), Float32, static_cast<float>(-1), Float32, static_cast<float>(1));
+    div_floats.test(LOC, Float32, static_cast<float>(9), Float32, static_cast<float>(3), Float32, static_cast<float>(3));
+    div_floats.test(LOC, Float32, static_cast<float>(-9), Float32, static_cast<float>(3), Float32, static_cast<float>(-3));
+    div_floats.test(LOC, Float32, static_cast<float>(9), Float32, static_cast<float>(-3), Float32, static_cast<float>(-3));
+    div_floats.test(LOC, Float32, static_cast<float>(-9), Float32, static_cast<float>(-3), Float32, static_cast<float>(3));
+    div_floats.test(LOC, Float32, std::numeric_limits<float>::min(), Float32, static_cast<float>(1), Float32, std::numeric_limits<float>::min());
+    div_floats.test(LOC, Float32, static_cast<float>(1), Float32, std::numeric_limits<float>::min(), Float32, static_cast<float>(1/std::numeric_limits<float>::min()));
+    div_floats.test(LOC, Float32, std::numeric_limits<float>::max(), Float32, static_cast<float>(1), Float32, std::numeric_limits<float>::max());
+    div_floats.test(LOC, Float32, static_cast<float>(1), Float32, std::numeric_limits<float>::max(), Float32, static_cast<float>(1/std::numeric_limits<float>::max()));
+}
+TEST(omrgenExtension, DivFloat64s) {
+    typedef double (FuncProto)(double, double);
+    DivFunc<FuncProto, double, double, double> div_doubles(LOC, "div_double", c, false);
+    //div_doubles.test(LOC, Float64, static_cast<double>(0), Float64, static_cast<double>(0), Float64, static_cast<double>(0));
+    div_doubles.test(LOC, Float64, static_cast<double>(0), Float64, static_cast<double>(3), Float64, static_cast<double>(0));
+    //div_doubles.test(LOC, Float64, static_cast<double>(3), Float64, static_cast<double>(0), Float64, static_cast<double>(0));
+    div_doubles.test(LOC, Float64, static_cast<double>(1), Float64, static_cast<double>(1), Float64, static_cast<double>(1));
+    div_doubles.test(LOC, Float64, static_cast<double>(-1), Float64, static_cast<double>(1), Float64, static_cast<double>(-1));
+    div_doubles.test(LOC, Float64, static_cast<double>(1), Float64, static_cast<double>(-1), Float64, static_cast<double>(-1));
+    div_doubles.test(LOC, Float64, static_cast<double>(-1), Float64, static_cast<double>(-1), Float64, static_cast<double>(1));
+    div_doubles.test(LOC, Float64, static_cast<double>(9), Float64, static_cast<double>(3), Float64, static_cast<double>(3));
+    div_doubles.test(LOC, Float64, static_cast<double>(-9), Float64, static_cast<double>(3), Float64, static_cast<double>(-3));
+    div_doubles.test(LOC, Float64, static_cast<double>(9), Float64, static_cast<double>(-3), Float64, static_cast<double>(-3));
+    div_doubles.test(LOC, Float64, static_cast<double>(-9), Float64, static_cast<double>(-3), Float64, static_cast<double>(3));
+    div_doubles.test(LOC, Float64, std::numeric_limits<double>::min(), Float64, static_cast<double>(1), Float64, std::numeric_limits<double>::min());
+    div_doubles.test(LOC, Float64, static_cast<double>(1), Float64, std::numeric_limits<double>::min(), Float64, static_cast<double>(1/std::numeric_limits<double>::min()));
+    div_doubles.test(LOC, Float64, std::numeric_limits<double>::max(), Float64, static_cast<double>(1), Float64, std::numeric_limits<double>::max());
+    div_doubles.test(LOC, Float64, static_cast<double>(1), Float64, std::numeric_limits<double>::max(), Float64, static_cast<double>(1/std::numeric_limits<double>::max()));
+}
+
+
 template<typename FuncPrototype, typename left_cType, typename right_cType, typename result_cType>
 class MulFunc : public BinaryOpFunc<FuncPrototype, left_cType, right_cType, result_cType> {
 public:

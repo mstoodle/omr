@@ -101,6 +101,7 @@ public:
     void Add(Location *loc, Builder *b, Value *result, Value *left, Value *right);
     void And(Location *loc, Builder *b, Value *result, Value *left, Value *right);
     void ConvertTo(Location *loc, Builder *b, Value *result, const Type *type, Value *value);
+    void Div(Location *loc, Builder *b, Value *result, Value *left, Value *right);
     void Mul(Location *loc, Builder *b, Value *result, Value *left, Value *right);
     void Sub(Location *loc, Builder *b, Value *result, Value *left, Value *right);
 

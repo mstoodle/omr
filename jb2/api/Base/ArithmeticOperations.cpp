@@ -94,6 +94,27 @@ Op_ConvertTo::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
 
 
 //
+// Div
+//
+INIT_JBALLOC_REUSECAT(Op_Div, Operation)
+
+Op_Div::Op_Div(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aDiv, Value *result, Value *left, Value *right)
+    : OperationR1V2(MEM_PASSLOC(a), aDiv, ext, parent, result, left, right) {
+
+}
+
+Op_Div::~Op_Div() {
+
+}
+
+Operation *
+Op_Div::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
+    Allocator *mem = b->ir()->mem();
+    return new (mem) Op_Div(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->result(), cloner->operand(0), cloner->operand(1));
+}
+
+
+//
 // Mul
 //
 INIT_JBALLOC_REUSECAT(Op_Mul, Operation)
