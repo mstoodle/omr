@@ -106,6 +106,7 @@ public:
     void ifCmpLessOrEqual(Location *location, Builder *target, Value *left, Value *right, bool isUnsigned);
     void ifCmpNotEqual(Location *location, Builder *target, Value *left, Value *right);
     void ifCmpNotEqualZero(Location *location, Builder *target, Value *v);
+    void indexAt(Location *location, Value *result, Value *base, const Type *elemType, Value *index);
     void load(Location *location, Value *result, Symbol *sym);
     void loadAt(Location *location, Value *result, Value *addrValue, const Type *baseType);
     void mul(Location *location, Value *result, Value *left, Value *right);

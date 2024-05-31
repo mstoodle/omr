@@ -401,7 +401,9 @@ OMRCodeGeneratorForBase::gencodeCreateLocalStruct(Operation *op) {
 Builder *
 OMRCodeGeneratorForBase::gencodeIndexAt(Operation *op) {
     assert(op->action() == _bx->aIndexAt);
-    assert(0); // TODO
+    Value *base = op->operand(0);
+    const Type *elementType = base->type()->refine<Base::PointerType>()->baseType();
+    ilgen()->indexAt(op->location(), op->result(), base, elementType, op->operand(1));
     return NULL;
 }
 
