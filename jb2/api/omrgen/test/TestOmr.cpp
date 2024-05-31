@@ -1029,6 +1029,116 @@ TEST(omrgenExtension, ReturnPointerToPointerParam_ppAddress) {
 }
 
 
+// Tests for CreateLocalArray
+template<uint32_t NUMVALUES, typename value_cType>
+class CreateLocalArrayFunc : public TestFunc {
+public:
+    CreateLocalArrayFunc(LOCATION, String name, Compiler *compiler, bool log)
+        : TestFunc(PASSLOC, compiler, log)
+        , _pValueType(NULL)
+        , _valueType(NULL)
+        , _resultValue(0) {
+
+        DefineName(name);
+        DefineFile(__FILE__);
+        DefineLine(LINETOSTR(__LINE__));
+    }
+    void run(LOCATION) {
+        typedef value_cType (FuncPrototype)();
+        FuncPrototype *f = body()->template nativeEntryPoint<FuncPrototype>();
+        EXPECT_NE(f, nullptr);
+        EXPECT_EQ(f(), _resultValue) << "Compiled f() returns " << _resultValue;
+    }
+    void test(LOCATION, const Type *valueType) {
+        value_cType sum=0;
+        for (int32_t i=0;i < NUMVALUES;i++) {
+            sum += i;
+        }
+        _valueType = valueType;
+        _resultValue = sum;
+        compile(PASSLOC);
+        run(PASSLOC);
+    }
+
+protected:
+    virtual bool buildContext(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
+        _pValueType = bx()->PointerTo(LOC, comp, _valueType);
+        ctx->DefineParameter("values", _pValueType);
+        ctx->DefineReturnType(_valueType);
+        ctx->DefineLocal("array", _pValueType);
+        ctx->DefineLocal("sum", _valueType);
+        return true;
+    }
+    virtual bool buildIL(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
+        Builder *entry = scope->entryPoint<BuilderEntry>(0)->builder();
+        auto valuesSym=ctx->LookupLocal("values"); 
+        auto arraySym=ctx->LookupLocal("array"); 
+        int32_t numElements = NUMVALUES;
+        Value *neValue = bx()->ConstInt32(LOC, entry, numElements);
+        Literal *lv = Int32->literal(LOC, comp->ir(), reinterpret_cast<LiteralBytes *>(&numElements));
+        fx()->Store(LOC, entry, arraySym, bx()->CreateLocalArray(LOC, entry, lv, _pValueType));
+        Value *arrayValue = fx()->Load(LOC, entry, arraySym);
+        for (value_cType i=0;i < NUMVALUES;i++) {
+            Literal *lv = _valueType->literal(LOC, comp->ir(), reinterpret_cast<LiteralBytes *>(&i));
+            Value *ci = this->bx()->Const(LOC, entry, lv);
+            bx()->StoreAt(LOC, entry, bx()->IndexAt(LOC, entry, arrayValue, ci), ci);
+        }
+
+        auto sumSym=ctx->LookupLocal("sum"); 
+        fx()->Store(LOC, entry, sumSym, bx()->Const(LOC, entry, _valueType->zero(LOC, comp->ir())));
+        for (int32_t i=0;i < NUMVALUES;i++) {
+            Value *ci = bx()->ConstInt32(LOC, entry, i);
+            Value *v = bx()->LoadAt(LOC, entry, bx()->IndexAt(LOC, entry, arrayValue, ci));
+            fx()->Store(LOC, entry, sumSym, bx()->Add(LOC, entry, fx()->Load(LOC, entry, sumSym), v));
+        }
+        fx()->Return(LOC, entry, fx()->Load(LOC, entry, sumSym));
+        return true;
+    }
+
+protected:
+    const Type *_valueType;
+    const Base::PointerType *_pValueType;
+    value_cType _resultValue;
+};
+
+TEST(omrgenExtension, CreateLocalStruct_int8) {
+    CreateLocalArrayFunc<1, int8_t> cla_1_int8(LOC, "cla_1_int8", c, false);
+    cla_1_int8.test(LOC, Int8);
+    CreateLocalArrayFunc<1, int8_t> cla_13_int8(LOC, "cla_13_int8", c, false);
+    cla_13_int8.test(LOC, Int8);
+}
+TEST(omrgenExtension, CreateLocalStruct_int16) {
+    CreateLocalArrayFunc<1, int16_t> cla_1_int16(LOC, "cla_1_int16", c, false);
+    cla_1_int16.test(LOC, Int16);
+    CreateLocalArrayFunc<1, int16_t> cla_13_int16(LOC, "cla_13_int16", c, false);
+    cla_13_int16.test(LOC, Int16);
+}
+TEST(omrgenExtension, CreateLocalStruct_int32) {
+    CreateLocalArrayFunc<1, int32_t> cla_1_int32(LOC, "cla_1_int32", c, false);
+    cla_1_int32.test(LOC, Int32);
+    CreateLocalArrayFunc<1, int32_t> cla_13_int32(LOC, "cla_13_int32", c, false);
+    cla_13_int32.test(LOC, Int32);
+}
+TEST(omrgenExtension, CreateLocalStruct_int64) {
+    CreateLocalArrayFunc<1, int64_t> cla_1_int64(LOC, "cla_1_int64", c, false);
+    cla_1_int64.test(LOC, Int64);
+    CreateLocalArrayFunc<1, int64_t> cla_13_int64(LOC, "cla_13_int64", c, false);
+    cla_13_int64.test(LOC, Int64);
+}
+TEST(omrgenExtension, CreateLocalStruct_float32) {
+    CreateLocalArrayFunc<1, float> cla_1_float32(LOC, "cla_1_float32", c, false);
+    cla_1_float32.test(LOC, Float32);
+    CreateLocalArrayFunc<1, float> cla_13_float32(LOC, "cla_13_float32", c, false);
+    cla_13_float32.test(LOC, Float32);
+}
+TEST(omrgenExtension, CreateLocalStruct_float64) {
+    CreateLocalArrayFunc<1, double> cla_1_float64(LOC, "cla_1_float64", c, false);
+    cla_1_float64.test(LOC, Float64);
+    CreateLocalArrayFunc<1, double> cla_13_float64(LOC, "cla_13_float64", c, false);
+    cla_13_float64.test(LOC, Float64);
+}
+
+
 // Base class for operating on two numbers together of the given types producing the given type
 template<typename FuncPrototype, typename left_cType, typename right_cType, typename result_cType>
 class BinaryOpFunc : public TestFunc {
