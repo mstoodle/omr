@@ -362,6 +362,13 @@ JBMethodBuilder::ConvertTo(Location *loc, Builder *b, Value *result, const Type 
 }
 
 void
+JBMethodBuilder::Div(Location *loc, Builder *b, Value *result, Value *left, Value *right) {
+    TR::IlBuilder *omr_b = map(b);
+    omr_b->setBCIndex(loc->bcIndex())->SetCurrentIlGenerator();
+    registerValue(result, omr_b->Div(map(left), map(right)));
+}
+
+void
 JBMethodBuilder::Mul(Location *loc, Builder *b, Value *result, Value *left, Value *right) {
     TR::IlBuilder *omr_b = map(b);
     omr_b->setBCIndex(loc->bcIndex())->SetCurrentIlGenerator();

@@ -71,6 +71,7 @@ BaseExtension::BaseExtension(MEM_LOCATION(a), Compiler *compiler, bool extended,
     , aAdd(registerAction(String(a, "Add")))
     , aAnd(registerAction(String(a, "And")))
     , aConvertTo(registerAction(String(a, "ConvertTo")))
+    , aDiv(registerAction(String(a, "Div")))
     , aMul(registerAction(String(a, "Mul")))
     , aSub(registerAction(String(a, "Sub")))
     , aLoadAt(registerAction(String(a, "LoadAt")))
@@ -103,6 +104,7 @@ BaseExtension::BaseExtension(MEM_LOCATION(a), Compiler *compiler, bool extended,
     , CompileFail_BadInputTypes_Add(registerReturnCode(String(a, "CompileFail_BadInputTypes_Add")))
     , CompileFail_BadInputTypes_And(registerReturnCode(String(a, "CompileFail_BadInputTypes_Add")))
     , CompileFail_BadInputTypes_ConvertTo(registerReturnCode(String(a, "CompileFail_BadInputTypes_ConvertTo")))
+    , CompileFail_BadInputTypes_Div(registerReturnCode(String(a, "CompileFail_BadInputTypes_Div")))
     , CompileFail_BadInputTypes_Mul(registerReturnCode(String(a, "CompileFail_BadInputTypes_Mul")))
     , CompileFail_BadInputTypes_Sub(registerReturnCode(String(a, "CompileFail_BadInputTypes_Sub")))
     , CompileFail_BadInputTypes_IfCmpEqual(registerReturnCode(String(a, "CompileFail_BadInputTypes_IfCmpEqual")))
@@ -363,12 +365,59 @@ BaseExtension::ConvertTo(LOCATION, Builder *b, const Type *type, Value *value) {
 
 
 bool
-BaseExtensionChecker::validateMul(LOCATION, Builder *b, Value *left, Value *right) {
+BaseExtensionChecker::validateDiv(LOCATION, Builder *b, Value *left, Value *right) {
     const Type *lType = left->type();
     const Type *rType = right->type();
 
-    if (lType == _base->Address || rType == _base->Address)
-        failValidateMul(PASSLOC, b, left, right);
+    if (lType == _base->Int8
+     || lType == _base->Int16
+     || lType == _base->Int32
+     || lType == _base->Int64
+     || lType == _base->Float32
+     || lType == _base->Float64) {
+        if (rType != lType)
+            failValidateDiv(PASSLOC, b, left, right);
+        return true;
+    }
+
+    // we defined this operation, so if we can't validate it we have to fail it
+    failValidateDiv(PASSLOC, b, left, right);
+    return true;
+}
+
+void
+BaseExtensionChecker::failValidateDiv(LOCATION, Builder *b, Value *left, Value *right) {
+    CompilationException e(PASSLOC, _base->compiler(), _base->CompileFail_BadInputTypes_Div);
+    const Type *lType = left->type();
+    const Type *rType = right->type();
+    Allocator *mem = _base->compiler()->mem();
+    e.setMessageLine(String(mem, "Div: invalid input types"))
+     .appendMessageLine(String(mem, "    left ").append(lType->to_string(mem)))
+     .appendMessageLine(String(mem, "   right ").append(rType->to_string(mem)))
+     .appendMessageLine(String(mem, "Left and right types are expected to be the same for numeric types (Int8,Int16,Int32,Int64,Float32,Float64)"))
+     .appendMessageLine(String(mem, "Address types cannot be used"));
+    throw e;
+}
+
+Value *
+BaseExtension::Div(LOCATION, Builder *b, Value *left, Value *right) {
+    for (auto it = _checkers.iterator(); it.hasItem(); it++) {
+        BaseExtensionChecker *checker = it.item();
+        if (checker->validateDiv(PASSLOC, b, left, right))
+            break;
+    }
+
+    Allocator *mem = b->ir()->mem();
+    Value *result = createValue(b, left->type());
+    addOperation(b, new (mem) Op_Div(MEM_PASSLOC(mem), this, b, aDiv, result, left, right));
+    return result;
+}
+
+
+bool
+BaseExtensionChecker::validateMul(LOCATION, Builder *b, Value *left, Value *right) {
+    const Type *lType = left->type();
+    const Type *rType = right->type();
 
     if (lType == _base->Int8
      || lType == _base->Int16
@@ -395,7 +444,7 @@ BaseExtensionChecker::failValidateMul(LOCATION, Builder *b, Value *left, Value *
     e.setMessageLine(String(mem, "Mul: invalid input types"))
      .appendMessageLine(String(mem, "    left ").append(lType->to_string(mem)))
      .appendMessageLine(String(mem, "   right ").append(rType->to_string(mem)))
-     .appendMessageLine(String(mem, "Left and right types are expected to be the same for integer types (Int8,Int16,Int32,Int64,Float32,Float64)"))
+     .appendMessageLine(String(mem, "Left and right types are expected to be the same for numeric types (Int8,Int16,Int32,Int64,Float32,Float64)"))
      .appendMessageLine(String(mem, "Address types cannot be used"));
     throw e;
 }
@@ -454,7 +503,7 @@ BaseExtensionChecker::failValidateSub(LOCATION, Builder *b, Value *left, Value *
     e.setMessageLine(String(mem, "Sub: invalid input types"))
      .appendMessageLine(String(mem, "    left ").append(lType->to_string(mem)))
      .appendMessageLine(String(mem, "   right ").append(rType->to_string(mem)))
-     .appendMessageLine(String(mem, "Left and right types are expected to be the same for integer types (Int8,Int16,Int32,Int64,Float32,Float64)"))
+     .appendMessageLine(String(mem, "Left and right types are expected to be the same for numeric types (Int8,Int16,Int32,Int64,Float32,Float64)"))
      .appendMessageLine(String(mem, "If left type is Address then the right type must be either Address or Word"));
     throw e;
 }
