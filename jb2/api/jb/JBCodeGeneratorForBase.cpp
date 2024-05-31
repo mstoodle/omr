@@ -177,6 +177,13 @@ JBCodeGeneratorForBase::gencodeConvertTo(Operation *op) {
 }
 
 Builder *
+JBCodeGeneratorForBase::gencodeDiv(Operation *op) {
+    assert(op->action() == _bx->aDiv);
+    jbmb()->Div(op->location(), op->parent(), op->result(), op->operand(0), op->operand(1));
+    return NULL;
+}
+
+Builder *
 JBCodeGeneratorForBase::gencodeMul(Operation *op) {
     assert(op->action() == _bx->aMul);
     jbmb()->Mul(op->location(), op->parent(), op->result(), op->operand(0), op->operand(1));

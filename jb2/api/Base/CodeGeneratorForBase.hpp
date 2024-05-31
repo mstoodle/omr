@@ -47,6 +47,7 @@ namespace Base {
     Builder * gencodeAdd(Operation *op); \
     Builder * gencodeAnd(Operation *op); \
     Builder * gencodeConvertTo(Operation *op); \
+    Builder * gencodeDiv(Operation *op); \
     Builder * gencodeMul(Operation *op); \
     Builder * gencodeSub(Operation *op); \
     Builder * gencodeForLoopUp(Operation *op); \
@@ -127,6 +128,7 @@ namespace Base {
     _gencodeVFT.assign(bx->aForLoopUp, &C::gencodeForLoopUp); \
     _gencodeVFT.assign(bx->aSub, &C::gencodeSub); \
     _gencodeVFT.assign(bx->aMul, &C::gencodeMul); \
+    _gencodeVFT.assign(bx->aDiv, &C::gencodeDiv); \
     _gencodeVFT.assign(bx->aConvertTo, &C::gencodeConvertTo); \
     _gencodeVFT.assign(bx->aAdd, &C::gencodeAdd); \
     _gencodeVFT.assign(bx->aAnd, &C::gencodeAnd); \
