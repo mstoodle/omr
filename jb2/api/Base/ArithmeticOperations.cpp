@@ -115,6 +115,27 @@ Op_Div::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
 
 
 //
+// EqualTo
+//
+INIT_JBALLOC_REUSECAT(Op_EqualTo, Operation)
+
+Op_EqualTo::Op_EqualTo(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aEqualTo, Value *result, Value *left, Value *right)
+    : OperationR1V2(MEM_PASSLOC(a), aEqualTo, ext, parent, result, left, right) {
+
+}
+
+Op_EqualTo::~Op_EqualTo() {
+
+}
+
+Operation *
+Op_EqualTo::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
+    Allocator *mem = b->ir()->mem();
+    return new (mem) Op_EqualTo(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->result(), cloner->operand(0), cloner->operand(1));
+}
+
+
+//
 // Mul
 //
 INIT_JBALLOC_REUSECAT(Op_Mul, Operation)
@@ -132,6 +153,27 @@ Operation *
 Op_Mul::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
     Allocator *mem = b->ir()->mem();
     return new (mem) Op_Mul(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->result(), cloner->operand(0), cloner->operand(1));
+}
+
+
+//
+// NotEqualTo
+//
+INIT_JBALLOC_REUSECAT(Op_NotEqualTo, Operation)
+
+Op_NotEqualTo::Op_NotEqualTo(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aNotEqualTo, Value *result, Value *left, Value *right)
+    : OperationR1V2(MEM_PASSLOC(a), aNotEqualTo, ext, parent, result, left, right) {
+
+}
+
+Op_NotEqualTo::~Op_NotEqualTo() {
+
+}
+
+Operation *
+Op_NotEqualTo::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
+    Allocator *mem = b->ir()->mem();
+    return new (mem) Op_NotEqualTo(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->result(), cloner->operand(0), cloner->operand(1));
 }
 
 

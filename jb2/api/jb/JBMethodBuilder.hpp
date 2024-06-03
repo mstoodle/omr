@@ -102,7 +102,9 @@ public:
     void And(Location *loc, Builder *b, Value *result, Value *left, Value *right);
     void ConvertTo(Location *loc, Builder *b, Value *result, const Type *type, Value *value);
     void Div(Location *loc, Builder *b, Value *result, Value *left, Value *right);
+    void EqualTo(Location *loc, Builder *b, Value *result, Value *left, Value *right);
     void Mul(Location *loc, Builder *b, Value *result, Value *left, Value *right);
+    void NotEqualTo(Location *loc, Builder *b, Value *result, Value *left, Value *right);
     void Sub(Location *loc, Builder *b, Value *result, Value *left, Value *right);
 
     void AppendBuilder(Location *loc, Builder *parent, Builder *b);
