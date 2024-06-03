@@ -44,8 +44,16 @@ DECL_OPERATION_CLASS(Op_Div, OperationR1V2, BaseExtension,
     Op_Div(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aDiv, Value *result, Value *left, Value *right);
 )
 
+DECL_OPERATION_CLASS(Op_EqualTo, OperationR1V2, BaseExtension,
+    Op_EqualTo(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aEqualTo, Value *result, Value *left, Value *right);
+)
+
 DECL_OPERATION_CLASS(Op_Mul, OperationR1V2, BaseExtension,
     Op_Mul(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aMul, Value *result, Value *left, Value *right);
+)
+
+DECL_OPERATION_CLASS(Op_NotEqualTo, OperationR1V2, BaseExtension,
+    Op_NotEqualTo(MEM_LOCATION(a), Extension *ext, Builder * parent, ActionID aNotEqualTo, Value *result, Value *left, Value *right);
 )
 
 DECL_OPERATION_CLASS(Op_Sub, OperationR1V2, BaseExtension,

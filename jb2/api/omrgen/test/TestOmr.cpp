@@ -1672,6 +1672,153 @@ TEST(omrgenExtension, DivFloat64s) {
 }
 
 
+// Test EqualTo with two numbers together of the given types
+template<typename FuncPrototype, typename left_cType, typename right_cType>
+class EqualToFunc : public BinaryOpFunc<FuncPrototype, left_cType, right_cType, int32_t> {
+public:
+    EqualToFunc(LOCATION, String name, Compiler *compiler, bool log)
+        : BinaryOpFunc<FuncPrototype, left_cType, right_cType, int32_t>(PASSLOC, name, compiler, log) { }
+protected:
+    virtual Value *doBinaryOp(LOCATION, Builder *b, Value *left, Value *right) {
+        return this->bx()->EqualTo(PASSLOC, b, left, right);
+    }
+};
+
+TEST(omrgenExtension, EqualToInt8s) {
+    typedef int32_t (FuncProto)(int8_t, int8_t);
+    EqualToFunc<FuncProto, int8_t, int8_t> equalto_int8s(LOC, "equalto_int8s", c, false);
+    equalto_int8s.test(LOC, Int8, static_cast<int8_t>(0), Int8, static_cast<int8_t>(0), Int32, static_cast<int32_t>(1));
+    equalto_int8s.test(LOC, Int8, static_cast<int8_t>(0), Int8, static_cast<int8_t>(3), Int32, static_cast<int32_t>(0));
+    equalto_int8s.test(LOC, Int8, static_cast<int8_t>(3), Int8, static_cast<int8_t>(0), Int32, static_cast<int32_t>(0));
+    equalto_int8s.test(LOC, Int8, static_cast<int8_t>(3), Int8, static_cast<int8_t>(3), Int32, static_cast<int32_t>(1));
+    equalto_int8s.test(LOC, Int8, static_cast<int8_t>(-1), Int8, static_cast<int8_t>(1), Int32, static_cast<int32_t>(0));
+    equalto_int8s.test(LOC, Int8, static_cast<int8_t>(1), Int8, static_cast<int8_t>(-1), Int32, static_cast<int32_t>(0));
+    equalto_int8s.test(LOC, Int8, static_cast<int8_t>(-1), Int8, static_cast<int8_t>(-1), Int32, static_cast<int32_t>(1));
+    equalto_int8s.test(LOC, Int8, std::numeric_limits<int8_t>::min(), Int8, static_cast<int8_t>(0), Int32, static_cast<int32_t>(0));
+    equalto_int8s.test(LOC, Int8, static_cast<int8_t>(0), Int8, std::numeric_limits<int8_t>::min(), Int32, static_cast<int32_t>(0));
+    equalto_int8s.test(LOC, Int8, std::numeric_limits<int8_t>::min(), Int8, std::numeric_limits<int8_t>::min(), Int32, static_cast<int32_t>(1));
+    equalto_int8s.test(LOC, Int8, std::numeric_limits<int8_t>::min(), Int8, std::numeric_limits<int8_t>::max(), Int32, static_cast<int32_t>(0));
+    equalto_int8s.test(LOC, Int8, std::numeric_limits<int8_t>::max(), Int8, static_cast<int8_t>(0), Int32, static_cast<int32_t>(0));
+    equalto_int8s.test(LOC, Int8, static_cast<int8_t>(0), Int8, std::numeric_limits<int8_t>::max(), Int32, static_cast<int32_t>(0));
+    equalto_int8s.test(LOC, Int8, std::numeric_limits<int8_t>::max(), Int8, std::numeric_limits<int8_t>::min(), Int32, static_cast<int32_t>(0));
+    equalto_int8s.test(LOC, Int8, std::numeric_limits<int8_t>::max(), Int8, std::numeric_limits<int8_t>::max(), Int32, static_cast<int32_t>(1));
+}
+TEST(omrgenExtension, EqualToInt16s) {
+    typedef int32_t (FuncProto)(int16_t, int16_t);
+    EqualToFunc<FuncProto, int16_t, int16_t> equalto_int16s(LOC, "equalto_int16s", c, false);
+    equalto_int16s.test(LOC, Int16, static_cast<int16_t>(0), Int16, static_cast<int16_t>(0), Int32, static_cast<int32_t>(1));
+    equalto_int16s.test(LOC, Int16, static_cast<int16_t>(0), Int16, static_cast<int16_t>(3), Int32, static_cast<int32_t>(0));
+    equalto_int16s.test(LOC, Int16, static_cast<int16_t>(3), Int16, static_cast<int16_t>(0), Int32, static_cast<int32_t>(0));
+    equalto_int16s.test(LOC, Int16, static_cast<int16_t>(3), Int16, static_cast<int16_t>(3), Int32, static_cast<int32_t>(1));
+    equalto_int16s.test(LOC, Int16, static_cast<int16_t>(-1), Int16, static_cast<int16_t>(1), Int32, static_cast<int32_t>(0));
+    equalto_int16s.test(LOC, Int16, static_cast<int16_t>(1), Int16, static_cast<int16_t>(-1), Int32, static_cast<int32_t>(0));
+    equalto_int16s.test(LOC, Int16, static_cast<int16_t>(-1), Int16, static_cast<int16_t>(-1), Int32, static_cast<int32_t>(1));
+    equalto_int16s.test(LOC, Int16, std::numeric_limits<int16_t>::min(), Int16, static_cast<int16_t>(0), Int32, static_cast<int32_t>(0));
+    equalto_int16s.test(LOC, Int16, static_cast<int16_t>(0), Int16, std::numeric_limits<int16_t>::min(), Int32, static_cast<int32_t>(0));
+    equalto_int16s.test(LOC, Int16, std::numeric_limits<int16_t>::min(), Int16, std::numeric_limits<int16_t>::min(), Int32, static_cast<int32_t>(1));
+    equalto_int16s.test(LOC, Int16, std::numeric_limits<int16_t>::min(), Int16, std::numeric_limits<int16_t>::max(), Int32, static_cast<int32_t>(0));
+    equalto_int16s.test(LOC, Int16, std::numeric_limits<int16_t>::max(), Int16, static_cast<int16_t>(0), Int32, static_cast<int32_t>(0));
+    equalto_int16s.test(LOC, Int16, static_cast<int16_t>(0), Int16, std::numeric_limits<int16_t>::max(), Int32, static_cast<int32_t>(0));
+    equalto_int16s.test(LOC, Int16, std::numeric_limits<int16_t>::max(), Int16, std::numeric_limits<int16_t>::min(), Int32, static_cast<int32_t>(0));
+    equalto_int16s.test(LOC, Int16, std::numeric_limits<int16_t>::max(), Int16, std::numeric_limits<int16_t>::max(), Int32, static_cast<int32_t>(1));
+}
+TEST(omrgenExtension, EqualToInt32s) {
+    typedef int32_t (FuncProto)(int32_t, int32_t);
+    EqualToFunc<FuncProto, int32_t, int32_t> equalto_int32s(LOC, "equalto_int32s", c, false);
+    equalto_int32s.test(LOC, Int32, static_cast<int32_t>(0), Int32, static_cast<int32_t>(0), Int32, static_cast<int32_t>(1));
+    equalto_int32s.test(LOC, Int32, static_cast<int32_t>(0), Int32, static_cast<int32_t>(3), Int32, static_cast<int32_t>(0));
+    equalto_int32s.test(LOC, Int32, static_cast<int32_t>(3), Int32, static_cast<int32_t>(0), Int32, static_cast<int32_t>(0));
+    equalto_int32s.test(LOC, Int32, static_cast<int32_t>(3), Int32, static_cast<int32_t>(3), Int32, static_cast<int32_t>(1));
+    equalto_int32s.test(LOC, Int32, static_cast<int32_t>(-1), Int32, static_cast<int32_t>(1), Int32, static_cast<int32_t>(0));
+    equalto_int32s.test(LOC, Int32, static_cast<int32_t>(1), Int32, static_cast<int32_t>(-1), Int32, static_cast<int32_t>(0));
+    equalto_int32s.test(LOC, Int32, static_cast<int32_t>(-1), Int32, static_cast<int32_t>(-1), Int32, static_cast<int32_t>(1));
+    equalto_int32s.test(LOC, Int32, std::numeric_limits<int32_t>::min(), Int32, static_cast<int32_t>(0), Int32, static_cast<int32_t>(0));
+    equalto_int32s.test(LOC, Int32, static_cast<int32_t>(0), Int32, std::numeric_limits<int32_t>::min(), Int32, static_cast<int32_t>(0));
+    equalto_int32s.test(LOC, Int32, std::numeric_limits<int32_t>::min(), Int32, std::numeric_limits<int32_t>::min(), Int32, static_cast<int32_t>(1));
+    equalto_int32s.test(LOC, Int32, std::numeric_limits<int32_t>::min(), Int32, std::numeric_limits<int32_t>::max(), Int32, static_cast<int32_t>(0));
+    equalto_int32s.test(LOC, Int32, std::numeric_limits<int32_t>::max(), Int32, static_cast<int32_t>(0), Int32, static_cast<int32_t>(0));
+    equalto_int32s.test(LOC, Int32, static_cast<int32_t>(0), Int32, std::numeric_limits<int32_t>::max(), Int32, static_cast<int32_t>(0));
+    equalto_int32s.test(LOC, Int32, std::numeric_limits<int32_t>::max(), Int32, std::numeric_limits<int32_t>::min(), Int32, static_cast<int32_t>(0));
+    equalto_int32s.test(LOC, Int32, std::numeric_limits<int32_t>::max(), Int32, std::numeric_limits<int32_t>::max(), Int32, static_cast<int32_t>(1));
+}
+TEST(omrgenExtension, EqualToInt64s) {
+    typedef int32_t (FuncProto)(int64_t, int64_t);
+    EqualToFunc<FuncProto, int64_t, int64_t> equalto_int64s(LOC, "equalto_int64s", c, false);
+    equalto_int64s.test(LOC, Int64, static_cast<int64_t>(0), Int64, static_cast<int64_t>(0), Int32, static_cast<int32_t>(1));
+    equalto_int64s.test(LOC, Int64, static_cast<int64_t>(0), Int64, static_cast<int64_t>(3), Int32, static_cast<int32_t>(0));
+    equalto_int64s.test(LOC, Int64, static_cast<int64_t>(3), Int64, static_cast<int64_t>(0), Int32, static_cast<int32_t>(0));
+    equalto_int64s.test(LOC, Int64, static_cast<int64_t>(3), Int64, static_cast<int64_t>(3), Int32, static_cast<int32_t>(1));
+    equalto_int64s.test(LOC, Int64, static_cast<int64_t>(-1), Int64, static_cast<int64_t>(1), Int32, static_cast<int32_t>(0));
+    equalto_int64s.test(LOC, Int64, static_cast<int64_t>(1), Int64, static_cast<int64_t>(-1), Int32, static_cast<int32_t>(0));
+    equalto_int64s.test(LOC, Int64, static_cast<int64_t>(-1), Int64, static_cast<int64_t>(-1), Int32, static_cast<int32_t>(1));
+    equalto_int64s.test(LOC, Int64, std::numeric_limits<int64_t>::min(), Int64, static_cast<int64_t>(0), Int32, static_cast<int32_t>(0));
+    equalto_int64s.test(LOC, Int64, static_cast<int64_t>(0), Int64, std::numeric_limits<int64_t>::min(), Int32, static_cast<int32_t>(0));
+    equalto_int64s.test(LOC, Int64, std::numeric_limits<int64_t>::min(), Int64, std::numeric_limits<int64_t>::min(), Int32, static_cast<int32_t>(1));
+    equalto_int64s.test(LOC, Int64, std::numeric_limits<int64_t>::min(), Int64, std::numeric_limits<int64_t>::max(), Int32, static_cast<int32_t>(0));
+    equalto_int64s.test(LOC, Int64, std::numeric_limits<int64_t>::max(), Int64, static_cast<int64_t>(0), Int32, static_cast<int32_t>(0));
+    equalto_int64s.test(LOC, Int64, static_cast<int64_t>(0), Int64, std::numeric_limits<int64_t>::max(), Int32, static_cast<int32_t>(0));
+    equalto_int64s.test(LOC, Int64, std::numeric_limits<int64_t>::max(), Int64, std::numeric_limits<int64_t>::min(), Int32, static_cast<int32_t>(0));
+    equalto_int64s.test(LOC, Int64, std::numeric_limits<int64_t>::max(), Int64, std::numeric_limits<int64_t>::max(), Int32, static_cast<int32_t>(1));
+}
+TEST(omrgenExtension, EqualToFloats) {
+    typedef int32_t (FuncProto)(float, float);
+    EqualToFunc<FuncProto, float, float> equalto_floats(LOC, "equalto_floats", c, false);
+    equalto_floats.test(LOC, Float32, static_cast<float>(0), Float32, static_cast<float>(0), Int32, static_cast<int32_t>(1));
+    equalto_floats.test(LOC, Float32, static_cast<float>(0), Float32, static_cast<float>(3), Int32, static_cast<int32_t>(0));
+    equalto_floats.test(LOC, Float32, static_cast<float>(3), Float32, static_cast<float>(0), Int32, static_cast<int32_t>(0));
+    equalto_floats.test(LOC, Float32, static_cast<float>(3), Float32, static_cast<float>(3), Int32, static_cast<int32_t>(1));
+    equalto_floats.test(LOC, Float32, static_cast<float>(-1), Float32, static_cast<float>(1), Int32, static_cast<int32_t>(0));
+    equalto_floats.test(LOC, Float32, static_cast<float>(1), Float32, static_cast<float>(-1), Int32, static_cast<int32_t>(0));
+    equalto_floats.test(LOC, Float32, static_cast<float>(-1), Float32, static_cast<float>(-1), Int32, static_cast<int32_t>(1));
+    equalto_floats.test(LOC, Float32, std::numeric_limits<float>::min(), Float32, static_cast<float>(0), Int32, static_cast<int32_t>(0));
+    equalto_floats.test(LOC, Float32, static_cast<float>(0), Float32, std::numeric_limits<float>::min(), Int32, static_cast<int32_t>(0));
+    equalto_floats.test(LOC, Float32, std::numeric_limits<float>::min(), Float32, std::numeric_limits<float>::min(), Int32, static_cast<int32_t>(1));
+    equalto_floats.test(LOC, Float32, std::numeric_limits<float>::min(), Float32, std::numeric_limits<float>::max(), Int32, static_cast<int32_t>(0));
+    equalto_floats.test(LOC, Float32, std::numeric_limits<float>::max(), Float32, static_cast<float>(0), Int32, static_cast<int32_t>(0));
+    equalto_floats.test(LOC, Float32, static_cast<float>(0), Float32, std::numeric_limits<float>::max(), Int32, static_cast<int32_t>(0));
+    equalto_floats.test(LOC, Float32, std::numeric_limits<float>::max(), Float32, std::numeric_limits<float>::min(), Int32, static_cast<int32_t>(0));
+    equalto_floats.test(LOC, Float32, std::numeric_limits<float>::max(), Float32, std::numeric_limits<float>::max(), Int32, static_cast<int32_t>(1));
+}
+TEST(omrgenExtension, EqualToDoubles) {
+    typedef int32_t (FuncProto)(double, double);
+    EqualToFunc<FuncProto, double, double> equalto_doubles(LOC, "equalto_doubles", c, false);
+    equalto_doubles.test(LOC, Float64, static_cast<float>(0), Float64, static_cast<float>(0), Int32, static_cast<int32_t>(1));
+    equalto_doubles.test(LOC, Float64, static_cast<float>(0), Float64, static_cast<float>(3), Int32, static_cast<int32_t>(0));
+    equalto_doubles.test(LOC, Float64, static_cast<float>(3), Float64, static_cast<float>(0), Int32, static_cast<int32_t>(0));
+    equalto_doubles.test(LOC, Float64, static_cast<float>(3), Float64, static_cast<float>(3), Int32, static_cast<int32_t>(1));
+    equalto_doubles.test(LOC, Float64, static_cast<float>(-1), Float64, static_cast<float>(1), Int32, static_cast<int32_t>(0));
+    equalto_doubles.test(LOC, Float64, static_cast<float>(1), Float64, static_cast<float>(-1), Int32, static_cast<int32_t>(0));
+    equalto_doubles.test(LOC, Float64, static_cast<float>(-1), Float64, static_cast<float>(-1), Int32, static_cast<int32_t>(1));
+    equalto_doubles.test(LOC, Float64, std::numeric_limits<float>::min(), Float64, static_cast<float>(0), Int32, static_cast<int32_t>(0));
+    equalto_doubles.test(LOC, Float64, static_cast<float>(0), Float64, std::numeric_limits<float>::min(), Int32, static_cast<int32_t>(0));
+    equalto_doubles.test(LOC, Float64, std::numeric_limits<float>::min(), Float64, std::numeric_limits<float>::min(), Int32, static_cast<int32_t>(1));
+    equalto_doubles.test(LOC, Float64, std::numeric_limits<float>::min(), Float64, std::numeric_limits<float>::max(), Int32, static_cast<int32_t>(0));
+    equalto_doubles.test(LOC, Float64, std::numeric_limits<float>::max(), Float64, static_cast<float>(0), Int32, static_cast<int32_t>(0));
+    equalto_doubles.test(LOC, Float64, static_cast<float>(0), Float64, std::numeric_limits<float>::max(), Int32, static_cast<int32_t>(0));
+    equalto_doubles.test(LOC, Float64, std::numeric_limits<float>::max(), Float64, std::numeric_limits<float>::min(), Int32, static_cast<int32_t>(0));
+    equalto_doubles.test(LOC, Float64, std::numeric_limits<float>::max(), Float64, std::numeric_limits<float>::max(), Int32, static_cast<int32_t>(1));
+}
+TEST(omrgenExtension, EqualToAddresses) {
+    typedef int32_t (FuncProto)(intptr_t, intptr_t);
+    EqualToFunc<FuncProto, intptr_t, intptr_t> equalto_intptrs(LOC, "equalto_intptrs", c, false);
+    equalto_intptrs.test(LOC, Address, static_cast<intptr_t>(0), Address, static_cast<intptr_t>(0), Int32, static_cast<int32_t>(1));
+    equalto_intptrs.test(LOC, Address, static_cast<intptr_t>(0), Address, static_cast<intptr_t>(3), Int32, static_cast<int32_t>(0));
+    equalto_intptrs.test(LOC, Address, static_cast<intptr_t>(3), Address, static_cast<intptr_t>(0), Int32, static_cast<int32_t>(0));
+    equalto_intptrs.test(LOC, Address, static_cast<intptr_t>(3), Address, static_cast<intptr_t>(3), Int32, static_cast<int32_t>(1));
+    equalto_intptrs.test(LOC, Address, static_cast<intptr_t>(-1), Address, static_cast<intptr_t>(1), Int32, static_cast<int32_t>(0));
+    equalto_intptrs.test(LOC, Address, static_cast<intptr_t>(1), Address, static_cast<intptr_t>(-1), Int32, static_cast<int32_t>(0));
+    equalto_intptrs.test(LOC, Address, static_cast<intptr_t>(-1), Address, static_cast<intptr_t>(-1), Int32, static_cast<int32_t>(1));
+    equalto_intptrs.test(LOC, Address, std::numeric_limits<intptr_t>::min(), Address, static_cast<intptr_t>(0), Int32, static_cast<int32_t>(0));
+    equalto_intptrs.test(LOC, Address, static_cast<intptr_t>(0), Address, std::numeric_limits<intptr_t>::min(), Int32, static_cast<int32_t>(0));
+    equalto_intptrs.test(LOC, Address, std::numeric_limits<intptr_t>::min(), Address, std::numeric_limits<intptr_t>::min(), Int32, static_cast<int32_t>(1));
+    equalto_intptrs.test(LOC, Address, std::numeric_limits<intptr_t>::min(), Address, std::numeric_limits<intptr_t>::max(), Int32, static_cast<int32_t>(0));
+    equalto_intptrs.test(LOC, Address, std::numeric_limits<intptr_t>::max(), Address, static_cast<intptr_t>(0), Int32, static_cast<int32_t>(0));
+    equalto_intptrs.test(LOC, Address, static_cast<intptr_t>(0), Address, std::numeric_limits<intptr_t>::max(), Int32, static_cast<int32_t>(0));
+    equalto_intptrs.test(LOC, Address, std::numeric_limits<intptr_t>::max(), Address, std::numeric_limits<intptr_t>::min(), Int32, static_cast<int32_t>(0));
+    equalto_intptrs.test(LOC, Address, std::numeric_limits<intptr_t>::max(), Address, std::numeric_limits<intptr_t>::max(), Int32, static_cast<int32_t>(1));
+}
+
+
 template<typename FuncPrototype, typename left_cType, typename right_cType, typename result_cType>
 class MulFunc : public BinaryOpFunc<FuncPrototype, left_cType, right_cType, result_cType> {
 public:
@@ -1797,6 +1944,153 @@ TEST(omrgenExtension, MulFloat64s) {
     mul_doubles.test(LOC, Float64, std::numeric_limits<double>::max(), Float64, static_cast<double>(1), Float64, std::numeric_limits<double>::max());
     mul_doubles.test(LOC, Float64, static_cast<double>(1), Float64, std::numeric_limits<double>::max(), Float64, std::numeric_limits<double>::max());
 }
+
+// Test NotEqualTo with two numbers together of the given types
+template<typename FuncPrototype, typename left_cType, typename right_cType>
+class NotEqualToFunc : public BinaryOpFunc<FuncPrototype, left_cType, right_cType, int32_t> {
+public:
+    NotEqualToFunc(LOCATION, String name, Compiler *compiler, bool log)
+        : BinaryOpFunc<FuncPrototype, left_cType, right_cType, int32_t>(PASSLOC, name, compiler, log) { }
+protected:
+    virtual Value *doBinaryOp(LOCATION, Builder *b, Value *left, Value *right) {
+        return this->bx()->NotEqualTo(PASSLOC, b, left, right);
+    }
+};
+
+TEST(omrgenExtension, NotEqualToInt8s) {
+    typedef int32_t (FuncProto)(int8_t, int8_t);
+    NotEqualToFunc<FuncProto, int8_t, int8_t> notequalto_int8s(LOC, "notequalto_int8s", c, false);
+    notequalto_int8s.test(LOC, Int8, static_cast<int8_t>(0), Int8, static_cast<int8_t>(0), Int32, static_cast<int32_t>(0));
+    notequalto_int8s.test(LOC, Int8, static_cast<int8_t>(0), Int8, static_cast<int8_t>(3), Int32, static_cast<int32_t>(1));
+    notequalto_int8s.test(LOC, Int8, static_cast<int8_t>(3), Int8, static_cast<int8_t>(0), Int32, static_cast<int32_t>(1));
+    notequalto_int8s.test(LOC, Int8, static_cast<int8_t>(3), Int8, static_cast<int8_t>(3), Int32, static_cast<int32_t>(0));
+    notequalto_int8s.test(LOC, Int8, static_cast<int8_t>(-1), Int8, static_cast<int8_t>(1), Int32, static_cast<int32_t>(1));
+    notequalto_int8s.test(LOC, Int8, static_cast<int8_t>(1), Int8, static_cast<int8_t>(-1), Int32, static_cast<int32_t>(1));
+    notequalto_int8s.test(LOC, Int8, static_cast<int8_t>(-1), Int8, static_cast<int8_t>(-1), Int32, static_cast<int32_t>(0));
+    notequalto_int8s.test(LOC, Int8, std::numeric_limits<int8_t>::min(), Int8, static_cast<int8_t>(0), Int32, static_cast<int32_t>(1));
+    notequalto_int8s.test(LOC, Int8, static_cast<int8_t>(0), Int8, std::numeric_limits<int8_t>::min(), Int32, static_cast<int32_t>(1));
+    notequalto_int8s.test(LOC, Int8, std::numeric_limits<int8_t>::min(), Int8, std::numeric_limits<int8_t>::min(), Int32, static_cast<int32_t>(0));
+    notequalto_int8s.test(LOC, Int8, std::numeric_limits<int8_t>::min(), Int8, std::numeric_limits<int8_t>::max(), Int32, static_cast<int32_t>(1));
+    notequalto_int8s.test(LOC, Int8, std::numeric_limits<int8_t>::max(), Int8, static_cast<int8_t>(0), Int32, static_cast<int32_t>(1));
+    notequalto_int8s.test(LOC, Int8, static_cast<int8_t>(0), Int8, std::numeric_limits<int8_t>::max(), Int32, static_cast<int32_t>(1));
+    notequalto_int8s.test(LOC, Int8, std::numeric_limits<int8_t>::max(), Int8, std::numeric_limits<int8_t>::min(), Int32, static_cast<int32_t>(1));
+    notequalto_int8s.test(LOC, Int8, std::numeric_limits<int8_t>::max(), Int8, std::numeric_limits<int8_t>::max(), Int32, static_cast<int32_t>(0));
+}
+TEST(omrgenExtension, NotEqualToInt16s) {
+    typedef int32_t (FuncProto)(int16_t, int16_t);
+    NotEqualToFunc<FuncProto, int16_t, int16_t> notequalto_int16s(LOC, "notequalto_int16s", c, false);
+    notequalto_int16s.test(LOC, Int16, static_cast<int16_t>(0), Int16, static_cast<int16_t>(0), Int32, static_cast<int32_t>(0));
+    notequalto_int16s.test(LOC, Int16, static_cast<int16_t>(0), Int16, static_cast<int16_t>(3), Int32, static_cast<int32_t>(1));
+    notequalto_int16s.test(LOC, Int16, static_cast<int16_t>(3), Int16, static_cast<int16_t>(0), Int32, static_cast<int32_t>(1));
+    notequalto_int16s.test(LOC, Int16, static_cast<int16_t>(3), Int16, static_cast<int16_t>(3), Int32, static_cast<int32_t>(0));
+    notequalto_int16s.test(LOC, Int16, static_cast<int16_t>(-1), Int16, static_cast<int16_t>(1), Int32, static_cast<int32_t>(1));
+    notequalto_int16s.test(LOC, Int16, static_cast<int16_t>(1), Int16, static_cast<int16_t>(-1), Int32, static_cast<int32_t>(1));
+    notequalto_int16s.test(LOC, Int16, static_cast<int16_t>(-1), Int16, static_cast<int16_t>(-1), Int32, static_cast<int32_t>(0));
+    notequalto_int16s.test(LOC, Int16, std::numeric_limits<int16_t>::min(), Int16, static_cast<int16_t>(0), Int32, static_cast<int32_t>(1));
+    notequalto_int16s.test(LOC, Int16, static_cast<int16_t>(0), Int16, std::numeric_limits<int16_t>::min(), Int32, static_cast<int32_t>(1));
+    notequalto_int16s.test(LOC, Int16, std::numeric_limits<int16_t>::min(), Int16, std::numeric_limits<int16_t>::min(), Int32, static_cast<int32_t>(0));
+    notequalto_int16s.test(LOC, Int16, std::numeric_limits<int16_t>::min(), Int16, std::numeric_limits<int16_t>::max(), Int32, static_cast<int32_t>(1));
+    notequalto_int16s.test(LOC, Int16, std::numeric_limits<int16_t>::max(), Int16, static_cast<int16_t>(0), Int32, static_cast<int32_t>(1));
+    notequalto_int16s.test(LOC, Int16, static_cast<int16_t>(0), Int16, std::numeric_limits<int16_t>::max(), Int32, static_cast<int32_t>(1));
+    notequalto_int16s.test(LOC, Int16, std::numeric_limits<int16_t>::max(), Int16, std::numeric_limits<int16_t>::min(), Int32, static_cast<int32_t>(1));
+    notequalto_int16s.test(LOC, Int16, std::numeric_limits<int16_t>::max(), Int16, std::numeric_limits<int16_t>::max(), Int32, static_cast<int32_t>(0));
+}
+TEST(omrgenExtension, NotEqualToInt32s) {
+    typedef int32_t (FuncProto)(int32_t, int32_t);
+    NotEqualToFunc<FuncProto, int32_t, int32_t> notequalto_int32s(LOC, "notequalto_int32s", c, false);
+    notequalto_int32s.test(LOC, Int32, static_cast<int32_t>(0), Int32, static_cast<int32_t>(0), Int32, static_cast<int32_t>(0));
+    notequalto_int32s.test(LOC, Int32, static_cast<int32_t>(0), Int32, static_cast<int32_t>(3), Int32, static_cast<int32_t>(1));
+    notequalto_int32s.test(LOC, Int32, static_cast<int32_t>(3), Int32, static_cast<int32_t>(0), Int32, static_cast<int32_t>(1));
+    notequalto_int32s.test(LOC, Int32, static_cast<int32_t>(3), Int32, static_cast<int32_t>(3), Int32, static_cast<int32_t>(0));
+    notequalto_int32s.test(LOC, Int32, static_cast<int32_t>(-1), Int32, static_cast<int32_t>(1), Int32, static_cast<int32_t>(1));
+    notequalto_int32s.test(LOC, Int32, static_cast<int32_t>(1), Int32, static_cast<int32_t>(-1), Int32, static_cast<int32_t>(1));
+    notequalto_int32s.test(LOC, Int32, static_cast<int32_t>(-1), Int32, static_cast<int32_t>(-1), Int32, static_cast<int32_t>(0));
+    notequalto_int32s.test(LOC, Int32, std::numeric_limits<int32_t>::min(), Int32, static_cast<int32_t>(0), Int32, static_cast<int32_t>(1));
+    notequalto_int32s.test(LOC, Int32, static_cast<int32_t>(0), Int32, std::numeric_limits<int32_t>::min(), Int32, static_cast<int32_t>(1));
+    notequalto_int32s.test(LOC, Int32, std::numeric_limits<int32_t>::min(), Int32, std::numeric_limits<int32_t>::min(), Int32, static_cast<int32_t>(0));
+    notequalto_int32s.test(LOC, Int32, std::numeric_limits<int32_t>::min(), Int32, std::numeric_limits<int32_t>::max(), Int32, static_cast<int32_t>(1));
+    notequalto_int32s.test(LOC, Int32, std::numeric_limits<int32_t>::max(), Int32, static_cast<int32_t>(0), Int32, static_cast<int32_t>(1));
+    notequalto_int32s.test(LOC, Int32, static_cast<int32_t>(0), Int32, std::numeric_limits<int32_t>::max(), Int32, static_cast<int32_t>(1));
+    notequalto_int32s.test(LOC, Int32, std::numeric_limits<int32_t>::max(), Int32, std::numeric_limits<int32_t>::min(), Int32, static_cast<int32_t>(1));
+    notequalto_int32s.test(LOC, Int32, std::numeric_limits<int32_t>::max(), Int32, std::numeric_limits<int32_t>::max(), Int32, static_cast<int32_t>(0));
+}
+TEST(omrgenExtension, NotEqualToInt64s) {
+    typedef int32_t (FuncProto)(int64_t, int64_t);
+    NotEqualToFunc<FuncProto, int64_t, int64_t> notequalto_int64s(LOC, "notequalto_int64s", c, false);
+    notequalto_int64s.test(LOC, Int64, static_cast<int64_t>(0), Int64, static_cast<int64_t>(0), Int32, static_cast<int32_t>(0));
+    notequalto_int64s.test(LOC, Int64, static_cast<int64_t>(0), Int64, static_cast<int64_t>(3), Int32, static_cast<int32_t>(1));
+    notequalto_int64s.test(LOC, Int64, static_cast<int64_t>(3), Int64, static_cast<int64_t>(0), Int32, static_cast<int32_t>(1));
+    notequalto_int64s.test(LOC, Int64, static_cast<int64_t>(3), Int64, static_cast<int64_t>(3), Int32, static_cast<int32_t>(0));
+    notequalto_int64s.test(LOC, Int64, static_cast<int64_t>(-1), Int64, static_cast<int64_t>(1), Int32, static_cast<int32_t>(1));
+    notequalto_int64s.test(LOC, Int64, static_cast<int64_t>(1), Int64, static_cast<int64_t>(-1), Int32, static_cast<int32_t>(1));
+    notequalto_int64s.test(LOC, Int64, static_cast<int64_t>(-1), Int64, static_cast<int64_t>(-1), Int32, static_cast<int32_t>(0));
+    notequalto_int64s.test(LOC, Int64, std::numeric_limits<int64_t>::min(), Int64, static_cast<int64_t>(0), Int32, static_cast<int32_t>(1));
+    notequalto_int64s.test(LOC, Int64, static_cast<int64_t>(0), Int64, std::numeric_limits<int64_t>::min(), Int32, static_cast<int32_t>(1));
+    notequalto_int64s.test(LOC, Int64, std::numeric_limits<int64_t>::min(), Int64, std::numeric_limits<int64_t>::min(), Int32, static_cast<int32_t>(0));
+    notequalto_int64s.test(LOC, Int64, std::numeric_limits<int64_t>::min(), Int64, std::numeric_limits<int64_t>::max(), Int32, static_cast<int32_t>(1));
+    notequalto_int64s.test(LOC, Int64, std::numeric_limits<int64_t>::max(), Int64, static_cast<int64_t>(0), Int32, static_cast<int32_t>(1));
+    notequalto_int64s.test(LOC, Int64, static_cast<int64_t>(0), Int64, std::numeric_limits<int64_t>::max(), Int32, static_cast<int32_t>(1));
+    notequalto_int64s.test(LOC, Int64, std::numeric_limits<int64_t>::max(), Int64, std::numeric_limits<int64_t>::min(), Int32, static_cast<int32_t>(1));
+    notequalto_int64s.test(LOC, Int64, std::numeric_limits<int64_t>::max(), Int64, std::numeric_limits<int64_t>::max(), Int32, static_cast<int32_t>(0));
+}
+TEST(omrgenExtension, NotEqualToFloats) {
+    typedef int32_t (FuncProto)(float, float);
+    NotEqualToFunc<FuncProto, float, float> notequalto_floats(LOC, "notequalto_floats", c, false);
+    notequalto_floats.test(LOC, Float32, static_cast<float>(0), Float32, static_cast<float>(0), Int32, static_cast<int32_t>(0));
+    notequalto_floats.test(LOC, Float32, static_cast<float>(0), Float32, static_cast<float>(3), Int32, static_cast<int32_t>(1));
+    notequalto_floats.test(LOC, Float32, static_cast<float>(3), Float32, static_cast<float>(0), Int32, static_cast<int32_t>(1));
+    notequalto_floats.test(LOC, Float32, static_cast<float>(3), Float32, static_cast<float>(3), Int32, static_cast<int32_t>(0));
+    notequalto_floats.test(LOC, Float32, static_cast<float>(-1), Float32, static_cast<float>(1), Int32, static_cast<int32_t>(1));
+    notequalto_floats.test(LOC, Float32, static_cast<float>(1), Float32, static_cast<float>(-1), Int32, static_cast<int32_t>(1));
+    notequalto_floats.test(LOC, Float32, static_cast<float>(-1), Float32, static_cast<float>(-1), Int32, static_cast<int32_t>(0));
+    notequalto_floats.test(LOC, Float32, std::numeric_limits<float>::min(), Float32, static_cast<float>(0), Int32, static_cast<int32_t>(1));
+    notequalto_floats.test(LOC, Float32, static_cast<float>(0), Float32, std::numeric_limits<float>::min(), Int32, static_cast<int32_t>(1));
+    notequalto_floats.test(LOC, Float32, std::numeric_limits<float>::min(), Float32, std::numeric_limits<float>::min(), Int32, static_cast<int32_t>(0));
+    notequalto_floats.test(LOC, Float32, std::numeric_limits<float>::min(), Float32, std::numeric_limits<float>::max(), Int32, static_cast<int32_t>(1));
+    notequalto_floats.test(LOC, Float32, std::numeric_limits<float>::max(), Float32, static_cast<float>(0), Int32, static_cast<int32_t>(1));
+    notequalto_floats.test(LOC, Float32, static_cast<float>(0), Float32, std::numeric_limits<float>::max(), Int32, static_cast<int32_t>(1));
+    notequalto_floats.test(LOC, Float32, std::numeric_limits<float>::max(), Float32, std::numeric_limits<float>::min(), Int32, static_cast<int32_t>(1));
+    notequalto_floats.test(LOC, Float32, std::numeric_limits<float>::max(), Float32, std::numeric_limits<float>::max(), Int32, static_cast<int32_t>(0));
+}
+TEST(omrgenExtension, NotEqualToDoubles) {
+    typedef int32_t (FuncProto)(double, double);
+    NotEqualToFunc<FuncProto, double, double> notequalto_doubles(LOC, "notequalto_doubles", c, false);
+    notequalto_doubles.test(LOC, Float64, static_cast<float>(0), Float64, static_cast<float>(0), Int32, static_cast<int32_t>(0));
+    notequalto_doubles.test(LOC, Float64, static_cast<float>(0), Float64, static_cast<float>(3), Int32, static_cast<int32_t>(1));
+    notequalto_doubles.test(LOC, Float64, static_cast<float>(3), Float64, static_cast<float>(0), Int32, static_cast<int32_t>(1));
+    notequalto_doubles.test(LOC, Float64, static_cast<float>(3), Float64, static_cast<float>(3), Int32, static_cast<int32_t>(0));
+    notequalto_doubles.test(LOC, Float64, static_cast<float>(-1), Float64, static_cast<float>(1), Int32, static_cast<int32_t>(1));
+    notequalto_doubles.test(LOC, Float64, static_cast<float>(1), Float64, static_cast<float>(-1), Int32, static_cast<int32_t>(1));
+    notequalto_doubles.test(LOC, Float64, static_cast<float>(-1), Float64, static_cast<float>(-1), Int32, static_cast<int32_t>(0));
+    notequalto_doubles.test(LOC, Float64, std::numeric_limits<float>::min(), Float64, static_cast<float>(0), Int32, static_cast<int32_t>(1));
+    notequalto_doubles.test(LOC, Float64, static_cast<float>(0), Float64, std::numeric_limits<float>::min(), Int32, static_cast<int32_t>(1));
+    notequalto_doubles.test(LOC, Float64, std::numeric_limits<float>::min(), Float64, std::numeric_limits<float>::min(), Int32, static_cast<int32_t>(0));
+    notequalto_doubles.test(LOC, Float64, std::numeric_limits<float>::min(), Float64, std::numeric_limits<float>::max(), Int32, static_cast<int32_t>(1));
+    notequalto_doubles.test(LOC, Float64, std::numeric_limits<float>::max(), Float64, static_cast<float>(0), Int32, static_cast<int32_t>(1));
+    notequalto_doubles.test(LOC, Float64, static_cast<float>(0), Float64, std::numeric_limits<float>::max(), Int32, static_cast<int32_t>(1));
+    notequalto_doubles.test(LOC, Float64, std::numeric_limits<float>::max(), Float64, std::numeric_limits<float>::min(), Int32, static_cast<int32_t>(1));
+    notequalto_doubles.test(LOC, Float64, std::numeric_limits<float>::max(), Float64, std::numeric_limits<float>::max(), Int32, static_cast<int32_t>(0));
+}
+TEST(omrgenExtension, NotEqualToAddresses) {
+    typedef int32_t (FuncProto)(intptr_t, intptr_t);
+    NotEqualToFunc<FuncProto, intptr_t, intptr_t> notequalto_intptrs(LOC, "notequalto_intptrs", c, false);
+    notequalto_intptrs.test(LOC, Address, static_cast<intptr_t>(0), Address, static_cast<intptr_t>(0), Int32, static_cast<int32_t>(0));
+    notequalto_intptrs.test(LOC, Address, static_cast<intptr_t>(0), Address, static_cast<intptr_t>(3), Int32, static_cast<int32_t>(1));
+    notequalto_intptrs.test(LOC, Address, static_cast<intptr_t>(3), Address, static_cast<intptr_t>(0), Int32, static_cast<int32_t>(1));
+    notequalto_intptrs.test(LOC, Address, static_cast<intptr_t>(3), Address, static_cast<intptr_t>(3), Int32, static_cast<int32_t>(0));
+    notequalto_intptrs.test(LOC, Address, static_cast<intptr_t>(-1), Address, static_cast<intptr_t>(1), Int32, static_cast<int32_t>(1));
+    notequalto_intptrs.test(LOC, Address, static_cast<intptr_t>(1), Address, static_cast<intptr_t>(-1), Int32, static_cast<int32_t>(1));
+    notequalto_intptrs.test(LOC, Address, static_cast<intptr_t>(-1), Address, static_cast<intptr_t>(-1), Int32, static_cast<int32_t>(0));
+    notequalto_intptrs.test(LOC, Address, std::numeric_limits<intptr_t>::min(), Address, static_cast<intptr_t>(0), Int32, static_cast<int32_t>(1));
+    notequalto_intptrs.test(LOC, Address, static_cast<intptr_t>(0), Address, std::numeric_limits<intptr_t>::min(), Int32, static_cast<int32_t>(1));
+    notequalto_intptrs.test(LOC, Address, std::numeric_limits<intptr_t>::min(), Address, std::numeric_limits<intptr_t>::min(), Int32, static_cast<int32_t>(0));
+    notequalto_intptrs.test(LOC, Address, std::numeric_limits<intptr_t>::min(), Address, std::numeric_limits<intptr_t>::max(), Int32, static_cast<int32_t>(1));
+    notequalto_intptrs.test(LOC, Address, std::numeric_limits<intptr_t>::max(), Address, static_cast<intptr_t>(0), Int32, static_cast<int32_t>(1));
+    notequalto_intptrs.test(LOC, Address, static_cast<intptr_t>(0), Address, std::numeric_limits<intptr_t>::max(), Int32, static_cast<int32_t>(1));
+    notequalto_intptrs.test(LOC, Address, std::numeric_limits<intptr_t>::max(), Address, std::numeric_limits<intptr_t>::min(), Int32, static_cast<int32_t>(1));
+    notequalto_intptrs.test(LOC, Address, std::numeric_limits<intptr_t>::max(), Address, std::numeric_limits<intptr_t>::max(), Int32, static_cast<int32_t>(0));
+}
+
 
 class GotoOpFunc : public TestFunc {
 public:

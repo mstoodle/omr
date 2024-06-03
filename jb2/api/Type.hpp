@@ -73,6 +73,7 @@ public:
     virtual void logLiteral(TextLogger & lgr, const Literal *lv) const { }
     virtual bool literalsAreEqual(const LiteralBytes *lv1, const LiteralBytes *lv2) const { return false; }
 
+    virtual bool hasValues() const { return true; }  // default can be overridden
     virtual const int64_t getInteger(const Literal *lv) const { return 0; }
     virtual const double getFloatingPoint(const Literal *lv) const { return 0.0; }
 
@@ -198,7 +199,11 @@ protected:
     )
 
     
-DECL_TYPE_CLASS(NoTypeType, Type, CoreExtension)
+//DECL_TYPE_CLASS(NoTypeType, Type, CoreExtension)
+DECL_TYPE_CLASS_WITH_STATE(NoTypeType, Type, CoreExtension,
+public:
+  virtual bool hasValues() const { return false; }
+)
 
 } // namespace JitBuilder
 } // namespace OMR

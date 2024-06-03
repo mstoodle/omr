@@ -187,9 +187,23 @@ OMRCodeGeneratorForBase::gencodeDiv(Operation *op) {
 }
 
 Builder *
+OMRCodeGeneratorForBase::gencodeEqualTo(Operation *op) {
+    assert(op->action() == _bx->aEqualTo);
+    ilgen()->equalTo(op->location(), op->result(), op->operand(0), op->operand(1));
+    return NULL;
+}
+
+Builder *
 OMRCodeGeneratorForBase::gencodeMul(Operation *op) {
     assert(op->action() == _bx->aMul);
     ilgen()->mul(op->location(), op->result(), op->operand(0), op->operand(1));
+    return NULL;
+}
+
+Builder *
+OMRCodeGeneratorForBase::gencodeNotEqualTo(Operation *op) {
+    assert(op->action() == _bx->aNotEqualTo);
+    ilgen()->notEqualTo(op->location(), op->result(), op->operand(0), op->operand(1));
     return NULL;
 }
 

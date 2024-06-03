@@ -72,7 +72,9 @@ BaseExtension::BaseExtension(MEM_LOCATION(a), Compiler *compiler, bool extended,
     , aAnd(registerAction(String(a, "And")))
     , aConvertTo(registerAction(String(a, "ConvertTo")))
     , aDiv(registerAction(String(a, "Div")))
+    , aEqualTo(registerAction(String(a, "EqualTo")))
     , aMul(registerAction(String(a, "Mul")))
+    , aNotEqualTo(registerAction(String(a, "NotEqualTo")))
     , aSub(registerAction(String(a, "Sub")))
     , aLoadAt(registerAction(String(a, "LoadAt")))
     , aStoreAt(registerAction(String(a, "StoreAt")))
@@ -105,7 +107,9 @@ BaseExtension::BaseExtension(MEM_LOCATION(a), Compiler *compiler, bool extended,
     , CompileFail_BadInputTypes_And(registerReturnCode(String(a, "CompileFail_BadInputTypes_Add")))
     , CompileFail_BadInputTypes_ConvertTo(registerReturnCode(String(a, "CompileFail_BadInputTypes_ConvertTo")))
     , CompileFail_BadInputTypes_Div(registerReturnCode(String(a, "CompileFail_BadInputTypes_Div")))
+    , CompileFail_BadInputTypes_EqualTo(registerReturnCode(String(a, "CompileFail_BadInputTypes_EqualTo")))
     , CompileFail_BadInputTypes_Mul(registerReturnCode(String(a, "CompileFail_BadInputTypes_Mul")))
+    , CompileFail_BadInputTypes_NotEqualTo(registerReturnCode(String(a, "CompileFail_BadInputTypes_NotEqualTo")))
     , CompileFail_BadInputTypes_Sub(registerReturnCode(String(a, "CompileFail_BadInputTypes_Sub")))
     , CompileFail_BadInputTypes_IfCmpEqual(registerReturnCode(String(a, "CompileFail_BadInputTypes_IfCmpEqual")))
     , CompileFail_BadInputTypes_IfCmpEqualZero(registerReturnCode(String(a, "CompileFail_BadInputTypes_IfCmpEqualZero")))
@@ -415,6 +419,48 @@ BaseExtension::Div(LOCATION, Builder *b, Value *left, Value *right) {
 
 
 bool
+BaseExtensionChecker::validateEqualTo(LOCATION, Builder *b, Value *left, Value *right) {
+    const Type *lType = left->type();
+    const Type *rType = right->type();
+
+    if (lType->hasValues() && rType == lType) {
+        return true;
+    }
+
+    // we defined this operation, so if we can't validate it we have to fail it
+    failValidateEqualTo(PASSLOC, b, left, right);
+    return true;
+}
+
+void
+BaseExtensionChecker::failValidateEqualTo(LOCATION, Builder *b, Value *left, Value *right) {
+    CompilationException e(PASSLOC, _base->compiler(), _base->CompileFail_BadInputTypes_EqualTo);
+    const Type *lType = left->type();
+    const Type *rType = right->type();
+    Allocator *mem = _base->compiler()->mem();
+    e.setMessageLine(String(mem, "EqualTo: invalid input types"))
+     .appendMessageLine(String(mem, "    left ").append(lType->to_string(mem)))
+     .appendMessageLine(String(mem, "   right ").append(rType->to_string(mem)))
+     .appendMessageLine(String(mem, "Left and right types are expected to be the same and type must have values (e.g. cannot be NoType)"));
+    throw e;
+}
+
+Value *
+BaseExtension::EqualTo(LOCATION, Builder *b, Value *left, Value *right) {
+    for (auto it = _checkers.iterator(); it.hasItem(); it++) {
+        BaseExtensionChecker *checker = it.item();
+        if (checker->validateEqualTo(PASSLOC, b, left, right))
+            break;
+    }
+
+    Allocator *mem = b->ir()->mem();
+    Value *result = createValue(b, Int32);
+    addOperation(b, new (mem) Op_EqualTo(MEM_PASSLOC(mem), this, b, aEqualTo, result, left, right));
+    return result;
+}
+
+
+bool
 BaseExtensionChecker::validateMul(LOCATION, Builder *b, Value *left, Value *right) {
     const Type *lType = left->type();
     const Type *rType = right->type();
@@ -462,6 +508,48 @@ BaseExtension::Mul(LOCATION, Builder *b, Value *left, Value *right) {
     addOperation(b, new (mem) Op_Mul(MEM_PASSLOC(mem), this, b, aMul, result, left, right));
     return result;
 }
+
+bool
+BaseExtensionChecker::validateNotEqualTo(LOCATION, Builder *b, Value *left, Value *right) {
+    const Type *lType = left->type();
+    const Type *rType = right->type();
+
+    if (lType->hasValues() && rType == lType) {
+        return true;
+    }
+
+    // we defined this operation, so if we can't validate it we have to fail it
+    failValidateNotEqualTo(PASSLOC, b, left, right);
+    return true;
+}
+
+void
+BaseExtensionChecker::failValidateNotEqualTo(LOCATION, Builder *b, Value *left, Value *right) {
+    CompilationException e(PASSLOC, _base->compiler(), _base->CompileFail_BadInputTypes_NotEqualTo);
+    const Type *lType = left->type();
+    const Type *rType = right->type();
+    Allocator *mem = _base->compiler()->mem();
+    e.setMessageLine(String(mem, "NotEqualTo: invalid input types"))
+     .appendMessageLine(String(mem, "    left ").append(lType->to_string(mem)))
+     .appendMessageLine(String(mem, "   right ").append(rType->to_string(mem)))
+     .appendMessageLine(String(mem, "Left and right types are expected to be the same and type must have values (e.g. cannot be NoType)"));
+    throw e;
+}
+
+Value *
+BaseExtension::NotEqualTo(LOCATION, Builder *b, Value *left, Value *right) {
+    for (auto it = _checkers.iterator(); it.hasItem(); it++) {
+        BaseExtensionChecker *checker = it.item();
+        if (checker->validateEqualTo(PASSLOC, b, left, right))
+            break;
+    }
+
+    Allocator *mem = b->ir()->mem();
+    Value *result = createValue(b, Int32);
+    addOperation(b, new (mem) Op_NotEqualTo(MEM_PASSLOC(mem), this, b, aNotEqualTo, result, left, right));
+    return result;
+}
+
 
 bool
 BaseExtensionChecker::validateSub(LOCATION, Builder *b, Value *left, Value *right) {

@@ -691,6 +691,29 @@ OMRIlGen::div(Location *location, Value *result, Value *left, Value *right) {
 }
 
 void
+OMRIlGen::equalTo(Location *location, Value *result, Value *left, Value *right) {
+    TR::DataTypes leftType = mapType(left->type());
+    TR::Node *leftNode = useValue(left);
+    TR::DataTypes rightType = mapType(right->type());
+    TR::Node *rightNode = useValue(right);
+    TR::DataType dt = leftNode->getDataType();
+    TR::ILOpCodes cmpOpCode(TR::ILOpCode::compareOpCode(dt, TR_cmpEQ, false));
+
+    // some unpleasantness because not all platforms currently implement all(any?) 8 or 16 bit ifcmp opcodes
+    if ((dt == TR::Int8 && !compiler()->platformImplements8bCompares()) ||
+        (dt == TR::Int16 && !compiler()->platformImplements16bCompares())) {
+
+        leftNode = convertNodeTo(TR::Int32, leftNode, false);
+        rightNode = convertNodeTo(TR::Int32, rightNode, false);
+        cmpOpCode = TR::ILOpCode::compareOpCode(TR::Int32, TR_cmpEQ, false);
+    }
+
+    TR::Node *resultNode = TR::Node::create(cmpOpCode, 2, leftNode, rightNode);
+    genTreeTop(resultNode, true);
+    defineValue(result, resultNode);
+}
+
+void
 OMRIlGen::goto_(Location *location, Builder *target) {
     TR::Block *targetBlock = mapBuilder(target);
     TR::Node *gotoNode = TR::Node::create(NULL, TR::Goto);
@@ -859,6 +882,29 @@ OMRIlGen::mul(Location *location, Value *result, Value *left, Value *right) {
     TR::DataTypes rightType = mapType(right->type());
     TR::Node *rightNode = useValue(right);
     TR::Node *resultNode = resultNode = binaryOpFromOpMap(TR::ILOpCode::multiplyOpCode, leftNode, rightNode);
+    defineValue(result, resultNode);
+}
+
+void
+OMRIlGen::notEqualTo(Location *location, Value *result, Value *left, Value *right) {
+    TR::DataTypes leftType = mapType(left->type());
+    TR::Node *leftNode = useValue(left);
+    TR::DataTypes rightType = mapType(right->type());
+    TR::Node *rightNode = useValue(right);
+    TR::DataType dt = leftNode->getDataType();
+    TR::ILOpCodes cmpOpCode(TR::ILOpCode::compareOpCode(dt, TR_cmpNE, false));
+
+    // some unpleasantness because not all platforms currently implement all(any?) 8 or 16 bit ifcmp opcodes
+    if ((dt == TR::Int8 && !compiler()->platformImplements8bCompares()) ||
+        (dt == TR::Int16 && !compiler()->platformImplements16bCompares())) {
+
+        leftNode = convertNodeTo(TR::Int32, leftNode, false);
+        rightNode = convertNodeTo(TR::Int32, rightNode, false);
+        cmpOpCode = TR::ILOpCode::compareOpCode(TR::Int32, TR_cmpNE, false);
+    }
+
+    TR::Node *resultNode = TR::Node::create(cmpOpCode, 2, leftNode, rightNode);
+    genTreeTop(resultNode, true);
     defineValue(result, resultNode);
 }
 
