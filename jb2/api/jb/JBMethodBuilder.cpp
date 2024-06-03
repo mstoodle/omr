@@ -369,10 +369,24 @@ JBMethodBuilder::Div(Location *loc, Builder *b, Value *result, Value *left, Valu
 }
 
 void
+JBMethodBuilder::EqualTo(Location *loc, Builder *b, Value *result, Value *left, Value *right) {
+    TR::IlBuilder *omr_b = map(b);
+    omr_b->setBCIndex(loc->bcIndex())->SetCurrentIlGenerator();
+    registerValue(result, omr_b->EqualTo(map(left), map(right)));
+}
+
+void
 JBMethodBuilder::Mul(Location *loc, Builder *b, Value *result, Value *left, Value *right) {
     TR::IlBuilder *omr_b = map(b);
     omr_b->setBCIndex(loc->bcIndex())->SetCurrentIlGenerator();
     registerValue(result, omr_b->Mul(map(left), map(right)));
+}
+
+void
+JBMethodBuilder::NotEqualTo(Location *loc, Builder *b, Value *result, Value *left, Value *right) {
+    TR::IlBuilder *omr_b = map(b);
+    omr_b->setBCIndex(loc->bcIndex())->SetCurrentIlGenerator();
+    registerValue(result, omr_b->NotEqualTo(map(left), map(right)));
 }
 
 void

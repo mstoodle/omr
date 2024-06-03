@@ -99,6 +99,7 @@ public:
     void convertTo(Location *location, Value *result, const Type *type, Value *value, bool needsUnsigned);
     void createlocalarray(Location *location, Value *result, Literal *numElementsLV, const Type *elementType);
     void div(Location *location, Value *result, Value *left, Value *right);
+    void equalTo(Location *location, Value *result, Value *left, Value *right);
     void goto_(Location *location, Builder *target);
     void ifCmpEqual(Location *location, Builder *target, Value *left, Value *right);
     void ifCmpEqualZero(Location *location, Builder *target, Value *v);
@@ -112,6 +113,7 @@ public:
     void load(Location *location, Value *result, Symbol *sym);
     void loadAt(Location *location, Value *result, Value *addrValue, const Type *baseType);
     void mul(Location *location, Value *result, Value *left, Value *right);
+    void notEqualTo(Location *location, Value *result, Value *left, Value *right);
     void returnValue(Location *location, Value *value);
     void returnNoValue(Location *location);
     void store(Location *location, Symbol *sy, Value *value);
