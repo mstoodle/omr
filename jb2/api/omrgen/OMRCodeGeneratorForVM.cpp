@@ -62,7 +62,7 @@ OMRCodeGeneratorForVM::ilgen() const {
 bool
 OMRCodeGeneratorForVM::registerBuilder(Builder *b) {
     VM::VMBuilderAddon *vmba = b->addon<VM::VMBuilderAddon>();
-    //ilgen()->registerBuilder(b, vmba->bcIndex());
+    ilgen()->registerBuilder(b); //, vmba->bcIndex());
     return true;
 }
 
