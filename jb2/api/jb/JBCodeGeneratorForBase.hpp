@@ -49,7 +49,7 @@ protected:
     JBCodeGenerator *jbcg() const;
     JBMethodBuilder *jbmb() const;
 
-    virtual void registerField(String baseStructName, String fieldName, const Type *fieldType, size_t fieldOffset);
+    virtual void registerField(const Type *ft, String baseStructName, String fieldName, const Type *fieldType, size_t fieldOffset);
 
     DEFINE_CG_BASE_HANDLERS(JBCodeGeneratorForBase);
 

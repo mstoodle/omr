@@ -20,8 +20,8 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef JITBUILDER_METHOD_INCL
-#define JITBUILDER_METHOD_INCL
+#ifndef JB2_METHOD_INCL
+#define JB2_METHOD_INCL
 
 #include <string.h>
 
@@ -34,15 +34,16 @@
 // quick and dirty implementation to get up and running
 // needs major overhaul
 
-namespace JitBuilder
-{
+namespace OMR {
+namespace JitBuilder {
+namespace omrgen {
 
 class Method : public TR::Method
    {
    public:
    TR_ALLOC(TR_Memory::Method);
 
-   Method() : TR::Method(TR::Method::JitBuilder) {}
+   Method() : TR::Method(TR::Method::JB2) {}
 
    // FIXME: need to provide real code for this group
    virtual uint16_t              classNameLength() { return static_cast<uint16_t>(strlen(classNameChars())); }
@@ -56,6 +57,8 @@ class Method : public TR::Method
    virtual bool                  isFinalInObject() { return false; }
    };
 
+} // namesapce omrgen
 } // namespace JitBuilder
+} // namespace OMR
 
-#endif // !defined(JITBUILDER_METHOD_INCL)
+#endif // !defined(JB2_METHOD_INCL)

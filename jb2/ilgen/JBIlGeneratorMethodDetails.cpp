@@ -26,6 +26,7 @@
 #include "env/FrontEnd.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/Method.hpp"
+#include "compile/JB2ResolvedMethod.hpp"
 #include "compile/InlineBlock.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "env/IO.hpp"

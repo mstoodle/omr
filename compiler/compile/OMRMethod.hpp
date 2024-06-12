@@ -118,7 +118,7 @@ class Method
 
    TR_ALLOC(TR_Memory::Method);
 
-   enum Type {J9, Test, JitBuilder};
+   enum Type {J9, Test, JitBuilder, JB2};
 
 
    virtual TR::DataType parmType(uint32_t parmNumber); // returns the type of the parmNumber'th parameter (0-based)

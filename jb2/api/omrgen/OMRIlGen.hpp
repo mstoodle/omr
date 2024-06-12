@@ -40,10 +40,13 @@ namespace TR { class SymbolReference; }
 namespace TR { class SymbolReferenceTable; }
 namespace TR { class TreeTop; }
 
+class mcount_t;
+
 namespace OMR {
 namespace JitBuilder {
 namespace omrgen {
 
+class JB2ResolvedMethod;
 class OMRCodeGenerator;
 
 typedef TR::ILOpCodes (*OpCodeMapper)(TR::DataType);
@@ -66,7 +69,6 @@ public:
     void registerBuilder(Builder *b);
     void registerBuilder(Builder *b, int32_t bcIndex);
 
-    void registerTypes(TypeDictionary *typedict);
     void registerNoType(const Type * t);
     void registerInt8(const Type * t);
     void registerInt16(const Type * t);
@@ -75,15 +77,23 @@ public:
     void registerFloat(const Type * t);
     void registerDouble(const Type * t);
     void registerAddress(const Type * t);
-    void registerPointer(const Type * t);
+    bool registerFunctionType(const Type *t);
+    bool registerStructType(const Type *t);
 
-    void registerSymbols(SymbolDictionary *symdict);
     void createParameterSymbol(Symbol *paramSym, int32_t parameterIndex);
     void createLocalSymbol(Symbol *localSym);
-    void createFunctionSymbol(Symbol *funcSym);
+    void createFunctionSymbol(Symbol *funcSym,
+                              const char *name,
+                              const char *fileName,
+                              const char *lineNumber,
+                              int32_t numParms,
+                              const Type ** parmTypes,
+                              const Type * returnType,
+                              void *entryPoint);
 
     void entryPoint(Builder *b);
     void genBuilder(Builder *b);
+    bool typeRegistered(const Type *type);
     TR::DataTypes mapType(const Type *type);
 
     void literalInt8(Value *resultValue, int8_t v);
@@ -96,6 +106,7 @@ public:
 
     void add(Location *location, Value *result, Value *left, Value *right);
     void and_(Location *location, Value *result, Value *left, Value *right);
+    void call(Location *location, Operation *callOp, bool isDirectCall);
     void convertTo(Location *location, Value *result, const Type *type, Value *value, bool needsUnsigned);
     void createlocalarray(Location *location, Value *result, Literal *numElementsLV, const Type *elementType);
     void div(Location *location, Value *result, Value *left, Value *right);
@@ -112,12 +123,15 @@ public:
     void indexAt(Location *location, Value *result, Value *base, const Type *elemType, Value *index);
     void load(Location *location, Value *result, Symbol *sym);
     void loadAt(Location *location, Value *result, Value *addrValue, const Type *baseType);
+    void loadFieldAddress(Location *location, Value *result, Value *objectValue, const Type *ft, String baseStructName, String fieldName, const Type *fieldType, size_t fieldOffset);
+    void loadFieldAt(Location *location, Value *result, Value *objectValue, const Type *ft, String baseStructName, String fieldName, const Type *fieldType, size_t fieldOffset);
     void mul(Location *location, Value *result, Value *left, Value *right);
     void notEqualTo(Location *location, Value *result, Value *left, Value *right);
     void returnValue(Location *location, Value *value);
     void returnNoValue(Location *location);
     void store(Location *location, Symbol *sy, Value *value);
     void storeAt(Location *location, Value *addrValue, const Type *baseType, Value *valueValue);
+    void storeFieldAt(Location *location, Value *objectValue, const Type *ft, String baseStructName, String fieldName, const Type *fieldType, size_t fieldOffset, Value *valueValue);
     void sub(Location *location, Value *result, Value *left, Value *right);
 
 protected:
@@ -151,6 +165,7 @@ protected:
     TR::Node * binaryOpFromOpMap(OpCodeMapper mapOp, TR::Node *leftNode, TR::Node *rightNode);
     void ifCmpCondition(TR_ComparisonTypes ct, bool isUnsignedCmp, TR::Node *leftNode, TR::Node *rightNode, TR::Block *targetBlock);
     TR::Node *zeroForType(TR::DataType dt);
+    TR::SymbolReference *getFieldSymRef(const Type *ft, String baseStructName, String fieldName, const Type *fieldsType, size_t fieldOffset);
 
     TR::Compilation * _comp;
     TR_FrontEnd * _fe;
@@ -172,11 +187,14 @@ protected:
     
     std::map<TypeID,TR::DataTypes> _types;
     BitVector _builderInTrees;
+    Array<JB2ResolvedMethod *> _functions;
+    Array<mcount_t> _functionIDs;
 
     TR::DataTypes _platformWordType;
     List<TR::Node *> _floatingNodes;
     TR::Node ** _valueNodes;
     TR::SymbolReference ** _symrefs;
+    Array<TR::SymbolReference *> _fieldSymRefs;
 
     ValueInfo *_valueInfos; // indexed by value ID
 

@@ -97,7 +97,7 @@ public:
     virtual bool registerLiteral(Literal *lv)   { return true; }
     virtual bool registerScope(Scope *s)        { return true; }
     virtual bool registerSymbol(Symbol *sym)    { return true; }
-    virtual bool registerType(const Type *type);
+    virtual bool registerType(const Type *type) { return true; }
     virtual bool registerValue(Value *value)    { return true; }
 
 protected:
@@ -108,6 +108,8 @@ protected:
     virtual void visitPostCompilation(Compilation *comp);
 
     void setIlGen(OMRIlGen *ilgen);
+    void registerSymbols(Compilation *comp);
+    void registerTypes(Compilation *comp);
 
     OMRIlGen *_ilgen;
     int32_t _omrCompileReturnCode;

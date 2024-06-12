@@ -23,6 +23,7 @@
 #include "Func/Function.hpp"
 #include "Func/FunctionCompilation.hpp"
 #include "Func/FunctionExtension.hpp"
+#include "Func/FunctionIRAddon.hpp"
 #include "Func/FunctionType.hpp"
 
 namespace OMR {
@@ -32,28 +33,32 @@ namespace Func {
 INIT_JBALLOC_REUSECAT(FunctionTypeBuilder, Type)
 
 FunctionTypeBuilder::FunctionTypeBuilder(Compilation *comp)
-    : _helper(NULL)
+    : _ir(comp->ir())
+    , _helper(NULL)
     , _returnType(NULL)
     , _parameterTypes(NULL, comp->ir()->mem()) {
 
 }
 
 FunctionTypeBuilder::FunctionTypeBuilder(Allocator *a, Compilation *comp)
-    : _helper(NULL)
+    : _ir(comp->ir())
+    , _helper(NULL)
     , _returnType(NULL)
     , _parameterTypes(NULL, a) {
 
 }
 
 FunctionTypeBuilder::FunctionTypeBuilder(IR *ir)
-    : _helper(NULL)
+    : _ir(ir)
+    , _helper(NULL)
     , _returnType(NULL)
     , _parameterTypes(NULL, ir->mem()) {
 
 }
 
 FunctionTypeBuilder::FunctionTypeBuilder(Allocator *a, IR *ir)
-    : _helper(NULL)
+    : _ir(ir)
+    , _helper(NULL)
     , _returnType(NULL)
     , _parameterTypes(NULL, a) {
 
@@ -77,7 +82,7 @@ FunctionTypeBuilder::create(MEM_LOCATION(a), FunctionExtension *fx, IR *ir) {
 DEFINE_TYPE_CLASS_COMMON(FunctionType, Type, "FunctionType",)
 
 FunctionType::FunctionType(MEM_LOCATION(a), FunctionExtension *fx, FunctionTypeBuilder &ftb)
-    : Type(MEM_PASSLOC(a), getTypeClassKind(), fx, typeName(a, ftb))
+    : Type(MEM_PASSLOC(a), getTypeClassKind(), fx, typeName(a, ftb), 0, ftb.ir()->typedict())
     , _returnType(ftb.returnType())
     , _numParms(ftb.numParameters())
     , _parmTypes((_numParms > 0) ? a->allocate<const Type *>(_numParms) : NULL) {
@@ -87,6 +92,8 @@ FunctionType::FunctionType(MEM_LOCATION(a), FunctionExtension *fx, FunctionTypeB
         const Type *parmType = it.item();
         _parmTypes[p++] = parmType;
     }
+    
+    ftb.ir()->addon<FunctionIRAddon>()->registerFunctionType(this);
 }
 
 FunctionType::FunctionType(Allocator *a, const FunctionType *source, IRCloner *cloner)
@@ -116,11 +123,13 @@ FunctionType::typeName(Allocator *mem, FunctionTypeBuilder & ftb) {
     auto it = ftb.parameterTypes();
     if (it.hasItem()) {
         const Type *type = it.item();
-        s.append(String(mem, "0:t")).append(String::to_string(mem, type->id()));
+        s.append(String(mem, "t")).append(String::to_string(mem, type->id()));
+        it++;
     }
-    for (int p=0 ;it.hasItem(); p++, it++) {
+    for (int p=1 ;it.hasItem(); p++, it++) {
         const Type *type = it.item();
-        s.append(String(mem, " ")).append(String::to_string(mem, p)).append(String(mem, ":t")).append(String::to_string(mem, type->id()));
+        s.append(String(mem, ",")).append(String(mem, "t")).append(String::to_string(mem, type->id()));
+        //s.append(String(mem, " ")).append(String::to_string(mem, p)).append(String(mem, ":t")).append(String::to_string(mem, type->id()));
     }
     s.append(String(mem, ")"));
     return s;

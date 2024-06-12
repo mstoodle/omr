@@ -85,7 +85,7 @@ class ResolvedMethodBase : public TR_ResolvedMethod
 
 const int16_t MAX_SIGNATURE_LENGTH=128;
 
-class ResolvedMethod : public ResolvedMethodBase, public Method
+class ResolvedMethod : public ResolvedMethodBase, public OMR::JitBuilder::omrgen::Method
    {
    public:
    ResolvedMethod(TR_OpaqueMethodBlock *method);
