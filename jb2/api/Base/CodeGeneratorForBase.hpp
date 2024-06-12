@@ -189,7 +189,7 @@ public:
 protected:
     Base::BaseExtension *bx() const;
 
-    virtual void registerField(String baseStructName, String fieldName, const Type *fieldType, size_t fieldOffset) { }
+    virtual void registerField(const Type *ft, String baseStructName, String fieldName, const Type *fieldType, size_t fieldOffset) { }
     const String & registerFieldString(const Base::StructType * sType, const Base::FieldType *fType, const String & name);
     const String & lookupFieldString(const Base::StructType * sType, const Base::FieldType *fType);
     void registerAllStructFields(const Base::StructType *sType, const Base::StructType * baseStructType, const String & fNamePrefix, size_t baseOffset);

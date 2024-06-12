@@ -78,7 +78,7 @@ OMRCodeGenerator::perform(Compilation *comp) {
     void *entryPoint=NULL;
     {
         OMRIlGen ilgen(comp, this);
-        ilgen.registerTypes(comp->ir()->typedict());
+        registerTypes(comp);
 
         Func::Function *func = (Func::Function *)comp->unit();
         Func::FunctionContext *fctx = comp->context<Func::FunctionContext>();
@@ -127,7 +127,7 @@ OMRCodeGenerator::perform(Compilation *comp) {
 
 void
 OMRCodeGenerator::visitPreCompilation(Compilation *comp) {
-    ilgen()->registerSymbols(comp->ir()->symdict());
+    registerSymbols(comp); // must be called inside TR::Compilation
 
     // create all the appropriate builder objects ahead of time
     for (auto it = comp->builders();it.hasItem();it++) {
@@ -146,12 +146,40 @@ OMRCodeGenerator::visitPreCompilation(Compilation *comp) {
     }
 }
 
-bool
-OMRCodeGenerator::registerType(const Type *type) {
-    CodeGeneratorForExtension *cgForExt = type->ext()->addon<OMRCodeGeneratorExtensionAddon>()->cgForExtension();
-    if (cgForExt)
-        return cgForExt->registerType(type);
-    return false;
+void
+OMRCodeGenerator::registerSymbols(Compilation *comp) {
+    SymbolDictionary *symdict = comp->ir()->symdict();
+    for (auto it = symdict->symbolIterator(); it.hasItem(); it++) {
+        Symbol *sym = it.item();
+        CodeGeneratorForExtension *cgForExt = sym->ext()->addon<OMRCodeGeneratorExtensionAddon>()->cgForExtension();
+        if (cgForExt)
+            assert(cgForExt->registerSymbol(sym));
+        else
+            assert(false);
+    }
+}
+
+void
+OMRCodeGenerator::registerTypes(Compilation *comp) {
+    TypeDictionary *typedict = comp->ir()->typedict();
+    TypeID numTypes = typedict->numTypes();
+    Allocator myMem("Type mapping", comp->mem());
+    BitVector mappedTypes(&myMem, numTypes);
+    while (numTypes > 0) {
+        TypeID startNumTypes = numTypes;
+        for (auto it = typedict->typesIterator(); it.hasItem(); it++) {
+            const Type *type = it.item();
+            if (mappedTypes.getBit(type->id()) != true) {
+                CodeGeneratorForExtension *cgForExt = type->ext()->addon<OMRCodeGeneratorExtensionAddon>()->cgForExtension();
+                bool mapped = cgForExt->registerType(type);
+                if (mapped) {
+                    numTypes--;
+                    mappedTypes.setBit(type->id());
+                }
+            }
+        }
+        assert(numTypes < startNumTypes);
+    }
 }
 
 Builder *

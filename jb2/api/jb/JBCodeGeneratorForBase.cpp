@@ -107,7 +107,7 @@ JBCodeGeneratorForBase::regtypeAddress(const Type *Address) {
 }
 
 void
-JBCodeGeneratorForBase::registerField(String baseStructName, String fieldName, const Type *fieldType, size_t fieldOffset) {
+JBCodeGeneratorForBase::registerField(const Type *ft, String baseStructName, String fieldName, const Type *fieldType, size_t fieldOffset) {
     jbmb()->registerField(baseStructName, fieldName, fieldType, fieldOffset);
 }
 

@@ -49,7 +49,7 @@ protected:
     OMRCodeGenerator *omrcg() const;
     OMRIlGen *ilgen() const;
 
-    virtual void registerField(String baseStructName, String fieldName, const Type *fieldType, size_t fieldOffset);
+    virtual void registerField(const Type *ft, String baseStructName, String fieldName, const Type *fieldType, size_t fieldOffset);
 
     DEFINE_CG_BASE_HANDLERS(OMRCodeGeneratorForBase);
 

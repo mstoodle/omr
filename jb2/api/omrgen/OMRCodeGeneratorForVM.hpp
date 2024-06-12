@@ -29,6 +29,9 @@ namespace OMR {
 namespace JitBuilder {
 namespace omrgen {
 
+class OMRCodeGenerator;
+class OMRIlGen;
+
 class OMRCodeGeneratorForVM : public VM::CodeGeneratorForVM {
     JBALLOC_(OMRCodeGeneratorForVM)
 
