@@ -286,7 +286,7 @@ TR::ARM64SystemLinkage::mapStack(TR::ResolvedMethodSymbol *method)
    uint32_t stackIndex = 0;
    ListIterator<TR::AutomaticSymbol> automaticIterator(&method->getAutomaticList());
    TR::AutomaticSymbol *localCursor = automaticIterator.getFirst();
-   bool frameNeeded = false;
+   bool frameNeeded = (machine->getLinkRegisterKilled());
 
    stackIndex = 8; // [sp+0] is for link register
 
