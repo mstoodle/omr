@@ -25,6 +25,7 @@
 
 #include "codegen/CodeGenerator.hpp"
 #include "compile/Compilation.hpp"
+#include "compile/JB2ResolvedMethod.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "env/FrontEnd.hpp"
 #include "env/StackMemoryRegion.hpp"
@@ -64,10 +65,13 @@ OMRIlGen::OMRIlGen(Compilation *jb2comp, OMRCodeGenerator *jb2cg)
     , _lastTree(NULL)
     , _otherBlockTrees(NULL)
     , _builderInTrees(jb2comp->mem(), jb2comp->ir()->maxBuilderID())
+    , _functions(NULL, jb2comp->ir()->mem())
+    , _functionIDs(NULL, jb2comp->ir()->mem())
     , _platformWordType(TR::NoType)
     , _floatingNodes(NULL, jb2comp->mem())
     , _valueNodes(NULL)
     , _symrefs(NULL)
+    , _fieldSymRefs(NULL, jb2comp->mem())
     , _valueInfos(NULL)
     , _jb2comp(jb2comp)
     , _jb2cg(jb2cg) {
@@ -227,28 +231,6 @@ OMRIlGen::registerBuilder(Builder *b) {
 }
 
 void
-OMRIlGen::registerTypes(TypeDictionary *typedict) {
-    TypeID numTypes = typedict->numTypes();
-    Allocator myMem("Type mapping", _jb2comp->mem());
-    BitVector mappedTypes(&myMem, numTypes);
-    while (numTypes > 0) {
-        TypeID startNumTypes = numTypes;
-        for (auto it = typedict->typesIterator(); it.hasItem(); it++) {
-            const Type *type = it.item();
-            if (mappedTypes.getBit(type->id()) != true) {
-                CodeGeneratorForExtension *cgForExt = type->ext()->addon<OMRCodeGeneratorExtensionAddon>()->cgForExtension();
-                bool mapped = cgForExt->registerType(type);
-                if (mapped) {
-                    numTypes--;
-                    mappedTypes.setBit(type->id());
-                }
-            }
-        }
-        assert(numTypes < startNumTypes);
-    }
-}
-
-void
 OMRIlGen::registerNoType(const Type * t) {
     assert(_types.find(t->id()) == _types.end());
     _types[t->id()] = TR::DataTypes::NoType;
@@ -296,8 +278,55 @@ OMRIlGen::registerDouble(const Type * t) {
 
 void
 OMRIlGen::registerAddress(const Type * t) {
-    assert(_types.find(t->id()) == _types.end());
+    assert (_types.find(t->id()) == _types.end());
     _types[t->id()] = TR::DataTypes::Address;
+}
+
+bool
+OMRIlGen::registerStructType(const Type *t) {
+    return false;
+}
+
+TR::SymbolReference *
+OMRIlGen::getFieldSymRef(const Type *ft, String baseStructName, String fieldName, const Type *fieldsType, size_t fieldOffset) {
+    TR::SymbolReference *sr = NULL;
+    if (_fieldSymRefs.exists(ft->id())) {
+        sr = _fieldSymRefs[ft->id()];
+        if (sr != NULL)
+            return sr;
+    }
+
+    TR::DataType type = mapType(fieldsType);
+
+    size_t len=(baseStructName.length() + 1 + fieldName.length() + 1) * sizeof(char);
+    char *fullName = (char *) _comp->trMemory()->allocateHeapMemory(len);
+    snprintf(fullName, len, "%s.%s", baseStructName.c_str(), fieldName.c_str());
+    TR::Symbol *symbol = TR::Symbol::createNamedShadow(_comp->trHeapMemory(), type, static_cast<uint32_t>(TR::DataType::getSize(type)), fullName);
+
+    // TBD: should we create a dynamic "constant" pool for accesses made by the method being compiled?
+    sr = new (_comp->trHeapMemory()) TR::SymbolReference(_comp->getSymRefTab(), symbol, _comp->getMethodSymbol()->getResolvedMethodIndex(), -1);
+    sr->setOffset(fieldOffset);
+
+    // conservative aliasing
+    int32_t refNum = sr->getReferenceNumber();
+    if (type == TR::Address)
+        _comp->getSymRefTab()->aliasBuilder.addressShadowSymRefs().set(refNum);
+    else if (type == TR::Int32)
+        _comp->getSymRefTab()->aliasBuilder.intShadowSymRefs().set(refNum);
+    else
+        _comp->getSymRefTab()->aliasBuilder.nonIntPrimitiveShadowSymRefs().set(refNum);
+
+    _fieldSymRefs.assign(ft->id(), sr);
+    return sr;
+}
+
+bool
+OMRIlGen::registerFunctionType(const Type *t) {
+    if (_types.find(t->id()) == _types.end()) {
+        _types[t->id()] = TR::DataTypes::Address;
+        return true;
+    }
+    return false;
 }
 
 TR::Block *
@@ -316,16 +345,10 @@ OMRIlGen::mapType(const Type *type) {
     return it->second;
 }
 
-void
-OMRIlGen::registerSymbols(SymbolDictionary *symdict) {
-    for (auto it = symdict->symbolIterator(); it.hasItem(); it++) {
-        Symbol *sym = it.item();
-        CodeGeneratorForExtension *cgForExt = sym->ext()->addon<OMRCodeGeneratorExtensionAddon>()->cgForExtension();
-        if (cgForExt)
-            assert(cgForExt->registerSymbol(sym));
-        else
-            assert(_jb2cg->registerSymbol(sym));
-    }
+bool
+OMRIlGen::typeRegistered(const Type *type) {
+    auto it = _types.find(type->id());
+    return (it != _types.end());
 }
 
 void
@@ -346,6 +369,44 @@ OMRIlGen::createParameterSymbol(Symbol *parameterSym, int32_t parameterIndex) {
     sym->getParmSymbol()->setName(parameterSym->name().c_str());
     if (!parameterSym->type()->isManaged())
         sym->setNotCollected();
+}
+
+void
+OMRIlGen::createFunctionSymbol(Symbol *funcSym,
+                               const char *name,
+                               const char *fileName,
+                               const char *lineNumber,
+                               int32_t numParms,
+                               const Type ** parmTypes,
+                               const Type * returnType,
+                               void *entryPoint) {
+    TR_ASSERT_FATAL(!_functions.exists(funcSym->id()) || _functions[funcSym->id()] == NULL, "Function '%s' already defined", name);
+
+    TR::DataTypes *trParmTypes = static_cast<TR::DataTypes *>(_comp->trMemory()->allocateHeapMemory(numParms * sizeof(TR::DataTypes)));
+    const char **parmNames = static_cast<const char **>(_comp->trMemory()->allocateHeapMemory(numParms * sizeof (const char *)));
+    for (int32_t p=0;p < numParms;p++) {
+        trParmTypes[p] = mapType(parmTypes[p]);
+
+        size_t len=(1+10+1) * sizeof(char);
+        char *name = static_cast<char *>(_comp->trMemory()->allocateHeapMemory(len));
+        snprintf(name, len, "p%u", p);
+        parmNames[p] = name;
+    }
+    TR::DataTypes trReturnType = mapType(returnType);
+    JB2ResolvedMethod *method = new (_comp->trMemory()->heapMemoryRegion()) JB2ResolvedMethod(this,
+                                                                                              name,
+                                                                                              fileName,
+                                                                                              lineNumber,
+                                                                                              numParms,
+                                                                                              trParmTypes,
+                                                                                              parmNames,
+                                                                                              trReturnType,
+                                                                                              entryPoint);
+    TR::ResolvedMethodSymbol *sym = TR::ResolvedMethodSymbol::create(_comp->trHeapMemory(), method, _comp);
+    sym->setMethodAddress(entryPoint);
+    mcount_t id = _comp->addOwningMethod(sym);
+    _functions.assign(funcSym->id(), method);
+    _functionIDs.assign(funcSym->id(), id);
 }
 
 void
@@ -654,6 +715,36 @@ OMRIlGen::and_(Location *location, Value *result, Value *left, Value *right) {
 }
 
 void
+OMRIlGen::call(Location *location, Operation *callOp, bool isDirectCall) {
+    assert(_functions[callOp->symbol()->id()] != NULL);
+    size_t numArgs = callOp->numOperands();
+    JB2ResolvedMethod *resolvedMethod = _functions[callOp->symbol()->id()];
+    TR::SymbolReference *methodSymRef = symRefTab()->findOrCreateStaticMethodSymbol(_functionIDs[callOp->symbol()->id()], -1, resolvedMethod);
+    TR::MethodSymbol *methodSym = methodSymRef->getSymbol()->getMethodSymbol();
+    methodSym->setLinkage(TR_System);
+    methodSym->setMethodAddress(resolvedMethod->getEntryPoint());
+
+    TR::DataType returnType = methodSym->getMethod()->returnType();
+    TR::Node *callNode = TR::Node::createWithSymRef(isDirectCall? TR::ILOpCode::getDirectCall(returnType): TR::ILOpCode::getIndirectCall(returnType), numArgs, methodSymRef);
+
+    int32_t childIndex = 0;
+    for (size_t a=0;a < numArgs;a++) {
+        Value *arg = callOp->operand(a);
+        TR::Node *argNode = useValue(arg);
+        TR::DataType argType = mapType(arg->type());
+        if (argType == TR::Int8 || argType == TR::Int16 || (_jb2comp->compiler()->platformWordSize() == 64 && argType == TR::Int32))
+            argNode = convertNodeTo(_platformWordType, argNode, false);
+        callNode->setAndIncChild(childIndex++, argNode);
+    }
+
+    // callNode must be anchored by itself
+    genTreeTop(callNode, true);
+
+    if (returnType != TR::NoType)
+        defineValue(callOp->result(), callNode);
+}
+
+void
 OMRIlGen::convertTo(Location *location, Value *result, const Type *typeTo, Value *value, bool needUnsigned) {
     TR::Node *valueNode = useValue(value);
     TR::Node *convertedValue = convertNodeTo(mapType(typeTo), valueNode, needUnsigned);
@@ -876,6 +967,31 @@ OMRIlGen::loadAt(Location *location, Value *result, Value *addrValue, const Type
 }
 
 void
+OMRIlGen::loadFieldAddress(Location *location, Value *result, Value *objectValue, const Type *ft, String baseStructName, String fieldName, const Type *fieldType, size_t fieldOffset) {
+    TR::SymbolReference *symRef = getFieldSymRef(ft, baseStructName, fieldName, fieldType, fieldOffset);
+    TR::DataType type = symRef->getSymbol()->getDataType();
+    TR::Node *objectNode = useValue(objectValue);
+    TR::Node *resultNode = NULL;
+    if (_jb2comp->compiler()->platformWordSize() == 64) {
+        TR::Node *offsetNode = TR::Node::lconst(fieldOffset);
+        resultNode = binaryOpNodeFromNodes(TR::aladd, objectNode, offsetNode);
+    } else {
+        TR::Node *offsetNode = TR::Node::iconst(fieldOffset);
+        resultNode = binaryOpNodeFromNodes(TR::aiadd, objectNode, offsetNode);
+    }
+    defineValue(result, resultNode);
+}
+
+void
+OMRIlGen::loadFieldAt(Location *location, Value *result, Value *objectValue, const Type *ft, String baseStructName, String fieldName, const Type *fieldType, size_t fieldOffset) {
+    TR::SymbolReference *symRef = getFieldSymRef(ft, baseStructName, fieldName, fieldType, fieldOffset);
+    TR::DataType type = symRef->getSymbol()->getDataType();
+    TR::Node *objectNode = useValue(objectValue);
+    TR::Node *resultNode = TR::Node::createWithSymRef(_comp->il.opCodeForIndirectLoad(type), 1, objectNode, 0, symRef);
+    defineValue(result, resultNode);
+}
+
+void
 OMRIlGen::mul(Location *location, Value *result, Value *left, Value *right) {
     TR::DataTypes leftType = mapType(left->type());
     TR::Node *leftNode = useValue(left);
@@ -952,6 +1068,17 @@ OMRIlGen::storeAt(Location *location, Value *addrValue, const Type *baseType, Va
     TR::SymbolReference *storeSymRef = symRefTab()->findOrCreateArrayShadowSymbolRef(addrBaseType, addrNode);
     TR::ILOpCodes storeOp = _comp->il.opCodeForIndirectArrayStore(addrBaseType);
     TR::Node *storeNode = TR::Node::createWithSymRef(storeOp, 2, addrNode, valueNode, 0, storeSymRef);
+    genNode(storeNode, true);
+}
+
+void
+OMRIlGen::storeFieldAt(Location *location, Value *objectValue, const Type *ft, String baseStructName, String fieldName, const Type *fieldType, size_t fieldOffset, Value *valueValue) {
+    TR::SymbolReference *symRef = getFieldSymRef(ft, baseStructName, fieldName, fieldType, fieldOffset);
+    TR::DataType type = symRef->getSymbol()->getDataType();
+    TR::ILOpCodes storeOp = _comp->il.opCodeForIndirectStore(type);
+    TR::Node *objectNode = useValue(objectValue);
+    TR::Node *valueNode = useValue(valueValue);
+    TR::Node *storeNode = TR::Node::createWithSymRef(storeOp, 2, objectNode, valueNode, 0, symRef);
     genNode(storeNode, true);
 }
 

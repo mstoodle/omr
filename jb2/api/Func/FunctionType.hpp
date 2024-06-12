@@ -51,10 +51,12 @@ public:
     const FunctionType * create(MEM_LOCATION(a), FunctionExtension *fx, IR *ir); 
 
 protected:
+    IR *ir() const { return _ir; }
     const Type * returnType() const { return _returnType; };
     size_t numParameters() const { return _parameterTypes.length(); }
     List<const Type *>::Iterator parameterTypes() const { return _parameterTypes.iterator(); }
 
+    IR *_ir;
     FunctionTypeHelper * _helper;
     const Type * _returnType;
     List<const Type *> _parameterTypes;

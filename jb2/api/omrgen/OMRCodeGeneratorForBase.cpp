@@ -107,7 +107,7 @@ OMRCodeGeneratorForBase::regtypeAddress(const Type *Address) {
 }
 
 void
-OMRCodeGeneratorForBase::registerField(String baseStructName, String fieldName, const Type *fieldType, size_t fieldOffset) {
+OMRCodeGeneratorForBase::registerField(const Type *ft, String baseStructName, String fieldName, const Type *fieldType, size_t fieldOffset) {
 }
 
 bool
@@ -116,9 +116,19 @@ OMRCodeGeneratorForBase::registerType(const Type *t) {
         ilgen()->registerAddress(t);
         return true;
     } else if (t->isKind<const Base::StructType>()) {
-        assert(0); // need to handle
+        if (ilgen()->typeRegistered(t)) {
+            ilgen()->registerStructType(t);
+            return false; // first pass just creates struct types
+        }
+
+        const Base::StructType *structType = t->refine<const Base::StructType>();
+        registerAllStructFields(structType, structType, String(allocator(), ""), 0); // second pass defines the fields
+        return true;
     } else if (t->isKind<const Base::FieldType>()) {
-        assert(0); // need to handle
+        //nothing to do, fields turn into symbol references during compilation
+        //const Base::FieldType *ft = t->refine<const Base::FieldType>();
+        //return ilgen()->registerFieldType(ft, ft->owningStruct()->name(), ft->fieldName(), ft->type(), ft->offset());
+        return true;
     } else {
         TypeID id = t->id();
         regtypeFunction f = _regtypeVFT[id];
@@ -127,21 +137,6 @@ OMRCodeGeneratorForBase::registerType(const Type *t) {
             return true;
         }
     }
-    #if 0
-    else if (t->isKind<const Base::StructType>()) {
-        if (!jbmb()->typeRegistered(t)) {
-            jbmb()->registerStruct(t);
-            return false; // first pass just creates struct types
-        }
-
-        const Base::StructType *structType = t->refine<const Base::StructType>();
-        registerAllStructFields(structType, structType, String(allocator(), ""), 0); // second pass defines the fields
-        jbmb()->closeStruct(t->name());
-    }
-    else if (t->isKind<const Base::FieldType>()) {
-        // fields are registered as part of registering the struct
-    }
-    #endif
 
     return false;
 }
@@ -389,9 +384,7 @@ Builder *
 OMRCodeGeneratorForBase::gencodeLoadFieldAt(Operation *op) {
     assert(op->action() == _bx->aLoadFieldAt);
     const Base::FieldType *ft = op->type()->refine<Base::FieldType>();
-    const Base::StructType *owningStruct = ft->owningStruct();
-    const String & structName = owningStruct->name();
-    assert(0); // TODO
+    ilgen()->loadFieldAt(op->location(), op->result(), op->operand(), ft, ft->owningStruct()->name(), ft->name(), ft->type(), ft->offset());
     return NULL;
 }
 
@@ -399,9 +392,7 @@ Builder *
 OMRCodeGeneratorForBase::gencodeStoreFieldAt(Operation *op) {
     assert(op->action() == _bx->aStoreFieldAt);
     const Base::FieldType *ft = op->type()->refine<Base::FieldType>();
-    const Base::StructType *owningStruct = ft->owningStruct();
-    const String & structName = owningStruct->name();
-    assert(0); // TODO
+    ilgen()->storeFieldAt(op->location(), op->operand(0), ft, ft->owningStruct()->name(), ft->name(), ft->type(), ft->offset(), op->operand(1));
     return NULL;
 }
 

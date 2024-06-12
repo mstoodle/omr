@@ -93,6 +93,9 @@ public:
         if (_wrt)
             _config->setTraceBuildIL();
     }
+    virtual ~TestSetup() {
+        _config->setTraceBuildIL(false); // reset for next test because config is global
+    }
 
     virtual void compile(LOCATION) = 0;
     virtual void run(LOCATION) = 0;
@@ -114,9 +117,11 @@ private:
 
 class TestFunc : public TestSetup {
 public:
-    TestFunc(LOCATION, Compiler *compiler, bool log)
+    TestFunc(LOCATION, Compiler *compiler, String name, String file, String line, bool log)
         : TestSetup(PASSLOC, compiler, log) {
-
+        DefineName(name);
+        DefineFile(file);
+        DefineLine(line);
     }
 
     void compile(LOCATION) {
@@ -137,11 +142,7 @@ private:
 class ReturnVoidFunc : public TestFunc {
 public:
     ReturnVoidFunc(LOCATION, Compiler *compiler, bool log)
-        : TestFunc(PASSLOC, compiler, log) {
-
-        DefineName("ReturnVoidFunc");
-        DefineFile(__FILE__);
-        DefineLine(LINETOSTR(__LINE__));
+        : TestFunc(PASSLOC, compiler, "ReturnVoidFunc", __FILE__, LINETOSTR(__LINE__), log) {
     }
     
     void run(LOCATION) {
@@ -169,13 +170,9 @@ template<typename FuncPrototype, typename cType>
 class ReturnValueFunc : public TestFunc {
 public:
     ReturnValueFunc(LOCATION, String name, Compiler *compiler, bool log)
-        : TestFunc(PASSLOC, compiler, log)
+        : TestFunc(PASSLOC, compiler, name, __FILE__, LINETOSTR(__LINE__), log)
         , _type(NULL)
         , _value(0) {
-
-        DefineName(name);
-        DefineFile(__FILE__);
-        DefineLine(LINETOSTR(__LINE__));
     }
     void run(LOCATION) {
         FuncPrototype *f = body()->template nativeEntryPoint<FuncPrototype>();
@@ -268,13 +265,9 @@ template<typename FuncPrototype, typename cType>
 class ReturnParameterFunc : public TestFunc {
 public:
     ReturnParameterFunc(LOCATION, String name, Compiler *compiler, bool log)
-        : TestFunc(PASSLOC, compiler, log)
+        : TestFunc(PASSLOC, compiler, name, __FILE__, LINETOSTR(__LINE__), log)
         , _type(NULL)
         , _value(0) {
-
-        DefineName(name);
-        DefineFile(__FILE__);
-        DefineLine(LINETOSTR(__LINE__));
     }
     void run(LOCATION) {
         FuncPrototype *f = body()->template nativeEntryPoint<FuncPrototype>();
@@ -368,15 +361,11 @@ template<typename FuncPrototype, typename cType>
 class ReturnLocalFunc : public TestFunc {
 public:
     ReturnLocalFunc(LOCATION, String name, Compiler *compiler, bool log)
-        : TestFunc(PASSLOC, compiler, log)
+        : TestFunc(PASSLOC, compiler, name, __FILE__, LINETOSTR(__LINE__), log)
         , _type(NULL)
         , _valueSym(NULL)
         , _tempSym(NULL)
         , _value(0) {
-
-        DefineName(name);
-        DefineFile(__FILE__);
-        DefineLine(LINETOSTR(__LINE__));
     }
     void run(LOCATION) {
         FuncPrototype *f = body()->template nativeEntryPoint<FuncPrototype>();
@@ -474,16 +463,12 @@ template<typename FuncPrototype, typename cTypeFrom, typename cTypeTo>
 class ConvertToFunc : public TestFunc {
 public:
     ConvertToFunc(LOCATION, String name, Compiler *compiler, bool log)
-        : TestFunc(PASSLOC, compiler, log)
+        : TestFunc(PASSLOC, compiler, name, __FILE__, LINETOSTR(__LINE__), log)
         , _typeFrom(NULL)
         , _typeTo(NULL)
         , _valueSym(NULL)
         , _valueFrom(0)
         , _expectedResult(0) {
-
-        DefineName(name);
-        DefineFile(__FILE__);
-        DefineLine(LINETOSTR(__LINE__));
     }
     void run(LOCATION) {
         FuncPrototype *f = body()->template nativeEntryPoint<FuncPrototype>();
@@ -827,13 +812,9 @@ template<typename FuncPrototype, typename cType>
 class ReturnPointerParameterFunc : public TestFunc {
 public:
     ReturnPointerParameterFunc(LOCATION, String name, Compiler *compiler, bool log)
-        : TestFunc(PASSLOC, compiler, log)
+        : TestFunc(PASSLOC, compiler, name, __FILE__, LINETOSTR(__LINE__), log)
         , _type(NULL)
         , _value(0) {
-
-        DefineName(name);
-        DefineFile(__FILE__);
-        DefineLine(LINETOSTR(__LINE__));
     }
     void run(LOCATION) {
         FuncPrototype *f = body()->template nativeEntryPoint<FuncPrototype>();
@@ -929,13 +910,9 @@ template<typename FuncPrototype, typename cType>
 class ReturnPointerToPointerParameterFunc : public TestFunc {
 public:
     ReturnPointerToPointerParameterFunc(LOCATION, String name, Compiler *compiler, bool log)
-        : TestFunc(PASSLOC, compiler, log)
+        : TestFunc(PASSLOC, compiler, name, __FILE__, LINETOSTR(__LINE__), log)
         , _type(NULL)
         , _value(0) {
-
-        DefineName(name);
-        DefineFile(__FILE__);
-        DefineLine(LINETOSTR(__LINE__));
     }
     void run(LOCATION) {
         FuncPrototype *f = body()->template nativeEntryPoint<FuncPrototype>();
@@ -1034,14 +1011,10 @@ template<uint32_t NUMVALUES, typename value_cType>
 class CreateLocalArrayFunc : public TestFunc {
 public:
     CreateLocalArrayFunc(LOCATION, String name, Compiler *compiler, bool log)
-        : TestFunc(PASSLOC, compiler, log)
+        : TestFunc(PASSLOC, compiler, name, __FILE__, LINETOSTR(__LINE__), log)
         , _pValueType(NULL)
         , _valueType(NULL)
         , _resultValue(0) {
-
-        DefineName(name);
-        DefineFile(__FILE__);
-        DefineLine(LINETOSTR(__LINE__));
     }
     void run(LOCATION) {
         typedef value_cType (FuncPrototype)();
@@ -1144,15 +1117,11 @@ template<typename FuncPrototype, typename left_cType, typename right_cType, type
 class BinaryOpFunc : public TestFunc {
 public:
     BinaryOpFunc(LOCATION, String name, Compiler *compiler, bool log)
-        : TestFunc(PASSLOC, compiler, log)
+        : TestFunc(PASSLOC, compiler, name, __FILE__, LINETOSTR(__LINE__), log)
         , _leftType(NULL)
         , _leftValue(0)
         , _rightType(NULL)
         , _rightValue(0) {
-
-        DefineName(name);
-        DefineFile(__FILE__);
-        DefineLine(LINETOSTR(__LINE__));
     }
     void run(LOCATION) {
         FuncPrototype *f = body()->template nativeEntryPoint<FuncPrototype>();
@@ -1425,125 +1394,194 @@ TEST(omrgenExtension, AndInt64s) {
 }
 
 
-// Test subtracting two numbers of the given types
-template<typename FuncPrototype, typename left_cType, typename right_cType, typename result_cType>
-class SubFunc : public BinaryOpFunc<FuncPrototype, left_cType, right_cType, result_cType> {
+// Test for Calls
+template<typename FuncPrototype, typename arg_cType>
+class CallVoid1ParmTestFunc : public TestFunc {
 public:
-    SubFunc(LOCATION, String name, Compiler *compiler, bool log)
-        : BinaryOpFunc<FuncPrototype, left_cType, right_cType, result_cType>(PASSLOC, name, compiler, log) { }
-protected:
-    virtual Value *doBinaryOp(LOCATION, Builder *b, Value *left, Value *right) {
-        return this->bx()->Sub(PASSLOC, b, left, right);
+    CallVoid1ParmTestFunc(LOCATION, String name, Compiler *compiler, bool log)
+        : TestFunc(PASSLOC, compiler, name, __FILE__, LINETOSTR(__LINE__), log)
+        , _argType(NULL)
+        , _argValue(0)
+        , _sentinelValue(0) {
     }
+    void run(LOCATION) {
+        FuncPrototype *f = body()->template nativeEntryPoint<FuncPrototype>();
+        EXPECT_NE(f, nullptr);
+        clearSentinel();
+        f(_argValue);
+        arg_cType v = loadSentinel();
+        EXPECT_EQ(v, _argValue) << "Compiled f(" << _argValue << ") sets sentinel to " << v;
+    }
+    void test(LOCATION, const Type *argType, arg_cType argValue) {
+        _argType = argType;
+        _argValue = argValue;
+        compile(PASSLOC);
+        run(PASSLOC);
+    }
+
+protected:
+    virtual bool buildContext(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
+        ctx->DefineParameter("value", _argType);
+        ctx->DefineReturnType(NoType);
+        defineFunction(comp, ctx);
+        return true;
+    }
+    virtual bool buildIL(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
+        Builder *entry = scope->entryPoint<BuilderEntry>(0)->builder();
+        auto parmSym=ctx->LookupLocal("value"); 
+        Value *value = fx()->Load(LOC, entry, parmSym);
+        callFunction(entry, value);
+        fx()->Return(LOC, entry);
+        return true;
+    }
+
+protected:
+    virtual void clearSentinel() = 0;
+    virtual arg_cType loadSentinel() = 0;
+    virtual void defineFunction(Func::FunctionCompilation *comp, Func::FunctionContext *ctx) = 0;
+    virtual void callFunction(Builder *b, Value *v) = 0;
+
+    const Type *_argType;
+    arg_cType _argValue;
+    int8_t *_sentinelValue;
 };
 
-TEST(omrgenExtension, SubInt8s) {
-    typedef int8_t (FuncProto)(int8_t, int8_t);
-    SubFunc<FuncProto, int8_t, int8_t, int8_t> sub_int8s(LOC, "sub_int8s", c, false);
-    sub_int8s.test(LOC, Int8, static_cast<int8_t>(0), Int8, static_cast<int8_t>(0), Int8, static_cast<int8_t>(0));
-    sub_int8s.test(LOC, Int8, static_cast<int8_t>(0), Int8, static_cast<int8_t>(3), Int8, static_cast<int8_t>(-3));
-    sub_int8s.test(LOC, Int8, static_cast<int8_t>(3), Int8, static_cast<int8_t>(0), Int8, static_cast<int8_t>(3));
-    sub_int8s.test(LOC, Int8, static_cast<int8_t>(-3), Int8, static_cast<int8_t>(3), Int8, static_cast<int8_t>(-6));
-    sub_int8s.test(LOC, Int8, static_cast<int8_t>(3), Int8, static_cast<int8_t>(-3), Int8, static_cast<int8_t>(6));
-    sub_int8s.test(LOC, Int8, static_cast<int8_t>(-3), Int8, static_cast<int8_t>(-3), Int8, static_cast<int8_t>(0));
-    sub_int8s.test(LOC, Int8, std::numeric_limits<int8_t>::min(), Int8, static_cast<int8_t>(0), Int8, std::numeric_limits<int8_t>::min());
-    sub_int8s.test(LOC, Int8, std::numeric_limits<int8_t>::max(), Int8, static_cast<int8_t>(0), Int8, std::numeric_limits<int8_t>::max());
-    sub_int8s.test(LOC, Int8, std::numeric_limits<int8_t>::min(), Int8, static_cast<int8_t>(-1), Int8, std::numeric_limits<int8_t>::min()+1);
-    sub_int8s.test(LOC, Int8, std::numeric_limits<int8_t>::max(), Int8, static_cast<int8_t>(1), Int8, std::numeric_limits<int8_t>::max()-1);
-}
-TEST(omrgenExtension, SubInt16s) {
-    typedef int16_t (FuncProto)(int16_t, int16_t);
-    SubFunc<FuncProto, int16_t, int16_t, int16_t> sub_int16s(LOC, "sub_int16s", c, false);
-    sub_int16s.test(LOC, Int16, static_cast<int16_t>(0), Int16, static_cast<int16_t>(0), Int16, static_cast<int16_t>(0));
-    sub_int16s.test(LOC, Int16, static_cast<int16_t>(0), Int16, static_cast<int16_t>(3), Int16, static_cast<int16_t>(-3));
-    sub_int16s.test(LOC, Int16, static_cast<int16_t>(3), Int16, static_cast<int16_t>(0), Int16, static_cast<int16_t>(3));
-    sub_int16s.test(LOC, Int16, static_cast<int16_t>(-3), Int16, static_cast<int16_t>(3), Int16, static_cast<int16_t>(-6));
-    sub_int16s.test(LOC, Int16, static_cast<int16_t>(3), Int16, static_cast<int16_t>(-3), Int16, static_cast<int16_t>(6));
-    sub_int16s.test(LOC, Int16, static_cast<int16_t>(-3), Int16, static_cast<int16_t>(-3), Int16, static_cast<int16_t>(0));
-    sub_int16s.test(LOC, Int16, std::numeric_limits<int16_t>::min(), Int16, static_cast<int16_t>(0), Int16, std::numeric_limits<int16_t>::min());
-    sub_int16s.test(LOC, Int16, std::numeric_limits<int16_t>::max(), Int16, static_cast<int16_t>(0), Int16, std::numeric_limits<int16_t>::max());
-    sub_int16s.test(LOC, Int16, std::numeric_limits<int16_t>::min(), Int16, static_cast<int16_t>(-1), Int16, std::numeric_limits<int16_t>::min()+1);
-    sub_int16s.test(LOC, Int16, std::numeric_limits<int16_t>::max(), Int16, static_cast<int16_t>(1), Int16, std::numeric_limits<int16_t>::max()-1);
-}
-TEST(omrgenExtension, SubInt32s) {
-    typedef int32_t (FuncProto)(int32_t, int32_t);
-    SubFunc<FuncProto, int32_t, int32_t, int32_t> sub_int32s(LOC, "sub_int32s", c, false);
-    sub_int32s.test(LOC, Int32, static_cast<int32_t>(0), Int32, static_cast<int32_t>(0), Int32, static_cast<int32_t>(0));
-    sub_int32s.test(LOC, Int32, static_cast<int32_t>(0), Int32, static_cast<int32_t>(3), Int32, static_cast<int32_t>(-3));
-    sub_int32s.test(LOC, Int32, static_cast<int32_t>(3), Int32, static_cast<int32_t>(0), Int32, static_cast<int32_t>(3));
-    sub_int32s.test(LOC, Int32, static_cast<int32_t>(-3), Int32, static_cast<int32_t>(3), Int32, static_cast<int32_t>(-6));
-    sub_int32s.test(LOC, Int32, static_cast<int32_t>(3), Int32, static_cast<int32_t>(-3), Int32, static_cast<int32_t>(6));
-    sub_int32s.test(LOC, Int32, static_cast<int32_t>(-3), Int32, static_cast<int32_t>(-3), Int32, static_cast<int32_t>(0));
-    sub_int32s.test(LOC, Int32, std::numeric_limits<int32_t>::min(), Int32, static_cast<int32_t>(0), Int32, std::numeric_limits<int32_t>::min());
-    sub_int32s.test(LOC, Int32, std::numeric_limits<int32_t>::max(), Int32, static_cast<int32_t>(0), Int32, std::numeric_limits<int32_t>::max());
-    sub_int32s.test(LOC, Int32, std::numeric_limits<int32_t>::min(), Int32, static_cast<int32_t>(-1), Int32, std::numeric_limits<int32_t>::min()+1);
-    sub_int32s.test(LOC, Int32, std::numeric_limits<int32_t>::max(), Int32, static_cast<int32_t>(1), Int32, std::numeric_limits<int32_t>::max()-1);
-}
-TEST(omrgenExtension, SubInt64s) {
-    typedef int64_t (FuncProto)(int64_t, int64_t);
-    SubFunc<FuncProto, int64_t, int64_t, int64_t> sub_int64s(LOC, "sub_int64s", c, false);
-    sub_int64s.test(LOC, Int64, static_cast<int64_t>(0), Int64, static_cast<int64_t>(0), Int64, static_cast<int64_t>(0));
-    sub_int64s.test(LOC, Int64, static_cast<int64_t>(0), Int64, static_cast<int64_t>(3), Int64, static_cast<int64_t>(-3));
-    sub_int64s.test(LOC, Int64, static_cast<int64_t>(3), Int64, static_cast<int64_t>(0), Int64, static_cast<int64_t>(3));
-    sub_int64s.test(LOC, Int64, static_cast<int64_t>(-3), Int64, static_cast<int64_t>(3), Int64, static_cast<int64_t>(-6));
-    sub_int64s.test(LOC, Int64, static_cast<int64_t>(3), Int64, static_cast<int64_t>(-3), Int64, static_cast<int64_t>(6));
-    sub_int64s.test(LOC, Int64, static_cast<int64_t>(-3), Int64, static_cast<int64_t>(-3), Int64, static_cast<int64_t>(0));
-    sub_int64s.test(LOC, Int64, std::numeric_limits<int64_t>::min(), Int64, static_cast<int64_t>(0), Int64, std::numeric_limits<int64_t>::min());
-    sub_int64s.test(LOC, Int64, std::numeric_limits<int64_t>::max(), Int64, static_cast<int64_t>(0), Int64, std::numeric_limits<int64_t>::max());
-    sub_int64s.test(LOC, Int64, std::numeric_limits<int64_t>::min(), Int64, static_cast<int64_t>(-1), Int64, std::numeric_limits<int64_t>::min()+1);
-    sub_int64s.test(LOC, Int64, std::numeric_limits<int64_t>::max(), Int64, static_cast<int64_t>(1), Int64, std::numeric_limits<int64_t>::max()-1);
-}
-TEST(omrgenExtension, SubFloat32s) {
-    typedef float (FuncProto)(float, float);
-    SubFunc<FuncProto, float, float, float> sub_float(LOC, "sub_float", c, false);
-    sub_float.test(LOC, Float32, static_cast<float>(0), Float32, static_cast<float>(0), Float32, static_cast<float>(0));
-    sub_float.test(LOC, Float32, static_cast<float>(0), Float32, static_cast<float>(3), Float32, static_cast<float>(-3));
-    sub_float.test(LOC, Float32, static_cast<float>(3), Float32, static_cast<float>(0), Float32, static_cast<float>(3));
-    sub_float.test(LOC, Float32, static_cast<float>(-3), Float32, static_cast<float>(3), Float32, static_cast<float>(-6));
-    sub_float.test(LOC, Float32, static_cast<float>(3), Float32, static_cast<float>(-3), Float32, static_cast<float>(6));
-    sub_float.test(LOC, Float32, static_cast<float>(-3), Float32, static_cast<float>(-3), Float32, static_cast<float>(0));
-    sub_float.test(LOC, Float32, std::numeric_limits<float>::min(), Float32, static_cast<float>(0), Float32, std::numeric_limits<float>::min());
-    sub_float.test(LOC, Float32, std::numeric_limits<float>::max(), Float32, static_cast<float>(0), Float32, std::numeric_limits<float>::max());
-    sub_float.test(LOC, Float32, std::numeric_limits<float>::min(), Float32, static_cast<float>(-1), Float32, std::numeric_limits<float>::min()+1);
-    sub_float.test(LOC, Float32, std::numeric_limits<float>::max(), Float32, static_cast<float>(1), Float32, std::numeric_limits<float>::max()-1);
-}
-TEST(omrgenExtension, SubFloat64s) {
-    typedef double (FuncProto)(double, double);
-    SubFunc<FuncProto, double, double, double> sub_double(LOC, "sub_double", c, false);
-    sub_double.test(LOC, Float64, static_cast<double>(0), Float64, static_cast<double>(0), Float64, static_cast<double>(0));
-    sub_double.test(LOC, Float64, static_cast<double>(0), Float64, static_cast<double>(3), Float64, static_cast<double>(-3));
-    sub_double.test(LOC, Float64, static_cast<double>(3), Float64, static_cast<double>(0), Float64, static_cast<double>(3));
-    sub_double.test(LOC, Float64, static_cast<double>(-3), Float64, static_cast<double>(3), Float64, static_cast<double>(-6));
-    sub_double.test(LOC, Float64, static_cast<double>(3), Float64, static_cast<double>(-3), Float64, static_cast<double>(6));
-    sub_double.test(LOC, Float64, static_cast<double>(-3), Float64, static_cast<double>(-3), Float64, static_cast<double>(0));
-    sub_double.test(LOC, Float64, std::numeric_limits<double>::min(), Float64, static_cast<double>(0), Float64, std::numeric_limits<double>::min());
-    sub_double.test(LOC, Float64, std::numeric_limits<double>::max(), Float64, static_cast<double>(0), Float64, std::numeric_limits<double>::max());
-    sub_double.test(LOC, Float64, std::numeric_limits<double>::min(), Float64, static_cast<double>(-1), Float64, std::numeric_limits<double>::min()+1);
-    sub_double.test(LOC, Float64, std::numeric_limits<double>::max(), Float64, static_cast<double>(1), Float64, std::numeric_limits<double>::max()-1);
-}
-TEST(omrgenExtension, SubAddressAndInt) {
-    if (c->platformWordSize() == 32) {
-        typedef intptr_t (FuncProto)(intptr_t, int32_t);
-        SubFunc<FuncProto, intptr_t, int32_t, intptr_t> add_addressint32s(LOC, "add_addressint32s", c, false);
-        add_addressint32s.test(LOC, Address, static_cast<intptr_t>(NULL), Int32, static_cast<int32_t>(0), Address, static_cast<intptr_t>(NULL));
-        add_addressint32s.test(LOC, Address, static_cast<intptr_t>(NULL), Int32, static_cast<int32_t>(4), Address, static_cast<intptr_t>(-4));
-        add_addressint32s.test(LOC, Address, static_cast<intptr_t>(0xdeadbeef), Int32, static_cast<int32_t>(0), Address, static_cast<intptr_t>(0xdeadbeef));
-        add_addressint32s.test(LOC, Address, static_cast<intptr_t>(0xdeadbeef), Int32, static_cast<int32_t>(16), Address, static_cast<intptr_t>(0xdeadbeef-16));
-        add_addressint32s.test(LOC, Address, std::numeric_limits<intptr_t>::max(), Int32, static_cast<int32_t>(0), Address, std::numeric_limits<intptr_t>::max());
-        add_addressint32s.test(LOC, Address, std::numeric_limits<intptr_t>::min(), Int32, static_cast<int32_t>(0), Address, std::numeric_limits<intptr_t>::min());
-    } else if (c->platformWordSize() == 64) {
-        typedef intptr_t (FuncProto)(intptr_t, int64_t);
-        SubFunc<FuncProto, intptr_t, int64_t, intptr_t> add_addressint64s(LOC, "add_addressint64s", c, false);
-        add_addressint64s.test(LOC, Address, static_cast<intptr_t>(NULL), Int64, static_cast<int64_t>(0), Address, static_cast<intptr_t>(NULL));
-        add_addressint64s.test(LOC, Address, static_cast<intptr_t>(NULL), Int64, static_cast<int64_t>(4), Address, static_cast<intptr_t>(-4));
-        add_addressint64s.test(LOC, Address, static_cast<intptr_t>(0xdeadbeef), Int64, static_cast<int64_t>(0), Address, static_cast<intptr_t>(0xdeadbeef));
-        add_addressint64s.test(LOC, Address, static_cast<intptr_t>(0xdeadbeef), Int64, static_cast<int64_t>(16), Address, static_cast<intptr_t>(0xdeadbeef-16));
-        add_addressint64s.test(LOC, Address, std::numeric_limits<intptr_t>::max(), Int64, static_cast<int64_t>(0), Address, std::numeric_limits<intptr_t>::max());
-        add_addressint64s.test(LOC, Address, std::numeric_limits<intptr_t>::min(), Int64, static_cast<int64_t>(0), Address, std::numeric_limits<intptr_t>::min());
 
+template <typename FuncPrototype, typename arg_cType>
+class CallVoid1Parm : public CallVoid1ParmTestFunc<FuncPrototype, arg_cType> {
+private:
+    static arg_cType sentinel;
+#define TARGET_LINE LINETOSTR(__LINE__)
+    static void target(arg_cType x) {
+        sentinel= x;
     }
+public:
+    CallVoid1Parm(LOCATION, String name, Compiler *compiler, bool log)
+        : CallVoid1ParmTestFunc<FuncPrototype, arg_cType>(PASSLOC, name, compiler, log) {
+    }
+protected:
+    virtual void clearSentinel() { sentinel = 0; }
+    virtual arg_cType loadSentinel() { return sentinel;  }
+    virtual void defineFunction(Func::FunctionCompilation *comp, Func::FunctionContext *ctx) { 
+        _fsym = ctx->DefineFunction(LOC, comp, "target", __FILE__, TARGET_LINE, (void*)&target, NoType, 1, this->_argType);
+    }
+    virtual void callFunction(Builder *b, Value *v) { 
+        fx->Call(LOC, b, _fsym, v);
+    }
+    Func::FunctionSymbol *_fsym;
+};
+
+typedef void *(CallVoid1Parm_FuncProto_int8_t)(int8_t);
+template<> int8_t CallVoid1Parm<CallVoid1Parm_FuncProto_int8_t, int8_t>::sentinel = 0;
+TEST(omrgenExtension, Call_void_int8) {
+    CallVoid1Parm<CallVoid1Parm_FuncProto_int8_t, int8_t> call_void_int8(LOC, "call_void_int8", c, false);
+    call_void_int8.test(LOC, Int8, static_cast<int8_t>(3));
+    call_void_int8.test(LOC, Int8, static_cast<int8_t>(-1));
+    call_void_int8.test(LOC, Int8, std::numeric_limits<int8_t>::min());
+    call_void_int8.test(LOC, Int8, std::numeric_limits<int8_t>::max());
+}
+typedef void *(CallVoid1Parm_FuncProto_int16_t)(int16_t);
+template<> int16_t CallVoid1Parm<CallVoid1Parm_FuncProto_int16_t, int16_t>::sentinel = 0;
+TEST(omrgenExtension, Call_void_int16) {
+    CallVoid1Parm<CallVoid1Parm_FuncProto_int16_t, int16_t> call_void_int16(LOC, "call_void_int16", c, false);
+    call_void_int16.test(LOC, Int16, static_cast<int16_t>(3));
+    call_void_int16.test(LOC, Int16, static_cast<int16_t>(-1));
+    call_void_int16.test(LOC, Int16, std::numeric_limits<int16_t>::min());
+    call_void_int16.test(LOC, Int16, std::numeric_limits<int16_t>::max());
+}
+typedef void *(CallVoid1Parm_FuncProto_int32_t)(int32_t);
+template<> int32_t CallVoid1Parm<CallVoid1Parm_FuncProto_int32_t, int32_t>::sentinel = 0;
+TEST(omrgenExtension, Call_void_int32) {
+    CallVoid1Parm<CallVoid1Parm_FuncProto_int32_t, int32_t> call_void_int32(LOC, "call_void_int32", c, false);
+    call_void_int32.test(LOC, Int32, static_cast<int32_t>(3));
+    call_void_int32.test(LOC, Int32, static_cast<int32_t>(-1));
+    call_void_int32.test(LOC, Int32, std::numeric_limits<int32_t>::min());
+    call_void_int32.test(LOC, Int32, std::numeric_limits<int32_t>::max());
+}
+typedef void *(CallVoid1Parm_FuncProto_int64_t)(int64_t);
+template<> int64_t CallVoid1Parm<CallVoid1Parm_FuncProto_int64_t, int64_t>::sentinel = 0;
+TEST(omrgenExtension, Call_void_int64) {
+    CallVoid1Parm<CallVoid1Parm_FuncProto_int64_t, int64_t> call_void_int64(LOC, "call_void_int64", c, false);
+    call_void_int64.test(LOC, Int64, static_cast<int64_t>(3));
+    call_void_int64.test(LOC, Int64, static_cast<int64_t>(-1));
+    call_void_int64.test(LOC, Int64, std::numeric_limits<int64_t>::min());
+    call_void_int64.test(LOC, Int64, std::numeric_limits<int64_t>::max());
+}
+typedef void *(CallVoid1Parm_FuncProto_float)(float);
+template<> float CallVoid1Parm<CallVoid1Parm_FuncProto_float, float>::sentinel = 0;
+TEST(omrgenExtension, Call_void_float32) {
+    CallVoid1Parm<CallVoid1Parm_FuncProto_float, float> call_void_float32(LOC, "call_void_float32", c, false);
+    call_void_float32.test(LOC, Float32, static_cast<float>(3));
+    call_void_float32.test(LOC, Float32, static_cast<float>(-1));
+    call_void_float32.test(LOC, Float32, std::numeric_limits<float>::min());
+    call_void_float32.test(LOC, Float32, std::numeric_limits<float>::max());
+}
+typedef void *(CallVoid1Parm_FuncProto_double)(double);
+template<> double CallVoid1Parm<CallVoid1Parm_FuncProto_double, double>::sentinel = 0;
+TEST(omrgenExtension, Call_void_float64) {
+    CallVoid1Parm<CallVoid1Parm_FuncProto_double, double> call_void_float64(LOC, "call_void_float64", c, false);
+    call_void_float64.test(LOC, Float64, static_cast<double>(3));
+    call_void_float64.test(LOC, Float64, static_cast<double>(-1));
+    call_void_float64.test(LOC, Float64, std::numeric_limits<double>::min());
+    call_void_float64.test(LOC, Float64, std::numeric_limits<double>::max());
+}
+typedef void *(CallVoid1Parm_FuncProto_pvoid)(void *);
+template<> void * CallVoid1Parm<CallVoid1Parm_FuncProto_pvoid, void *>::sentinel = 0;
+TEST(omrgenExtension, Call_void_address) {
+    CallVoid1Parm<CallVoid1Parm_FuncProto_pvoid, void *> call_void_address(LOC, "call_void_address", c, false);
+    call_void_address.test(LOC, Address, reinterpret_cast<void *>(0xdeadf00d));
+    call_void_address.test(LOC, Address, reinterpret_cast<void *>(0xcafebeef));
+    call_void_address.test(LOC, Address, std::numeric_limits<void *>::min());
+    call_void_address.test(LOC, Address, std::numeric_limits<void *>::max());
 }
 
+// Test for function pointers
+typedef bool (*fpType_bool_bool)(bool);
+template <typename FuncPrototype>
+class CallVoid1_fp: public CallVoid1ParmTestFunc<FuncPrototype, fpType_bool_bool> {
+private:
+    static fpType_bool_bool sentinel;
+#define TARGET_LINE LINETOSTR(__LINE__)
+    static void target(fpType_bool_bool x) {
+        if (((*x)(true) == false) &&
+            ((*x)(false) == true))
+            sentinel = x;
+    }
+public:
+    CallVoid1_fp(LOCATION, String name, Compiler *compiler, bool log)
+        : CallVoid1ParmTestFunc<FuncPrototype, fpType_bool_bool>(PASSLOC, name, compiler, log) {
+    }
+protected:
+    virtual void clearSentinel() { sentinel = NULL;}
+    virtual fpType_bool_bool loadSentinel() { return sentinel; }
+    virtual bool buildContext(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
+        Func::FunctionTypeBuilder ftb(comp->ir());
+        ftb.setReturnType(Int8)
+           .addParameterType(Int8);
+        this->_argType = ftb.create(fx, comp);
+        ctx->DefineParameter("value", this->_argType);
+        ctx->DefineReturnType(NoType);
+        defineFunction(comp, ctx);
+        return true;
+    }
+    virtual void defineFunction(Func::FunctionCompilation *comp, Func::FunctionContext *ctx) { 
+        _fsym = ctx->DefineFunction(LOC, comp, "target", __FILE__, TARGET_LINE, (void*)&target, NoType, 1, this->_argType);
+    }
+    virtual void callFunction(Builder *b, Value *v) { 
+        fx->Call(LOC, b, _fsym, v);
+    }
+    Func::FunctionSymbol *_fsym;
+};
+
+static bool booleanNot(bool x) { return !x; }
+static bool conditionalNot(bool x) { if (!x) { return true; } return false; }
+typedef void *(CallVoid1_fp_FuncProto)(fpType_bool_bool);
+template<> fpType_bool_bool CallVoid1_fp<CallVoid1_fp_FuncProto>::sentinel = 0;
+TEST(omrgenExtension, Call_fp_bool_bool) {
+    CallVoid1_fp<CallVoid1_fp_FuncProto> call_void_fp(LOC, "call_void_fp", c, false);
+    call_void_fp.test(LOC, Address, &booleanNot); // argType will be ignored
+    call_void_fp.test(LOC, Address, &conditionalNot); // argType will be ignored
+}
 
 template<typename FuncPrototype, typename left_cType, typename right_cType, typename result_cType>
 class DivFunc : public BinaryOpFunc<FuncPrototype, left_cType, right_cType, result_cType> {
@@ -1594,7 +1632,7 @@ TEST(omrgenExtension, DivInt16s) {
     div_int16s.test(LOC, Int16, std::numeric_limits<int16_t>::max(), Int16, static_cast<int16_t>(1), Int16, std::numeric_limits<int16_t>::max());
     div_int16s.test(LOC, Int16, static_cast<int16_t>(1), Int16, std::numeric_limits<int16_t>::max(), Int16, static_cast<int16_t>(0));
 }
-TEST(omrgenExtension, DivInt32s) {
+TEST(omrgenExtension, Divfloat32s) {
     typedef int32_t (FuncProto)(int32_t, int32_t);
     DivFunc<FuncProto, int32_t, int32_t, int32_t> div_int32s(LOC, "div_int32s", c, false);
     //div_int32s.test(LOC, Int32, static_cast<int32_t>(0), Int32, static_cast<int32_t>(0), Int32, static_cast<int32_t>(0));
@@ -1816,6 +1854,238 @@ TEST(omrgenExtension, EqualToAddresses) {
     equalto_intptrs.test(LOC, Address, static_cast<intptr_t>(0), Address, std::numeric_limits<intptr_t>::max(), Int32, static_cast<int32_t>(0));
     equalto_intptrs.test(LOC, Address, std::numeric_limits<intptr_t>::max(), Address, std::numeric_limits<intptr_t>::min(), Int32, static_cast<int32_t>(0));
     equalto_intptrs.test(LOC, Address, std::numeric_limits<intptr_t>::max(), Address, std::numeric_limits<intptr_t>::max(), Int32, static_cast<int32_t>(1));
+}
+
+
+// Tests for LoadFieldAt
+template<typename struct_cType, typename field_cType>
+class LoadFieldAtTestFunc : public TestFunc {
+public:
+    typedef field_cType (FuncPrototype)(struct_cType *);
+    LoadFieldAtTestFunc(LOCATION, String name, Compiler *compiler, bool log)
+        : TestFunc(PASSLOC, compiler, name, __FILE__, LINETOSTR(__LINE__), log)
+        , _ft(NULL)
+        , _structType(NULL)
+        , _fieldType(NULL)
+        , _fieldValue(0) {
+    }
+    virtual void run(LOCATION) {
+        FuncPrototype *f = body()->template nativeEntryPoint<FuncPrototype>();
+        EXPECT_NE(f, nullptr);
+        struct_cType _struct;
+        _struct._value = _fieldValue;
+        field_cType rv = f(&_struct);
+        EXPECT_EQ(rv, _fieldValue) << "Compiled f(struct *) returns _value as " << rv << " (expected " << _fieldValue << ")";
+    }
+    void test(LOCATION, bool doCompile, const Type *ft, field_cType fieldValue) {
+        _ft = ft;
+        _fieldValue = fieldValue;
+        if (doCompile)
+            compile(PASSLOC);
+        run(PASSLOC);
+    }
+
+protected:
+    virtual bool buildContext(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
+        _structType = defineStruct(comp, _ft);
+        _fieldType = _structType->LookupField("_value");
+        assert(_fieldType != NULL);
+        ctx->DefineParameter("theStruct", this->bx()->PointerTo(PASSLOC, comp, _structType));
+        ctx->DefineReturnType(_fieldType);
+        return true;
+    }
+    virtual bool buildIL(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
+        Builder *entry = scope->entryPoint<BuilderEntry>(0)->builder();
+        auto structSym=ctx->LookupLocal("theStruct"); 
+        Value *structBase = fx()->Load(LOC, entry, structSym);
+        Value *value = bx()->LoadFieldAt(LOC, entry, _fieldType, structBase);
+        fx()->Return(LOC, entry, value);
+        return true;
+    }
+
+protected:
+    virtual const Base::StructType * defineStruct(Func::FunctionCompilation *comp, const Type *ft) = 0;
+
+    const Type * _ft;
+    const Base::StructType *_structType;
+    const Base::FieldType *_fieldType;
+    field_cType _fieldValue;
+};
+
+template<typename struct_cType, typename field_cType>
+class LoadFieldAtFunc : public LoadFieldAtTestFunc<struct_cType, field_cType> {
+public:
+    LoadFieldAtFunc(LOCATION, String name, Compiler *compiler, bool log)
+        : LoadFieldAtTestFunc<struct_cType, field_cType>(PASSLOC, name, compiler, log) { }
+protected:
+    virtual void addFieldsBefore(Func::FunctionCompilation *comp, Base::StructTypeBuilder *stb) { }
+    virtual void addFieldsAfter(Func::FunctionCompilation *comp, Base::StructTypeBuilder *stb) { }
+    virtual const Base::StructType * defineStruct(Func::FunctionCompilation *comp, const Type *ft) {
+        Base::StructTypeBuilder stb(this->bx(), comp);
+        stb.setName("TheStruct");
+        addFieldsBefore(comp, &stb);
+        stb.addField("_value", ft, offsetof(struct_cType, _value));
+        addFieldsAfter(comp, &stb);
+        return stb.create(LOC);
+    }
+};
+
+TEST(omrgenExtension, LoadFieldFromStructInt8) {
+    typedef struct SingleInt8Struct { int8_t _value; } SingleInt8Struct;
+    typedef LoadFieldAtFunc<SingleInt8Struct, int8_t> LoadFieldAtSingleInt8Func;
+    LoadFieldAtSingleInt8Func loadsingle_int8(LOC, "loadsingle_int8", c, false);
+    loadsingle_int8.test(LOC, true, Int8, static_cast<int8_t>(0));
+    loadsingle_int8.test(LOC, false, Int8, static_cast<int8_t>(3));
+    loadsingle_int8.test(LOC, false, Int8, static_cast<int8_t>(-1));
+    loadsingle_int8.test(LOC, false, Int8, std::numeric_limits<int8_t>::min());
+    loadsingle_int8.test(LOC, false, Int8, std::numeric_limits<int8_t>::max());
+}
+TEST(omrgenExtension, LoadFieldFromStructInt16) {
+    typedef struct SingleInt16Struct { int16_t _value; } SingleInt16Struct;
+    typedef LoadFieldAtFunc<SingleInt16Struct, int16_t> LoadFieldAtSingleInt16Func;
+    LoadFieldAtSingleInt16Func loadsingle_int16(LOC, "loadsingle_int16", c, false);
+    loadsingle_int16.test(LOC, true, Int16, static_cast<int16_t>(0));
+    loadsingle_int16.test(LOC, false, Int16, static_cast<int16_t>(3));
+    loadsingle_int16.test(LOC, false, Int16, static_cast<int16_t>(-1));
+    loadsingle_int16.test(LOC, false, Int16, std::numeric_limits<int16_t>::min());
+    loadsingle_int16.test(LOC, false, Int16, std::numeric_limits<int16_t>::max());
+}
+TEST(omrgenExtension, LoadFieldFromStructInt32) {
+    typedef struct SingleInt32Struct { int32_t _value; } SingleInt32Struct;
+    typedef LoadFieldAtFunc<SingleInt32Struct, int32_t> LoadFieldAtSingleInt32Func;
+    LoadFieldAtSingleInt32Func loadsingle_int32(LOC, "loadsingle_int32", c, false);
+    loadsingle_int32.test(LOC, true, Int32, static_cast<int32_t>(0));
+    loadsingle_int32.test(LOC, false, Int32, static_cast<int32_t>(3));
+    loadsingle_int32.test(LOC, false, Int32, static_cast<int32_t>(-1));
+    loadsingle_int32.test(LOC, false, Int32, std::numeric_limits<int32_t>::min());
+    loadsingle_int32.test(LOC, false, Int32, std::numeric_limits<int32_t>::max());
+}
+TEST(omrgenExtension, LoadFieldFromStructInt64) {
+    typedef struct SingleInt64Struct { int64_t _value; } SingleInt64Struct;
+    typedef LoadFieldAtFunc<SingleInt64Struct, int64_t> LoadFieldAtSingleInt64Func;
+    LoadFieldAtSingleInt64Func loadsingle_int64(LOC, "loadsingle_int64", c, false);
+    loadsingle_int64.test(LOC, true, Int64, static_cast<int64_t>(0));
+    loadsingle_int64.test(LOC, false, Int64, static_cast<int64_t>(3));
+    loadsingle_int64.test(LOC, false, Int64, static_cast<int64_t>(-1));
+    loadsingle_int64.test(LOC, false, Int64, std::numeric_limits<int64_t>::min());
+    loadsingle_int64.test(LOC, false, Int64, std::numeric_limits<int64_t>::max());
+}
+TEST(omrgenExtension, LoadFieldFromStructFloat32) {
+    typedef struct SingleFloat32Struct { float _value; } SingleFloat32Struct;
+    typedef LoadFieldAtFunc<SingleFloat32Struct, float> LoadFieldAtSingleFloat32Func;
+    LoadFieldAtSingleFloat32Func loadsingle_float32(LOC, "loadsingle_float32", c, false);
+    loadsingle_float32.test(LOC, true, Float32, static_cast<float>(0));
+    loadsingle_float32.test(LOC, false, Float32, static_cast<float>(3));
+    loadsingle_float32.test(LOC, false, Float32, static_cast<float>(-1));
+    loadsingle_float32.test(LOC, false, Float32, std::numeric_limits<float>::min());
+    loadsingle_float32.test(LOC, false, Float32, std::numeric_limits<float>::max());
+}
+TEST(omrgenExtension, LoadFieldFromStructFloat64) {
+    typedef struct SingleFloat64Struct { double _value; } SingleFloat64Struct;
+    typedef LoadFieldAtFunc<SingleFloat64Struct, double> LoadFieldAtSingleFloat64Func;
+    LoadFieldAtSingleFloat64Func loadsingle_float64(LOC, "loadsingle_float64", c, false);
+    loadsingle_float64.test(LOC, true, Float64, static_cast<double>(0));
+    loadsingle_float64.test(LOC, false, Float64, static_cast<double>(3));
+    loadsingle_float64.test(LOC, false, Float64, static_cast<double>(-1));
+    loadsingle_float64.test(LOC, false, Float64, std::numeric_limits<double>::min());
+    loadsingle_float64.test(LOC, false, Float64, std::numeric_limits<double>::max());
+}
+TEST(omrgenExtension, LoadFieldFromStructAddress) {
+    typedef struct SingleAddressStruct { void * _value; } SingleAddressStruct;
+    typedef LoadFieldAtFunc<SingleAddressStruct, void *> LoadFieldAtSingleAddressFunc;
+    LoadFieldAtSingleAddressFunc loadsingle_address(LOC, "loadsingle_address", c, false);
+    loadsingle_address.test(LOC, true, Address, static_cast<void *>(0));
+    loadsingle_address.test(LOC, false, Address, reinterpret_cast<void *>(3));
+    loadsingle_address.test(LOC, false, Address, std::numeric_limits<void *>::min());
+    loadsingle_address.test(LOC, false, Address, std::numeric_limits<void *>::max());
+}
+
+template<typename struct_cType, typename field_cType>
+class LoadFieldAtBeforeAfterFunc : public LoadFieldAtFunc<struct_cType, field_cType> {
+    typedef field_cType (FuncPrototype)(struct_cType *);
+public:
+    LoadFieldAtBeforeAfterFunc(LOCATION, String name, Compiler *compiler, bool log)
+        : LoadFieldAtFunc<struct_cType, field_cType>(PASSLOC, name, compiler, log) { }
+protected:
+    virtual void addFieldsBefore(Func::FunctionCompilation *comp, Base::StructTypeBuilder *stb) {
+        stb->addField("_pad1", Int64, offsetof(struct_cType, _pad1));
+        stb->addField("_pad2", Int32, offsetof(struct_cType, _pad2));
+    }
+    virtual void addFieldsAfter(Func::FunctionCompilation *comp, Base::StructTypeBuilder *stb) {
+        stb->addField("_pad3", Float64, offsetof(struct_cType, _pad3));
+        stb->addField("_pad4", Float32, offsetof(struct_cType, _pad4));
+    }
+    field_cType _notFieldValue;
+};
+
+TEST(omrgenExtension, LoadFieldFromStructPaddedInt8) {
+    typedef struct PaddedInt8Struct { int64_t _pad1; int32_t _pad2; int8_t _value; double _pad3; float _pad4; } SingleInt8Struct;
+    typedef LoadFieldAtBeforeAfterFunc<PaddedInt8Struct, int8_t> LoadFieldAtBeforeAfterInt8Func;
+    LoadFieldAtBeforeAfterInt8Func loadpadded_int8(LOC, "loadpadded_int8", c, false);
+    loadpadded_int8.test(LOC, true, Int8, static_cast<int8_t>(0));
+    loadpadded_int8.test(LOC, false, Int8, static_cast<int8_t>(3));
+    loadpadded_int8.test(LOC, false, Int8, static_cast<int8_t>(-1));
+    loadpadded_int8.test(LOC, false, Int8, std::numeric_limits<int8_t>::min());
+    loadpadded_int8.test(LOC, false, Int8, std::numeric_limits<int8_t>::max());
+}
+TEST(omrgenExtension, LoadFieldFromStructPaddedInt16) {
+    typedef struct PaddedInt16Struct { int64_t _pad1; int32_t _pad2; int16_t _value; double _pad3; float _pad4; } SingleInt16Struct;
+    typedef LoadFieldAtBeforeAfterFunc<PaddedInt16Struct, int16_t> LoadFieldAtBeforeAfterInt16Func;
+    LoadFieldAtBeforeAfterInt16Func loadpadded_int16(LOC, "loadpadded_int16", c, false);
+    loadpadded_int16.test(LOC, true, Int16, static_cast<int16_t>(0));
+    loadpadded_int16.test(LOC, false, Int16, static_cast<int16_t>(3));
+    loadpadded_int16.test(LOC, false, Int16, static_cast<int16_t>(-1));
+    loadpadded_int16.test(LOC, false, Int16, std::numeric_limits<int16_t>::min());
+    loadpadded_int16.test(LOC, false, Int16, std::numeric_limits<int16_t>::max());
+}
+TEST(omrgenExtension, LoadFieldFromStructPaddedInt32) {
+    typedef struct PaddedInt32Struct { int64_t _pad1; int32_t _pad2; int32_t _value; double _pad3; float _pad4; } SingleInt32Struct;
+    typedef LoadFieldAtBeforeAfterFunc<PaddedInt32Struct, int32_t> LoadFieldAtBeforeAfterInt32Func;
+    LoadFieldAtBeforeAfterInt32Func loadpadded_int32(LOC, "loadpadded_int32", c, false);
+    loadpadded_int32.test(LOC, true, Int32, static_cast<int32_t>(0));
+    loadpadded_int32.test(LOC, false, Int32, static_cast<int32_t>(3));
+    loadpadded_int32.test(LOC, false, Int32, static_cast<int32_t>(-1));
+    loadpadded_int32.test(LOC, false, Int32, std::numeric_limits<int32_t>::min());
+    loadpadded_int32.test(LOC, false, Int32, std::numeric_limits<int32_t>::max());
+}
+TEST(omrgenExtension, LoadFieldFromStructPaddedInt64) {
+    typedef struct PaddedInt64Struct { int64_t _pad1; int32_t _pad2; int64_t _value; double _pad3; float _pad4; } SingleInt64Struct;
+    typedef LoadFieldAtBeforeAfterFunc<PaddedInt64Struct, int64_t> LoadFieldAtBeforeAfterInt64Func;
+    LoadFieldAtBeforeAfterInt64Func loadpadded_int64(LOC, "loadpadded_int64", c, false);
+    loadpadded_int64.test(LOC, true, Int64, static_cast<int64_t>(0));
+    loadpadded_int64.test(LOC, false, Int64, static_cast<int64_t>(3));
+    loadpadded_int64.test(LOC, false, Int64, static_cast<int64_t>(-1));
+    loadpadded_int64.test(LOC, false, Int64, std::numeric_limits<int64_t>::min());
+    loadpadded_int64.test(LOC, false, Int64, std::numeric_limits<int64_t>::max());
+}
+TEST(omrgenExtension, LoadFieldFromStructPaddedFloat32) {
+    typedef struct PaddedFloat32Struct { int64_t _pad1; int32_t _pad2; float _value; double _pad3; float _pad4; } SingleFloat32Struct;
+    typedef LoadFieldAtBeforeAfterFunc<PaddedFloat32Struct, float> LoadFieldAtBeforeAfterFloat32Func;
+    LoadFieldAtBeforeAfterFloat32Func loadpadded_float32(LOC, "loadpadded_float32", c, false);
+    loadpadded_float32.test(LOC, true, Float32, static_cast<float>(0));
+    loadpadded_float32.test(LOC, false, Float32, static_cast<float>(3));
+    loadpadded_float32.test(LOC, false, Float32, static_cast<float>(-1));
+    loadpadded_float32.test(LOC, false, Float32, std::numeric_limits<float>::min());
+    loadpadded_float32.test(LOC, false, Float32, std::numeric_limits<float>::max());
+}
+TEST(omrgenExtension, LoadFieldFromStructPaddedFloat64) {
+    typedef struct PaddedFloat64Struct { int64_t _pad1; int32_t _pad2; double _value; double _pad3; float _pad4; } SingleFloat64Struct;
+    typedef LoadFieldAtBeforeAfterFunc<PaddedFloat64Struct, double> LoadFieldAtBeforeAfterFloat64Func;
+    LoadFieldAtBeforeAfterFloat64Func loadpadded_float64(LOC, "loadpadded_float64", c, false);
+    loadpadded_float64.test(LOC, true, Float64, static_cast<double>(0));
+    loadpadded_float64.test(LOC, false, Float64, static_cast<double>(3));
+    loadpadded_float64.test(LOC, false, Float64, static_cast<double>(-1));
+    loadpadded_float64.test(LOC, false, Float64, std::numeric_limits<double>::min());
+    loadpadded_float64.test(LOC, false, Float64, std::numeric_limits<double>::max());
+}
+TEST(omrgenExtension, LoadFieldFromStructPaddedAddress) {
+    typedef struct PaddedAddressStruct { int64_t _pad1; int32_t _pad2; void * _value; double _pad3; float _pad4; } SingleAddressStruct;
+    typedef LoadFieldAtBeforeAfterFunc<PaddedAddressStruct, void *> LoadFieldAtBeforeAfterAddressFunc;
+    LoadFieldAtBeforeAfterAddressFunc loadpadded_address(LOC, "loadpadded_address", c, false);
+    loadpadded_address.test(LOC, true, Address, static_cast<void *>(0));
+    loadpadded_address.test(LOC, false, Address, reinterpret_cast<void *>(3));
+    loadpadded_address.test(LOC, false, Address, std::numeric_limits<void *>::min());
+    loadpadded_address.test(LOC, false, Address, std::numeric_limits<void *>::max());
 }
 
 
@@ -2095,11 +2365,7 @@ TEST(omrgenExtension, NotEqualToAddresses) {
 class GotoOpFunc : public TestFunc {
 public:
     GotoOpFunc(LOCATION, String name, Compiler *compiler, bool log)
-        : TestFunc(PASSLOC, compiler, log) {
-
-        DefineName(name);
-        DefineFile(__FILE__);
-        DefineLine(LINETOSTR(__LINE__));
+        : TestFunc(PASSLOC, compiler, name, __FILE__, LINETOSTR(__LINE__), log) {
     }
     void run(LOCATION) {
         typedef int8_t (FuncPrototype)(int8_t);
@@ -2154,13 +2420,9 @@ template<typename FuncPrototype, typename condition_cType>
 class IfCmpToZeroBaseFunc : public TestFunc {
 public:
     IfCmpToZeroBaseFunc(LOCATION, String name, Compiler *compiler, bool log)
-        : TestFunc(PASSLOC, compiler, log)
+        : TestFunc(PASSLOC, compiler, name, __FILE__, LINETOSTR(__LINE__), log)
         , _conditionType(NULL)
         , _conditionValue(0) {
-
-        DefineName(name);
-        DefineFile(__FILE__);
-        DefineLine(LINETOSTR(__LINE__));
     }
     void run(LOCATION) {
         FuncPrototype *f = body()->template nativeEntryPoint<FuncPrototype>();
@@ -2373,14 +2635,10 @@ template<typename FuncPrototype, typename cType>
 class IfCmpOpBaseFunc : public TestFunc {
 public:
     IfCmpOpBaseFunc(LOCATION, String name, Compiler *compiler, bool log)
-        : TestFunc(PASSLOC, compiler, log)
+        : TestFunc(PASSLOC, compiler, name, __FILE__, LINETOSTR(__LINE__), log)
         , _type(NULL)
         , _leftValue(0)
         , _rightValue(0) {
-
-        DefineName(name);
-        DefineFile(__FILE__);
-        DefineLine(LINETOSTR(__LINE__));
     }
     void run(LOCATION) {
         FuncPrototype *f = body()->template nativeEntryPoint<FuncPrototype>();
@@ -3410,145 +3668,17 @@ TEST(omrgenExtension, IfCmpUnsignedLessOrEqualInt64s) {
 }
 // no unsigned comparisons for Float32,Float64,Address
 
-// Test class to validate simple Goto opcode
-
-// Test class for nested IfCmp opcodes to evalute more complicated conditional structures
-// Since all the basic IfCmp opcodes work (earlier tests) just use IfCmpGreaterThan with Int64
-// Compiled code returns int8_t and a different number for each of the possible paths.
-class NestedControlFlowFunc : public TestFunc {
-public:
-    NestedControlFlowFunc(LOCATION, String name, Compiler *compiler, bool log)
-        : TestFunc(PASSLOC, compiler, log)
-        , _numLeaves(0)
-        , _numInternal(0)
-        , _internalNodes(NULL)
-        , _resultValue(0) {
-
-        DefineName(name);
-        DefineFile(__FILE__);
-        DefineLine(LINETOSTR(__LINE__));
-    }
-    void run(LOCATION) {
-        typedef int64_t (FuncPrototype)(int64_t);
-        FuncPrototype *f = body()->template nativeEntryPoint<FuncPrototype>();
-        EXPECT_NE(f, nullptr);
-
-        int64_t v=0;
-        for (int64_t l=0;l < _numLeaves;l++) {
-            int64_t nextLeaf = static_cast<int64_t>(1) << (l+1);
-            for (;v < nextLeaf;v++) {
-                EXPECT_EQ(f(v), l) << "Compiled f(" << v << ") returns " << l;
-            }
-        }
-    }
-    void compileAndRun(LOCATION, int8_t numLeaves, int8_t numInternal, int64_t *internalNodes) {
-        _numLeaves = numLeaves;
-        _numInternal = numInternal;
-        _internalNodes = internalNodes;
-        this->TestFunc::compile(PASSLOC);
-        run(PASSLOC);
-    }
-
-protected:
-    virtual bool buildContext(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
-        ctx->DefineParameter("path", Int64);
-        ctx->DefineReturnType(Int64);
-        return true;
-    }
-
-    // used to assemble the conditional nest from leaves to root
-    typedef struct Node {
-        Builder *_b;
-        int64_t _label;
-    } Node;
-
-    virtual bool buildIL(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
-        Builder *entry = scope->entryPoint<BuilderEntry>(0)->builder();
-        auto pathSym=ctx->LookupLocal("path"); 
-        Value *pathValue = fx()->Load(LOC, entry, pathSym);
-
-        Allocator *mem = comp->mem();
-        List<Node *> nodes(NULL, mem);
-        for (int8_t l=0;l < _numLeaves;l++) {
-            Builder *leafBuilder = cx()->OrphanBuilder(LOC, entry);
-            int64_t label = static_cast<int64_t>(1) << l;
-            Value *leafValue = bx()->ConstInt64(LOC, leafBuilder, l);
-            fx()->Return(LOC, leafBuilder, leafValue);
-            Node *leafNode = mem->allocate<Node>(1);
-            leafNode->_b = leafBuilder;
-            leafNode->_label = label;
-            nodes.push_back(leafNode);
-        }
-        Builder *lastBuilder = NULL;
-        for (int8_t i=0;i < _numInternal;i++) {
-            int64_t nextLabel = _internalNodes[i];
-            for (auto it=nodes.fwdIterator();it.hasTwoItems();it++) {
-                Node *n1 = it.item();
-                Node *n2 = it.secondItem();
-                if (nextLabel == (n1->_label | n2->_label)) {
-                    lastBuilder = cx()->OrphanBuilder(LOC, entry);
-                    Value *labelValue = bx()->ConstInt64(LOC, lastBuilder, n2->_label);
-                    Value *maskedValue = bx()->And(LOC, lastBuilder, pathValue, labelValue);
-                    bx()->IfCmpNotEqualZero(LOC, lastBuilder, n2->_b, maskedValue);
-                    bx()->Goto(LOC, lastBuilder, n1->_b);
-
-                    Node *newNode = mem->allocate<Node>(1);
-                    newNode->_b = lastBuilder;
-                    newNode->_label = nextLabel;
-                    nodes.insertBefore(newNode, it);
-                    nodes.removeTwo(it);
-                    break;
-                }
-            }
-        }
-        bx()->Goto(LOC, entry, lastBuilder);
-        return true;
-    }
-
-protected:
-    int8_t _numLeaves;
-    int8_t _numInternal;
-    int64_t *_internalNodes;
-    int64_t _path;
-    int64_t _resultValue;
-};
-
-TEST(omrgenExtension, NestedControlFlow2) {
-    NestedControlFlowFunc nest2(LOC, "nest2", c, false);
-    int64_t nodes[1] = { 3 };
-    nest2.compileAndRun(LOC, 2, 1, nodes);
-}
-TEST(omrgenExtension, NestedControlFlow3L) {
-    NestedControlFlowFunc nest3l(LOC, "nest3l", c, false);
-    int64_t nodes[2] = { 3, 7 };
-    nest3l.compileAndRun(LOC, 3, 2, nodes);
-}
-TEST(omrgenExtension, NestedControlFlow3R) {
-    NestedControlFlowFunc nest3r(LOC, "nest3r", c, false);
-    int64_t nodes[2] = { 6, 7 };
-    nest3r.compileAndRun(LOC, 3, 2, nodes);
-}
-TEST(omrgenExtension, NestedControlFlow6) {
-    NestedControlFlowFunc nest6(LOC, "nest6", c, false);
-    int64_t nodes[5] = { 6, 14, 48, 62, 63 };
-    nest6.compileAndRun(LOC, 6, 5, nodes);
-}
-
 // Base class for IndexAt
 template<typename FuncPrototype, typename index_cType>
 class IndexAtFunc : public TestFunc {
 public:
     IndexAtFunc(LOCATION, String name, Compiler *compiler, bool log)
-        : TestFunc(PASSLOC, compiler, log)
+        : TestFunc(PASSLOC, compiler, name, __FILE__, LINETOSTR(__LINE__), log)
         , _elementType(NULL)
         , _baseValue(0)
         , _baseType(0)
         , _indexType(NULL)
         , _indexValue(0) {
-
-        DefineName(name);
-        DefineFile(__FILE__);
-        DefineLine(LINETOSTR(__LINE__));
     }
     void run(LOCATION) {
         FuncPrototype *f = body()->template nativeEntryPoint<FuncPrototype>();
@@ -3753,3 +3883,498 @@ TEST(omrgenExtension, IndexAtInt64byInt64) {
     indexat_int64_int64.test(LOC, Int64, reinterpret_cast<uintptr_t>(array), Int64, static_cast<int64_t>(4), reinterpret_cast<uintptr_t>(array+4));
     indexat_int64_int64.test(LOC, Int64, static_cast<uintptr_t>(0), Int64, std::numeric_limits<int64_t>::max() >> 3, static_cast<uintptr_t>((std::numeric_limits<int64_t>::max() >> 3) << 3));
 }
+
+
+// Test class for nested IfCmp opcodes to evalute more complicated conditional structures
+// Since all the basic IfCmp opcodes work (earlier tests) just use IfCmpGreaterThan with Int64
+// Compiled code returns int8_t and a different number for each of the possible paths.
+class NestedControlFlowFunc : public TestFunc {
+public:
+    NestedControlFlowFunc(LOCATION, String name, Compiler *compiler, bool log)
+        : TestFunc(PASSLOC, compiler, name, __FILE__, LINETOSTR(__LINE__), log)
+        , _numLeaves(0)
+        , _numInternal(0)
+        , _internalNodes(NULL)
+        , _resultValue(0) {
+    }
+    void run(LOCATION) {
+        typedef int64_t (FuncPrototype)(int64_t);
+        FuncPrototype *f = body()->template nativeEntryPoint<FuncPrototype>();
+        EXPECT_NE(f, nullptr);
+
+        int64_t v=0;
+        for (int64_t l=0;l < _numLeaves;l++) {
+            int64_t nextLeaf = static_cast<int64_t>(1) << (l+1);
+            for (;v < nextLeaf;v++) {
+                EXPECT_EQ(f(v), l) << "Compiled f(" << v << ") returns " << l;
+            }
+        }
+    }
+    void compileAndRun(LOCATION, int8_t numLeaves, int8_t numInternal, int64_t *internalNodes) {
+        _numLeaves = numLeaves;
+        _numInternal = numInternal;
+        _internalNodes = internalNodes;
+        this->TestFunc::compile(PASSLOC);
+        run(PASSLOC);
+    }
+
+protected:
+    virtual bool buildContext(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
+        ctx->DefineParameter("path", Int64);
+        ctx->DefineReturnType(Int64);
+        return true;
+    }
+
+    // used to assemble the conditional nest from leaves to root
+    typedef struct Node {
+        Builder *_b;
+        int64_t _label;
+    } Node;
+
+    virtual bool buildIL(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
+        Builder *entry = scope->entryPoint<BuilderEntry>(0)->builder();
+        auto pathSym=ctx->LookupLocal("path"); 
+        Value *pathValue = fx()->Load(LOC, entry, pathSym);
+
+        Allocator *mem = comp->mem();
+        List<Node *> nodes(NULL, mem);
+        for (int8_t l=0;l < _numLeaves;l++) {
+            Builder *leafBuilder = cx()->OrphanBuilder(LOC, entry);
+            int64_t label = static_cast<int64_t>(1) << l;
+            Value *leafValue = bx()->ConstInt64(LOC, leafBuilder, l);
+            fx()->Return(LOC, leafBuilder, leafValue);
+            Node *leafNode = mem->allocate<Node>(1);
+            leafNode->_b = leafBuilder;
+            leafNode->_label = label;
+            nodes.push_back(leafNode);
+        }
+        Builder *lastBuilder = NULL;
+        for (int8_t i=0;i < _numInternal;i++) {
+            int64_t nextLabel = _internalNodes[i];
+            for (auto it=nodes.fwdIterator();it.hasTwoItems();it++) {
+                Node *n1 = it.item();
+                Node *n2 = it.secondItem();
+                if (nextLabel == (n1->_label | n2->_label)) {
+                    lastBuilder = cx()->OrphanBuilder(LOC, entry);
+                    Value *labelValue = bx()->ConstInt64(LOC, lastBuilder, n2->_label);
+                    Value *maskedValue = bx()->And(LOC, lastBuilder, pathValue, labelValue);
+                    bx()->IfCmpNotEqualZero(LOC, lastBuilder, n2->_b, maskedValue);
+                    bx()->Goto(LOC, lastBuilder, n1->_b);
+
+                    Node *newNode = mem->allocate<Node>(1);
+                    newNode->_b = lastBuilder;
+                    newNode->_label = nextLabel;
+                    nodes.insertBefore(newNode, it);
+                    nodes.removeTwo(it);
+                    break;
+                }
+            }
+        }
+        bx()->Goto(LOC, entry, lastBuilder);
+        return true;
+    }
+
+protected:
+    int8_t _numLeaves;
+    int8_t _numInternal;
+    int64_t *_internalNodes;
+    int64_t _path;
+    int64_t _resultValue;
+};
+
+TEST(omrgenExtension, NestedControlFlow2) {
+    NestedControlFlowFunc nest2(LOC, "nest2", c, false);
+    int64_t nodes[1] = { 3 };
+    nest2.compileAndRun(LOC, 2, 1, nodes);
+}
+TEST(omrgenExtension, NestedControlFlow3L) {
+    NestedControlFlowFunc nest3l(LOC, "nest3l", c, false);
+    int64_t nodes[2] = { 3, 7 };
+    nest3l.compileAndRun(LOC, 3, 2, nodes);
+}
+TEST(omrgenExtension, NestedControlFlow3R) {
+    NestedControlFlowFunc nest3r(LOC, "nest3r", c, false);
+    int64_t nodes[2] = { 6, 7 };
+    nest3r.compileAndRun(LOC, 3, 2, nodes);
+}
+TEST(omrgenExtension, NestedControlFlow6) {
+    NestedControlFlowFunc nest6(LOC, "nest6", c, false);
+    int64_t nodes[5] = { 6, 14, 48, 62, 63 };
+    nest6.compileAndRun(LOC, 6, 5, nodes);
+}
+
+
+// Tests for StoreFieldAt
+template<typename struct_cType, typename field_cType>
+class StoreFieldAtTestFunc : public TestFunc {
+public:
+    typedef void (FuncPrototype)(struct_cType *, field_cType);
+    StoreFieldAtTestFunc(LOCATION, String name, Compiler *compiler, bool log)
+        : TestFunc(PASSLOC, compiler, name, __FILE__, LINETOSTR(__LINE__), log)
+        , _ft(NULL)
+        , _structType(NULL)
+        , _fieldType(NULL)
+        , _fieldValue(0)
+        , _notFieldValue(0) {
+    }
+    void run(LOCATION) {
+        FuncPrototype *f = body()->template nativeEntryPoint<FuncPrototype>();
+        EXPECT_NE(f, nullptr);
+        struct_cType _struct;
+        _struct._value = _notFieldValue;
+        f(&_struct, _fieldValue);
+        field_cType v = _struct._value;
+        EXPECT_EQ(v, _fieldValue) << "Compiled f(struct *) sets _value to " << v << " (expected " << _fieldValue << ")";
+    }
+    void test(LOCATION, bool doCompile, const Type *ft, field_cType fieldValue, field_cType notFieldValue) {
+        _ft = ft;
+        _fieldValue = fieldValue;
+        _notFieldValue = notFieldValue;
+        if (doCompile)
+            compile(PASSLOC);
+        run(PASSLOC);
+    }
+
+protected:
+    virtual bool buildContext(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
+        _structType = defineStruct(comp, _ft);
+        _fieldType = _structType->LookupField("_value");
+        assert(_fieldType != NULL);
+        ctx->DefineParameter("theStruct", this->bx()->PointerTo(PASSLOC, comp, _structType));
+        ctx->DefineParameter("value", _fieldType->type());
+        ctx->DefineReturnType(NoType);
+        return true;
+    }
+    virtual bool buildIL(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
+        Builder *entry = scope->entryPoint<BuilderEntry>(0)->builder();
+        auto structSym=ctx->LookupLocal("theStruct"); 
+        Value *structBase = fx()->Load(LOC, entry, structSym);
+        auto valueSym = ctx->LookupLocal("value");
+        Value *value = fx()->Load(LOC, entry, valueSym);
+        bx()->StoreFieldAt(LOC, entry, _fieldType, structBase, value);
+        fx()->Return(LOC, entry);
+        return true;
+    }
+
+protected:
+    virtual const Base::StructType * defineStruct(Func::FunctionCompilation *comp, const Type *ft) = 0;
+
+    const Type * _ft;
+    const Base::StructType *_structType;
+    const Base::FieldType *_fieldType;
+    field_cType _fieldValue;
+    field_cType _notFieldValue;
+};
+
+template<typename struct_cType, typename field_cType>
+class StoreFieldAtFunc : public StoreFieldAtTestFunc<struct_cType, field_cType> {
+public:
+    StoreFieldAtFunc(LOCATION, String name, Compiler *compiler, bool log)
+        : StoreFieldAtTestFunc<struct_cType, field_cType>(PASSLOC, name, compiler, log) { }
+protected:
+    virtual void addFieldsBefore(Func::FunctionCompilation *comp, Base::StructTypeBuilder *stb) { }
+    virtual void addFieldsAfter(Func::FunctionCompilation *comp, Base::StructTypeBuilder *stb) { }
+    virtual const Base::StructType * defineStruct(Func::FunctionCompilation *comp, const Type *ft) {
+        Base::StructTypeBuilder stb(this->bx(), comp);
+        stb.setName("TheStruct");
+        addFieldsBefore(comp, &stb);
+        stb.addField("_value", ft, offsetof(struct_cType, _value));
+        addFieldsAfter(comp, &stb);
+        return stb.create(LOC);
+    }
+};
+
+TEST(omrgenExtension, StoreFieldFromStructInt8) {
+    typedef struct SingleInt8Struct { int8_t _value; } SingleInt8Struct;
+    typedef StoreFieldAtFunc<SingleInt8Struct, int8_t> StoreFieldAtSingleInt8Func;
+    StoreFieldAtSingleInt8Func storesingle_int8(LOC, "storesingle_int8", c, true);
+    storesingle_int8.test(LOC, true, Int8, static_cast<int8_t>(0), static_cast<int8_t>(15));
+    storesingle_int8.test(LOC, false, Int8, static_cast<int8_t>(3), static_cast<int8_t>(15));
+    storesingle_int8.test(LOC, false, Int8, static_cast<int8_t>(-1), static_cast<int8_t>(15));
+    storesingle_int8.test(LOC, false, Int8, std::numeric_limits<int8_t>::min(), static_cast<int8_t>(15));
+    storesingle_int8.test(LOC, false, Int8, std::numeric_limits<int8_t>::max(), static_cast<int8_t>(15));
+}
+TEST(omrgenExtension, StoreFieldFromStructInt16) {
+    typedef struct SingleInt16Struct { int16_t _value; } SingleInt16Struct;
+    typedef StoreFieldAtFunc<SingleInt16Struct, int16_t> StoreFieldAtSingleInt16Func;
+    StoreFieldAtSingleInt16Func storesingle_int16(LOC, "storesingle_int16", c, false);
+    storesingle_int16.test(LOC, true, Int16, static_cast<int16_t>(0), static_cast<int16_t>(15));
+    storesingle_int16.test(LOC, false, Int16, static_cast<int16_t>(3), static_cast<int16_t>(15));
+    storesingle_int16.test(LOC, false, Int16, static_cast<int16_t>(-1), static_cast<int16_t>(15));
+    storesingle_int16.test(LOC, false, Int16, std::numeric_limits<int16_t>::min(), static_cast<int16_t>(15));
+    storesingle_int16.test(LOC, false, Int16, std::numeric_limits<int16_t>::max(), static_cast<int16_t>(15));
+}
+TEST(omrgenExtension, StoreFieldFromStructInt32) {
+    typedef struct SingleInt32Struct { int32_t _value; } SingleInt32Struct;
+    typedef StoreFieldAtFunc<SingleInt32Struct, int32_t> StoreFieldAtSingleInt32Func;
+    StoreFieldAtSingleInt32Func storesingle_int32(LOC, "storesingle_int32", c, false);
+    storesingle_int32.test(LOC, true, Int32, static_cast<int32_t>(0), static_cast<int32_t>(15));
+    storesingle_int32.test(LOC, false, Int32, static_cast<int32_t>(3), static_cast<int32_t>(15));
+    storesingle_int32.test(LOC, false, Int32, static_cast<int32_t>(-1), static_cast<int32_t>(15));
+    storesingle_int32.test(LOC, false, Int32, std::numeric_limits<int32_t>::min(), static_cast<int32_t>(15));
+    storesingle_int32.test(LOC, false, Int32, std::numeric_limits<int32_t>::max(), static_cast<int32_t>(15));
+}
+TEST(omrgenExtension, StoreFieldFromStructInt64) {
+    typedef struct SingleInt64Struct { int64_t _value; } SingleInt64Struct;
+    typedef StoreFieldAtFunc<SingleInt64Struct, int64_t> StoreFieldAtSingleInt64Func;
+    StoreFieldAtSingleInt64Func storesingle_int64(LOC, "storesingle_int64", c, false);
+    storesingle_int64.test(LOC, true, Int64, static_cast<int64_t>(0), static_cast<int64_t>(15));
+    storesingle_int64.test(LOC, false, Int64, static_cast<int64_t>(3), static_cast<int64_t>(15));
+    storesingle_int64.test(LOC, false, Int64, static_cast<int64_t>(-1), static_cast<int64_t>(15));
+    storesingle_int64.test(LOC, false, Int64, std::numeric_limits<int64_t>::min(), static_cast<int64_t>(15));
+    storesingle_int64.test(LOC, false, Int64, std::numeric_limits<int64_t>::max(), static_cast<int64_t>(15));
+}
+TEST(omrgenExtension, StoreFieldFromStructFloat32) {
+    typedef struct SingleFloat32Struct { float _value; } SingleFloat32Struct;
+    typedef StoreFieldAtFunc<SingleFloat32Struct, float> StoreFieldAtSingleFloat32Func;
+    StoreFieldAtSingleFloat32Func storesingle_float32(LOC, "storesingle_float32", c, false);
+    storesingle_float32.test(LOC, true, Float32, static_cast<float>(0), static_cast<float>(15));
+    storesingle_float32.test(LOC, false, Float32, static_cast<float>(3), static_cast<float>(15));
+    storesingle_float32.test(LOC, false, Float32, static_cast<float>(-1), static_cast<float>(15));
+    storesingle_float32.test(LOC, false, Float32, std::numeric_limits<float>::min(), static_cast<float>(15));
+    storesingle_float32.test(LOC, false, Float32, std::numeric_limits<float>::max(), static_cast<float>(15));
+}
+TEST(omrgenExtension, StoreFieldFromStructFloat64) {
+    typedef struct SingleFloat64Struct { double _value; } SingleFloat64Struct;
+    typedef StoreFieldAtFunc<SingleFloat64Struct, double> StoreFieldAtSingleFloat64Func;
+    StoreFieldAtSingleFloat64Func storesingle_float64(LOC, "storesingle_float64", c, false);
+    storesingle_float64.test(LOC, true, Float64, static_cast<double>(0), static_cast<double>(15));
+    storesingle_float64.test(LOC, false, Float64, static_cast<double>(3), static_cast<double>(15));
+    storesingle_float64.test(LOC, false, Float64, static_cast<double>(-1), static_cast<double>(15));
+    storesingle_float64.test(LOC, false, Float64, std::numeric_limits<double>::min(), static_cast<double>(15));
+    storesingle_float64.test(LOC, false, Float64, std::numeric_limits<double>::max(), static_cast<double>(15));
+}
+TEST(omrgenExtension, StoreFieldFromStructAddress) {
+    typedef struct SingleAddressStruct { void * _value; } SingleAddressStruct;
+    typedef StoreFieldAtFunc<SingleAddressStruct, void *> StoreFieldAtSingleAddressFunc;
+    StoreFieldAtSingleAddressFunc storesingle_address(LOC, "storesingle_address", c, false);
+    storesingle_address.test(LOC, true, Address, static_cast<void *>(0), reinterpret_cast<void *>(15));
+    storesingle_address.test(LOC, false, Address, reinterpret_cast<void *>(3), reinterpret_cast<void *>(15));
+    storesingle_address.test(LOC, false, Address, std::numeric_limits<void *>::min(), reinterpret_cast<void *>(15));
+    storesingle_address.test(LOC, false, Address, std::numeric_limits<void *>::max(), reinterpret_cast<void *>(15));
+}
+
+template<typename struct_cType, typename field_cType>
+class StoreFieldAtBeforeAfterFunc : public StoreFieldAtFunc<struct_cType, field_cType> {
+    typedef void (FuncPrototype)(struct_cType *, field_cType);
+public:
+    StoreFieldAtBeforeAfterFunc(LOCATION, String name, Compiler *compiler, bool log)
+        : StoreFieldAtFunc<struct_cType, field_cType>(PASSLOC, name, compiler, log) { }
+    virtual void run(LOCATION) {
+        FuncPrototype *f = this->body()->template nativeEntryPoint<FuncPrototype>();
+        EXPECT_NE(f, nullptr);
+        struct_cType _struct;
+        _struct._pad1 = static_cast<int64_t>(-1);
+        _struct._pad2 = static_cast<int32_t>(-1);
+        _struct._value = this->_notFieldValue;
+        _struct._pad3 = static_cast<double>(-1);
+        _struct._pad4 = static_cast<float>(-1);
+        f(&_struct, this->_fieldValue);
+        field_cType v = _struct._value;
+        EXPECT_EQ(v, this->_fieldValue) << "Compiled f(struct *) sets _value as " << v << " (expected " << this->_fieldValue << ")";
+        EXPECT_EQ(_struct._pad1, static_cast<int64_t>(-1)) << "Compiled f(struct *) did not change _pad1" << _struct._pad1 << " (expected -1)";
+        EXPECT_EQ(_struct._pad2, static_cast<int32_t>(-1)) << "Compiled f(struct *) did not change _pad2" << _struct._pad2 << " (expected -1)";
+        EXPECT_EQ(_struct._pad3, static_cast<double>(-1)) << "Compiled f(struct *) did not change _pad3" << _struct._pad3 << " (expected -1)";
+        EXPECT_EQ(_struct._pad3, static_cast<float>(-1)) << "Compiled f(struct *) did not change _pad4" << _struct._pad4 << " (expected -1)";
+    }
+protected:
+    virtual void addFieldsBefore(Func::FunctionCompilation *comp, Base::StructTypeBuilder *stb) {
+        stb->addField("_pad1", Int64, offsetof(struct_cType, _pad1));
+        stb->addField("_pad2", Int32, offsetof(struct_cType, _pad2));
+     }
+    virtual void addFieldsAfter(Func::FunctionCompilation *comp, Base::StructTypeBuilder *stb) {
+        stb->addField("_pad3", Float64, offsetof(struct_cType, _pad3));
+        stb->addField("_pad4", Float32, offsetof(struct_cType, _pad3));
+     }
+};
+
+TEST(omrgenExtension, StoreFieldFromStructPaddedInt8) {
+    typedef struct PaddedInt8Struct { int64_t _pad1; int32_t _pad2; int8_t _value; double _pad3; float _pad4; } SingleInt8Struct;
+    typedef StoreFieldAtBeforeAfterFunc<PaddedInt8Struct, int8_t> StoreFieldAtBeforeAfterInt8Func;
+    StoreFieldAtBeforeAfterInt8Func storepadded_int8(LOC, "storepadded_int8", c, false);
+    storepadded_int8.test(LOC, true, Int8, static_cast<int8_t>(0), static_cast<int8_t>(15));
+    storepadded_int8.test(LOC, false, Int8, static_cast<int8_t>(3), static_cast<int8_t>(15));
+    storepadded_int8.test(LOC, false, Int8, static_cast<int8_t>(-1), static_cast<int8_t>(15));
+    storepadded_int8.test(LOC, false, Int8, std::numeric_limits<int8_t>::min(), static_cast<int8_t>(15));
+    storepadded_int8.test(LOC, false, Int8, std::numeric_limits<int8_t>::max(), static_cast<int8_t>(15));
+}
+TEST(omrgenExtension, StoreFieldFromStructPaddedInt16) {
+    typedef struct PaddedInt16Struct { int64_t _pad1; int32_t _pad2; int16_t _value; double _pad3; float _pad4; } SingleInt16Struct;
+    typedef StoreFieldAtBeforeAfterFunc<PaddedInt16Struct, int16_t> StoreFieldAtBeforeAfterInt16Func;
+    StoreFieldAtBeforeAfterInt16Func storepadded_int16(LOC, "storepadded_int16", c, false);
+    storepadded_int16.test(LOC, true, Int16, static_cast<int16_t>(0), static_cast<int8_t>(15));
+    storepadded_int16.test(LOC, false, Int16, static_cast<int16_t>(3), static_cast<int8_t>(15));
+    storepadded_int16.test(LOC, false, Int16, static_cast<int16_t>(-1), static_cast<int8_t>(15));
+    storepadded_int16.test(LOC, false, Int16, std::numeric_limits<int16_t>::min(), static_cast<int8_t>(15));
+    storepadded_int16.test(LOC, false, Int16, std::numeric_limits<int16_t>::max(), static_cast<int8_t>(15));
+}
+TEST(omrgenExtension, StoreFieldFromStructPaddedInt32) {
+    typedef struct PaddedInt32Struct { int64_t _pad1; int32_t _pad2; int32_t _value; double _pad3; float _pad4; } SingleInt32Struct;
+    typedef StoreFieldAtBeforeAfterFunc<PaddedInt32Struct, int32_t> StoreFieldAtBeforeAfterInt32Func;
+    StoreFieldAtBeforeAfterInt32Func storepadded_int32(LOC, "storepadded_int32", c, false);
+    storepadded_int32.test(LOC, true, Int32, static_cast<int32_t>(0), static_cast<int8_t>(15));
+    storepadded_int32.test(LOC, false, Int32, static_cast<int32_t>(3), static_cast<int8_t>(15));
+    storepadded_int32.test(LOC, false, Int32, static_cast<int32_t>(-1), static_cast<int8_t>(15));
+    storepadded_int32.test(LOC, false, Int32, std::numeric_limits<int32_t>::min(), static_cast<int8_t>(15));
+    storepadded_int32.test(LOC, false, Int32, std::numeric_limits<int32_t>::max(), static_cast<int8_t>(15));
+}
+TEST(omrgenExtension, StoreFieldFromStructPaddedInt64) {
+    typedef struct PaddedInt64Struct { int64_t _pad1; int32_t _pad2; int64_t _value; double _pad3; float _pad4; } SingleInt64Struct;
+    typedef StoreFieldAtBeforeAfterFunc<PaddedInt64Struct, int64_t> StoreFieldAtBeforeAfterInt64Func;
+    StoreFieldAtBeforeAfterInt64Func storepadded_int64(LOC, "storepadded_int64", c, false);
+    storepadded_int64.test(LOC, true, Int64, static_cast<int64_t>(0), static_cast<int8_t>(15));
+    storepadded_int64.test(LOC, false, Int64, static_cast<int64_t>(3), static_cast<int8_t>(15));
+    storepadded_int64.test(LOC, false, Int64, static_cast<int64_t>(-1), static_cast<int8_t>(15));
+    storepadded_int64.test(LOC, false, Int64, std::numeric_limits<int64_t>::min(), static_cast<int8_t>(15));
+    storepadded_int64.test(LOC, false, Int64, std::numeric_limits<int64_t>::max(), static_cast<int64_t>(15));
+}
+TEST(omrgenExtension, StoreFieldFromStructPaddedFloat32) {
+    typedef struct PaddedFloat32Struct { int64_t _pad1; int32_t _pad2; float _value; double _pad3; float _pad4; } SingleFloat32Struct;
+    typedef StoreFieldAtBeforeAfterFunc<PaddedFloat32Struct, float> StoreFieldAtBeforeAfterFloat32Func;
+    StoreFieldAtBeforeAfterFloat32Func storepadded_float32(LOC, "storepadded_float32", c, false);
+    storepadded_float32.test(LOC, true, Float32, static_cast<float>(0), static_cast<float>(15));
+    storepadded_float32.test(LOC, false, Float32, static_cast<float>(3), static_cast<float>(15));
+    storepadded_float32.test(LOC, false, Float32, static_cast<float>(-1), static_cast<float>(15));
+    storepadded_float32.test(LOC, false, Float32, std::numeric_limits<float>::min(), static_cast<float>(15));
+    storepadded_float32.test(LOC, false, Float32, std::numeric_limits<float>::max(), static_cast<float>(15));
+}
+TEST(omrgenExtension, StoreFieldFromStructPaddedFloat64) {
+    typedef struct PaddedFloat64Struct { int64_t _pad1; int32_t _pad2; double _value; double _pad3; float _pad4; } SingleFloat64Struct;
+    typedef StoreFieldAtBeforeAfterFunc<PaddedFloat64Struct, double> StoreFieldAtBeforeAfterFloat64Func;
+    StoreFieldAtBeforeAfterFloat64Func storepadded_float64(LOC, "storepadded_float64", c, false);
+    storepadded_float64.test(LOC, true, Float64, static_cast<double>(0), static_cast<double>(15));
+    storepadded_float64.test(LOC, false, Float64, static_cast<double>(3), static_cast<double>(15));
+    storepadded_float64.test(LOC, false, Float64, static_cast<double>(-1), static_cast<double>(15));
+    storepadded_float64.test(LOC, false, Float64, std::numeric_limits<double>::min(), static_cast<double>(15));
+    storepadded_float64.test(LOC, false, Float64, std::numeric_limits<double>::max(), static_cast<double>(15));
+}
+TEST(omrgenExtension, StoreFieldFromStructPaddedAddress) {
+    typedef struct PaddedAddressStruct { int64_t _pad1; int32_t _pad2; void * _value; double _pad3; float _pad4; } SingleAddressStruct;
+    typedef StoreFieldAtBeforeAfterFunc<PaddedAddressStruct, void *> StoreFieldAtBeforeAfterAddressFunc;
+    StoreFieldAtBeforeAfterAddressFunc storepadded_address(LOC, "storepadded_address", c, false);
+    storepadded_address.test(LOC, true, Address, static_cast<void *>(0), reinterpret_cast<void *>(15));
+    storepadded_address.test(LOC, false, Address, reinterpret_cast<void *>(3), reinterpret_cast<void *>(15));
+    storepadded_address.test(LOC, false, Address, std::numeric_limits<void *>::min(), reinterpret_cast<void *>(15));
+    storepadded_address.test(LOC, false, Address, std::numeric_limits<void *>::max(), reinterpret_cast<void *>(15));
+}
+
+
+// Test subtracting two numbers of the given types
+template<typename FuncPrototype, typename left_cType, typename right_cType, typename result_cType>
+class SubFunc : public BinaryOpFunc<FuncPrototype, left_cType, right_cType, result_cType> {
+public:
+    SubFunc(LOCATION, String name, Compiler *compiler, bool log)
+        : BinaryOpFunc<FuncPrototype, left_cType, right_cType, result_cType>(PASSLOC, name, compiler, log) { }
+protected:
+    virtual Value *doBinaryOp(LOCATION, Builder *b, Value *left, Value *right) {
+        return this->bx()->Sub(PASSLOC, b, left, right);
+    }
+};
+
+TEST(omrgenExtension, SubInt8s) {
+    typedef int8_t (FuncProto)(int8_t, int8_t);
+    SubFunc<FuncProto, int8_t, int8_t, int8_t> sub_int8s(LOC, "sub_int8s", c, false);
+    sub_int8s.test(LOC, Int8, static_cast<int8_t>(0), Int8, static_cast<int8_t>(0), Int8, static_cast<int8_t>(0));
+    sub_int8s.test(LOC, Int8, static_cast<int8_t>(0), Int8, static_cast<int8_t>(3), Int8, static_cast<int8_t>(-3));
+    sub_int8s.test(LOC, Int8, static_cast<int8_t>(3), Int8, static_cast<int8_t>(0), Int8, static_cast<int8_t>(3));
+    sub_int8s.test(LOC, Int8, static_cast<int8_t>(-3), Int8, static_cast<int8_t>(3), Int8, static_cast<int8_t>(-6));
+    sub_int8s.test(LOC, Int8, static_cast<int8_t>(3), Int8, static_cast<int8_t>(-3), Int8, static_cast<int8_t>(6));
+    sub_int8s.test(LOC, Int8, static_cast<int8_t>(-3), Int8, static_cast<int8_t>(-3), Int8, static_cast<int8_t>(0));
+    sub_int8s.test(LOC, Int8, std::numeric_limits<int8_t>::min(), Int8, static_cast<int8_t>(0), Int8, std::numeric_limits<int8_t>::min());
+    sub_int8s.test(LOC, Int8, std::numeric_limits<int8_t>::max(), Int8, static_cast<int8_t>(0), Int8, std::numeric_limits<int8_t>::max());
+    sub_int8s.test(LOC, Int8, std::numeric_limits<int8_t>::min(), Int8, static_cast<int8_t>(-1), Int8, std::numeric_limits<int8_t>::min()+1);
+    sub_int8s.test(LOC, Int8, std::numeric_limits<int8_t>::max(), Int8, static_cast<int8_t>(1), Int8, std::numeric_limits<int8_t>::max()-1);
+}
+TEST(omrgenExtension, SubInt16s) {
+    typedef int16_t (FuncProto)(int16_t, int16_t);
+    SubFunc<FuncProto, int16_t, int16_t, int16_t> sub_int16s(LOC, "sub_int16s", c, false);
+    sub_int16s.test(LOC, Int16, static_cast<int16_t>(0), Int16, static_cast<int16_t>(0), Int16, static_cast<int16_t>(0));
+    sub_int16s.test(LOC, Int16, static_cast<int16_t>(0), Int16, static_cast<int16_t>(3), Int16, static_cast<int16_t>(-3));
+    sub_int16s.test(LOC, Int16, static_cast<int16_t>(3), Int16, static_cast<int16_t>(0), Int16, static_cast<int16_t>(3));
+    sub_int16s.test(LOC, Int16, static_cast<int16_t>(-3), Int16, static_cast<int16_t>(3), Int16, static_cast<int16_t>(-6));
+    sub_int16s.test(LOC, Int16, static_cast<int16_t>(3), Int16, static_cast<int16_t>(-3), Int16, static_cast<int16_t>(6));
+    sub_int16s.test(LOC, Int16, static_cast<int16_t>(-3), Int16, static_cast<int16_t>(-3), Int16, static_cast<int16_t>(0));
+    sub_int16s.test(LOC, Int16, std::numeric_limits<int16_t>::min(), Int16, static_cast<int16_t>(0), Int16, std::numeric_limits<int16_t>::min());
+    sub_int16s.test(LOC, Int16, std::numeric_limits<int16_t>::max(), Int16, static_cast<int16_t>(0), Int16, std::numeric_limits<int16_t>::max());
+    sub_int16s.test(LOC, Int16, std::numeric_limits<int16_t>::min(), Int16, static_cast<int16_t>(-1), Int16, std::numeric_limits<int16_t>::min()+1);
+    sub_int16s.test(LOC, Int16, std::numeric_limits<int16_t>::max(), Int16, static_cast<int16_t>(1), Int16, std::numeric_limits<int16_t>::max()-1);
+}
+TEST(omrgenExtension, SubInt32s) {
+    typedef int32_t (FuncProto)(int32_t, int32_t);
+    SubFunc<FuncProto, int32_t, int32_t, int32_t> sub_int32s(LOC, "sub_int32s", c, false);
+    sub_int32s.test(LOC, Int32, static_cast<int32_t>(0), Int32, static_cast<int32_t>(0), Int32, static_cast<int32_t>(0));
+    sub_int32s.test(LOC, Int32, static_cast<int32_t>(0), Int32, static_cast<int32_t>(3), Int32, static_cast<int32_t>(-3));
+    sub_int32s.test(LOC, Int32, static_cast<int32_t>(3), Int32, static_cast<int32_t>(0), Int32, static_cast<int32_t>(3));
+    sub_int32s.test(LOC, Int32, static_cast<int32_t>(-3), Int32, static_cast<int32_t>(3), Int32, static_cast<int32_t>(-6));
+    sub_int32s.test(LOC, Int32, static_cast<int32_t>(3), Int32, static_cast<int32_t>(-3), Int32, static_cast<int32_t>(6));
+    sub_int32s.test(LOC, Int32, static_cast<int32_t>(-3), Int32, static_cast<int32_t>(-3), Int32, static_cast<int32_t>(0));
+    sub_int32s.test(LOC, Int32, std::numeric_limits<int32_t>::min(), Int32, static_cast<int32_t>(0), Int32, std::numeric_limits<int32_t>::min());
+    sub_int32s.test(LOC, Int32, std::numeric_limits<int32_t>::max(), Int32, static_cast<int32_t>(0), Int32, std::numeric_limits<int32_t>::max());
+    sub_int32s.test(LOC, Int32, std::numeric_limits<int32_t>::min(), Int32, static_cast<int32_t>(-1), Int32, std::numeric_limits<int32_t>::min()+1);
+    sub_int32s.test(LOC, Int32, std::numeric_limits<int32_t>::max(), Int32, static_cast<int32_t>(1), Int32, std::numeric_limits<int32_t>::max()-1);
+}
+TEST(omrgenExtension, SubInt64s) {
+    typedef int64_t (FuncProto)(int64_t, int64_t);
+    SubFunc<FuncProto, int64_t, int64_t, int64_t> sub_int64s(LOC, "sub_int64s", c, false);
+    sub_int64s.test(LOC, Int64, static_cast<int64_t>(0), Int64, static_cast<int64_t>(0), Int64, static_cast<int64_t>(0));
+    sub_int64s.test(LOC, Int64, static_cast<int64_t>(0), Int64, static_cast<int64_t>(3), Int64, static_cast<int64_t>(-3));
+    sub_int64s.test(LOC, Int64, static_cast<int64_t>(3), Int64, static_cast<int64_t>(0), Int64, static_cast<int64_t>(3));
+    sub_int64s.test(LOC, Int64, static_cast<int64_t>(-3), Int64, static_cast<int64_t>(3), Int64, static_cast<int64_t>(-6));
+    sub_int64s.test(LOC, Int64, static_cast<int64_t>(3), Int64, static_cast<int64_t>(-3), Int64, static_cast<int64_t>(6));
+    sub_int64s.test(LOC, Int64, static_cast<int64_t>(-3), Int64, static_cast<int64_t>(-3), Int64, static_cast<int64_t>(0));
+    sub_int64s.test(LOC, Int64, std::numeric_limits<int64_t>::min(), Int64, static_cast<int64_t>(0), Int64, std::numeric_limits<int64_t>::min());
+    sub_int64s.test(LOC, Int64, std::numeric_limits<int64_t>::max(), Int64, static_cast<int64_t>(0), Int64, std::numeric_limits<int64_t>::max());
+    sub_int64s.test(LOC, Int64, std::numeric_limits<int64_t>::min(), Int64, static_cast<int64_t>(-1), Int64, std::numeric_limits<int64_t>::min()+1);
+    sub_int64s.test(LOC, Int64, std::numeric_limits<int64_t>::max(), Int64, static_cast<int64_t>(1), Int64, std::numeric_limits<int64_t>::max()-1);
+}
+TEST(omrgenExtension, SubFloat32s) {
+    typedef float (FuncProto)(float, float);
+    SubFunc<FuncProto, float, float, float> sub_float(LOC, "sub_float", c, false);
+    sub_float.test(LOC, Float32, static_cast<float>(0), Float32, static_cast<float>(0), Float32, static_cast<float>(0));
+    sub_float.test(LOC, Float32, static_cast<float>(0), Float32, static_cast<float>(3), Float32, static_cast<float>(-3));
+    sub_float.test(LOC, Float32, static_cast<float>(3), Float32, static_cast<float>(0), Float32, static_cast<float>(3));
+    sub_float.test(LOC, Float32, static_cast<float>(-3), Float32, static_cast<float>(3), Float32, static_cast<float>(-6));
+    sub_float.test(LOC, Float32, static_cast<float>(3), Float32, static_cast<float>(-3), Float32, static_cast<float>(6));
+    sub_float.test(LOC, Float32, static_cast<float>(-3), Float32, static_cast<float>(-3), Float32, static_cast<float>(0));
+    sub_float.test(LOC, Float32, std::numeric_limits<float>::min(), Float32, static_cast<float>(0), Float32, std::numeric_limits<float>::min());
+    sub_float.test(LOC, Float32, std::numeric_limits<float>::max(), Float32, static_cast<float>(0), Float32, std::numeric_limits<float>::max());
+    sub_float.test(LOC, Float32, std::numeric_limits<float>::min(), Float32, static_cast<float>(-1), Float32, std::numeric_limits<float>::min()+1);
+    sub_float.test(LOC, Float32, std::numeric_limits<float>::max(), Float32, static_cast<float>(1), Float32, std::numeric_limits<float>::max()-1);
+}
+TEST(omrgenExtension, SubFloat64s) {
+    typedef double (FuncProto)(double, double);
+    SubFunc<FuncProto, double, double, double> sub_double(LOC, "sub_double", c, false);
+    sub_double.test(LOC, Float64, static_cast<double>(0), Float64, static_cast<double>(0), Float64, static_cast<double>(0));
+    sub_double.test(LOC, Float64, static_cast<double>(0), Float64, static_cast<double>(3), Float64, static_cast<double>(-3));
+    sub_double.test(LOC, Float64, static_cast<double>(3), Float64, static_cast<double>(0), Float64, static_cast<double>(3));
+    sub_double.test(LOC, Float64, static_cast<double>(-3), Float64, static_cast<double>(3), Float64, static_cast<double>(-6));
+    sub_double.test(LOC, Float64, static_cast<double>(3), Float64, static_cast<double>(-3), Float64, static_cast<double>(6));
+    sub_double.test(LOC, Float64, static_cast<double>(-3), Float64, static_cast<double>(-3), Float64, static_cast<double>(0));
+    sub_double.test(LOC, Float64, std::numeric_limits<double>::min(), Float64, static_cast<double>(0), Float64, std::numeric_limits<double>::min());
+    sub_double.test(LOC, Float64, std::numeric_limits<double>::max(), Float64, static_cast<double>(0), Float64, std::numeric_limits<double>::max());
+    sub_double.test(LOC, Float64, std::numeric_limits<double>::min(), Float64, static_cast<double>(-1), Float64, std::numeric_limits<double>::min()+1);
+    sub_double.test(LOC, Float64, std::numeric_limits<double>::max(), Float64, static_cast<double>(1), Float64, std::numeric_limits<double>::max()-1);
+}
+TEST(omrgenExtension, SubAddressAndInt) {
+    if (c->platformWordSize() == 32) {
+        typedef intptr_t (FuncProto)(intptr_t, int32_t);
+        SubFunc<FuncProto, intptr_t, int32_t, intptr_t> sub_addressint32s(LOC, "sub_addressint32s", c, false);
+        sub_addressint32s.test(LOC, Address, static_cast<intptr_t>(NULL), Int32, static_cast<int32_t>(0), Address, static_cast<intptr_t>(NULL));
+        sub_addressint32s.test(LOC, Address, static_cast<intptr_t>(NULL), Int32, static_cast<int32_t>(4), Address, static_cast<intptr_t>(-4));
+        sub_addressint32s.test(LOC, Address, static_cast<intptr_t>(0xdeadbeef), Int32, static_cast<int32_t>(0), Address, static_cast<intptr_t>(0xdeadbeef));
+        sub_addressint32s.test(LOC, Address, static_cast<intptr_t>(0xdeadbeef), Int32, static_cast<int32_t>(16), Address, static_cast<intptr_t>(0xdeadbeef-16));
+        sub_addressint32s.test(LOC, Address, std::numeric_limits<intptr_t>::max(), Int32, static_cast<int32_t>(0), Address, std::numeric_limits<intptr_t>::max());
+        sub_addressint32s.test(LOC, Address, std::numeric_limits<intptr_t>::min(), Int32, static_cast<int32_t>(0), Address, std::numeric_limits<intptr_t>::min());
+    } else if (c->platformWordSize() == 64) {
+        typedef intptr_t (FuncProto)(intptr_t, int64_t);
+        SubFunc<FuncProto, intptr_t, int64_t, intptr_t> sub_addressint64s(LOC, "sub_addressint64s", c, false);
+        sub_addressint64s.test(LOC, Address, static_cast<intptr_t>(NULL), Int64, static_cast<int64_t>(0), Address, static_cast<intptr_t>(NULL));
+        sub_addressint64s.test(LOC, Address, static_cast<intptr_t>(NULL), Int64, static_cast<int64_t>(4), Address, static_cast<intptr_t>(-4));
+        sub_addressint64s.test(LOC, Address, static_cast<intptr_t>(0xdeadbeef), Int64, static_cast<int64_t>(0), Address, static_cast<intptr_t>(0xdeadbeef));
+        sub_addressint64s.test(LOC, Address, static_cast<intptr_t>(0xdeadbeef), Int64, static_cast<int64_t>(16), Address, static_cast<intptr_t>(0xdeadbeef-16));
+        sub_addressint64s.test(LOC, Address, std::numeric_limits<intptr_t>::max(), Int64, static_cast<int64_t>(0), Address, std::numeric_limits<intptr_t>::max());
+        sub_addressint64s.test(LOC, Address, std::numeric_limits<intptr_t>::min(), Int64, static_cast<int64_t>(0), Address, std::numeric_limits<intptr_t>::min());
+
+    }
+}
+

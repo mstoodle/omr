@@ -55,8 +55,8 @@ OMRCodeGeneratorForFunc::ilgen() const {
 
 bool
 OMRCodeGeneratorForFunc::registerType(const Type *t) {
-    assert(0);
-    return true; // FunctionType handled by Address which will be registered independently?
+    assert(t->isExactKind<Func::FunctionType>());
+    return ilgen()->registerFunctionType(t);
 }
 
 bool
@@ -70,7 +70,17 @@ OMRCodeGeneratorForFunc::registerSymbol(Symbol *sym) {
         return true;
     } else {
         assert(sym->isKind<Func::FunctionSymbol>());
-        assert(0);
+        Func::FunctionSymbol *funcSym = sym->refine<Func::FunctionSymbol>();
+        const Func::FunctionType *ft = funcSym->functionType();
+        ilgen()->createFunctionSymbol(sym,
+                                      funcSym->name().c_str(),
+                                      funcSym->fileName().c_str(),
+                                      funcSym->lineNumber().c_str(),
+                                      ft->numParms(),
+                                      ft->parmTypes(),
+                                      ft->returnType(),
+                                      funcSym->entryPoint());
+        return true;
     }
 }
 
@@ -89,9 +99,7 @@ Builder *
 OMRCodeGeneratorForFunc::gencodeCall(Operation *op) {
     assert(op->action() == _fx->aCall);
     Func::Op_Call *opCall = static_cast<Func::Op_Call *>(op);
-    Func::FunctionSymbol *funcSym = opCall->symbol()->refine<Func::FunctionSymbol>();
-    const Func::FunctionType *funcType = funcSym->functionType();
-    //jbmb()->Call(opCall->location(), opCall->parent(), opCall->result(), funcSym->name(), opCall->numOperands(), opCall->operands());
+    ilgen()->call(opCall->location(), opCall, true);
     return NULL;
 }
 
@@ -99,9 +107,7 @@ Builder *
 OMRCodeGeneratorForFunc::gencodeCallVoid(Operation *op) {
     assert(op->action() == _fx->aCallVoid);
     Func::Op_CallVoid *opCallVoid = static_cast<Func::Op_CallVoid *>(op);
-    Func::FunctionSymbol *funcSym = opCallVoid->symbol()->refine<Func::FunctionSymbol>();
-    const Func::FunctionType *funcType = funcSym->functionType();
-    //jbmb()->Call(opCallVoid->location(), opCallVoid->parent(), funcSym->name(), opCallVoid->numOperands(), opCallVoid->operands());
+    ilgen()->call(opCallVoid->location(), opCallVoid, true);
     return NULL;
 }
 

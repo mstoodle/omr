@@ -344,8 +344,7 @@ FieldType::~FieldType() {
 String
 FieldType::to_string(Allocator *mem, bool useHeader) const {
     String s(Type::base_string(mem, useHeader));
-    s.append(String(mem, " fieldType ")).append(_fieldName);
-    s.append(String(mem, " size ")).append(String::to_string(mem, _type->size()));
+    s.append(String(mem, "fieldType "));
     s.append(String(mem, " t")).append(String::to_string(mem, _type->id()));
     s.append(String(mem, "@")).append(String::to_string(mem, _offset));
     return s;

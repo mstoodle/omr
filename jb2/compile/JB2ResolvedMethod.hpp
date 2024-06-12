@@ -32,7 +32,6 @@ class TR_IlGenerator;
 
 namespace OMR {
 namespace JitBuilder {
-
 namespace omrgen {
 
 class JB2ResolvedMethodBase : public TR_ResolvedMethod
@@ -73,7 +72,7 @@ class JB2ResolvedMethodBase : public TR_ResolvedMethod
 
 const int16_t MAX_SIGNATURE_LENGTH=128;
 
-class JB2ResolvedMethod : public JB2ResolvedMethodBase, public TR::Method
+class JB2ResolvedMethod : public JB2ResolvedMethodBase, public OMR::JitBuilder::omrgen::Method
    {
 public:
    JB2ResolvedMethod(TR_IlGenerator * ilgen,
@@ -114,7 +113,7 @@ public:
    virtual char                * signatureChars()                           { return ""; } //_signatureChars; }
    virtual uint16_t              signatureLength()                          { return 0; } //static_cast<uint16_t>(strlen(signatureChars())); }
 
-   virtual void                * resolvedMethodAddress()                    { return (void *)NULL; } // TODO
+   virtual void                * resolvedMethodAddress()                    { return (void *)_entryPoint; }
 
    virtual uint16_t              numberOfParameterSlots()                   { return _numParms; }
    virtual TR::DataType          parmType(uint32_t slot);
@@ -127,7 +126,7 @@ public:
 
    virtual uint32_t              maxBytecodeIndex()                         { return 0; }
    virtual uint8_t             * code()                                     { return NULL; }
-   virtual TR_OpaqueMethodBlock* getPersistentIdentifier()                  { return (TR_OpaqueMethodBlock *) NULL; } // TODO
+   virtual TR_OpaqueMethodBlock* getPersistentIdentifier()                  { return (TR_OpaqueMethodBlock *) _entryPoint; }
    virtual bool                  isInterpreted()                            { return startAddressForJittedMethod() == 0; }
 
    const char                  * getLineNumber()                            { return _lineNumber;}

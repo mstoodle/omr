@@ -138,14 +138,14 @@ CodeGeneratorForBase::registerAllStructFields(const Base::StructType *sType, con
         if (fType->isKind<const Base::StructType>()) {
             // define a "dummy" field corresponding to the struct field itself, so we can ask for its address easily
             // in case this field's struct needs to be passed to anything
-            registerField(baseStructType->name(), name, bx()->NoType, fieldOffset);
+            registerField(fType, baseStructType->name(), name, bx()->NoType, fieldOffset);
             const Base::StructType *innerStructType = fType->type()->refine<const Base::StructType>();
             String newPrefix = fieldName;
             fieldName.append(".");
             registerAllStructFields(innerStructType, baseStructType, newPrefix, fieldOffset);
         }
         else {
-            registerField(baseStructType->name(), name, fType->type(), fieldOffset);
+            registerField(fType, baseStructType->name(), name, fType->type(), fieldOffset);
         }
     }
 }
