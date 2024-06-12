@@ -185,12 +185,13 @@ public:
 
     size_t length() const { return _length; }
     bool empty() const { return _length == 0; }
+    bool exists(size_t index) const { return (index >= 0 && index < _length); }
     const T operator[] (size_t index) const {
-        assert(index >= 0 && index < _length);
+        assert(exists(index));
         return _items[index];
     }
     T operator[](size_t index) {
-        assert(index >= 0 && index < _length);
+        assert(exists(index));
         return _items[index];
     }
     void assign(size_t index, T v) {
