@@ -30,6 +30,7 @@
 #include "Base/Base.hpp"
 #include "vm/VM.hpp"
 #include "jb/JB.hpp"
+//#include "omrgen/omrgen.hpp"
 
 #define STACKVALUETYPE	Int32
 #define STACKVALUECTYPE int32_t
@@ -41,7 +42,7 @@ using namespace OMR::JitBuilder;
 
 class OperandStackTestFunction : public VM::VMFunction {
 public:
-    OperandStackTestFunction(LOCATION, VM::VMExtension *vmx);
+    OperandStackTestFunction(MEM_LOCATION(a), VM::VMExtension *vmx);
 
     virtual bool buildContext(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx);
     virtual bool buildIL(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx);
@@ -91,7 +92,7 @@ protected:
 
 class OperandStackTestUsingStructFunction : public OperandStackTestFunction {
 public:
-    OperandStackTestUsingStructFunction(LOCATION, VM::VMExtension *vmx);
+    OperandStackTestUsingStructFunction(MEM_LOCATION(a), VM::VMExtension *vmx);
     virtual bool buildContext(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx);
     virtual bool buildIL(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx);
 

@@ -22,6 +22,7 @@
 #include "Builder.hpp"
 #include "Compilation.hpp"
 #include "Compiler.hpp"
+#include "Config.hpp"
 #include "Extension.hpp"
 #include "Operation.hpp"
 #include "TextLogger.hpp"
@@ -47,6 +48,9 @@ Visitor::~Visitor() {
 
 CompilerReturnCode
 Visitor::perform(Compilation *comp) {
+    // got to be a better way to do this
+    _config = ext()->compiler()->config()->refine(this);
+    this->Pass::perform(comp);
     start(comp);
     if (_aborted) {
         if (_errorCode == compiler()->CompileSuccessful)
@@ -58,10 +62,15 @@ Visitor::perform(Compilation *comp) {
 
 void
 Visitor::start(Compilation *comp) {
+    TextLogger *lgr = this->lgr();
+    if (lgr) lgr->taggedSectionStart("Visitor", this->to_string());
+
     _comp = comp;
     _aborted = false;
 
+    if (lgr) lgr->sectionStart("visitBegin") << this->to_string() << lgr->endl();
     visitBegin();
+    if (lgr) lgr->sectionEnd("visitBegin") << this->to_string() << lgr->endl();
 
     {
         Allocator *mem = comp->mem();
@@ -69,29 +78,45 @@ Visitor::start(Compilation *comp) {
         BitVector visited(mem, _comp->ir()->maxBuilderID());
         _comp->ir()->addInitialBuildersToWorklist(worklist);
 
+        if (lgr) lgr->sectionStart("visitPreCompilation") << _comp->to_string() << lgr->endl();
         visitPreCompilation(_comp);
+        if (lgr) lgr->sectionEnd("visitPreCompilation") << _comp->to_string() << lgr->endl();
 
         while(!worklist.empty()) {
             if (_aborted)
                 break;
             Builder *b = worklist.back();
+
+            if (lgr) lgr->sectionStart("visitBuilder") << b << lgr->endl();
             visitBuilder(b, visited, worklist);
+            if (lgr) lgr->sectionEnd("visitBuilder") << b << lgr->endl();
+
             worklist.pop_back();
         }
     }
 
+    if (lgr) lgr->sectionStart("visitPostCompilation") << _comp->to_string() << lgr->endl();
     visitPostCompilation(_comp);
+    if (lgr) lgr->sectionEnd("visitPostCompilation") << _comp->to_string() << lgr->endl();
 
+    if (lgr) lgr->sectionStart("visitEnd") << this->to_string() << lgr->endl();
     visitEnd();
+    if (lgr) lgr->sectionEnd("visitEnd") << this->to_string() << lgr->endl();
 
     _aborted = false;
     _comp = NULL;
+
+    if (lgr) lgr->taggedSectionEnd("Visitor", this->to_string());
 }
 
 void
 Visitor::abort(CompilerReturnCode code) {
     _errorCode = code;
     _aborted = true;
+
+    TextLogger *lgr = this->lgr();
+    if (lgr) { lgr->indent() << "Aborted error code is " << _errorCode << lgr->endl(); }
+    if (lgr) lgr->taggedSectionEnd("Visitor", this->to_string());
 }
 
 void
@@ -108,6 +133,8 @@ Visitor::start(Operation * op) {
 
 void
 Visitor::visitBuilder(Builder *b, BitVector & visited, BuilderList & worklist) {
+    TextLogger *lgr = this->lgr();
+
     int64_t id = b->id();
     if (visited.getBit(id))
         return;
@@ -121,7 +148,10 @@ Visitor::visitBuilder(Builder *b, BitVector & visited, BuilderList & worklist) {
 
 void
 Visitor::visitOperations(Builder *b, BitVector & visited, BuilderList & worklist) {
+    TextLogger *lgr = this->lgr();
     for (Operation *op = b->firstOperation(); op != NULL; op = op->next()) {
+
+        if (lgr) lgr->sectionStart("visitOperation") << op << lgr->endl();
         visitOperation(op);
 
         for (auto it = op->builders(); it.hasItem(); it++) {
@@ -130,7 +160,13 @@ Visitor::visitOperations(Builder *b, BitVector & visited, BuilderList & worklist
                 worklist.push_front(inner_b);
             }
         }
+        if (lgr) lgr->sectionEnd("visitOperation") << op << lgr->endl();
     }
+}
+
+TextLogger *
+Visitor::lgr() const {
+   return _config->traceVisitor() ? _config->logger() : NULL;
 }
 
 void

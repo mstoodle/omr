@@ -60,13 +60,14 @@ main(int argc, char *argv[]) {
     cout << "Step 2: load extensions (core, Func, Base and VM)\n";
     CoreExtension *cx = c.lookupExtension<CoreExtension>();
     JB::JBExtension *jx = c.loadExtension<JB::JBExtension>(LOC);
+    //omrgen::OMRExtension *jx = c.loadExtension<omrgen::OMRExtension>(LOC);
     Base::BaseExtension *bx = c.loadExtension<Base::BaseExtension>(LOC);
     Func::FunctionExtension *fx = c.loadExtension<Func::FunctionExtension>(LOC);
     VM::VMExtension *vmx = c.loadExtension<VM::VMExtension>(LOC);
     assert(vmx);
 
     cout << "Step 3: Create Function object\n";
-    VMRegisterFunction vmrFunc(LOC, &c);
+    VMRegisterFunction *vmrFunc = new (c.mem()) VMRegisterFunction(MEM_LOC(c.mem()), &c);
 
     cout << "Step 4: Set up logging configuration\n";
     TextLogger logger(std::cout, String("    "));
@@ -74,7 +75,7 @@ main(int argc, char *argv[]) {
     
     cout << "Step 5: compile vmregister function\n";
     StrategyID codegenStrategy = cx->strategyCodegen;
-    CompiledBody * body = fx->compile(LOC, &vmrFunc, codegenStrategy, wrt);
+    CompiledBody * body = fx->compile(LOC, vmrFunc, codegenStrategy, wrt);
 
     if (body->rc() != c.CompileSuccessful) {
         cout << "Compile failed: " << body->rc() << "\n";
@@ -91,8 +92,8 @@ main(int argc, char *argv[]) {
     cout << "vmregister(values) returned " << retVal << "\n";
 
     cout << "Step 7: compile vmregisterInStruct function\n";
-    VMRegisterInStructFunction vmrisFunc(LOC, &c);
-    body = fx->compile(LOC, &vmrisFunc, codegenStrategy, wrt); 
+    VMRegisterInStructFunction *vmrisFunc = new (c.mem()) VMRegisterInStructFunction(MEM_LOC(c.mem()), &c);
+    body = fx->compile(LOC, vmrisFunc, codegenStrategy, wrt); 
 
     if (body->rc() != c.CompileSuccessful) {
         cout << "Compile failed: " << body->rc() << "\n";
@@ -118,8 +119,8 @@ main(int argc, char *argv[]) {
 }
 
 
-VMRegisterFunction::VMRegisterFunction(LOCATION, Compiler *compiler)
-    : Func::Function(PASSLOC, compiler)
+VMRegisterFunction::VMRegisterFunction(MEM_LOCATION(a), Compiler *compiler)
+    : Func::Function(MEM_PASSLOC(a), compiler)
     , _cx(compiler->lookupExtension<CoreExtension>())
     , _bx(compiler->lookupExtension<Base::BaseExtension>())
     , _fx(compiler->lookupExtension<Func::FunctionExtension>())
@@ -171,8 +172,8 @@ VMRegisterFunction::buildIL(LOCATION, Func::FunctionCompilation *comp, Func::Fun
 }
 
 
-VMRegisterInStructFunction::VMRegisterInStructFunction(LOCATION, Compiler *compiler)
-    : Func::Function(PASSLOC, compiler)
+VMRegisterInStructFunction::VMRegisterInStructFunction(MEM_LOCATION(a), Compiler *compiler)
+    : Func::Function(MEM_PASSLOC(a), compiler)
     , _cx(compiler->lookupExtension<CoreExtension>())
     , _bx(compiler->lookupExtension<Base::BaseExtension>())
     , _fx(compiler->lookupExtension<Func::FunctionExtension>())

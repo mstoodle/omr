@@ -38,8 +38,8 @@ public:
 
 protected:
     BuilderEntry(Allocator *a, const BuilderEntry *source, IRCloner *cloner);
-
     virtual EntryPoint *clone(Allocator *mem, IRCloner *cloner) const;
+    virtual void logContents(TextLogger & lgr) const;
 
     Builder *_builder;
 

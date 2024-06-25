@@ -33,6 +33,7 @@ namespace JitBuilder {
 class Compilation;
 class IR;
 class IRCloner;
+class TextLogger;
 
 class EntryPoint : public ExtensibleIR {
     JBALLOC_(EntryPoint)
@@ -48,12 +49,12 @@ public:
 
     const String & name() const { return _name; }
 
-    //Compilation *comp() const { return _comp; }
+    void log(TextLogger & lgr) const;
 
 protected:
     EntryPoint(Allocator *a, const EntryPoint *source, IRCloner *cloner);
-
     virtual EntryPoint *clone(Allocator *mem, IRCloner *cloner) const;
+    virtual void logContents(TextLogger & lgr) const { }
 
     EntryPointID _id;
     EntryID _entryID;

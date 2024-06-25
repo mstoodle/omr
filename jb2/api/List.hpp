@@ -30,6 +30,7 @@ namespace OMR {
 namespace JitBuilder {
 
 class Compiler;
+class TextLogger;
 
 template <typename T>
 class List : public Allocatable {
@@ -475,6 +476,12 @@ public:
         delete current->_next->remove();
         delete current->remove();
         change(-1);
+    }
+    void log(TextLogger & lgr) {
+        for (auto it=iterator();it.hasItem();it++) {
+            T *x = it.item();
+            x->log(lgr);
+        }
     }
     void erase() {
         int32_t len=_length;

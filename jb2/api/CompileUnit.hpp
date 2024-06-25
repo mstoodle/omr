@@ -25,6 +25,7 @@
 #include <map>
 #include "common.hpp"
 #include "CreateLoc.hpp"
+#include "ExtensibleIR.hpp"
 
 
 namespace OMR {
@@ -34,6 +35,7 @@ class Compilation;
 class CompiledBody;
 class Compiler;
 class Config;
+class Context;
 class Debugger;
 class IR;
 class Scope;
@@ -41,7 +43,7 @@ class Symbol;
 class TextLogger;
 class TypeDictionary;
 
-class CompileUnit : public Allocatable {
+class CompileUnit : public ExtensibleIR {
     JBALLOC_(CompileUnit)
 
     friend class Compilation;
@@ -75,10 +77,10 @@ public:
     //void addLocation(Location *loc ) { _locations.push_back(loc); }
 
 protected:
-    ALL_ALLOC_ALLOWED(CompileUnit, LOCATION, Compiler *compiler, String name="");
-    ALL_ALLOC_ALLOWED(CompileUnit, LOCATION, CompileUnit *outerUnit, String name="");
+    DYNAMIC_ALLOC_ONLY(CompileUnit, LOCATION, Compiler *compiler, ExtensibleKind kind, String name="");
+    DYNAMIC_ALLOC_ONLY(CompileUnit, LOCATION, CompileUnit *outerUnit, ExtensibleKind kind, String name="");
 
-    virtual void logSpecific(TextLogger & lgr) const { }
+    virtual void logContents(TextLogger & lgr) const { }
 
     // Next two are the public API for user sub classes
     virtual bool buildContext(LOCATION, Compilation *comp, Scope *scope, Context *ctx) { return true; }
@@ -92,6 +94,7 @@ protected:
     std::map<StrategyID,CompiledBody *>   _bodies;
 
     //List<Location *>        _locations;
+    SUBCLASS_KINDSERVICE_DECL(Extensible,CompileUnit);
 };
 
 } // namespace JitBuilder

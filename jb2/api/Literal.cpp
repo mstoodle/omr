@@ -89,12 +89,9 @@ Literal::operator==(Literal & other) {
 
 void
 Literal::log(TextLogger & lgr) const {
-    lgr.indent() << this;
-    #if 0
-    lgr.indent() << this << " ";
-    _type->logLiteral(lgr, this);
-    lgr << " ]";
-    #endif
+    lgr.indent() << lgr.irStart() << "literal l" << id() << "_t" << type()->id() << " ";
+    type()->logLiteral(lgr, this);
+    lgr << lgr.irStop() << lgr.endl();
 }
 
 const int64_t

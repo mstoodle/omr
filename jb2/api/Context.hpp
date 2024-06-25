@@ -113,6 +113,8 @@ public:
     ContextID id() const { return _id; }
     const String & name() const { return _name; }
 
+    void log(TextLogger &lgr) const;
+
     virtual Value *readValue(Builder *b, Value *readFrom) {
         return readFrom; // by default, no mapping of Values
     }
@@ -133,6 +135,7 @@ protected:
     DYNAMIC_ALLOC_ONLY(Context, Extension *ext, KINDTYPE(Extensible) kind, IR *ir, String name="");
     DYNAMIC_ALLOC_ONLY(Context, Extension *ext, KINDTYPE(Extensible) kind, Context *parent, String name="");
     Context (Allocator *a, const Context *source, IRCloner *cloner);
+    virtual void logContents(TextLogger &lgr) const;
 
     IR *ir() const { return _ir; }
 

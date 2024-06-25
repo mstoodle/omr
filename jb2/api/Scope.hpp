@@ -85,8 +85,7 @@ public:
     const String & name() const { return _name; }
     IR *ir() const { return _ir; }
 
-    Context *context() const { return _context; }
-    template <class T> T *context() const { return _context->refine<T>(); }
+    void log(TextLogger & lgr) const;
 
     void addInitialBuildersToWorklist(BuilderList & worklist);
 
@@ -99,13 +98,6 @@ public:
     template <class T>
     size_t numEntryPoints() {
         return _entries.length();
-        #if 0
-        KINDTYPE(Extensible) kind = CLASSKIND(T,EntryPoint);
-        if (_entries.length() <= kind)
-            return 0;
-        List<EntryPoint *> *list = _entries[kind];
-        return (list != NULL) ? list->length() : 0;
-        #endif
     }
     void addEntryPoint(EntryPoint *entry, EntryID e=0);
 
@@ -126,6 +118,7 @@ protected:
     Scope(Allocator *a, const Scope *source, IRCloner *cloner);
 
     virtual Scope *clone(Allocator *mem, IRCloner *cloner) const;
+    virtual void logContents(TextLogger &lgr)  { }
 
     EntryPoint *findEntryPoint(EntryID e, ExtensibleKind kind) const;
     void addChild(Scope *child) { _children.push_back(child); }
@@ -143,7 +136,6 @@ protected:
 
     uint64_t _id;
     IR *_ir;
-    Context *_context;
     String _name;
 
     Scope * _parent;

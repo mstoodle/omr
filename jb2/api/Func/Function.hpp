@@ -38,7 +38,7 @@ class LocalSymbol;
 class ParameterSymbol;
 
 class Function : public CompileUnit {
-    JBALLOC(Function, NoAllocationCategory)
+    JBALLOC_(Function)
 
     friend class FunctionCompilation;
     friend class FunctionExtension;
@@ -57,8 +57,12 @@ public:
     const String & lineNumber() const { return _lineNumber; }
 
 protected:
-    ALL_ALLOC_ALLOWED(Function, LOCATION, Compiler *compiler);
-    ALL_ALLOC_ALLOWED(Function, LOCATION, Function *outerFunction);
+    DYNAMIC_ALLOC_ONLY(Function, LOCATION, Compiler *compiler, String name="");
+    DYNAMIC_ALLOC_ONLY(Function, LOCATION, Function *outerFunction, String name="");
+    DYNAMIC_ALLOC_ONLY(Function, LOCATION, Compiler *compiler, ExtensibleKind kind, String name="");
+    DYNAMIC_ALLOC_ONLY(Function, LOCATION, Function *outerFunction, ExtensibleKind kind, String name="");
+    virtual void logContents(TextLogger &lgr) const;
+
 
     CoreExtension *cx() { return _cx; }
 
@@ -75,6 +79,8 @@ private:
     String _givenName;
     String _fileName;
     String _lineNumber;
+
+    SUBCLASS_KINDSERVICE_DECL(Extensible,Function);
 };
 
 } // namespace Func

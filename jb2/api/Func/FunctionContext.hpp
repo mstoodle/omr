@@ -76,6 +76,7 @@ protected:
     DYNAMIC_ALLOC_ONLY(FunctionContext, const FunctionContext *source, IRCloner *cloner);
 
     virtual Context *clone(Allocator *mem, IRCloner *cloner) const;
+    virtual void logContents(TextLogger & lgr) const;
 
     FunctionCompilation *fComp() const;
 

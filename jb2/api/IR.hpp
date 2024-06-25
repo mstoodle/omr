@@ -69,6 +69,7 @@ class IR : public ExtensibleIR {
 public:
     DYNAMIC_ALLOC_ONLY(IR, CompileUnit *unit);
 
+    IRID id() const                      { return _id; }
     Compiler *compiler() const           { return _unit->compiler(); }
     Allocator *mem() const               { return _mem; }
     CompileUnit *unit() const            { return _unit; }
@@ -98,6 +99,8 @@ public:
     // Make a copy of this IR using the provided allocator
     IR *clone(Allocator *mem) const;
 
+    void log(Compilation *comp, TextLogger &lgr) const;
+
 protected:
     // only used by clone()
     DYNAMIC_ALLOC_ONLY(IR, const IR *source, IRCloner *cloner);
@@ -125,6 +128,7 @@ protected:
     // with this call, the created Literal takes ownership of value memory
     Literal *registerLiteral(LOCATION, const Type *type, const LiteralBytes *value);
 
+    IRID _id;
     BuilderID _nextBuilderID;
     ContextID _nextContextID;
     ContextID _nextEntryPointID;

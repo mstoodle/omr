@@ -36,7 +36,7 @@ namespace VM {
 class VMExtension;
 
 class VMFunction : public Func::Function {
-    JBALLOC(VMFunction, NoAllocationCategory)
+    JBALLOC_(VMFunction)
 
 public:
     // no public constructors intentionally: meant to be subclassed
@@ -44,8 +44,8 @@ public:
     virtual String kindName() const { return "VMFunction"; }
 
 protected:
-    ALL_ALLOC_ALLOWED(VMFunction, LOCATION, Compiler *compiler, VMExtension *vmx);
-    ALL_ALLOC_ALLOWED(VMFunction, LOCATION, VMFunction *outerFunction);
+    DYNAMIC_ALLOC_ONLY(VMFunction, LOCATION, Compiler *compiler, VMExtension *vmx);
+    DYNAMIC_ALLOC_ONLY(VMFunction, LOCATION, VMFunction *outerFunction);
 
     virtual Builder *EntryBuilder(LOCATION, IR *ir, Scope *scope);
 
@@ -53,6 +53,8 @@ protected:
 
 private:
     VMExtension * _vmx;
+
+    SUBCLASS_KINDSERVICE_DECL(Extensible, VMFunction);
 };
 
 } // namespace VM

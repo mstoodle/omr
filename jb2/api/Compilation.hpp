@@ -28,7 +28,7 @@
 #include "Context.hpp"
 #include "EntryPoint.hpp"
 #include "Extensible.hpp"
-#include "IR.hpp" // temporary during refactoring
+#include "IR.hpp"
 #include "Scope.hpp"
 
 namespace OMR {
@@ -97,7 +97,8 @@ class Compilation : public Extensible {
     IR *ir() const { return _ir; }
 
     TextLogger * logger(bool enabled=true) const { return enabled ? _logger : NULL; }
-    virtual void log(TextLogger &lgr) const;
+    virtual void log(TextLogger &lgr);
+    String to_string() const { return *_string; }
 
     void setWriter(TextWriter * w) { _writer = w; }
     TextWriter * writer(bool enabled=true) const { return enabled ? _writer : NULL; }
@@ -134,6 +135,7 @@ protected:
 
     TextLogger * _logger;
     TextWriter * _writer;
+    String *_string;
 
     List<Builder *> _builders; // to remove after refactoring
 

@@ -55,5 +55,14 @@ KindService::assignKind(Kind baseKind, String name) {
     return fullKind;
 }
 
+String
+KindService::getName(Kind kind) {
+    auto found = _nameFromKindMap.find(kind);
+    if (found != _nameFromKindMap.end()) {
+        return found->second;
+    }
+    return "";
+}
+
 } // namespace JitBuilder
 } // namespace OMR

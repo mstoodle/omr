@@ -64,6 +64,7 @@ class Compiler : public Allocatable {
     friend class Executor;
     friend class Extensible;
     friend class Extension;
+    friend class IR;
     friend class LiteralDictionary;
     friend class Pass;
     friend class Strategy;
@@ -148,6 +149,7 @@ protected:
     SymbolDictionaryID maxSymbolDictionaryID() const { return _nextSymbolDictionaryID-1; }
     SymbolDictionaryID maxTypeDictionaryID() const { return _nextTypeDictionaryID-1; }
 
+    IRID getIRID() { return _nextIRID++; }
     LiteralDictionaryID getLiteralDictionaryID() { return _nextLiteralDictionaryID++; }
     SymbolDictionaryID getSymbolDictionaryID() { return _nextSymbolDictionaryID++; }
     TypeDictionaryID getTypeDictionaryID() { return this->_nextTypeDictionaryID++; }
@@ -211,6 +213,7 @@ protected:
     TypeID _nextTypeID;
     std::map<TypeID, Type *> _types;
 
+    IRID _nextIRID;
     LiteralDictionaryID _nextLiteralDictionaryID;
     SymbolDictionaryID _nextSymbolDictionaryID;
     TypeDictionaryID _nextTypeDictionaryID;

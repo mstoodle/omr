@@ -25,6 +25,7 @@
 #include "common.hpp"
 #include "Compiler.hpp"
 #include "Extensible.hpp"
+#include "Pass.hpp"
 #include "String.hpp"
 
 namespace OMR {

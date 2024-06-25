@@ -22,10 +22,10 @@
 #include "AllocatorRaw.hpp"
 #include "Compilation.hpp"
 #include "Compiler.hpp"
+#include "Config.hpp"
 #include "Pass.hpp"
 #include "Strategy.hpp"
 #include "TextLogger.hpp"
-#include "TextWriter.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -37,9 +37,11 @@ Strategy::Strategy(Allocator *a, Compiler *compiler, String name)
     , _id(NoStrategy)
     , _compiler(compiler)
     , _name(name)
+    , _config(NULL)
     , _passes(NULL, a) {
 
     _id = compiler->addStrategy(this);
+    _config = compiler->config()->refine(this);
 }
 
 Strategy::~Strategy() {
@@ -62,14 +64,21 @@ Strategy::addPass(Pass *pass) {
 
 CompilerReturnCode
 Strategy::perform(Compilation *comp) {
+    _config = comp->config()->refine(this);
+    TextLogger *lgr = this->lgr();
+
+    if (lgr) lgr->taggedSectionStart("Strategy", _name);
+
     CompilerReturnCode rc = _compiler->CompileSuccessful;
     for (auto it = _passes.iterator(); it.hasItem(); it++) {
         Pass *pass = it.item();
 
-        if (comp->writer()) { // TODO should have its own specific trace enabler
-            TextWriter &w = *comp->writer();
-            w.logger() << "IL before pass " << pass->name() << w.logger().endl();
-            w.print(comp);
+        if (lgr) lgr->sectionStart("Strategy pass") << pass->name() << lgr->endl();
+
+        if (lgr) {
+            lgr->sectionStart("Before IR") << lgr->endl();
+            comp->ir()->log(comp, *lgr);
+            lgr->sectionEnd("Before IR") << lgr->endl();
         }
 
         {
@@ -80,23 +89,31 @@ Strategy::perform(Compilation *comp) {
             comp->setPassAllocator(NULL);
         }
 
-        if (comp->writer()) { // TODO should have its own specific trace enabler
-            TextWriter & w = *comp->writer();
-            w.logger() << "IL after pass " << pass->name() << w.logger().endl();
-            w.print(comp);
+        if (lgr) {
+            lgr->sectionStart("After IR") << lgr->endl();
+            comp->ir()->log(comp, *lgr);
+            lgr->sectionEnd("After IR") << lgr->endl();
         }
+
+        if (lgr) lgr->sectionEnd("Strategy pass") << pass->name() << lgr->endl();
 
         if (rc != _compiler->CompileSuccessful)
             break;
     }
 
-    if (comp->writer()) { // TODO should have its own specific trace enabler
-        TextWriter &w = *comp->writer();
-        w.logger() << "Final IL" << w.logger().endl();
-        w.print(comp);
+    if (lgr) {
+        lgr->sectionStart("Final IR") << lgr->endl();
+        comp->ir()->log(comp, *lgr);
+        lgr->sectionEnd("Final IR") << lgr->endl();
     }
 
+    if (lgr) lgr->taggedSectionEnd("Strategy", _name);
     return rc;
+}
+
+TextLogger *
+Strategy::lgr() const {
+    return _config->traceStrategy() ? _config->logger() : NULL;
 }
 
 } // namespace JitBuilder

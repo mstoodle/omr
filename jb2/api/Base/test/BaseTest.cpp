@@ -84,8 +84,8 @@ TEST(BaseExtension, checkVersionFail) {
 // BaseFunc is an abstract class used by subclasses to create test functions for Base
 class BaseFunc : public Func::Function {
 public:
-    BaseFunc(LOCATION, Compiler *c, String name, String line, String file)
-        : Func::Function(PASSLOC, c)
+    BaseFunc(MEM_LOCATION(a), Compiler *c, String name, String line, String file)
+        : Func::Function(MEM_PASSLOC(a), c)
         , _cx(c->lookupExtension<CoreExtension>())
         , _bx(c->lookupExtension<Base::BaseExtension>())
         , _fx(c->lookupExtension<Func::FunctionExtension>()) {
@@ -110,7 +110,7 @@ protected:
 #define BASE_FUNC(name,line,file,fields,entry,xtor_code,init_code,il_code) \
     class name : public BaseFunc { \
     public: \
-        name(LOCATION, Compiler *c) : BaseFunc(PASSLOC, c, #name, line, file) { \
+        name(MEM_LOCATION(a), Compiler *c) : BaseFunc(MEM_PASSLOC(a), c, #name, line, file) { \
             xtor_code; \
         } \
     protected: \
@@ -151,17 +151,17 @@ protected:
 
 
 #define COMPILE_TO_SUCCEED(fl,ln,fn,c,FuncClass,cx,fx,wrt,body,FuncProto,f) \
-    FuncClass func(fl,ln,fn, &c); \
+    FuncClass *func = new (c.mem()) FuncClass(c.mem(), fl,ln,fn, &c); \
     const StrategyID codegenStrategy = cx->strategyCodegen; \
-    CompiledBody *body = fx->compile(fl,ln,fn, &func, codegenStrategy, wrt); \
+    CompiledBody *body = fx->compile(fl,ln,fn, func, codegenStrategy, wrt); \
     EXPECT_NE(body, nullptr) << "Compiled body ok"; \
     EXPECT_EQ((int)body->rc(), (int)c.CompileSuccessful) << "Compiled function ok"; \
     FuncProto *f = body->nativeEntryPoint<FuncProto>(); \
     EXPECT_NE(f, nullptr)
 
 #define COMPILE_TO_FAIL(fl,ln,fn,c,FuncClass,cx,fx,wrt,expectedFailureCode) \
-    FuncClass func(fl,ln,fn, &c); \
-    CompiledBody * body = fx->compile(fl,ln,fn, &func, cx->strategyCodegen, wrt); \
+    FuncClass *func = new (c.mem()) FuncClass(c.mem(), fl,ln,fn, &c); \
+    CompiledBody * body = fx->compile(fl,ln,fn, func, cx->strategyCodegen, wrt); \
     EXPECT_NE(body, nullptr) << "Compiled body ok"; \
     EXPECT_EQ((int)body->rc(), (int)expectedFailureCode) << "Function compilation expected to fail";
 

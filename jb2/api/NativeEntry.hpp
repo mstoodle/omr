@@ -43,6 +43,7 @@ public:
 
 protected:
     DYNAMIC_ALLOC_ONLY(NativeEntry, IR *ir, ExtensibleKind kind, EntryID id, void *entry, String name="");
+    void logContents(TextLogger & lgr) const;
 
     void *_entry;
 

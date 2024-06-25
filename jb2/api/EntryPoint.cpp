@@ -22,6 +22,7 @@
 #include "Compilation.hpp"
 #include "EntryPoint.hpp"
 #include "IRCloner.hpp"
+#include "TextLogger.hpp"
 
 
 namespace OMR {
@@ -52,6 +53,13 @@ EntryPoint *
 EntryPoint::clone(Allocator *mem, IRCloner *cloner) const {
     // EntryPoints by default will not be cloned
     return NULL;
+}
+
+void
+EntryPoint::log(TextLogger & lgr) const {
+    lgr.irFlagBegin("entry") << "e" << _id << " " << Extensible::kindService.getName(_kind) << " ";
+    logContents(lgr);
+    lgr.irFlagEnd();
 }
 
 EntryPoint::~EntryPoint() {

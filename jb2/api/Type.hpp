@@ -68,6 +68,8 @@ public:
 
     String base_string(Allocator *mem, bool useHeader=false) const;
     virtual String to_string(Allocator *mem, bool useHeader=false) const;
+    void log(TextLogger & lgr) const;
+    virtual void logContents(TextLogger & lgr) const;
     void logType(TextLogger & lgr, bool useHeader=false) const;
     virtual void logValue(TextLogger & lgr, const void *p) const { }
     virtual void logLiteral(TextLogger & lgr, const Literal *lv) const { }
