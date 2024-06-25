@@ -37,17 +37,10 @@ namespace OMR {
 namespace JitBuilder {
 
 INIT_JBALLOC_ON(CompileUnit, Compiler)
+SUBCLASS_KINDSERVICE_IMPL(CompileUnit,"CompileUnit",ExtensibleIR,Extensible)
 
-CompileUnit::CompileUnit(MEM_LOCATION(a), Compiler *compiler, String name)
-    : Allocatable(a)
-    , _compiler(compiler)
-    , _id(compiler->getCompileUnitID())
-    , _createLocation(PASSLOC)
-    , _name(compiler->mem(), name)
-    , _outerUnit(NULL) {
-}
-CompileUnit::CompileUnit(LOCATION, Compiler *compiler, String name)
-    : Allocatable()
+CompileUnit::CompileUnit(MEM_LOCATION(a), Compiler *compiler, ExtensibleKind kind, String name)
+    : ExtensibleIR(a, compiler->coreExt(), kind)
     , _compiler(compiler)
     , _id(compiler->getCompileUnitID())
     , _createLocation(PASSLOC)
@@ -55,16 +48,8 @@ CompileUnit::CompileUnit(LOCATION, Compiler *compiler, String name)
     , _outerUnit(NULL) {
 }
 
-CompileUnit::CompileUnit(MEM_LOCATION(a), CompileUnit *outerUnit, String name)
-    : Allocatable(a)
-    , _compiler(outerUnit->_compiler)
-    , _id(outerUnit->_compiler->getCompileUnitID())
-    , _createLocation(PASSLOC)
-    , _name(_compiler->mem(), name)
-    , _outerUnit(outerUnit) {
-}
-CompileUnit::CompileUnit(LOCATION, CompileUnit *outerUnit, String name)
-    : Allocatable()
+CompileUnit::CompileUnit(MEM_LOCATION(a), CompileUnit *outerUnit, ExtensibleKind kind, String name)
+    : ExtensibleIR(a, outerUnit->compiler()->coreExt(), kind)
     , _compiler(outerUnit->_compiler)
     , _id(outerUnit->_compiler->getCompileUnitID())
     , _createLocation(PASSLOC)
@@ -86,18 +71,11 @@ CompileUnit::EntryBuilder(LOCATION, IR *ir, Scope *scope) {
 
 void
 CompileUnit::log(TextLogger &lgr) const {
-    lgr.indent() << "[ " << kindName() << " " << _id << lgr.endl();
-    lgr.indentIn();
+    lgr.irSectionBegin("unit", "u", id(), _kind, name());
 
-    lgr.indent() << "[ name " << name() << " ]" << lgr.endl();
-    lgr.indent() << "[ creator " << _createLocation.to_string(_compiler->mem()) << " ]" << lgr.endl();
+    logContents(lgr);
 
-    logSpecific(lgr);
-
-    lgr << "]" << lgr.endl();
-
-    lgr.indentOut();
-    lgr.indent() << "]" << lgr.endl();
+    lgr.irSectionEnd();
 }
 
 #if 0

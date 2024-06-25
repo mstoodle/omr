@@ -102,6 +102,18 @@ Type::base_string(Allocator *mem, bool useHeader) const {
 }
 
 void
+Type::log(TextLogger &lgr) const {
+    lgr.irOneLinerBegin("type", "t", _id);
+    this->logContents(lgr);
+    lgr.irOneLinerEnd();
+}
+
+void
+Type::logContents(TextLogger & lgr) const {
+     lgr << "size " << size() << " " << name() << " primitiveType";
+}
+
+void
 Type::logType(TextLogger &lgr, bool useHeader) const {
     lgr << "[ ";
     lgr << this->to_string(_ext->compiler()->mem(), useHeader);

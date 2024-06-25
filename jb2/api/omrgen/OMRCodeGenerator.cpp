@@ -53,7 +53,7 @@ INIT_JBALLOC_REUSECAT(OMRCodeGenerator, CodeGeneration);
 SUBCLASS_KINDSERVICE_IMPL(OMRCodeGenerator,"OMRCodeGenerator",CodeGenerator,Extensible);
 
 OMRCodeGenerator::OMRCodeGenerator(Allocator *a, Extension *ext)
-    : CodeGenerator(a, CLASSKIND(OMRCodeGenerator, Extensible), ext, "omrcg")
+    : CodeGenerator(a, CLASSKIND(OMRCodeGenerator, Extensible), ext, "OMRCodeGenerator")
     , _omrCompileReturnCode(0)
     , _compileReturnCode(ext->compiler()->CompileNotStarted) {
     setTraceEnabled(false);

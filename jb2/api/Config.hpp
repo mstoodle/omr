@@ -32,8 +32,17 @@ class Allocator;
 class Compilation;
 class Compiler;
 class FunctionBuilder;
+class Literal;
+class Location;
+class Operation;
+class Pass;
+class Strategy;
+class Symbol;
 class TextLogger;
+class Transformation;
 class Transformer;
+class Type;
+class Value;
 
 // Needs method filter concept and construction should decode filter
 class Config : public Allocatable {
@@ -45,6 +54,26 @@ class Config : public Allocatable {
 public:
     ALL_ALLOC_ALLOWED_NOARGS(Config);
     ALL_ALLOC_ALLOWED(Config, Config *parent);
+
+	virtual Config *refine(Compiler *c) { return this; }
+	virtual Config *refine(Compilation *comp) { return this; }
+	virtual Config *refine(Location *loc) { return this; }
+	virtual Config *refine(Pass *p) { return this; }
+	virtual Config *refine(Transformation *t) { return this; }
+	virtual Config *refine(Operation *op) { return this; }
+	virtual Config *refine(Type *t) { return this; }
+	virtual Config *refine(Strategy *s) { return this; }
+	virtual Config *refine(Symbol *sym) { return this; }
+	virtual Config *refine(Literal *lv) { return this; }
+	virtual Config *refine(Value *v) { return this; }
+
+    // when true, turn logging on for strategies
+    bool traceStrategy() const                                { return _traceStrategy; }
+    Config * setTraceStrategy(bool v=true)                    { _traceStrategy = v; return this; }
+
+    // when true, turn logging on in any subclass of Visitor
+    bool traceVisitor() const                                 { return _traceVisitor; }
+    Config * setTraceVisitor(bool v=true)                     { _traceVisitor = v; return this; }
 
     // when true, turn logging on when buildIL() is called
     bool traceBuildIL() const                                 { return _traceBuildIL; }
@@ -95,6 +124,8 @@ protected:
     Allocator * compilationAllocator(Allocator *allocator) { return allocateAllocators(allocator, _trackCompilationAllocations, _traceCompilationAllocations); }
     void destructCompilationAllocator(Allocator *allocator) { destructAllocators(allocator, _trackCompilationAllocations, _traceCompilationAllocations); }
 
+    bool _traceStrategy;
+    bool _traceVisitor;
     bool _traceBuildIL;
     bool _traceCodeGenerator;
     bool _traceCompilationAllocations;

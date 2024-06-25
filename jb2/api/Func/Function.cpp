@@ -31,27 +31,29 @@ namespace OMR {
 namespace JitBuilder {
 namespace Func {
 
+INIT_JBALLOC_ON(Function, Compiler)
+SUBCLASS_KINDSERVICE_IMPL(Function,"Function",CompileUnit,Extensible)
 
-Function::Function(MEM_LOCATION(a), Compiler *compiler)
-    : CompileUnit(MEM_PASSLOC(a), compiler)
+Function::Function(MEM_LOCATION(a), Compiler *compiler, String name)
+    : CompileUnit (MEM_PASSLOC(a), compiler, getExtensibleClassKind(), name)
     , _cx(compiler->coreExt()) {
 
 }
 
-Function::Function(LOCATION, Compiler *compiler)
-    : CompileUnit(PASSLOC, compiler) 
-    , _cx(compiler->coreExt()){
-
-}
-
-Function::Function(MEM_LOCATION(a), Function *outerFunc)
-    : CompileUnit(MEM_PASSLOC(a), outerFunc) 
+Function::Function(MEM_LOCATION(a), Function *outerFunc, String name)
+    : CompileUnit(MEM_PASSLOC(a), outerFunc, getExtensibleClassKind(), name)
     , _cx(_compiler->coreExt()){
 
 }
 
-Function::Function(LOCATION, Function *outerFunc)
-    : CompileUnit(PASSLOC, outerFunc) 
+Function::Function(MEM_LOCATION(a), Compiler *compiler, ExtensibleKind kind, String name)
+    : CompileUnit (MEM_PASSLOC(a), compiler, kind, name)
+    , _cx(compiler->coreExt()) {
+
+}
+
+Function::Function(MEM_LOCATION(a), Function *outerFunc, ExtensibleKind kind, String name)
+    : CompileUnit(MEM_PASSLOC(a), outerFunc, kind, name)
     , _cx(_compiler->coreExt()){
 
 }
@@ -87,6 +89,13 @@ Function::DefineFile(String file) {
 void
 Function::DefineLine(String line) {
     _lineNumber = String(compiler()->mem(), line);
+}
+
+void
+Function::logContents(TextLogger &lgr) const {
+    lgr.indent() << lgr.irStart() << "name " << name() << lgr.irStop() << lgr.endl();
+    lgr.indent() << lgr.irStart() << "fileName " << fileName() << lgr.irStop() << lgr.endl();
+    lgr.indent() << lgr.irStart() << "lineNumber " << lineNumber() << lgr.irStop() << lgr.endl();
 }
 
 } // namespace Function

@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include "AllocationCategoryClasses.hpp"
 #include "Compiler.hpp"
+#include "CoreExtension.hpp"
 #include "IRCloner.hpp"
 #include "Operation.hpp"
 #include "TextLogger.hpp"
@@ -33,21 +34,10 @@ namespace OMR {
 namespace JitBuilder {
 
 INIT_JBALLOC_ON(TypeDictionary, Dictionaries)
+SUBCLASS_KINDSERVICE_IMPL(TypeDictionary, "TypeDictionary", ExtensibleIR, Extensible)
 
 TypeDictionary::TypeDictionary(Allocator *a, Compiler *compiler)
-    : Allocatable(a)
-    , _id(compiler->getTypeDictionaryID())
-    , _name("")
-    , _compiler(compiler)
-    , _mem(compiler->mem())
-    , _types(NULL, _mem)
-    , _ownedTypes(NULL, _mem)
-    , _nextTypeID(0)
-    , _linkedDictionary(NULL) {
-}
-
-TypeDictionary::TypeDictionary(Compiler *compiler)
-    : Allocatable()
+    : ExtensibleIR(a, compiler->coreExt(), CLASSKIND(TypeDictionary, Extensible))
     , _id(compiler->getTypeDictionaryID())
     , _name("")
     , _compiler(compiler)
@@ -59,19 +49,8 @@ TypeDictionary::TypeDictionary(Compiler *compiler)
 }
 
 TypeDictionary::TypeDictionary(Allocator *a, Compiler *compiler, String name)
-    : Allocatable(a)
+    : ExtensibleIR(a, compiler->coreExt(), CLASSKIND(TypeDictionary, Extensible))
     , _id(compiler->getTypeDictionaryID())
-    , _name(name)
-    , _compiler(compiler)
-    , _mem(compiler->mem())
-    , _types(NULL, _mem)
-    , _ownedTypes(NULL, _mem)
-    , _nextTypeID(0)
-    , _linkedDictionary(NULL) {
-}
-
-TypeDictionary::TypeDictionary(Compiler *compiler, String name)
-    : _id(compiler->getTypeDictionaryID())
     , _name(name)
     , _compiler(compiler)
     , _mem(compiler->mem())
@@ -83,7 +62,7 @@ TypeDictionary::TypeDictionary(Compiler *compiler, String name)
 
 // Only accessible to subclasses
 TypeDictionary::TypeDictionary(Allocator *a, Compiler *compiler, String name, TypeDictionary * linkedDict)
-    : Allocatable(a)
+    : ExtensibleIR(a, compiler->coreExt(), CLASSKIND(TypeDictionary, Extensible))
     , _id(compiler->getTypeDictionaryID())
     , _name(name)
     , _compiler(compiler)
@@ -92,25 +71,6 @@ TypeDictionary::TypeDictionary(Allocator *a, Compiler *compiler, String name, Ty
     , _ownedTypes(NULL, _mem)
     , _nextTypeID(linkedDict->_nextTypeID)
     , _linkedDictionary(linkedDict) {
-    for (auto it = linkedDict->typesIterator(); it.hasItem(); it++) {
-        const Type *type = it.item();
-        internalRegisterType(type);
-    }
-    _nextTypeID = linkedDict->_nextTypeID;
-}
-
-// Only accessible to subclasses
-TypeDictionary::TypeDictionary(Compiler *compiler, String name, TypeDictionary * linkedDict)
-    : Allocatable()
-    , _id(compiler->getTypeDictionaryID())
-    , _name(name)
-    , _compiler(compiler)
-    , _mem(compiler->mem())
-    , _types(NULL, _mem)
-    , _ownedTypes(NULL, _mem)
-    , _nextTypeID(linkedDict->_nextTypeID)
-    , _linkedDictionary(linkedDict) {
-
     for (auto it = linkedDict->typesIterator(); it.hasItem(); it++) {
         const Type *type = it.item();
         internalRegisterType(type);
@@ -120,7 +80,7 @@ TypeDictionary::TypeDictionary(Compiler *compiler, String name, TypeDictionary *
 
 // Only used by clone
 TypeDictionary::TypeDictionary(Allocator *a, const TypeDictionary *source, IRCloner *cloner)
-    : Allocatable(a)
+    : ExtensibleIR(a, source->ext(), source->kind())
     , _id(source->_id)
     , _name(source->_name)
     , _compiler(source->_compiler)
@@ -169,19 +129,19 @@ TypeDictionary::RemoveType(const Type *type) {
 }
 
 void
-TypeDictionary::log(TextLogger &lgr) {
-    lgr.indent() << "[ TypeDictionary " << this << " \"" << this->name() << "\"" << lgr.endl();
-    lgr.indentIn();
-    if (this->hasLinkedDictionary())
-        lgr.indent() << "[ linkedDictionary " << this->linkedDictionary() << " ]" << lgr.endl();
+TypeDictionary::log(TextLogger &lgr) const {
+    lgr.irSectionBegin("typedict", "T", _id, kind(), _name);
+    lgr.irFlagOrNull<TypeDictionary>("linkedDictionary", this->linkedDictionary());
+    logContents(lgr);
     for (auto it = this->typesIterator();it.hasItem();it++) {
         const Type *type = it.item();
-        lgr.indent();
-        type->logType(lgr, true);
-        lgr << lgr.endl();
+        type->log(lgr);
     }
-    lgr.indentOut();
-    lgr.indent() << "]" << lgr.endl();
+    lgr.irSectionEnd();
+}
+
+void
+TypeDictionary::logContents(TextLogger &lgr) const {
 }
 
 void

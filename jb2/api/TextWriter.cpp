@@ -22,6 +22,7 @@
 #include "Builder.hpp"
 #include "Compilation.hpp"
 #include "Compiler.hpp"
+#include "Config.hpp"
 #include "CoreExtension.hpp"
 #include "Literal.hpp"
 #include "LiteralDictionary.hpp"
@@ -40,13 +41,13 @@ INIT_JBALLOC_REUSECAT(TextWriter, Compiler)
 SUBCLASS_KINDSERVICE_IMPL(TextWriter,"TextWriter",Visitor, Extensible);
 
 TextWriter::TextWriter(Allocator *a, Compiler * compiler, std::ostream & os, String perIndent)
-    : Visitor(a, CLASSKIND(TextWriter, Extensible), compiler->coreExt())
+    : Visitor(a, CLASSKIND(TextWriter, Extensible), compiler->coreExt(), "TextWriter")
     , _logger(*(new (a) TextLogger(a, os, perIndent))) {
 
 }
 
 TextWriter::TextWriter(Allocator *a, Compiler * compiler, TextLogger & logger)
-    : Visitor(a, CLASSKIND(TextWriter, Extensible), compiler->coreExt())
+    : Visitor(a, CLASSKIND(TextWriter, Extensible), compiler->coreExt(), "TextWriter")
     , _logger(logger) {
 
 }
@@ -56,10 +57,17 @@ TextWriter::~TextWriter() {
 }
 
 void
+TextWriter::start(Compilation *comp) {
+    bool savedFlag = _config->traceVisitor();
+    _config->setTraceVisitor(false);
+    this->Visitor::start(comp);
+    _config->setTraceVisitor(savedFlag);
+}
+
+void
 TextWriter::visitPreCompilation(Compilation * comp) {
-    _logger << "[ Compilation ";
-    _logger.indentIn(); // won't take effect until next endl!
-    comp->log(_logger);
+    _logger.indent() << "[ Compilation " << _logger.endl();
+    _logger.indentIn();
 }
 
 void

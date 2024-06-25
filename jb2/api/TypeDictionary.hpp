@@ -23,6 +23,7 @@
 #define TYPEDICTIONARY_INCL
 
 #include "common.hpp"
+#include "ExtensibleIR.hpp"
 #include "String.hpp"
 
 namespace OMR {
@@ -36,7 +37,7 @@ class IR;
 class IRCloner;
 class OperationBuilder;
 
-class TypeDictionary : public Allocatable {
+class TypeDictionary : public ExtensibleIR {
     JBALLOC_(TypeDictionary)
 
     friend class DynamicType;
@@ -47,15 +48,13 @@ class TypeDictionary : public Allocatable {
     friend class Type;
 
 public:
-    ALL_ALLOC_ALLOWED(TypeDictionary, Compiler *compiler);
-    ALL_ALLOC_ALLOWED(TypeDictionary, Compiler *compiler, String name);
-    ALL_ALLOC_ALLOWED(TypeDictionary, Compiler *compiler, String name, TypeDictionary *linkedDict);
+    DYNAMIC_ALLOC_ONLY(TypeDictionary, Compiler *compiler);
+    DYNAMIC_ALLOC_ONLY(TypeDictionary, Compiler *compiler, String name);
+    DYNAMIC_ALLOC_ONLY(TypeDictionary, Compiler *compiler, String name, TypeDictionary *linkedDict);
 
     Compiler *compiler() const { return _compiler; }
     Allocator *mem() const { return _mem; }
 
-    //TypeIterator TypesBegin() const { return TypeIterator(_types); }
-    //TypeIterator TypesEnd() const { return TypeIterator(); }
     TypeListIterator typesIterator() const { return _types.iterator(); }
     TypeListIterator modifiableTypesIterator() { return _types.iterator(true, false, false); }
 
@@ -66,18 +65,19 @@ public:
     TypeDictionaryID id() const { return _id; }
     String name() const { return _name; }
     bool hasLinkedDictionary() const { return _linkedDictionary != NULL; }
-    TypeDictionary *linkedDictionary() { return _linkedDictionary; }
+    TypeDictionary *linkedDictionary() const { return _linkedDictionary; }
 
-    void log(TextLogger &lgr);
+    void log(TextLogger &lgr) const;
 
     void registerType(const Type *type);
 
 protected:
     TypeDictionary(Allocator *a, const TypeDictionary *source, IRCloner *cloner);
 
+    virtual TypeDictionary *clone(Allocator *mem, IRCloner *cloner) const;
+    virtual void logContents(TextLogger &lgr) const;
     void internalRegisterType(const Type *type);
     TypeID getTypeID() { return _nextTypeID++; }
-    virtual TypeDictionary *clone(Allocator *mem, IRCloner *cloner) const;
 
     TypeDictionaryID _id;
     String _name;
@@ -87,6 +87,8 @@ protected:
     List<const Type *> _ownedTypes;
     TypeID _nextTypeID;
     TypeDictionary * _linkedDictionary;
+
+    SUBCLASS_KINDSERVICE_DECL(Extensible, TypeDictionary);
 };
 
 } // namespace JitBuilder
