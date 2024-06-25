@@ -23,6 +23,7 @@
 #define STRATEGY_INCL
 
 #include "common.hpp"
+#include "String.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -30,6 +31,7 @@ namespace JitBuilder {
 class Compilation;
 class Compiler;
 class Pass;
+class TextLogger;
 
 class Strategy : public Allocatable {
     JBALLOC_(Strategy)
@@ -58,9 +60,12 @@ public:
     virtual void allocateData() { }
     
 protected:
+    TextLogger *lgr() const;
+
     StrategyID _id;
     Compiler *_compiler;
     String _name;
+    Config *_config;
     List<Pass *> _passes;
     StrategyData *_data;
 };

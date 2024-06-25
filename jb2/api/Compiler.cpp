@@ -77,6 +77,7 @@ INIT_JBALLOC(Compiler);
     , _strategies() \
     , _nextTypeID(NoTypeID+1) \
     , _types() \
+    , _nextIRID(0) \
     , _nextLiteralDictionaryID(0) \
     , _nextSymbolDictionaryID(0) \
     , _nextTypeDictionaryID(0) \

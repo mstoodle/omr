@@ -21,8 +21,10 @@
 
 #include "Compilation.hpp"
 #include "Compiler.hpp"
+#include "Config.hpp"
 #include "Extension.hpp"
 #include "Pass.hpp"
+#include "String.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -33,9 +35,16 @@ SUBCLASS_KINDSERVICE_IMPL(Pass,"Pass",Extensible,Extensible);
 Pass::Pass(Allocator *a, KINDTYPE(Extensible) kind, Extension *ext, String name)
     : Extensible(a, ext, kind)
     , _id(0)
-    , _name(name) {
+    , _name(name)
+    , _config(NULL) {
 
     _id = ext->compiler()->addPass(this);
+    _string = new (a) String(a, a, "[ Pass p");
+    _string->append(String::to_string(a, _id))
+            .append(" ")
+            .append(_name)
+            .append(" ]");
+    _config = ext->compiler()->config()->refine(this);
 }
 
 Pass::~Pass() {
@@ -44,7 +53,13 @@ Pass::~Pass() {
 
 CompilerReturnCode
 Pass::perform(Compilation *comp) {
+    _config = ext()->compiler()->config()->refine(this);
     return compiler()->CompileSuccessful;
+}
+
+TextLogger *
+Pass::lgr() const {
+   return _config->logger();
 }
 
 } // namespace JitBuilder

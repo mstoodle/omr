@@ -146,13 +146,14 @@ main(int argc, char *argv[]) {
     if (verbose) cout << "Step 2: lookup and load extensions (core, JB, Base, Func, and VM)\n";
     CoreExtension *cx = compiler.lookupExtension<CoreExtension>();
     JB::JBExtension *jx = compiler.loadExtension<JB::JBExtension>(LOC);
+    //omrgen::OMRExtension *omr = compiler.loadExtension<omrgen::OMRExtension>(LOC);
     Base::BaseExtension *bx = compiler.loadExtension<Base::BaseExtension>(LOC);
     Func::FunctionExtension *fx = compiler.loadExtension<Func::FunctionExtension>(LOC);
     VM::VMExtension *vmx = compiler.loadExtension<VM::VMExtension>(LOC);
     assert(vmx);
 
     if (verbose) cout << "Step 3: Create Function object\n";
-    OperandStackTestFunction pointerFunction(LOC, vmx);
+    OperandStackTestFunction *pointerFunction = new (compiler.mem()) OperandStackTestFunction(MEM_LOC(compiler.mem()), vmx);
 
     if (verbose) cout << "Step 4: Set up logging configuration\n";
     TextLogger logger(std::cout, String("    "));
@@ -160,7 +161,7 @@ main(int argc, char *argv[]) {
     
     if (verbose) cout << "Step 5: compile function\n";
     const StrategyID codegenStrategy = cx->strategyCodegen; \
-    CompiledBody * body = fx->compile(LOC, &pointerFunction, codegenStrategy, wrt); \
+    CompiledBody * body = fx->compile(LOC, pointerFunction, codegenStrategy, wrt); \
     
     if (body->rc() != compiler.CompileSuccessful) {
         cout << "Compile failed: " << compiler.returnCodeName(body->rc()).c_str() << "\n";
@@ -171,15 +172,15 @@ main(int argc, char *argv[]) {
     if (verbose) cout << "Step 6: invoke compiled function and print results\n";
     typedef void (OperandStackTestProto)();
     OperandStackTestProto *ptrTest = body->nativeEntryPoint<OperandStackTestProto>();
-    verifySP = pointerFunction.getSPPtr();
+    verifySP = pointerFunction->getSPPtr();
     setupResult12Equals();
     ptrTest();
 
     if (verbose) cout << "Step 7: Set up operand stack tests using a Thread structure\n";
-    OperandStackTestUsingStructFunction threadFunction(LOC, vmx);
+    OperandStackTestUsingStructFunction *threadFunction = new (compiler.mem()) OperandStackTestUsingStructFunction(MEM_LOC(compiler.mem()), vmx);
 
     if (verbose) cout << "Step 8: compile function\n";
-    body = fx->compile(LOC, &threadFunction, codegenStrategy, wrt);
+    body = fx->compile(LOC, threadFunction, codegenStrategy, wrt);
     if (body->rc() != compiler.CompileSuccessful) {
         cout << "Compile failed: " << compiler.returnCodeName(body->rc()).c_str() << "\n";
         cout << compiler.errorCondition()->message().c_str();
@@ -414,8 +415,8 @@ OperandStackTestFunction::verifyStack(const char *step, int32_t max, int32_t num
 }
 
 
-OperandStackTestFunction::OperandStackTestFunction(LOCATION, VM::VMExtension *vmx)
-    : VM::VMFunction(PASSLOC, vmx->compiler(), vmx)
+OperandStackTestFunction::OperandStackTestFunction(MEM_LOCATION(a), VM::VMExtension *vmx)
+    : VM::VMFunction(MEM_PASSLOC(a), vmx->compiler(), vmx)
     , _cx(vmx->compiler()->coreExt())
     , _bx(vmx->bx())
     , _fx(vmx->fx())
@@ -624,8 +625,8 @@ OperandStackTestFunction::buildIL(LOCATION, Func::FunctionCompilation *comp, Fun
 
 
 
-OperandStackTestUsingStructFunction::OperandStackTestUsingStructFunction(LOCATION, VM::VMExtension *vmx)
-    : OperandStackTestFunction(PASSLOC, vmx) {
+OperandStackTestUsingStructFunction::OperandStackTestUsingStructFunction(MEM_LOCATION(a), VM::VMExtension *vmx)
+    : OperandStackTestFunction(MEM_PASSLOC(a), vmx) {
     }
 
 

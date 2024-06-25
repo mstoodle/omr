@@ -49,6 +49,7 @@ public:
     const static Kind AnyKind=1;
 
     Kind getNextKind(Kind k);
+    String getName(Kind k);
 
     Kind assignKind(Kind baseKind, String name);
     bool isExactMatch(Kind matchee, Kind matcher) {

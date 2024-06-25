@@ -61,6 +61,8 @@ KINDSERVICE_CATEGORY(Extensible);
 class Extensible : public Loggable {
     JBALLOC_(Extensible)
 
+    friend TextLogger;
+
 public:
     DYNAMIC_ALLOC_ONLY(Extensible, Extension *ext, KINDTYPE(Extensible)=KIND(Extensible));
 

@@ -24,6 +24,7 @@
 
 #include "common.hpp"
 #include <map>
+#include "ExtensibleIR.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -38,7 +39,7 @@ class OperationBuilder;
 class TextLogger;
 class Type;
 
-class SymbolDictionary : public Allocatable {
+class SymbolDictionary : public ExtensibleIR {
     JBALLOC_(SymbolDictionary)
 
     friend class Compiler;
@@ -50,9 +51,9 @@ class SymbolDictionary : public Allocatable {
     friend class OperationBuilder;
 
 public:
-    ALL_ALLOC_ALLOWED(SymbolDictionary, Compiler *compiler);
-    ALL_ALLOC_ALLOWED(SymbolDictionary, Compiler *compiler, String name);
-    ALL_ALLOC_ALLOWED(SymbolDictionary, Compiler *compiler, String name, SymbolDictionary *linkedTypes);
+    DYNAMIC_ALLOC_ONLY(SymbolDictionary, Compiler *compiler);
+    DYNAMIC_ALLOC_ONLY(SymbolDictionary, Compiler *compiler, String name);
+    DYNAMIC_ALLOC_ONLY(SymbolDictionary, Compiler *compiler, String name, SymbolDictionary *linkedTypes);
 
     SymbolListIterator symbolIterator() const { return _symbols.iterator(); }
 
@@ -63,11 +64,11 @@ public:
     SymbolDictionaryID id() const { return _id; }
     const String & name() const { return _name; }
     bool hasLinkedDictionary() const { return _linkedDictionary != NULL; }
-    SymbolDictionary *linkedDictionary() { return _linkedDictionary; }
+    SymbolDictionary *linkedDictionary() const { return _linkedDictionary; }
 
     void registerSymbol(Symbol *symbol);
 
-    void log(TextLogger &w);
+    void log(TextLogger &w) const;
 
     SymbolID numSymbols() const { return _nextSymbolID; }
 
@@ -76,6 +77,7 @@ protected:
 
     void internalRegisterSymbol(Symbol *symbol);
     virtual SymbolDictionary *clone(Allocator *mem, IRCloner *cloner) const;
+    virtual void logContents(TextLogger &w) const {}
 
     SymbolDictionaryID _id;
     Compiler * _compiler;
@@ -87,6 +89,8 @@ protected:
     std::map<String, Symbol *> _symbolsByName;
     SymbolID _nextSymbolID;
     SymbolDictionary * _linkedDictionary;
+
+    SUBCLASS_KINDSERVICE_DECL(Extensible, SymbolDictionary);
 };
 
 } // namespace JitBuilder

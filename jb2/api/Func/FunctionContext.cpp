@@ -282,6 +282,32 @@ FunctionContext::getSymbol(String name) {
     return NULL;
 }
 
+void
+FunctionContext::logContents(TextLogger & lgr) const {
+    lgr.irListBegin("locals", _locals.length());
+    for (auto it=_locals.iterator(); it.hasItem(); it++) {
+        const LocalSymbol *sym = it.item();
+        lgr.indent();
+        sym->log(lgr);
+    }
+    lgr.irListEnd(_locals.length());
+    lgr.irListBegin("parameters", _parameters.length());
+    for (auto it=_parameters.iterator(); it.hasItem(); it++) {
+        const ParameterSymbol *sym = it.item();
+        lgr.indent();
+        sym->log(lgr);
+    }
+    lgr.irListEnd(_parameters.length());
+    lgr.irListBegin("returnTypes", _returnTypes.length());
+    for (auto it=_returnTypes.constIterator(); it.hasItem(); it++) {
+        const Type *rt = it.item();
+        lgr.indent();
+        rt->logType(lgr);
+        lgr << lgr.endl();
+    }
+    lgr.irListEnd(_returnTypes.length());
+}
+
 } // namespace Func
 } // namespace JitBuilder
 } // namespace OMR

@@ -71,6 +71,9 @@ const ExecutorID NoExecutor=0;
 typedef uint64_t ExtensionID;
 const ExtensionID NoExtension=0;
 
+typedef uint64_t IRID;
+// zero is not "special"
+
 typedef uint64_t KindServiceID;
 // zero is not "special"
 

@@ -64,6 +64,7 @@ protected:
     virtual void visitEnd()                               { }
 
     // logging support: output msg to the log if enabled
+    TextLogger * lgr() const;
     void trace(String msg);
 
     Compilation *_comp;

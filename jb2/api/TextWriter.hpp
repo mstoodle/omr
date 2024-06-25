@@ -44,9 +44,10 @@ public:
 
     TextLogger & logger() { return _logger; }
 
+    virtual void start(Compilation *comp);
     void print(Compilation *comp) { start(comp); }
-    void print(Builder * b) { start(b); }
-    void print(Operation * op) { start(op); }
+    void print(Builder * b) { this->Visitor::start(b); }
+    void print(Operation * op) { this->Visitor::start(op); }
 
 protected:
     TextLogger & _logger;

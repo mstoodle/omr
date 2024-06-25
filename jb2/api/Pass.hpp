@@ -44,12 +44,17 @@ public:
 
     const String & name() const { return _name; }
     PassID id() const { return _id; }
+    String to_string() const { return *_string; }
 
     virtual CompilerReturnCode perform(Compilation *comp);
 
 protected:
+    virtual TextLogger *lgr() const;
+
     PassID _id;
     String _name;
+    String *_string;
+    Config *_config;
 
     SUBCLASS_KINDSERVICE_DECL(Extensible, Pass);
 };

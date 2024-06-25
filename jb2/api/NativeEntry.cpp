@@ -20,6 +20,7 @@
  *******************************************************************************/
 
 #include "NativeEntry.hpp"
+#include "TextLogger.hpp"
 
 
 namespace OMR {
@@ -43,6 +44,11 @@ NativeEntry::NativeEntry(Allocator *a, IR *ir, ExtensibleKind kind, EntryID id, 
 
 NativeEntry::~NativeEntry() {
 
+}
+
+void
+NativeEntry::logContents(TextLogger & lgr) const {
+    lgr << "entryPC " << (void *)_entry << " ";
 }
 
 } // namespace JitBuilder

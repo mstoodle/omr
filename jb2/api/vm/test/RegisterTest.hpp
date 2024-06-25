@@ -29,12 +29,13 @@
 #include "Base/Base.hpp"
 #include "vm/VM.hpp"
 #include "jb/JB.hpp"
+//#include "omrgen/omrgen.hpp"
 
 using namespace OMR::JitBuilder;
 
 class VMRegisterFunction : public Func::Function {
 public:
-    VMRegisterFunction(LOCATION, Compiler *compiler);
+    VMRegisterFunction(MEM_LOCATION(a), Compiler *compiler);
     virtual bool buildContext(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx);
     virtual bool buildIL(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx);
 
@@ -55,7 +56,7 @@ typedef struct VMRegisterStruct {
 
 class VMRegisterInStructFunction : public Func::Function {
 public:
-    VMRegisterInStructFunction(LOCATION, Compiler *compiler);
+    VMRegisterInStructFunction(MEM_LOCATION(a), Compiler *compiler);
     virtual bool buildContext(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx);
     virtual bool buildIL(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx);
 

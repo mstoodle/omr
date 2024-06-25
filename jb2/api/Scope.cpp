@@ -19,12 +19,15 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#include "BitVector.hpp"
 #include "Builder.hpp"
 #include "BuilderEntry.hpp"
 #include "Compilation.hpp"
 #include "CompiledBody.hpp"
 #include "IRCloner.hpp"
+#include "Operation.hpp"
 #include "Scope.hpp"
+#include "TextLogger.hpp"
 
 
 namespace OMR {
@@ -204,6 +207,56 @@ Scope::saveEntries(CompiledBody *body) {
             }
         }
     }
+}
+
+void
+Scope::log(TextLogger & lgr) const {
+    lgr.irSectionBegin("scope", "Scope", id(), kind(), name());
+    lgr.irFlagBegin("entries") << _entries.length() << lgr.endl();
+    lgr.indentIn();
+    for (EntryID e=0;e < _entries.length();e++) {
+        List<EntryPoint *> *epList = _entries[e];
+        if (epList != NULL) {
+            for (auto it=epList->iterator(); it.hasItem(); it++) {
+                EntryPoint *entry = it.item();
+                entry->log(lgr);
+            }
+        }
+    }
+    lgr.indentOut();
+    lgr.indent(); lgr.irFlagEnd();
+
+    {
+        Allocator *mem = _ir->mem();
+        BuilderList worklist(NULL, mem);
+        BitVector visited(mem, _ir->maxBuilderID());
+        _ir->addInitialBuildersToWorklist(worklist);
+
+        while(!worklist.empty()) {
+            Builder *b = worklist.back();
+            int64_t id = b->id();
+            if (visited.getBit(id)) {
+                worklist.pop_back();
+                continue;
+            }
+            visited.setBit(id);
+            b->logPrefix(lgr);
+            for (Operation *op = b->firstOperation(); op != NULL; op = op->next()) {
+                op->logFull(lgr);
+
+                for (auto it = op->builders(); it.hasItem(); it++) {
+                    Builder * inner_b = it.item();
+                    if (inner_b && !visited.getBit(inner_b->id())) {
+                        worklist.push_front(inner_b);
+                    }
+                }
+            }
+            b->logSuffix(lgr);
+            worklist.pop_back();
+        }
+    }
+
+    lgr.irSectionEnd();
 }
 
 } // namespace JitBuilder

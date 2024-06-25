@@ -27,6 +27,7 @@
 #include "IRCloner.hpp"
 #include "Symbol.hpp"
 #include "SymbolDictionary.hpp"
+#include "TextLogger.hpp"
 
 
 namespace OMR {
@@ -93,12 +94,32 @@ Context::Context(Allocator *a, const Context *source, IRCloner *cloner)
         _children.push_back(cloner->clonedContext(child));
     }
 }
-   
+
 Context *
 Context::clone(Allocator *a, IRCloner *cloner) const {
     return new (a) Context(a, this, cloner);
 }
 
+void
+Context::log(TextLogger &lgr) const {
+    lgr.irSectionBegin("context", "x", id(), kind(), name());
+    logContents(lgr);
+    lgr.irSectionEnd();
+    for (auto it=_children.iterator();it.hasItem();it++) {
+        Context *child = it.item();
+        child->log(lgr);
+    }
+}
+
+void
+Context::logContents(TextLogger &lgr) const {
+    if (_parent == NULL)
+        lgr.irFlagBegin("parent NULL");
+    else {
+        lgr.irFlagBegin("parent") << _parent;
+    }
+    lgr.irFlagEnd();
+}
 #if 0
 void
 Context::initEntriesAndExits(LOCATION, Compilation *comp) {

@@ -31,6 +31,7 @@ namespace JitBuilder {
 
 class Compilation;
 class IR;
+class IRCloner;
 class LiteralDictionary;
 class TextLogger;
 class Type;

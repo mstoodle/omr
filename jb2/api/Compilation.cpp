@@ -31,6 +31,7 @@
 #include "Literal.hpp"
 #include "LiteralDictionary.hpp"
 #include "Scope.hpp"
+#include "String.hpp"
 #include "SymbolDictionary.hpp"
 #include "TextLogger.hpp"
 #include "TypeDictionary.hpp"
@@ -59,6 +60,10 @@ Compilation::Compilation(Allocator *a, Extension *ext, ExtensibleKind kind, Comp
     , _builders(NULL, _mem) {
 
     notifyCreation(KIND(Extensible));
+
+    _string = new (a) String(a, a, "[ compilation C");
+    _string->append(String::to_string(a, _id))
+            .append(" ]");
 }
 
 Compilation::~Compilation() {
@@ -89,18 +94,8 @@ Compilation::registerBuilder(Builder *b) {
 #endif
 
 void
-Compilation::log(TextLogger &lgr) const {
-   lgr << lgr.endl();
-
-   lgr.indentIn();
-   TypeDictionary *td = ir()->typedict();
-   td->log(lgr);
-
-   SymbolDictionary *sd = ir()->symdict();
-   sd->log(lgr);
-
-   LiteralDictionary *ld = ir()->litdict();
-   ld->log(lgr);
+Compilation::log(TextLogger &lgr) {
+   ir()->log(this, lgr);
 }
 
 bool

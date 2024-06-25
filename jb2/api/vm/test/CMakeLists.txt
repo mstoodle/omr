@@ -37,6 +37,7 @@ set(GTEST_DIR $(omr_SOURCE_DIR)/third_party/gtest-1.8.0)
 		jb2base
 		jb2func
 		jb2jb
+		#jb2omrgen
 		jb2core
 		jb2
 		omrGtest
@@ -64,6 +65,7 @@ set(GTEST_DIR $(omr_SOURCE_DIR)/third_party/gtest-1.8.0)
 		jb2base
 		jb2func
 		jb2jb
+		#jb2omrgen
 		jb2core
 		jb2
 		omrGtest

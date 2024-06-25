@@ -57,7 +57,9 @@ Symbol::~Symbol() {
 
 void
 Symbol::log(TextLogger &lgr) const {
-    lgr << this << lgr.endl();
+    lgr << lgr.irStart() << "s" << id() << "_" << type() << " \"" << name() << "\"";
+    logDetails(lgr);
+    lgr << lgr.irStop();
 }
 
 } // namespace JitBuilder

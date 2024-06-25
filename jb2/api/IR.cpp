@@ -35,6 +35,7 @@
 #include "Symbol.hpp"
 #include "SymbolDictionary.hpp"
 #include "TextLogger.hpp"
+#include "TextWriter.hpp"
 #include "TypeDictionary.hpp"
 
 namespace OMR {
@@ -45,6 +46,7 @@ SUBCLASS_KINDSERVICE_IMPL(IR,"IR",Extensible,Extensible)
 
 IR::IR(Allocator *a, CompileUnit *unit)
     : ExtensibleIR(a, unit->compiler()->coreExt(), KIND(Extensible))
+    , _id(unit->compiler()->getIRID())
     , _nextBuilderID(NoBuilder+1)
     , _nextContextID(NoContext+1)
     , _nextLiteralID(NoLiteral+1)
@@ -168,6 +170,23 @@ IR *
 IR::clone(Allocator *mem) const {
     IRCloner cloner(mem, compiler()->coreExt(), KIND(Extensible));
     return new (mem) IR(mem, this, &cloner);
+}
+
+void
+IR::log(Compilation *comp, TextLogger &lgr) const {
+   lgr.irSectionBegin("ir", "ir", id(), kind(), unit()->createLoc()->functionName(mem()));
+   unit()->log(lgr);
+   typedict()->log(lgr);
+   symdict()->log(lgr);
+   litdict()->log(lgr);
+
+   _context->log(lgr);
+   _scope->log(lgr);
+
+   //TextWriter *wrtr = new (mem()) TextWriter(mem(), compiler(), lgr);
+   //wrtr->print(comp);
+
+   lgr.irSectionEnd();
 }
 
 } // namespace JitBuilder

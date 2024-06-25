@@ -29,27 +29,17 @@ namespace OMR {
 namespace JitBuilder {
 namespace VM {
 
+INIT_JBALLOC_ON(VMFunction, Compiler)
+SUBCLASS_KINDSERVICE_IMPL(VMFunction, "VMFunction", Func::Function, Extensible)
 
 VMFunction::VMFunction(MEM_LOCATION(a), Compiler *compiler, VMExtension *vmx)
-    : Func::Function(MEM_PASSLOC(a), compiler)
-    , _vmx(vmx) {
-
-}
-
-VMFunction::VMFunction(LOCATION, Compiler *compiler, VMExtension *vmx)
-    : Func::Function(PASSLOC, compiler) 
+    : Func::Function(MEM_PASSLOC(a), compiler, getExtensibleClassKind())
     , _vmx(vmx) {
 
 }
 
 VMFunction::VMFunction(MEM_LOCATION(a), VMFunction *outerFunc)
-    : Func::Function(MEM_PASSLOC(a), outerFunc) 
-    , _vmx(outerFunc->vmx()) {
-
-}
-
-VMFunction::VMFunction(LOCATION, VMFunction *outerFunc)
-    : Func::Function(PASSLOC, outerFunc) 
+    : Func::Function(MEM_PASSLOC(a), outerFunc, getExtensibleClassKind())
     , _vmx(outerFunc->vmx()) {
 
 }

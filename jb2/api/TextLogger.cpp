@@ -63,20 +63,80 @@ TextLogger::~TextLogger() {
 }
 
 TextLogger &
+operator<<(TextLogger &log, const bool v) {
+    log._os << v;
+    return log;
+}
+
+TextLogger &
+operator<<(TextLogger &log, const int8_t v) {
+    log._os << v;
+    return log;
+}
+
+TextLogger &
+operator<<(TextLogger &log, const int16_t v) {
+    log._os << v;
+    return log;
+}
+
+TextLogger &operator<<(TextLogger &log, const int32_t v) {
+    log._os << v;
+    return log;
+}
+
+TextLogger &operator<<(TextLogger &log, const int64_t v) {
+    log._os << v;
+    return log;
+}
+
+TextLogger &operator<<(TextLogger &log, const uint32_t v) {
+    log._os << v;
+    return log;
+}
+
+TextLogger &operator<<(TextLogger &log, const uint64_t v) {
+    log._os << v;
+    return log;
+}
+
+#if defined(OSX)
+TextLogger &operator<<(TextLogger &log, const size_t v) {
+    log._os << v;
+    return log;
+}
+#endif
+
+TextLogger &operator<<(TextLogger &log, const void * v) {
+    log._os << std::hex << v << std::dec;
+    return log;
+}
+
+TextLogger &operator<<(TextLogger &log, const float v) {
+    log._os << v;
+    return log;
+}
+
+TextLogger &operator<<(TextLogger &log, const double v) {
+    log._os << v;
+    return log;
+}
+
+TextLogger &operator<<(TextLogger &log, const String & s) {
+    s.log(log);
+    return log;
+}
+
+TextLogger &operator<<(TextLogger &log, const char *s) {
+    log._os << s;
+    return log;
+}
+
+TextLogger &
 operator<<(TextLogger &log, const Builder *b) {
     log << "B" << b->id();
     return log;
 }
-
-#ifdef CASES_IN_CORE
-TextLogger &
-operator<<(TextLogger &log, const Case *c) {
-    log << c->value() << " : " << c->builder();
-    if (c->fallsThrough())
-    log << " fallthrough ";
-    return log;
-}
-#endif
 
 TextLogger &
 operator<<(TextLogger & log, const Literal *lv) {
@@ -103,14 +163,6 @@ operator<< (TextLogger &log, const Scope *s) {
 }
 
 TextLogger &
-operator<< (TextLogger &log, const Symbol *s) {
-    log << "[ s" << s->id() << "_" << s->type() << " \"" << s->name() << "\"";
-    s->logDetails(log);
-    log << "]";
-    return log;
-}
-
-TextLogger &
 operator<< (TextLogger &log, const SymbolDictionary *sd) {
     return log << "S" << sd->id();
 }
@@ -128,6 +180,156 @@ operator<<(TextLogger &log, const TypeDictionary *dict) {
 TextLogger &
 operator<<(TextLogger &log, const Value *v) {
     return log << "v" << v->id() << "_" << v->type();
+}
+
+
+TextLogger &
+TextLogger::tagLine() {
+    _os << "============================================================\n";
+    return *this;
+}
+
+String
+TextLogger::sectionBegin() {
+    return "{ ";
+}
+
+String
+TextLogger::sectionStop() {
+    return "} ";
+}
+
+TextLogger &
+TextLogger::taggedSectionStart (String section, String extra) {
+    tagLine();
+    sectionStart(section) << extra << endl();
+    return *this;
+}
+
+TextLogger &
+TextLogger::taggedSectionEnd (String section, String extra) {
+    sectionEnd(section) << extra << endl();
+    tagLine();
+    return *this;
+}
+
+TextLogger &
+TextLogger::sectionStart (String section) {
+    indent() << sectionBegin() << section << " ";
+    indentIn();
+    return *this;
+}
+
+TextLogger &
+TextLogger::sectionEnd(String section) {
+    indentOut();
+    indent() << sectionStop() << section << " ";
+    return *this;
+}
+
+String
+TextLogger::irStart() {
+    return "[ ";
+}
+
+String
+TextLogger::irStop() {
+    return "]";
+}
+
+String
+TextLogger::irSpacedStop() {
+    return " ]";
+}
+
+TextLogger &
+TextLogger::irListBegin(String name, size_t numEntries) {
+    indent() << irStart() << name << " " << numEntries;
+    if (numEntries > 0) {
+        (*this) << endl();
+        indentIn();
+    }
+    return *this;
+}
+
+TextLogger &
+TextLogger::irListEnd(size_t numEntries) {
+    if (numEntries > 0) {
+        indentOut();
+        indent();
+    } else {
+        *this << " ";
+    }
+    
+    *this << irStop() << endl();
+    return *this;
+}
+
+TextLogger &
+TextLogger::irSectionBegin(String title, String designator, uint64_t id, ExtensibleKind kind, String name) {
+    const String &kindName = Extensible::kindService.getName(kind);
+    indent() << irStart() << title << " " << designator << id << " " << kindName << " \"" << name << "\"" << endl();
+    indentIn();
+    return *this;
+}
+
+TextLogger &
+TextLogger::irSectionEnd() {
+    indentOut();
+    indent() << irSpacedStop() << endl();
+    return *this;
+}
+
+TextLogger &
+TextLogger::irOneLinerBegin(String title, String designator, uint64_t id) {
+    indent() << irStart() << title << " " << designator << id << " ";
+    return *this;
+}
+
+TextLogger &
+TextLogger::irOneLinerEnd() {
+    (*this) << " " << irStop() << endl();
+    return *this;
+}
+
+TextLogger &
+TextLogger::irFlagBegin(String flag) {
+    indent() << irStart() << flag << " ";
+    return *this;
+}
+
+TextLogger &
+TextLogger::irFlagEnd() {
+    *this << irStop() << endl();
+    return *this;
+}
+
+TextLogger &
+TextLogger::irBooleanFlag(String flag, bool on) {
+    indent() << irStart() << (on ? "" : "not") << flag << irStop() << endl();
+    return *this;
+}
+
+String
+TextLogger::endl() const {
+    return String("\n");
+}
+
+TextLogger &
+TextLogger::indent() {
+    for (int32_t in=0;in < _indent;in++)
+        _perIndent.log(*this);
+    return *this;
+}
+
+void
+TextLogger::indentIn() {
+    _indent++;
+}
+
+void
+TextLogger::indentOut() {
+    _indent--;
 }
 
 #if 0

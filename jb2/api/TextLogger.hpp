@@ -24,6 +24,8 @@
 
 #include <iomanip>
 #include "common.hpp"
+#include "Extensible.hpp"
+#include "KindService.hpp"
 #include "String.hpp"
 
 namespace OMR {
@@ -47,67 +49,27 @@ class TextLogger : public Allocatable { // should be Allocatable
 public:
     ALL_ALLOC_ALLOWED(TextLogger, std::ostream & os, String perIndent);
 
-    friend TextLogger &operator<<(TextLogger &log, const bool v) {
-        log._os << v;
-        return log;
-    }
-    friend TextLogger &operator<<(TextLogger &log, const int8_t v) {
-        log._os << v;
-        return log;
-    }
-    friend TextLogger &operator<<(TextLogger &log, const int16_t v) {
-        log._os << v;
-        return log;
-    }
-    friend TextLogger &operator<<(TextLogger &log, const int32_t v) {
-        log._os << v;
-        return log;
-    }
-    friend TextLogger &operator<<(TextLogger &log, const int64_t v) {
-        log._os << v;
-        return log;
-    }
-    friend TextLogger &operator<<(TextLogger &log, const uint32_t v) {
-        log._os << v;
-        return log;
-    }
-    friend TextLogger &operator<<(TextLogger &log, const uint64_t v) {
-        log._os << v;
-        return log;
-    }
+    friend TextLogger &operator<<(TextLogger &log, const bool v);
+    friend TextLogger &operator<<(TextLogger &log, const int8_t v);
+    friend TextLogger &operator<<(TextLogger &log, const int16_t v);
+    friend TextLogger &operator<<(TextLogger &log, const int32_t v);
+    friend TextLogger &operator<<(TextLogger &log, const int64_t v);
+    friend TextLogger &operator<<(TextLogger &log, const uint32_t v);
+    friend TextLogger &operator<<(TextLogger &log, const uint64_t v);
     #if defined(OSX)
-    friend TextLogger &operator<<(TextLogger &log, const size_t v) {
-        log._os << v;
-        return log;
-    }
+    friend TextLogger &operator<<(TextLogger &log, const size_t v);
     #endif
-    friend TextLogger &operator<<(TextLogger &log, const void * v) {
-        log._os << std::hex << v << std::dec;
-        return log;
-    }
-    friend TextLogger &operator<<(TextLogger &log, const float v) {
-        log._os << v;
-        return log;
-    }
-    friend TextLogger &operator<<(TextLogger &log, const double v) {
-        log._os << v;
-        return log;
-    }
-    friend TextLogger &operator<<(TextLogger &log, const String & s) {
-        s.log(log);
-        return log;
-    }
-    friend TextLogger &operator<<(TextLogger &log, const char *s) {
-        log._os << s;
-        return log;
-    }
+    friend TextLogger &operator<<(TextLogger &log, const void * v);
+    friend TextLogger &operator<<(TextLogger &log, const float v);
+    friend TextLogger &operator<<(TextLogger &log, const double v);
+    friend TextLogger &operator<<(TextLogger &log, const String & s);
+    friend TextLogger &operator<<(TextLogger &log, const char *s);
+
     friend TextLogger & operator<<(TextLogger &log, const Builder *b);
-   //friend TextLogger &operator<<(TextLogger &log, const Case *c);
     friend TextLogger & operator<<(TextLogger &log, const Literal *lv);
     friend TextLogger & operator<<(TextLogger &log, const LiteralDictionary *ld);
     friend TextLogger & operator<<(TextLogger &log, const Operation *op);
     friend TextLogger & operator<<(TextLogger &log, const Scope *s);
-    friend TextLogger & operator<<(TextLogger &log, const Symbol *s);
     friend TextLogger & operator<<(TextLogger &log, const SymbolDictionary *sd);
     friend TextLogger & operator<<(TextLogger &log, const Type *t);
     friend TextLogger & operator<<(TextLogger &log, const TypeDictionary *dict);
@@ -115,25 +77,47 @@ public:
 
     void logOperation(Operation *op);
 
-    String endl() {
-        return String("\n");
-    }
+    TextLogger & tagLine();
 
-    TextLogger & indent() {
-        for (int32_t in=0;in < _indent;in++)
-            _perIndent.log(*this);
+    String sectionBegin();
+    String sectionStop();
+
+    TextLogger & taggedSectionStart (String section, String extra);
+    TextLogger & taggedSectionEnd (String section, String extra);
+    TextLogger & sectionStart (String section);
+    TextLogger & sectionEnd(String section);
+
+    String irStart();
+    String irStop();
+    String irSpacedStop();
+    TextLogger & irListBegin(String name, size_t numEntries);
+    TextLogger & irListEnd(size_t numEntries);
+    TextLogger & irSectionBegin(String title, String designator, uint64_t id, ExtensibleKind kind, String name);
+    TextLogger & irSectionEnd();
+    TextLogger & irOneLinerBegin(String title, String designator, uint64_t id);
+    TextLogger & irOneLinerEnd();
+    TextLogger & irFlagBegin(String flag);
+    TextLogger & irFlagEnd();
+    template<typename T>
+    TextLogger & irFlagOrNull(String flag, T *thing) {
+        irFlagBegin(flag);
+        if (thing == NULL)
+            *this << "NULL";
+        else
+            *this << thing;
+        irFlagEnd();
         return *this;
     }
-    void indentIn() {
-        _indent++;
-    }
-    void indentOut() {
-        _indent--;
-    }
+    TextLogger & irBooleanFlag(String flag, bool on);
+
+    String endl() const;
+    TextLogger & indent();
+    void indentIn();
+    void indentOut();
 
 protected:
 
-    void logTypePrefix(const Type * type, bool indent=true);
+    //void logTypePrefix(const Type * type, bool indent=true);
 
     std::ostream & _os;
     String _perIndent;

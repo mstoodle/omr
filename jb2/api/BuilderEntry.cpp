@@ -22,6 +22,7 @@
 #include "Builder.hpp"
 #include "BuilderEntry.hpp"
 #include "IRCloner.hpp"
+#include "TextLogger.hpp"
 
 
 namespace OMR {
@@ -50,6 +51,11 @@ BuilderEntry::clone(Allocator *mem, IRCloner *cloner) const {
 
 BuilderEntry::~BuilderEntry() {
 
+}
+
+void
+BuilderEntry::logContents(TextLogger & lgr) const {
+    lgr << "B" << _builder->id() << " ";
 }
 
 } // namespace JitBuilder

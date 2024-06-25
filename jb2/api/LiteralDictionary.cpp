@@ -21,6 +21,7 @@
 
 #include "AllocationCategoryClasses.hpp"
 #include "Compiler.hpp"
+#include "CoreExtension.hpp"
 #include "IRCloner.hpp"
 #include "Operation.hpp"
 #include "Literal.hpp"
@@ -33,23 +34,13 @@ namespace OMR {
 namespace JitBuilder {
 
 INIT_JBALLOC_ON(LiteralDictionary, Dictionaries)
+SUBCLASS_KINDSERVICE_IMPL(LiteralDictionary, "LiteralDictionary", ExtensibleIR, Extensible)
 
 LiteralDictionary::LiteralDictionary(Allocator *a, Compiler *compiler)
-    : Allocatable(a)
+    : ExtensibleIR(a, compiler->coreExt(), getExtensibleClassKind())
     , _id(compiler->getLiteralDictionaryID())
     , _compiler(compiler)
     , _mem(a)
-    , _name("")
-    , _literals(NULL, _mem)
-    , _ownedLiterals(NULL, _mem)
-    , _nextLiteralID(NoLiteral+1)
-    , _linkedDictionary(NULL) {
-}
-LiteralDictionary::LiteralDictionary(Compiler *compiler)
-    : Allocatable()
-    ,  _id(compiler->getLiteralDictionaryID())
-    , _compiler(compiler)
-    , _mem(compiler->mem())
     , _name("")
     , _literals(NULL, _mem)
     , _ownedLiterals(NULL, _mem)
@@ -58,20 +49,10 @@ LiteralDictionary::LiteralDictionary(Compiler *compiler)
 }
 
 LiteralDictionary::LiteralDictionary(Allocator *a, Compiler *compiler, String name)
-    : Allocatable(a)
+    : ExtensibleIR(a, compiler->coreExt(), getExtensibleClassKind())
     , _id(compiler->getLiteralDictionaryID())
     , _compiler(compiler)
     , _mem(a)
-    , _name(name)
-    , _literals(NULL, _mem)
-    , _ownedLiterals(NULL, _mem)
-    , _nextLiteralID(NoLiteral+1)
-    , _linkedDictionary(NULL) {
-}
-LiteralDictionary::LiteralDictionary(Compiler *compiler, String name)
-    : _id(compiler->getLiteralDictionaryID())
-    , _compiler(compiler)
-    , _mem(compiler->mem())
     , _name(name)
     , _literals(NULL, _mem)
     , _ownedLiterals(NULL, _mem)
@@ -80,26 +61,10 @@ LiteralDictionary::LiteralDictionary(Compiler *compiler, String name)
 }
 
 LiteralDictionary::LiteralDictionary(Allocator *a, Compiler *compiler, String name, LiteralDictionary * linkedLiterals)
-    : Allocatable(a)
+    : ExtensibleIR(a, compiler->coreExt(), getExtensibleClassKind())
     , _id(compiler->getLiteralDictionaryID())
     , _compiler(compiler)
     , _mem(a)
-    , _name(name)
-    , _literals(NULL, _mem)
-    , _ownedLiterals(NULL, _mem)
-    , _nextLiteralID(linkedLiterals->_nextLiteralID)
-    , _linkedDictionary(linkedLiterals) {
-
-    for (auto it = linkedLiterals->literalIterator(); it.hasItem(); it++) {
-        Literal *literal = it.item();
-        addNewLiteral(literal);
-    }
-}
-LiteralDictionary::LiteralDictionary(Compiler *compiler, String name, LiteralDictionary * linkedLiterals)
-    : Allocatable()
-    , _id(compiler->getLiteralDictionaryID())
-    , _compiler(compiler)
-    , _mem(compiler->mem())
     , _name(name)
     , _literals(NULL, _mem)
     , _ownedLiterals(NULL, _mem)
@@ -114,7 +79,7 @@ LiteralDictionary::LiteralDictionary(Compiler *compiler, String name, LiteralDic
 
 // only used by clone
 LiteralDictionary::LiteralDictionary(Allocator *a, const LiteralDictionary *source, IRCloner *cloner)
-    : Allocatable(a)
+    : ExtensibleIR(a, source->ext(), source->kind())
     , _id(source->_id)
     , _compiler(source->_compiler)
     , _mem(a)
@@ -210,17 +175,18 @@ LiteralDictionary::registerLiteral(LOCATION, const Type *type, const LiteralByte
 
 void
 LiteralDictionary::log(TextLogger &lgr) {
-    lgr.indent() << "[ LiteralDictionary " << this << " \"" << this->name() << "\"" << lgr.endl();
-    lgr.indentIn();
-    if (this->hasLinkedDictionary())
-        lgr.indent() << "[ linkedDictionary " << this->linkedDictionary() << " ]" << lgr.endl();
+    lgr.irSectionBegin("litdict", "L", id(), kind(), name());
+    lgr.irFlagOrNull<LiteralDictionary>("linkedDictionary", this->linkedDictionary());
+    logContents(lgr);
     for (auto it = this->literalIterator();it.hasItem();it++) {
         Literal *literal = it.item();
         literal->log(lgr);
-        lgr << lgr.endl();
     }
-    lgr.indentOut();
-    lgr.indent() << "]" << lgr.endl();
+    lgr.irSectionEnd();
+}
+
+void
+LiteralDictionary::logContents(TextLogger &lgr) {
 }
 
 } // namespace JitBuilder

@@ -25,6 +25,8 @@
 
 #include <map>
 #include "common.hpp"
+#include "CreateLoc.hpp"
+#include "ExtensibleIR.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -37,7 +39,7 @@ class IR;
 class OperationBuilder;
 class TextLogger;
 
-class LiteralDictionary : public Allocatable {
+class LiteralDictionary : public ExtensibleIR {
     JBALLOC_(LiteralDictionary)
 
     friend class Compiler;
@@ -51,9 +53,9 @@ class LiteralDictionary : public Allocatable {
     friend class OperationBuilder;
 
 public:
-    ALL_ALLOC_ALLOWED(LiteralDictionary, Compiler *compiler);
-    ALL_ALLOC_ALLOWED(LiteralDictionary, Compiler *compiler, String name);
-    ALL_ALLOC_ALLOWED(LiteralDictionary, Compiler *compiler, String name, LiteralDictionary *linkedTypes);
+    DYNAMIC_ALLOC_ONLY(LiteralDictionary, Compiler *compiler);
+    DYNAMIC_ALLOC_ONLY(LiteralDictionary, Compiler *compiler, String name);
+    DYNAMIC_ALLOC_ONLY(LiteralDictionary, Compiler *compiler, String name, LiteralDictionary *linkedTypes);
 
     LiteralListIterator literalIterator() const { return _literals.iterator(); }
 
@@ -63,12 +65,13 @@ public:
     LiteralDictionaryID id() const { return _id; }
     const String & name() const { return _name; }
     bool hasLinkedDictionary() const { return _linkedDictionary != NULL; }
-    LiteralDictionary *linkedDictionary() { return _linkedDictionary; }
+    LiteralDictionary *linkedDictionary() const { return _linkedDictionary; }
 
     void log(TextLogger &lgr);
 
 protected:
     LiteralDictionary(Allocator *a, const LiteralDictionary *source, IRCloner *cloner);
+    virtual void logContents(TextLogger &lgr);
 
     LiteralID getLiteralID() { return _nextLiteralID++; }
     void addNewLiteral(Literal *literal);
@@ -84,7 +87,9 @@ protected:
     std::map<const Type *,LiteralList *> _literalsByType;
     LiteralID _nextLiteralID;
     LiteralDictionary * _linkedDictionary;
-    };
+
+    SUBCLASS_KINDSERVICE_DECL(Extensible, LiteralDictionary);
+};
 
 } // namespace JitBuilder
 } // namespace OMR

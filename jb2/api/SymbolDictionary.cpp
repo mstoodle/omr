@@ -21,6 +21,7 @@
 
 #include "AllocationCategoryClasses.hpp"
 #include "Compiler.hpp"
+#include "CoreExtension.hpp"
 #include "IRCloner.hpp"
 #include "Symbol.hpp"
 #include "SymbolDictionary.hpp"
@@ -32,23 +33,13 @@ namespace OMR {
 namespace JitBuilder {
 
 INIT_JBALLOC_ON(SymbolDictionary, Dictionaries)
+SUBCLASS_KINDSERVICE_IMPL(SymbolDictionary, "SymbolDictionary", ExtensibleIR, Extensible)
 
 SymbolDictionary::SymbolDictionary(Allocator *a, Compiler *compiler)
-    : Allocatable(a)
+    : ExtensibleIR(a, compiler->coreExt(), getExtensibleClassKind())
     , _id(compiler->getSymbolDictionaryID())
     , _compiler(compiler)
     , _mem(a)
-    , _name("")
-    , _symbols(NULL, _mem)
-    , _ownedSymbols(NULL, _mem)
-    , _nextSymbolID(NoSymbol+1)
-    , _linkedDictionary(NULL) {
-}
-SymbolDictionary::SymbolDictionary(Compiler *compiler)
-    : Allocatable()
-    , _id(compiler->getSymbolDictionaryID())
-    , _compiler(compiler)
-    , _mem(compiler->mem())
     , _name("")
     , _symbols(NULL, _mem)
     , _ownedSymbols(NULL, _mem)
@@ -57,7 +48,7 @@ SymbolDictionary::SymbolDictionary(Compiler *compiler)
 }
 
 SymbolDictionary::SymbolDictionary(Allocator *a, Compiler *compiler, String name)
-    : Allocatable(a)
+    : ExtensibleIR(a, compiler->coreExt(), getExtensibleClassKind())
     , _id(compiler->getSymbolDictionaryID())
     , _compiler(compiler)
     , _mem(a)
@@ -67,20 +58,9 @@ SymbolDictionary::SymbolDictionary(Allocator *a, Compiler *compiler, String name
     , _nextSymbolID(NoSymbol+1)
     , _linkedDictionary(NULL) {
 }
-SymbolDictionary::SymbolDictionary(Compiler *compiler, String name)
-    : Allocatable()
-    , _id(compiler->getSymbolDictionaryID())
-    , _compiler(compiler)
-    , _mem(compiler->mem())
-    , _name(name)
-    , _symbols(NULL, _mem)
-    , _ownedSymbols(NULL, _mem)
-    , _nextSymbolID(NoSymbol+1)
-    , _linkedDictionary(NULL) {
-}
 
 SymbolDictionary::SymbolDictionary(Allocator *a, Compiler *compiler, String name, SymbolDictionary * linkedDictionary)
-    : Allocatable(a)
+    : ExtensibleIR(a, compiler->coreExt(), getExtensibleClassKind())
     , _id(compiler->getSymbolDictionaryID())
     , _compiler(compiler)
     , _mem(a)
@@ -96,27 +76,10 @@ SymbolDictionary::SymbolDictionary(Allocator *a, Compiler *compiler, String name
     }
     _nextSymbolID = linkedDictionary->_nextSymbolID;
 }
-SymbolDictionary::SymbolDictionary(Compiler *compiler, String name, SymbolDictionary * linkedDictionary)
-    : Allocatable()
-    , _id(compiler->getSymbolDictionaryID())
-    , _compiler(compiler)
-    , _mem(compiler->mem())
-    , _name(name)
-    , _symbols(NULL, _mem)
-    , _ownedSymbols(NULL, _mem)
-    , _nextSymbolID(linkedDictionary->_nextSymbolID)
-    , _linkedDictionary(linkedDictionary) {
-
-    for (auto it = linkedDictionary->symbolIterator(); it.hasItem(); it++) {
-         Symbol *sym = it.item();
-         internalRegisterSymbol(sym); // for symbols not owned by this SymbolDictionary
-    }
-    _nextSymbolID = linkedDictionary->_nextSymbolID;
-}
 
 // only used by clone()
 SymbolDictionary::SymbolDictionary(Allocator *a, const SymbolDictionary * source, IRCloner *cloner)
-    : Allocatable(a)
+    : ExtensibleIR(a, source->ext(), source->kind())
     , _id(source->_id)
     , _compiler(source->_compiler)
     , _mem(a)
@@ -203,20 +166,16 @@ SymbolDictionary::registerSymbol(Symbol *symbol) {
 }
 
 void
-SymbolDictionary::log(TextLogger &lgr) {
-    lgr.indent() << "[ SymbolDictionary " << this << " \"" << this->name() << "\"" << lgr.endl();
-    lgr.indentIn();
-    if (this->hasLinkedDictionary())
-        lgr.indent() << "[ linkedDictionary " << this->linkedDictionary() << " ]" << lgr.endl();
-
+SymbolDictionary::log(TextLogger &lgr) const {
+    lgr.irSectionBegin("symdict", "S", id(), kind(), name());
+    lgr.irFlagOrNull<SymbolDictionary>("linkedDictionary", this->linkedDictionary());
+    logContents(lgr);
     for (auto it = this->symbolIterator();it.hasItem();it++) {
         Symbol *symbol = it.item();
         lgr.indent();
         symbol->log(lgr);
     }
-
-    lgr.indentOut();
-    lgr.indent() << "]" << lgr.endl();
+    lgr.irSectionEnd();
 }
 
 } // namespace JitBuilder
