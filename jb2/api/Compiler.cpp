@@ -445,8 +445,10 @@ Compiler::compile(LOCATION, Compilation *comp, StrategyID strategyID) {
 
         if (success) {
             if (config()->traceBuildIL()) {
-                TextWriter writer(NULL, this, *comp->logger());
-                writer.perform(comp);
+                AllocatorRaw raw;
+                TextWriter *writer = new (&raw) TextWriter(&raw, this, *comp->logger());
+                writer->perform(comp);
+                delete writer;
             }
 
             if (strategyID != NoStrategy) {
