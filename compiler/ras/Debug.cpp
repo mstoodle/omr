@@ -2031,8 +2031,9 @@ TR_Debug::getStaticName(TR::SymbolReference * symRef)
             return "*Masked*";
 
          const uint8_t EXTRA_SPACE = 5;
-         char * name = (char *)_comp->trMemory()->allocateHeapMemory(TR::Compiler->debug.pointerPrintfMaxLenInChars()+EXTRA_SPACE);
-         sprintf(name, POINTER_PRINTF_FORMAT, staticAddress);
+         size_t len=TR::Compiler->debug.pointerPrintfMaxLenInChars()+EXTRA_SPACE+1;
+         char * name = (char *)_comp->trMemory()->allocateHeapMemory(len);
+         snprintf(name, len, POINTER_PRINTF_FORMAT, staticAddress);
          return name;
          }
 
