@@ -32,7 +32,7 @@ INIT_JBALLOC(EntryPoint)
 SUBCLASS_KINDSERVICE_IMPL(EntryPoint,"EntryPoint",ExtensibleIR,Extensible)
 
 EntryPoint::EntryPoint(Allocator *a, IR *ir, ExtensibleKind kind, EntryID entryID, String name)
-    : ExtensibleIR(a, ir->ext(), kind)
+    : ExtensibleIR(a, ir->ext(), ir, kind)
     , _id(ir->getEntryPointID())
     , _entryID(entryID)
     , _ir(ir)
@@ -41,7 +41,7 @@ EntryPoint::EntryPoint(Allocator *a, IR *ir, ExtensibleKind kind, EntryID entryI
 }
 
 EntryPoint::EntryPoint(Allocator *a, const EntryPoint *source, IRCloner *cloner)
-    : ExtensibleIR(a, source->ext(), source->kind())
+    : ExtensibleIR(a, source->ext(), cloner->clonedIR(), source->kind())
     , _id(source->_id)
     , _entryID(source->_entryID)
     , _ir(cloner->clonedIR())

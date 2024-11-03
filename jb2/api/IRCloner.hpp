@@ -46,7 +46,7 @@ class Type;
 class TypeDictionary;
 class Value;
 
-class IRCloner : public ExtensibleIR {
+class IRCloner : public Extensible {
     friend class IR;
 
 public:

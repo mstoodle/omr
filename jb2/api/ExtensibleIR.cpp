@@ -21,6 +21,8 @@
 
 #include "AddonIR.hpp"
 #include "ExtensibleIR.hpp"
+#include "IR.hpp"
+#include "IRCloner.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -28,14 +30,17 @@ namespace JitBuilder {
 INIT_JBALLOC(ExtensibleIR)
 SUBCLASS_KINDSERVICE_IMPL(ExtensibleIR, "ExtensibleIR", Extensible, Extensible);
 
-ExtensibleIR::ExtensibleIR(Allocator *a, Extension *ext, KINDTYPE(Extensible) kind)
-    : Extensible(a, ext, kind) {
+ExtensibleIR::ExtensibleIR(Allocator *a, Extension *ext, IR *ir, KINDTYPE(Extensible) kind)
+    : Extensible(a, ext, kind)
+    , _ir(ir) {
 
 }
 
 ExtensibleIR::ExtensibleIR(Allocator *a, const ExtensibleIR *source, IRCloner *cloner)
-    : Extensible(a, source->ext(), source->kind()) {
+    : Extensible(a, source->ext(), source->kind())
+    , _ir(cloner->clonedIR()) {
 
+    assert(a == _ir->allocator());
     if (source->addons() != NULL) {
         for (auto it = source->addons()->iterator(); it.hasItem(); it++) {
             Addon *sourceAddon = it.item();

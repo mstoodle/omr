@@ -33,10 +33,10 @@ namespace OMR {
 namespace JitBuilder {
 
 INIT_JBALLOC_ON(SymbolDictionary, Dictionaries)
-SUBCLASS_KINDSERVICE_IMPL(SymbolDictionary, "SymbolDictionary", ExtensibleIR, Extensible)
+SUBCLASS_KINDSERVICE_IMPL(SymbolDictionary, "SymbolDictionary", Extensible, Extensible)
 
 SymbolDictionary::SymbolDictionary(Allocator *a, Compiler *compiler)
-    : ExtensibleIR(a, compiler->coreExt(), getExtensibleClassKind())
+    : Extensible(a, compiler->coreExt(), getExtensibleClassKind())
     , _id(compiler->getSymbolDictionaryID())
     , _compiler(compiler)
     , _mem(a)
@@ -48,7 +48,7 @@ SymbolDictionary::SymbolDictionary(Allocator *a, Compiler *compiler)
 }
 
 SymbolDictionary::SymbolDictionary(Allocator *a, Compiler *compiler, String name)
-    : ExtensibleIR(a, compiler->coreExt(), getExtensibleClassKind())
+    : Extensible(a, compiler->coreExt(), getExtensibleClassKind())
     , _id(compiler->getSymbolDictionaryID())
     , _compiler(compiler)
     , _mem(a)
@@ -60,7 +60,7 @@ SymbolDictionary::SymbolDictionary(Allocator *a, Compiler *compiler, String name
 }
 
 SymbolDictionary::SymbolDictionary(Allocator *a, Compiler *compiler, String name, SymbolDictionary * linkedDictionary)
-    : ExtensibleIR(a, compiler->coreExt(), getExtensibleClassKind())
+    : Extensible(a, compiler->coreExt(), getExtensibleClassKind())
     , _id(compiler->getSymbolDictionaryID())
     , _compiler(compiler)
     , _mem(a)
@@ -79,7 +79,7 @@ SymbolDictionary::SymbolDictionary(Allocator *a, Compiler *compiler, String name
 
 // only used by clone()
 SymbolDictionary::SymbolDictionary(Allocator *a, const SymbolDictionary * source, IRCloner *cloner)
-    : ExtensibleIR(a, source->ext(), source->kind())
+    : Extensible(a, source->ext(), source->kind())
     , _id(source->_id)
     , _compiler(source->_compiler)
     , _mem(a)

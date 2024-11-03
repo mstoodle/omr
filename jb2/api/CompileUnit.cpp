@@ -40,7 +40,7 @@ INIT_JBALLOC_ON(CompileUnit, Compiler)
 SUBCLASS_KINDSERVICE_IMPL(CompileUnit,"CompileUnit",ExtensibleIR,Extensible)
 
 CompileUnit::CompileUnit(MEM_LOCATION(a), Compiler *compiler, ExtensibleKind kind, String name)
-    : ExtensibleIR(a, compiler->coreExt(), kind)
+    : Extensible(a, compiler->coreExt(), kind)
     , _compiler(compiler)
     , _id(compiler->getCompileUnitID())
     , _createLocation(PASSLOC)
@@ -49,7 +49,7 @@ CompileUnit::CompileUnit(MEM_LOCATION(a), Compiler *compiler, ExtensibleKind kin
 }
 
 CompileUnit::CompileUnit(MEM_LOCATION(a), CompileUnit *outerUnit, ExtensibleKind kind, String name)
-    : ExtensibleIR(a, outerUnit->compiler()->coreExt(), kind)
+    : Extensible(a, outerUnit->compiler()->coreExt(), kind)
     , _compiler(outerUnit->_compiler)
     , _id(outerUnit->_compiler->getCompileUnitID())
     , _createLocation(PASSLOC)

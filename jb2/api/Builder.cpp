@@ -36,7 +36,7 @@ INIT_JBALLOC_ON(Builder, IL);
 SUBCLASS_KINDSERVICE_IMPL(Builder, "Builder", ExtensibleIR, Extensible);
 
 Builder::Builder(Allocator *a, Extension *ext, KINDTYPE(Extensible) kind, IR *ir, Scope *scope, String name)
-    : ExtensibleIR(a, ext, kind)
+    : ExtensibleIR(a, ext, ir, kind)
     , _id(ir->getBuilderID())
     , _ext(ext)
     , _ir(ir)
@@ -61,7 +61,7 @@ Builder::Builder(Allocator *a, Extension *ext, KINDTYPE(Extensible) kind, IR *ir
 }
 
 Builder::Builder(Allocator *a, Extension *ext, IR * ir, Scope *scope, String name)
-    : ExtensibleIR(a, ext, CLASSKIND(Builder, Extensible))
+    : ExtensibleIR(a, ext, ir, CLASSKIND(Builder, Extensible))
     , _id(ir->getBuilderID())
     , _ext(ext)
     , _ir(ir)
@@ -86,7 +86,7 @@ Builder::Builder(Allocator *a, Extension *ext, IR * ir, Scope *scope, String nam
 }
 
 Builder::Builder(Allocator *a, Extension *ext, Builder *parent, Scope *scope, String name)
-    : ExtensibleIR(a, ext, CLASSKIND(Builder, Extensible))
+    : ExtensibleIR(a, ext, parent->ir(), CLASSKIND(Builder, Extensible))
     , _id(parent->ir()->getBuilderID())
     , _ext(ext)
     , _ir(parent->_ir)
@@ -112,7 +112,7 @@ Builder::Builder(Allocator *a, Extension *ext, Builder *parent, Scope *scope, St
 }
 
 Builder::Builder(Allocator *a, Extension *ext, Builder *parent, Operation *boundToOp, String name)
-    : ExtensibleIR(a, ext, CLASSKIND(Builder, Extensible))
+    : ExtensibleIR(a, ext, parent->ir(), CLASSKIND(Builder, Extensible))
     , _id(parent->ir()->getBuilderID())
     , _ext(ext)
     , _ir(parent->_ir)
@@ -138,10 +138,10 @@ Builder::Builder(Allocator *a, Extension *ext, Builder *parent, Operation *bound
 }
 
 Builder::Builder(Allocator *a, const Builder *source, IRCloner *cloner)
-    : ExtensibleIR(a, source->_ext, CLASSKIND(Builder, Extensible))
+    : ExtensibleIR(a, source->_ext, cloner->clonedIR(), CLASSKIND(Builder, Extensible))
     , _id(source->_id)
     , _ext(source->_ext)
-    , _ir(source->_ir)
+    , _ir(cloner->clonedIR())
     , _name(source->_name)
     , _parent(cloner->clonedBuilder(source->_parent))
     , _children(NULL, a)

@@ -45,7 +45,7 @@ INIT_JBALLOC_ON(IR, Compilation)
 SUBCLASS_KINDSERVICE_IMPL(IR,"IR",Extensible,Extensible)
 
 IR::IR(Allocator *a, CompileUnit *unit)
-    : ExtensibleIR(a, unit->compiler()->coreExt(), KIND(Extensible))
+    : ExtensibleIR(a, unit->compiler()->coreExt(), this, KIND(Extensible))
     , _id(unit->compiler()->getIRID())
     , _nextBuilderID(NoBuilder+1)
     , _nextContextID(NoContext+1)
@@ -69,7 +69,7 @@ IR::IR(Allocator *a, CompileUnit *unit)
 }
 
 IR::IR(Allocator *a, const IR *source, IRCloner *cloner)
-    : ExtensibleIR(a, source->ext(), KIND(Extensible))
+    : ExtensibleIR(a, source->ext(), this, KIND(Extensible))
     , _nextBuilderID(NoBuilder+1)
     , _nextContextID(NoContext+1)
     , _nextLiteralID(NoLiteral+1)

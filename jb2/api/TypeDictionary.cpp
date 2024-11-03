@@ -34,10 +34,10 @@ namespace OMR {
 namespace JitBuilder {
 
 INIT_JBALLOC_ON(TypeDictionary, Dictionaries)
-SUBCLASS_KINDSERVICE_IMPL(TypeDictionary, "TypeDictionary", ExtensibleIR, Extensible)
+SUBCLASS_KINDSERVICE_IMPL(TypeDictionary, "TypeDictionary", Extensible, Extensible)
 
 TypeDictionary::TypeDictionary(Allocator *a, Compiler *compiler)
-    : ExtensibleIR(a, compiler->coreExt(), CLASSKIND(TypeDictionary, Extensible))
+    : Extensible(a, compiler->coreExt(), CLASSKIND(TypeDictionary, Extensible))
     , _id(compiler->getTypeDictionaryID())
     , _name("")
     , _compiler(compiler)
@@ -49,7 +49,7 @@ TypeDictionary::TypeDictionary(Allocator *a, Compiler *compiler)
 }
 
 TypeDictionary::TypeDictionary(Allocator *a, Compiler *compiler, String name)
-    : ExtensibleIR(a, compiler->coreExt(), CLASSKIND(TypeDictionary, Extensible))
+    : Extensible(a, compiler->coreExt(), CLASSKIND(TypeDictionary, Extensible))
     , _id(compiler->getTypeDictionaryID())
     , _name(name)
     , _compiler(compiler)
@@ -62,7 +62,7 @@ TypeDictionary::TypeDictionary(Allocator *a, Compiler *compiler, String name)
 
 // Only accessible to subclasses
 TypeDictionary::TypeDictionary(Allocator *a, Compiler *compiler, String name, TypeDictionary * linkedDict)
-    : ExtensibleIR(a, compiler->coreExt(), CLASSKIND(TypeDictionary, Extensible))
+    : Extensible(a, compiler->coreExt(), CLASSKIND(TypeDictionary, Extensible))
     , _id(compiler->getTypeDictionaryID())
     , _name(name)
     , _compiler(compiler)
@@ -80,7 +80,7 @@ TypeDictionary::TypeDictionary(Allocator *a, Compiler *compiler, String name, Ty
 
 // Only used by clone
 TypeDictionary::TypeDictionary(Allocator *a, const TypeDictionary *source, IRCloner *cloner)
-    : ExtensibleIR(a, source->ext(), source->kind())
+    : Extensible(a, source->ext(), source->kind())
     , _id(source->_id)
     , _name(source->_name)
     , _compiler(source->_compiler)

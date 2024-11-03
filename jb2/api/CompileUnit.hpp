@@ -43,7 +43,7 @@ class Symbol;
 class TextLogger;
 class TypeDictionary;
 
-class CompileUnit : public ExtensibleIR {
+class CompileUnit : public Extensible {
     JBALLOC_(CompileUnit)
 
     friend class Compilation;

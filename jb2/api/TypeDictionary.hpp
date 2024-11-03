@@ -23,7 +23,7 @@
 #define TYPEDICTIONARY_INCL
 
 #include "common.hpp"
-#include "ExtensibleIR.hpp"
+#include "Extensible.hpp"
 #include "String.hpp"
 
 namespace OMR {
@@ -37,7 +37,7 @@ class IR;
 class IRCloner;
 class OperationBuilder;
 
-class TypeDictionary : public ExtensibleIR {
+class TypeDictionary : public Extensible {
     JBALLOC_(TypeDictionary)
 
     friend class DynamicType;

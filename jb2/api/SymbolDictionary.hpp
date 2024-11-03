@@ -24,7 +24,7 @@
 
 #include "common.hpp"
 #include <map>
-#include "ExtensibleIR.hpp"
+#include "Extensible.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -39,7 +39,7 @@ class OperationBuilder;
 class TextLogger;
 class Type;
 
-class SymbolDictionary : public ExtensibleIR {
+class SymbolDictionary : public Extensible {
     JBALLOC_(SymbolDictionary)
 
     friend class Compiler;
