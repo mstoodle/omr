@@ -37,7 +37,7 @@ INIT_JBALLOC(Scope)
 SUBCLASS_KINDSERVICE_IMPL(Scope, "Scope", Extensible, Extensible)
 
 Scope::Scope(Allocator *a, Extension *ext, IR *ir, String name)
-    : ExtensibleIR(a, ext, KIND(Extensible))
+    : ExtensibleIR(a, ext, ir, KIND(Extensible))
     , _id(ir->getScopeID())
     , _ir(ir)
     , _name(name)
@@ -50,7 +50,7 @@ Scope::Scope(Allocator *a, Extension *ext, IR *ir, String name)
 }
 
 Scope::Scope(Allocator *a, Extension *ext, KINDTYPE(Extensible) kind, IR *ir, String name)
-    : ExtensibleIR(a, ext, kind)
+    : ExtensibleIR(a, ext, ir, kind)
     , _id(ir->getScopeID())
     , _ir(ir)
     , _name(name)
@@ -63,7 +63,7 @@ Scope::Scope(Allocator *a, Extension *ext, KINDTYPE(Extensible) kind, IR *ir, St
 }
 
 Scope::Scope(Allocator *a, Extension *ext, Scope *parent, String name)
-    : ExtensibleIR(a, ext, KIND(Extensible))
+    : ExtensibleIR(a, ext, parent->ir(), KIND(Extensible))
     , _id(parent->ir()->getScopeID())
     , _ir(parent->ir())
     , _name(name)
@@ -76,7 +76,7 @@ Scope::Scope(Allocator *a, Extension *ext, Scope *parent, String name)
 }
 
 Scope::Scope(Allocator *a, Extension *ext, KINDTYPE(Extensible) kind, Scope *parent, String name)
-    : ExtensibleIR(a, ext, kind)
+    : ExtensibleIR(a, ext, parent->ir(), kind)
     , _id(parent->ir()->getScopeID())
     , _ir(parent->ir())
     , _name(name)
@@ -89,7 +89,7 @@ Scope::Scope(Allocator *a, Extension *ext, KINDTYPE(Extensible) kind, Scope *par
 }
 
 Scope::Scope(Allocator *a, const Scope *source, IRCloner *cloner)
-    : ExtensibleIR(a, source->ext(), source->_kind)
+    : ExtensibleIR(a, source->ext(), cloner->clonedIR(), source->_kind)
     , _id(source->_id)
     , _ir(cloner->clonedIR())
     , _name(source->_name)

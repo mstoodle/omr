@@ -51,18 +51,22 @@ namespace OMR {
 namespace JitBuilder {
 
 class Extension;
+class IR;
 class IRCloner;
 
 class ExtensibleIR : public Extensible {
     JBALLOC_(ExtensibleIR)
 
 public:
-    DYNAMIC_ALLOC_ONLY(ExtensibleIR, Extension *ext, KINDTYPE(Extensible)=KIND(Extensible));
+    DYNAMIC_ALLOC_ONLY(ExtensibleIR, Extension *ext, IR *ir, KINDTYPE(Extensible)=KIND(Extensible));
+    IR *ir() const { return _ir; }
 
 protected:
     ExtensibleIR(Allocator *a, const ExtensibleIR *source, IRCloner *cloner);
 
     virtual ExtensibleIR *clone(Allocator *a, IRCloner *cloner) const;
+
+    IR *_ir;
 
     SUBCLASS_KINDSERVICE_DECL(Extensible, ExtensibleIR);
 };

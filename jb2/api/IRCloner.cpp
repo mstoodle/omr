@@ -39,7 +39,7 @@ namespace OMR {
 namespace JitBuilder {
 
 IRCloner::IRCloner(Allocator *mem, Extension *ext, KINDTYPE(Extensible) kind)
-    : ExtensibleIR(mem, ext, kind)
+    : Extensible(mem, ext, kind)
     , _mem(mem)
     , _clonedIR(NULL)
     , _clonedBuilders(NULL, mem)

@@ -39,7 +39,7 @@ class IR;
 class OperationBuilder;
 class TextLogger;
 
-class LiteralDictionary : public ExtensibleIR {
+class LiteralDictionary : public Extensible {
     JBALLOC_(LiteralDictionary)
 
     friend class Compiler;

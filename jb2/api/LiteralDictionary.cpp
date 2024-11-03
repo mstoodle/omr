@@ -37,7 +37,7 @@ INIT_JBALLOC_ON(LiteralDictionary, Dictionaries)
 SUBCLASS_KINDSERVICE_IMPL(LiteralDictionary, "LiteralDictionary", ExtensibleIR, Extensible)
 
 LiteralDictionary::LiteralDictionary(Allocator *a, Compiler *compiler)
-    : ExtensibleIR(a, compiler->coreExt(), getExtensibleClassKind())
+    : Extensible(a, compiler->coreExt(), getExtensibleClassKind())
     , _id(compiler->getLiteralDictionaryID())
     , _compiler(compiler)
     , _mem(a)
@@ -49,7 +49,7 @@ LiteralDictionary::LiteralDictionary(Allocator *a, Compiler *compiler)
 }
 
 LiteralDictionary::LiteralDictionary(Allocator *a, Compiler *compiler, String name)
-    : ExtensibleIR(a, compiler->coreExt(), getExtensibleClassKind())
+    : Extensible(a, compiler->coreExt(), getExtensibleClassKind())
     , _id(compiler->getLiteralDictionaryID())
     , _compiler(compiler)
     , _mem(a)
@@ -61,7 +61,7 @@ LiteralDictionary::LiteralDictionary(Allocator *a, Compiler *compiler, String na
 }
 
 LiteralDictionary::LiteralDictionary(Allocator *a, Compiler *compiler, String name, LiteralDictionary * linkedLiterals)
-    : ExtensibleIR(a, compiler->coreExt(), getExtensibleClassKind())
+    : Extensible(a, compiler->coreExt(), getExtensibleClassKind())
     , _id(compiler->getLiteralDictionaryID())
     , _compiler(compiler)
     , _mem(a)
@@ -79,7 +79,7 @@ LiteralDictionary::LiteralDictionary(Allocator *a, Compiler *compiler, String na
 
 // only used by clone
 LiteralDictionary::LiteralDictionary(Allocator *a, const LiteralDictionary *source, IRCloner *cloner)
-    : ExtensibleIR(a, source->ext(), source->kind())
+    : Extensible(a, source->ext(), source->kind())
     , _id(source->_id)
     , _compiler(source->_compiler)
     , _mem(a)

@@ -37,7 +37,7 @@ INIT_JBALLOC(Context)
 SUBCLASS_KINDSERVICE_IMPL(Context, "Context", ExtensibleIR, Extensible)
 
 Context::Context(Allocator *a, Extension *ext, IR *ir, String name)
-    : ExtensibleIR(a, ext, CLASSKIND(Context, Extensible))
+    : ExtensibleIR(a, ext, ir, CLASSKIND(Context, Extensible))
     , _id(ir->getContextID())
     , _ir(ir)
     , _name(name)
@@ -48,7 +48,7 @@ Context::Context(Allocator *a, Extension *ext, IR *ir, String name)
 }
 
 Context::Context(Allocator *a, Extension *ext, KINDTYPE(Extensible) kind, IR *ir, String name)
-    : ExtensibleIR(a, ext, kind)
+    : ExtensibleIR(a, ext, ir, kind)
     , _id(ir->getContextID())
     , _ir(ir)
     , _name(name)
@@ -59,7 +59,7 @@ Context::Context(Allocator *a, Extension *ext, KINDTYPE(Extensible) kind, IR *ir
 }
 
 Context::Context(Allocator *a, Extension *ext, Context *parent, String name)
-    : ExtensibleIR(a, ext, CLASSKIND(Context, Extensible))
+    : ExtensibleIR(a, ext, parent->ir(), CLASSKIND(Context, Extensible))
     , _id(parent->ir()->getContextID())
     , _ir(parent->ir())
     , _name(name)
@@ -70,7 +70,7 @@ Context::Context(Allocator *a, Extension *ext, Context *parent, String name)
 }
 
 Context::Context(Allocator *a, Extension *ext, KINDTYPE(Extensible) kind, Context *parent, String name)
-    : ExtensibleIR(a, ext, kind)
+    : ExtensibleIR(a, ext, parent->ir(), kind)
     , _id(parent->ir()->getContextID())
     , _ir(parent->ir())
     , _name(name)
@@ -81,7 +81,7 @@ Context::Context(Allocator *a, Extension *ext, KINDTYPE(Extensible) kind, Contex
 }
 
 Context::Context(Allocator *a, const Context *source, IRCloner *cloner)
-    : ExtensibleIR(a, source->ext(), source->kind())
+    : ExtensibleIR(a, source->ext(), cloner->clonedIR(), source->kind())
     , _id(source->_id)
     , _ir(cloner->clonedIR())
     , _name(source->_name)
