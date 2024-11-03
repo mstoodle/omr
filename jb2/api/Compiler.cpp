@@ -78,9 +78,10 @@ INIT_JBALLOC(Compiler);
     , _nextTypeID(NoTypeID+1) \
     , _types() \
     , _nextIRID(0) \
-    , _nextLiteralDictionaryID(0) \
-    , _nextSymbolDictionaryID(0) \
-    , _nextTypeDictionaryID(0) \
+    , _nextLiteralDictionaryID(0) /* remove */ \
+    , _nextSymbolDictionaryID(0) /* remove */ \
+    , _nextTypeDictionaryID(0) /* remove */ \
+    , _nextDictionaryID(NoDictionary+1) \
     , _targetPlatform(NULL) \
     , _compilerPlatform(NULL) \
     , _clientPlatform(NULL) \

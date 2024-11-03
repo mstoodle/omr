@@ -59,6 +59,9 @@ const CompileUnitID NoCompileUnit=0;
 typedef uint64_t ContextID;
 const ContextID NoContext=0;
 
+typedef uint64_t DictionaryID;
+const DictionaryID NoDictionary=0;
+
 typedef uint64_t EntryID;
 const EntryID PrimaryEntry=0;
 

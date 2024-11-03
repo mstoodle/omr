@@ -59,6 +59,9 @@ class Compiler : public Allocatable {
     friend class Compilation;
     friend class CompilationException;
     friend class CompiledBody;
+    friend class CompilerLiteralDictionary;
+    friend class CompilerSymbolDictionary;
+    friend class CompilerTypeDictionary;
     friend class CompileUnit;
     friend class Context;
     friend class Executor;
@@ -150,9 +153,10 @@ protected:
     SymbolDictionaryID maxTypeDictionaryID() const { return _nextTypeDictionaryID-1; }
 
     IRID getIRID() { return _nextIRID++; }
-    LiteralDictionaryID getLiteralDictionaryID() { return _nextLiteralDictionaryID++; }
-    SymbolDictionaryID getSymbolDictionaryID() { return _nextSymbolDictionaryID++; }
-    TypeDictionaryID getTypeDictionaryID() { return this->_nextTypeDictionaryID++; }
+    LiteralDictionaryID getLiteralDictionaryID() { return _nextLiteralDictionaryID++; } // remove
+    SymbolDictionaryID getSymbolDictionaryID() { return _nextSymbolDictionaryID++; } // remove
+    TypeDictionaryID getTypeDictionaryID() { return this->_nextTypeDictionaryID++; } // remove
+    DictionaryID getDictionaryID() { return this->_nextDictionaryID++; }
 
     Extension *internalLoadExtension(LOCATION, const SemanticVersion * version, String name);
     Extension *internalLookupExtension(String name);
@@ -214,9 +218,10 @@ protected:
     std::map<TypeID, Type *> _types;
 
     IRID _nextIRID;
-    LiteralDictionaryID _nextLiteralDictionaryID;
-    SymbolDictionaryID _nextSymbolDictionaryID;
-    TypeDictionaryID _nextTypeDictionaryID;
+    LiteralDictionaryID _nextLiteralDictionaryID; // remove
+    SymbolDictionaryID _nextSymbolDictionaryID; // remove
+    TypeDictionaryID _nextTypeDictionaryID; // remove
+    DictionaryID _nextDictionaryID;
 
     Platform *_targetPlatform;
     Platform *_compilerPlatform;

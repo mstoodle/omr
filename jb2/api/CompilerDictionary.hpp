@@ -31,6 +31,7 @@
 #include "Extension.hpp"
 #include "List.hpp"
 #include "IDs.hpp"
+#include "TextLogger.hpp"
 #include "Type.hpp"
 
 namespace OMR {
@@ -72,7 +73,17 @@ public:
     const String & name() const { return _name; }
     Compiler *compiler() const { return _compiler; }
     typename List<EntryType *>::Iterator iterator() const { return _entries.iterator(); }
-    virtual void log(TextLogger &lgr) const { }
+    typename List<EntryType *>::Iterator modifiableIterator() { return _entries.iterator(true, false, false); }
+    virtual void log(TextLogger &lgr) const {
+        lgr.irSectionBegin("dict", "D", _id, kind(), _name);
+        logContents(lgr);
+        for (auto it = this->iterator();it.hasItem();it++) {
+            EntryType *entry = it.item();
+            entry->log(lgr);
+        }
+        lgr.irSectionEnd();
+    }
+
 
     EntryType *Lookup(EntryID id) {
         for (auto it = iterator(); it.hasItem(); it++) {
@@ -90,6 +101,8 @@ public:
     }
 
     EntryID numEntries() const { return _nextID; }
+
+    virtual void registerEntry(EntryType *entry) { addNewEntry(entry); }
 
 protected:
     virtual void logContents(TextLogger &lgr) const { }

@@ -58,6 +58,7 @@ public:
     const String & name() const                    { return _name; }
     TypeDictionary *owningDictionary() const       { return _dict; }
     virtual size_t size() const                    { return _size; } // some Types cannot set size at construction
+    const Type *type() const                       { return this; } // bit weird, but dictionaries depend on it
 
     bool operator!=(const Type & other) const {
         return _dict != other._dict || _id != other._id;
