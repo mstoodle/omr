@@ -29,6 +29,7 @@ namespace OMR {
 namespace JitBuilder {
 
 class Compilation;
+class ExtensibleIR;
 class IR;
 class IRCloner;
 
@@ -51,7 +52,8 @@ public:
 protected:
     Location(Allocator *a, const Location *source, IRCloner *cloner);
 
-    virtual Location *clone(Allocator *mem, IRCloner *cloner) const;
+    virtual ExtensibleIR *clone(Allocator *mem, IRCloner *cloner) const { return reinterpret_cast<ExtensibleIR *>(cloneLocation(mem, cloner)); } // TODO: FIX!
+    virtual Location *cloneLocation(Allocator *mem, IRCloner *cloner) const;
 
     LocationID    _id;
     IR * _ir;

@@ -108,7 +108,7 @@ IRCloner::clonedBuilder(Builder *b) {
         clonedBuilder = _clonedBuilders[id];
     
     if (clonedBuilder == NULL) {
-        clonedBuilder = b->clone(_mem, this);
+        clonedBuilder = b->cloneBuilder(_mem, this);
         _clonedBuilders.assign(id, clonedBuilder);
     }
 
@@ -123,7 +123,7 @@ IRCloner::clonedContext(Context *ctx) {
         clonedContext = _clonedContexts[id];
     
     if (clonedContext == NULL) {
-        clonedContext = ctx->clone(_mem, this);
+        clonedContext = ctx->cloneContext(_mem, this);
         _clonedContexts.assign(id, clonedContext);
     }
 
@@ -140,7 +140,7 @@ IRCloner::clonedEntryPoint(EntryPoint *e) {
         clonedEntry = _clonedEntryPoints[id];
     
     if (clonedEntry == NULL) {
-        clonedEntry = e->clone(_mem, this);
+        clonedEntry = e->cloneEntryPoint(_mem, this);
         if (clonedEntry != NULL)
             _clonedEntryPoints.assign(id, clonedEntry);
     }
@@ -156,7 +156,7 @@ IRCloner::clonedLiteral(Literal *lv) {
         clonedLiteral = _clonedLiterals[id];
     
     if (clonedLiteral == NULL) {
-        clonedLiteral = lv->clone(_mem, this);
+        clonedLiteral = lv->cloneLiteral(_mem, this);
         _clonedLiterals.assign(id, clonedLiteral);
     }
 
@@ -174,7 +174,7 @@ IRCloner::clonedLiteralDictionary(LiteralDictionary *d) {
         clonedDict = _clonedLiteralDictionaries[id];
     
     if (clonedDict == NULL) {
-        clonedDict = d->clone(_mem, this);
+        clonedDict = d->cloneDictionary(_mem, this);
         _clonedLiteralDictionaries.assign(id, clonedDict);
     }
 
@@ -189,7 +189,7 @@ IRCloner::clonedLocation(Location *loc) {
         clonedLocation = _clonedLocations[id];
     
     if (clonedLocation == NULL) {
-        clonedLocation = loc->clone(_mem, this);
+        clonedLocation = loc->cloneLocation(_mem, this);
         _clonedLocations.assign(id, clonedLocation);
     }
 
@@ -204,7 +204,7 @@ IRCloner::clonedOperation(Operation *op) {
         clonedOperation = _clonedOperations[id];
     
     if (clonedOperation == NULL) {
-        clonedOperation = op->clone(_mem, this);
+        clonedOperation = op->cloneOperation(_mem, this);
         _clonedOperations.assign(id, clonedOperation);
     }
 
@@ -219,7 +219,7 @@ IRCloner::clonedScope(Scope *s) {
         clonedScope = _clonedScopes[id];
     
     if (clonedScope == NULL) {
-        clonedScope = s->clone(_mem, this);
+        clonedScope = s->cloneScope(_mem, this);
         _clonedScopes.assign(id, clonedScope);
     }
 
@@ -234,7 +234,7 @@ IRCloner::clonedSymbol(Symbol *s) {
         clonedSymbol = _clonedSymbols[id];
     
     if (clonedSymbol == NULL) {
-        clonedSymbol = s->clone(_mem, this);
+        clonedSymbol = s->cloneSymbol(_mem, this);
         _clonedSymbols.assign(id, clonedSymbol);
     }
 
@@ -252,7 +252,7 @@ IRCloner::clonedSymbolDictionary(SymbolDictionary *d) {
         clonedDict = _clonedSymbolDictionaries[id];
     
     if (clonedDict == NULL) {
-        clonedDict = d->clone(_mem, this);
+        clonedDict = d->cloneDictionary(_mem, this);
         _clonedSymbolDictionaries.assign(id, clonedDict);
     }
 
@@ -295,7 +295,7 @@ IRCloner::clonedTypeDictionary(TypeDictionary *d) {
         clonedDict = _clonedTypeDictionaries[id];
     
     if (clonedDict == NULL) {
-        clonedDict = d->clone(_mem, this);
+        clonedDict = d->cloneDictionary(_mem, this);
         _clonedTypeDictionaries.assign(id, clonedDict);
     }
 
@@ -310,11 +310,16 @@ IRCloner::clonedValue(Value *v) {
         clonedValue = _clonedValues[id];
     
     if (clonedValue == NULL) {
-        clonedValue = v->clone(_mem, this);
+        clonedValue = v->cloneValue(_mem, this);
         _clonedValues.assign(id, clonedValue);
     }
 
     return clonedValue;
+}
+
+ExtensibleIR *
+IRCloner::clone(ExtensibleIR *item) {
+    return item->clone(_mem, this);
 }
 
 } // namespace JitBuilder

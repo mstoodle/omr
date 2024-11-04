@@ -53,7 +53,8 @@ public:
 
 protected:
     EntryPoint(Allocator *a, const EntryPoint *source, IRCloner *cloner);
-    virtual EntryPoint *clone(Allocator *mem, IRCloner *cloner) const;
+    virtual ExtensibleIR *clone(Allocator *mem, IRCloner *cloner) const { return cloneEntryPoint(mem, cloner); }
+    virtual EntryPoint *cloneEntryPoint(Allocator *mem, IRCloner *cloner) const;
     virtual void logContents(TextLogger & lgr) const { }
 
     EntryPointID _id;

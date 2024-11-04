@@ -117,7 +117,9 @@ protected:
     DYNAMIC_ALLOC_ONLY(Scope, Extension *ext, KINDTYPE(Extensible) kind, Scope *parent, String name="");
     Scope(Allocator *a, const Scope *source, IRCloner *cloner);
 
-    virtual Scope *clone(Allocator *mem, IRCloner *cloner) const;
+    virtual ExtensibleIR *clone(Allocator *mem, IRCloner *cloner) const { return cloneScope(mem, cloner); }
+    virtual Scope *cloneScope(Allocator *mem, IRCloner *cloner) const;
+
     virtual void logContents(TextLogger &lgr)  { }
 
     EntryPoint *findEntryPoint(EntryID e, ExtensibleKind kind) const;

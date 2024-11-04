@@ -46,7 +46,7 @@ Symbol::Symbol(Allocator *mem, const Symbol *source, IRCloner *cloner)
 }
 
 Symbol *
-Symbol::clone(Allocator *mem, IRCloner *cloner) {
+Symbol::cloneSymbol(Allocator *mem, IRCloner *cloner) {
     assert(_kind == KIND(Symbol));
     return new (mem) Symbol(mem, this, cloner);
 }

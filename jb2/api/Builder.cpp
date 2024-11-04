@@ -173,7 +173,7 @@ Builder::Builder(Allocator *a, const Builder *source, IRCloner *cloner)
 }
 
 Builder *
-Builder::clone(Allocator *mem, IRCloner *cloner) const {
+Builder::cloneBuilder(Allocator *mem, IRCloner *cloner) const {
     return new (mem) Builder(mem, this, cloner);
 }
 

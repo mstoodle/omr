@@ -30,6 +30,7 @@
 namespace OMR {
 namespace JitBuilder {
 
+class ExtensibleIR;
 class Extension;
 class IRCloner;
 class SymbolDictionary;
@@ -74,7 +75,8 @@ protected:
     }
     Symbol(Allocator *mem, const Symbol *source, IRCloner *cloner);
 
-    virtual Symbol *clone(Allocator *a, IRCloner *cloner);
+    virtual ExtensibleIR *clone(Allocator *mem, IRCloner *cloner) { return reinterpret_cast<ExtensibleIR *>(cloneSymbol(mem, cloner)); } // TODO: FIX!
+    virtual Symbol *cloneSymbol(Allocator *mem, IRCloner *cloner);
 
     void assignID(SymbolID id) {
         // TODO convert to CompilationException

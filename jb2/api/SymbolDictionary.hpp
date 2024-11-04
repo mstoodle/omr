@@ -32,6 +32,7 @@ namespace JitBuilder {
 class Compiler;
 class DebugDictionary;
 class DynamicType;
+class ExtensibleIR;
 class Extension;
 class IR;
 class IRCloner;
@@ -76,7 +77,8 @@ protected:
     SymbolDictionary(Allocator *a, const SymbolDictionary *source, IRCloner *cloner);
 
     void internalRegisterSymbol(Symbol *symbol);
-    virtual SymbolDictionary *clone(Allocator *mem, IRCloner *cloner) const;
+    virtual ExtensibleIR *clone(Allocator *mem, IRCloner *cloner) const { return reinterpret_cast<ExtensibleIR *>(cloneDictionary(mem, cloner)); } // TODO: FIX!
+    virtual SymbolDictionary *cloneDictionary(Allocator *mem, IRCloner *cloner) const;
     virtual void logContents(TextLogger &w) const {}
 
     SymbolDictionaryID _id;

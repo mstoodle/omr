@@ -61,7 +61,7 @@ Value::Value(Allocator *a, const Value *source, IRCloner *cloner)
 }
 
 Value *
-Value::clone(Allocator *mem, IRCloner *cloner) const {
+Value::cloneValue(Allocator *mem, IRCloner *cloner) const {
     return new (mem) Value(mem, this, cloner);
 }
 

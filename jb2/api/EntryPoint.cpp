@@ -50,7 +50,7 @@ EntryPoint::EntryPoint(Allocator *a, const EntryPoint *source, IRCloner *cloner)
 }
 
 EntryPoint *
-EntryPoint::clone(Allocator *mem, IRCloner *cloner) const {
+EntryPoint::cloneEntryPoint(Allocator *mem, IRCloner *cloner) const {
     // EntryPoints by default will not be cloned
     return NULL;
 }

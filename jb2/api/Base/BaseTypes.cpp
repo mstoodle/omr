@@ -40,7 +40,7 @@ namespace Base {
 
 #define DEFINE_ABSTRACT_BASETYPE_CLASS(C,Super,user_code) \
     DEFINE_BASETYPE_CLASS(C,Super, \
-        const Type * C::clone(Allocator *a, IRCloner *cloner) const { assert(0); return NULL; } \
+        const Type * C::cloneType(Allocator *a, IRCloner *cloner) const { assert(0); return NULL; } \
         void C::logValue(TextLogger &lgr, const void *p) const { assert(0); } \
         void C::logLiteral(TextLogger & lgr, const Literal *lv) const { assert(0); } \
         bool C::literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const { return false; } \
@@ -52,7 +52,7 @@ namespace Base {
     DEFINE_BASETYPE_CLASS(C,Super, \
         C::C(MEM_LOCATION(a), Extension *ext) : Super(MEM_PASSLOC(a), getTypeClassKind(), ext, #C, size) { } \
         const Type * \
-        C::clone(Allocator *a, IRCloner *cloner) const { \
+        C::cloneType(Allocator *a, IRCloner *cloner) const { \
             assert(_kind == KIND(Type)); \
             return new (a) C(a, this, cloner); \
         } \
@@ -324,7 +324,7 @@ FieldType::FieldType(Allocator *a, const FieldType *source, IRCloner *cloner)
 }
 
 const Type *
-FieldType::clone(Allocator *a, IRCloner *cloner) const {
+FieldType::cloneType(Allocator *a, IRCloner *cloner) const {
     return new (a) FieldType(a, this, cloner);
 }
 
@@ -471,7 +471,7 @@ StructType::StructType(Allocator *a, const StructType *source, IRCloner *cloner)
 }
 
 const Type *
-StructType::clone(Allocator *a, IRCloner *cloner) const {
+StructType::cloneType(Allocator *a, IRCloner *cloner) const {
     return new (a) StructType(a, this, cloner);
 }
 

@@ -139,7 +139,8 @@ protected:
 
     IR *ir() const { return _ir; }
 
-    virtual Context *clone(Allocator *a, IRCloner *cloner) const;
+    virtual ExtensibleIR *clone(Allocator *a, IRCloner *cloner) const { return cloneContext(a, cloner); }
+    virtual Context *cloneContext(Allocator *a, IRCloner *cloner) const;
 
     void addSymbol(Symbol *sym);
     void addChild(Context *child) { _children.push_back(child); }

@@ -31,8 +31,8 @@ class CompilerLiteralDictionary : public CompilerDictionary<Literal, LiteralID, 
     typedef CompilerDictionary<Literal, LiteralID, NoLiteral, LiteralList> DictBaseType;
     JBALLOC_(CompilerLiteralDictionary)
 
-    friend class Compiler;
     friend class Literal;
+    friend class LiteralDictionary;
 
 public:
     DYNAMIC_ALLOC_ONLY(CompilerLiteralDictionary, Compiler *compiler, String name);

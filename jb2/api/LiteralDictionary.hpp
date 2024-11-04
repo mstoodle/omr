@@ -76,7 +76,8 @@ protected:
     LiteralID getLiteralID() { return _nextLiteralID++; }
     void addNewLiteral(Literal *literal);
     Literal *registerLiteral(LOCATION, const Type *type, const LiteralBytes *value);
-    virtual LiteralDictionary *clone(Allocator *mem, IRCloner *cloner) const;
+    virtual ExtensibleIR *clone(Allocator *mem, IRCloner *cloner) const { return reinterpret_cast<ExtensibleIR *>(cloneDictionary(mem, cloner)); }; // TODO: FIX!
+    LiteralDictionary *cloneDictionary(Allocator *mem, IRCloner *cloner) const;
 
     LiteralDictionaryID _id;
     Compiler * _compiler;

@@ -31,8 +31,8 @@ class CompilerTypeDictionary : public CompilerDictionary<const Type, TypeID, NoT
     typedef CompilerDictionary<const Type, TypeID, NoTypeID, TypeList> DictBaseType;
     JBALLOC_(CompilerTypeDictionary)
 
-    friend class Compiler;
     friend class Type;
+    friend class TypeDictionary;
 
 public:
     DYNAMIC_ALLOC_ONLY(CompilerTypeDictionary, Compiler *compiler, String name);

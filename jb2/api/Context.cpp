@@ -96,7 +96,7 @@ Context::Context(Allocator *a, const Context *source, IRCloner *cloner)
 }
 
 Context *
-Context::clone(Allocator *a, IRCloner *cloner) const {
+Context::cloneContext(Allocator *a, IRCloner *cloner) const {
     return new (a) Context(a, this, cloner);
 }
 

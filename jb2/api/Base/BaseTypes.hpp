@@ -209,7 +209,7 @@ protected:
     DYNAMIC_ALLOC_ONLY(FieldType, LOCATION, BaseExtension *ext, const StructType *structType, String fieldName, const Type *type, size_t offset, TypeDictionary *dict=NULL);
     FieldType(Allocator *a, const FieldType *source, IRCloner *cloner);
 
-    virtual const Type *clone(Allocator *a, IRCloner *cloner) const;
+    virtual const Type *cloneType(Allocator *a, IRCloner *cloner) const;
 
     String explodedName(TypeReplacer *repl, String & baseName) const;
 
@@ -331,7 +331,7 @@ protected:
     DYNAMIC_ALLOC_ONLY(StructType, LOCATION, StructTypeBuilder *builder);
     StructType(Allocator *a, const StructType *source, IRCloner *cloner);
 
-    virtual const Type *clone(Allocator *a, IRCloner *cloner) const;
+    virtual const Type *cloneType(Allocator *a, IRCloner *cloner) const;
 
     virtual const FieldType * addField(MEM_LOCATION(a), Extension *ext, String name, const Type *type, size_t offset, TypeDictionary *dict=NULL);
     virtual const FieldType * addField(LOCATION, Extension *ext, String name, const Type *type, size_t offset, TypeDictionary *dict=NULL) {

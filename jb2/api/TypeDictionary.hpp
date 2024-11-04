@@ -32,6 +32,7 @@ namespace JitBuilder {
 class Compiler;
 class DebugDictionary;
 class DynamicType;
+class ExtensibleIR;
 class Extension;
 class IR;
 class IRCloner;
@@ -74,7 +75,9 @@ public:
 protected:
     TypeDictionary(Allocator *a, const TypeDictionary *source, IRCloner *cloner);
 
-    virtual TypeDictionary *clone(Allocator *mem, IRCloner *cloner) const;
+    virtual ExtensibleIR *clone(Allocator *mem, IRCloner *cloner) const { return reinterpret_cast<ExtensibleIR *>(cloneDictionary(mem, cloner)); } // TODO: FIX!
+    virtual TypeDictionary *cloneDictionary(Allocator *mem, IRCloner *cloner) const;
+
     virtual void logContents(TextLogger &lgr) const;
     void internalRegisterType(const Type *type);
     TypeID getTypeID() { return _nextTypeID++; }
