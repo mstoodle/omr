@@ -109,7 +109,7 @@ LiteralDictionary::~LiteralDictionary() {
 }
 
 LiteralDictionary *
-LiteralDictionary::clone(Allocator *mem, IRCloner *cloner) const {
+LiteralDictionary::cloneDictionary(Allocator *mem, IRCloner *cloner) const {
     return new (mem) LiteralDictionary(mem, this, cloner);
 }
 

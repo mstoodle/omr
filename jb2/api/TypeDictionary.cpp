@@ -105,7 +105,7 @@ TypeDictionary::~TypeDictionary() {
 }
 
 TypeDictionary *
-TypeDictionary::clone(Allocator *mem, IRCloner *cloner) const {
+TypeDictionary::cloneDictionary(Allocator *mem, IRCloner *cloner) const {
     return new (mem) TypeDictionary(mem, this, cloner);
 }
 

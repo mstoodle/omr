@@ -91,7 +91,7 @@ SymbolDictionary::SymbolDictionary(Allocator *a, const SymbolDictionary * source
 
     for (auto it = source->symbolIterator(); it.hasItem(); it++) {
          Symbol *sym = it.item();
-         internalRegisterSymbol(sym->clone(a, cloner));
+         internalRegisterSymbol(sym->cloneSymbol(a, cloner));
     }
 }
 
@@ -109,7 +109,7 @@ SymbolDictionary::~SymbolDictionary() {
 }
 
 SymbolDictionary *
-SymbolDictionary::clone(Allocator *a, IRCloner *cloner) const {
+SymbolDictionary::cloneDictionary(Allocator *a, IRCloner *cloner) const {
     return new (a) SymbolDictionary(a, this, cloner);
 }
 

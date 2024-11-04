@@ -70,15 +70,10 @@ Type::~Type() {
 }
 
 const Type *
-Type::clone(Allocator *a, IRCloner *cloner) const {
+Type::cloneType(Allocator *a, IRCloner *cloner) const {
     assert(0); // Should not be any Type objets
     assert(_kind == KIND(Type));
     return new (a) Type(a, this, cloner);
-}
-
-const Type *
-Type::cloneType(Allocator *a, IRCloner *cloner) const {
-    return clone(a, cloner);
 }
 
 Literal *

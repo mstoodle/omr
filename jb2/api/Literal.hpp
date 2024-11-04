@@ -30,6 +30,7 @@ namespace OMR {
 namespace JitBuilder {
 
 class Compilation;
+class ExtensibleIR;
 class IR;
 class IRCloner;
 class LiteralDictionary;
@@ -62,7 +63,8 @@ public:
 protected:
     Literal(Allocator *a, const Literal *source, IRCloner *cloner);
 
-    virtual Literal *clone(Allocator *a, IRCloner *cloner);
+    virtual ExtensibleIR *clone(Allocator *mem, IRCloner *cloner) { return reinterpret_cast<ExtensibleIR *>(cloneLiteral(mem, cloner)); }; // TODO: FIX!
+    virtual Literal *cloneLiteral(Allocator *mem, IRCloner *cloner);
 
     LiteralID _id;
     CreateLocation _creator;

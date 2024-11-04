@@ -50,7 +50,7 @@ class IRCloner : public Extensible {
     friend class IR;
 
 public:
-    IRCloner(Allocator *mem, Extension *ext, KINDTYPE(Extensible) kind);
+    IRCloner(Allocator *mem, Extension *ext, KINDTYPE(Extensible) kind=CLASSKIND(IRCloner,Extensible));
     virtual ~IRCloner();
 
     IR *clonedIR() { return _clonedIR; }
@@ -68,6 +68,7 @@ public:
     const Type **clonedTypeArray(int32_t numTypes, const Type **typeArray);
     TypeDictionary *clonedTypeDictionary(TypeDictionary *d);
     Value *clonedValue(Value *v);
+    ExtensibleIR *clone(ExtensibleIR *item);
 
 protected:
     void setClonedIR(IR *clonedIR);

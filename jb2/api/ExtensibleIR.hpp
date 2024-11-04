@@ -56,6 +56,7 @@ class IRCloner;
 
 class ExtensibleIR : public Extensible {
     JBALLOC_(ExtensibleIR)
+    friend class IRCloner;
 
 public:
     DYNAMIC_ALLOC_ONLY(ExtensibleIR, Extension *ext, IR *ir, KINDTYPE(Extensible)=KIND(Extensible));

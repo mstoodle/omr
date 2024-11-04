@@ -130,7 +130,7 @@ Scope::Scope(Allocator *a, const Scope *source, IRCloner *cloner)
 }
 
 Scope *
-Scope::clone(Allocator *mem, IRCloner *cloner) const {
+Scope::cloneScope(Allocator *mem, IRCloner *cloner) const {
     return new (mem) Scope(mem, this, cloner);
 }
 

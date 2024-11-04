@@ -104,7 +104,8 @@ protected:
 
     Builder(Allocator *a, const Builder *source, IRCloner *cloner);
 
-    virtual Builder *clone(Allocator *mem, IRCloner *cloner) const;
+    virtual ExtensibleIR *clone(Allocator *mem, IRCloner *cloner) const { return cloneBuilder(mem, cloner); }
+    virtual Builder *cloneBuilder(Allocator *mem, IRCloner *cloner) const;
 
     void setParent(Builder *parent);
     void addChild(Builder *child);

@@ -168,7 +168,7 @@ IR::build(LOCATION, Compilation *comp) {
 
 IR *
 IR::clone(Allocator *mem) const {
-    IRCloner cloner(mem, compiler()->coreExt(), KIND(Extensible));
+    IRCloner cloner(mem, compiler()->coreExt());
     return new (mem) IR(mem, this, &cloner);
 }
 

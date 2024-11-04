@@ -62,7 +62,7 @@ Location::Location(Allocator *a, const Location *source, IRCloner *cloner)
 }
 
 Location *
-Location::clone(Allocator *mem, IRCloner *cloner) const {
+Location::cloneLocation(Allocator *mem, IRCloner *cloner) const {
     return new (mem) Location(mem, this, cloner);
 }
 

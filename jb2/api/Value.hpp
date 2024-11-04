@@ -28,6 +28,7 @@ namespace OMR {
 namespace JitBuilder {
 
 class Builder;
+class ExtensibleIR;
 class Extension;
 class IRCloner;
 class Operation;
@@ -56,7 +57,8 @@ protected:
     Value(Allocator *a, Builder * parent, const Type * type);
     Value(Allocator *a, const Value *source, IRCloner *cloner);
 
-    virtual Value *clone(Allocator *mem, IRCloner *cloner) const;
+    virtual ExtensibleIR *clone(Allocator *mem, IRCloner *cloner) const { return reinterpret_cast<ExtensibleIR *>(cloneValue(mem, cloner)); } // TODO: FIX!
+    virtual Value *cloneValue(Allocator *mem, IRCloner *cloner) const;
 
     static Value * create(Builder * parent, const Type * type);
     void addDefinition(Operation *op) { _definitions.push_back(op); }

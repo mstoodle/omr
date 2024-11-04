@@ -33,6 +33,7 @@ namespace JitBuilder {
 class Allocator;
 class Builder;
 class Compiler;
+class ExtensibleIR;
 class Extension;
 class IR;
 class IRCloner;
@@ -112,8 +113,8 @@ protected:
 
     void transformTypeIfNeeded(TypeReplacer *repl, const Type *type) const;
 
-    virtual const Type *clone(Allocator *mem, IRCloner *cloner) const;
-    const Type *cloneType(Allocator *mem, IRCloner *cloner) const;
+    virtual ExtensibleIR *clone(Allocator *mem, IRCloner *cloner) const { return const_cast<ExtensibleIR *>(reinterpret_cast<const ExtensibleIR *>(cloneType(mem, cloner))); } // TODO: FIX!
+    virtual const Type *cloneType(Allocator *mem, IRCloner *cloner) const;
 
     Extension *_ext;
     CreateLocation _createLoc;
@@ -137,7 +138,7 @@ protected:
         virtual void logValue(TextLogger &lgr, const void *p) const; \
         virtual void logLiteral(TextLogger & lgr, const Literal *lv) const; \
     protected: \
-        virtual const Type *clone(Allocator *mem, IRCloner *cloner) const; \
+        virtual const Type *cloneType(Allocator *mem, IRCloner *cloner) const; \
         SUBCLASS_KINDSERVICE_DECL(Type, C); \
         user_decl \
     };
@@ -174,7 +175,7 @@ protected:
     INIT_JBALLOC_REUSECAT(C, Type) \
     SUBCLASS_KINDSERVICE_IMPL(C, name, Super, Super); \
     const Type * \
-    C::clone(Allocator *a, IRCloner *cloner) const { \
+    C::cloneType(Allocator *a, IRCloner *cloner) const { \
         assert(_kind == KIND(Type)); \
         return new (a) C(a, this, cloner); \
     } \

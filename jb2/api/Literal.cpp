@@ -105,7 +105,7 @@ Literal::getFloatingPoint() const {
 }
 
 Literal *
-Literal::clone(Allocator *mem, IRCloner *cloner) {
+Literal::cloneLiteral(Allocator *mem, IRCloner *cloner) {
     return new (mem) Literal(mem, this, cloner);
 }
 

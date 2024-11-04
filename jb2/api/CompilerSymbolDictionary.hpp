@@ -31,8 +31,8 @@ class CompilerSymbolDictionary : public CompilerDictionary<Symbol, SymbolID, NoS
     typedef CompilerDictionary<Symbol, SymbolID, NoSymbol, SymbolList> DictBaseType;
     JBALLOC_(CompilerSymbolDictionary)
 
-    friend class Compiler;
     friend class Symbol;
+    friend class SymbolDictionary;
 
 public:
     DYNAMIC_ALLOC_ONLY(CompilerSymbolDictionary, Compiler *compiler, String name);

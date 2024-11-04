@@ -121,7 +121,8 @@ protected:
     Operation(MEM_LOCATION(a), ActionID action, Extension *ext, Builder * parent, Operation *next=NULL, Operation *prev=NULL);
     Operation(Allocator *a, const Operation *source, IRCloner *cloner);
 
-    virtual Operation *clone(Allocator *a, IRCloner *cloner) const = 0;
+    virtual ExtensibleIR *clone(Allocator *mem, IRCloner *cloner) const { return reinterpret_cast<ExtensibleIR *>(cloneOperation(mem, cloner)); } // TODO: FIX!
+    virtual Operation *cloneOperation(Allocator *mem, IRCloner *cloner) const = 0;
 
     Operation * setParent(Builder * newParent);
     Operation * setLocation(Location *location);
@@ -782,7 +783,7 @@ class OperationB1R0V2 : public OperationR0V2 {
 #define IRCLONER_SUPPORT(C,Super) \
 protected: \
     C(Allocator *a, const C *source, IRCloner *cloner) : Super(a, source, cloner) { }; \
-    virtual Operation *clone(Allocator *mem, IRCloner *cloner) const { return new (mem) C(mem, this, cloner); }
+    virtual Operation *cloneOperation(Allocator *mem, IRCloner *cloner) const { return new (mem) C(mem, this, cloner); }
 
 // This DECL_OPERATION_CLASS macro helps Extensions to create new Operation classes, leaving only the constructors and
 // any Operation-specific APIs to be declared. The parameters are the name of the concrete operation class to create,
@@ -804,7 +805,7 @@ public: \
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const; \
 protected: \
     C(Allocator *a, const C *source, IRCloner *cloner) : Super(a, source, cloner) { }; \
-    virtual Operation *clone(Allocator *mem, IRCloner *cloner) const { return new (mem) C(mem, this, cloner); } \
+    virtual Operation *cloneOperation(Allocator *mem, IRCloner *cloner) const { return new (mem) C(mem, this, cloner); } \
     userDecls \
 };
 
@@ -817,7 +818,7 @@ public: \
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const; \
 protected: \
     C(Allocator *a, const C *source, IRCloner *cloner); \
-    virtual Operation *clone(Allocator *mem, IRCloner *cloner) const { return new (mem) C(mem, this, cloner); } \
+    virtual Operation *cloneOperation(Allocator *mem, IRCloner *cloner) const { return new (mem) C(mem, this, cloner); } \
     userDecls \
 };
 
