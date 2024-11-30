@@ -168,4 +168,123 @@ TEST(JB2BitVector, IterateMultipleBits) {
     it++; EXPECT_FALSE(it.hasItem()) << "iterator should again be empty now";
 }
 
+TEST(JB2BitVector, DynamicIterate) {
+    BitVector *v = BitVector::newVector(mem, 15, 13);
+    v->setBit(8);
+    auto it = v->iterator();
+    EXPECT_TRUE(it.hasItem()) << "dynamic vector should have two bits to iterate";
+    EXPECT_EQ(it.item(), 8) << "First iterated bit should be 8";
+    it++; EXPECT_TRUE(it.hasItem()) << "dynamic vector should still have one more bit to iterate";
+    EXPECT_EQ(it.item(), 13) << "Second iterated bit should be 13";
+    it++; EXPECT_FALSE(it.hasItem()) << "iterator should be empty now";
+    delete v;
+}
+
+TEST(JB2Vector, BitUnionSameSize) {
+    BitVector v1(mem, 15, 5);
+    BitVector v2(mem, 15, 10);
+    v2 |= v1;
+    auto it = v1.iterator();
+    EXPECT_TRUE(it.hasItem()) << "v1 should have one item";
+    EXPECT_EQ(it.item(), 5) << "v1 bit 5 should not be changed";
+    it++; EXPECT_FALSE(it.hasItem()) << "v1 should only have bit 5 set";
+
+    auto it2= v2.iterator();
+    EXPECT_TRUE(it2.hasItem()) << "v2 should have two bits set";
+    EXPECT_EQ(it2.item(), 5) << "v2 should have bit 5 set";
+    it2++; EXPECT_TRUE(it2.hasItem()) << "v2 should have a second bit";
+    EXPECT_EQ(it2.item(), 10) << "v2 should have bit 10 set";
+    it2++; EXPECT_FALSE(it2.hasItem()) << "v2 should only have bits 5 and 10 set";
+}
+
+TEST(JB2Vector, BitIntersectSameSize) {
+    BitVector v1(mem, 15, 5);
+    BitVector v2(mem, 15, 5);
+    v1.setBit(2);
+    v2.setBit(12);
+    v2 &= v1;
+    auto it = v1.iterator();
+    EXPECT_TRUE(it.hasItem()) << "v1 should unchanged with two bits";
+    EXPECT_EQ(it.item(), 2) << "v1 bit 2 should not be changed";
+    it++; EXPECT_TRUE(it.hasItem()) << "v1 should have two bits set";
+    EXPECT_EQ(it.item(), 5) << "v1 bit 5 should not be changed";
+    it++; EXPECT_FALSE(it.hasItem()) << "v1 should only have two bits set";
+
+    auto it2= v2.iterator();
+    EXPECT_TRUE(it2.hasItem()) << "v2 should now have one bit set";
+    EXPECT_EQ(it2.item(), 5) << "v2 should have bit 5 set";
+    it2++; EXPECT_FALSE(it2.hasItem()) << "v2 should only have bit 5 set";
+}
+
+TEST(JB2Vector, BitUnionUnequalSizeOneLonger) {
+    BitVector v1(mem, 30, 25);
+    BitVector v2(mem, 15, 10);
+    v2 |= v1;
+    auto it = v1.iterator();
+    EXPECT_TRUE(it.hasItem()) << "v1 should have one item";
+    EXPECT_EQ(it.item(), 25) << "v1 bit 25 should not be changed";
+    it++; EXPECT_FALSE(it.hasItem()) << "v1 should only have bit 25 set";
+
+    auto it2= v2.iterator();
+    EXPECT_TRUE(it2.hasItem()) << "v2 should have two bits set";
+    EXPECT_EQ(it2.item(), 10) << "v2 should have bit 10 set";
+    it2++; EXPECT_TRUE(it2.hasItem()) << "v2 should have a second bit";
+    EXPECT_EQ(it2.item(), 25) << "v2 should have bit 25 set";
+    it2++; EXPECT_FALSE(it2.hasItem()) << "v2 should only have bits 10 and 25 set";
+}
+
+TEST(JB2Vector, BitIntersectUnequalSizeOneLonger) {
+    BitVector v1(mem, 30, 5);
+    BitVector v2(mem, 15, 5);
+    v1.setBit(25);
+    v2.setBit(12);
+    v2 &= v1;
+    auto it = v1.iterator();
+    EXPECT_TRUE(it.hasItem()) << "v1 should unchanged with two bits";
+    EXPECT_EQ(it.item(), 5) << "v1 bit 5 should not be changed";
+    it++; EXPECT_TRUE(it.hasItem()) << "v1 should have two bits set";
+    EXPECT_EQ(it.item(), 25) << "v1 bit 25 should not be changed";
+    it++; EXPECT_FALSE(it.hasItem()) << "v1 should only have two bits set";
+
+    auto it2= v2.iterator();
+    EXPECT_TRUE(it2.hasItem()) << "v2 should now have one bit set";
+    EXPECT_EQ(it2.item(), 5) << "v2 should have bit 5 set";
+    it2++; EXPECT_FALSE(it2.hasItem()) << "v2 should only have bit 5 set";
+}
+TEST(JB2Vector, BitUnionUnequalSizeTwoLonger) {
+    BitVector v1(mem, 15, 10);
+    BitVector v2(mem, 30, 25);
+    v2 |= v1;
+    auto it = v1.iterator();
+    EXPECT_TRUE(it.hasItem()) << "v1 should have one item";
+    EXPECT_EQ(it.item(), 10) << "v1 bit 25 should not be changed";
+    it++; EXPECT_FALSE(it.hasItem()) << "v1 should only have bit 10 set";
+
+    auto it2= v2.iterator();
+    EXPECT_TRUE(it2.hasItem()) << "v2 should have two bits set";
+    EXPECT_EQ(it2.item(), 10) << "v2 should have bit 10 set";
+    it2++; EXPECT_TRUE(it2.hasItem()) << "v2 should have a second bit";
+    EXPECT_EQ(it2.item(), 25) << "v2 should have bit 25 set";
+    it2++; EXPECT_FALSE(it2.hasItem()) << "v2 should only have bits 10 and 25 set";
+}
+
+TEST(JB2Vector, BitIntersectUnequalSizeTwoLonger) {
+    BitVector v1(mem, 15, 5);
+    BitVector v2(mem, 30, 5);
+    v1.setBit(12);
+    v2.setBit(25);
+    v2 &= v1;
+    auto it = v1.iterator();
+    EXPECT_TRUE(it.hasItem()) << "v1 should unchanged with two bits";
+    EXPECT_EQ(it.item(), 5) << "v1 bit 5 should not be changed";
+    it++; EXPECT_TRUE(it.hasItem()) << "v1 should have two bits set";
+    EXPECT_EQ(it.item(), 12) << "v1 bit 12 should not be changed";
+    it++; EXPECT_FALSE(it.hasItem()) << "v1 should only have two bits set";
+
+    auto it2= v2.iterator();
+    EXPECT_TRUE(it2.hasItem()) << "v2 should now have one bit set";
+    EXPECT_EQ(it2.item(), 5) << "v2 should have bit 5 set";
+    it2++; EXPECT_FALSE(it2.hasItem()) << "v2 should only have bit 5 set";
+}
+
 // should test modification detection, but may need separate test to detect assertions
