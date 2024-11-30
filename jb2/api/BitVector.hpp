@@ -153,6 +153,10 @@ public:
         , _words(NULL)
         , _ownWords(false) {
     }
+    static BitVector *newVector(Allocator *a) {
+        void *v = a->allocate<BitVector>(1);
+        return new (v) BitVector(a);
+    }
 
     // rule of 3
     BitVector(const BitVector & other)
@@ -201,6 +205,10 @@ public:
         , _ownWords(false) {
         grow(sizeHint);
     }
+    static BitVector *newVector(Allocator *a, BitIndex sizeHint) {
+        void *v = a->allocate<BitVector>(1);
+        return new (v) BitVector(a, sizeHint);
+    }
 
     BitVector(Allocator *a, BitIndex sizeHint, BitIndex one)
         : _mem(a)
@@ -210,6 +218,10 @@ public:
         , _ownWords(false) {
         grow(sizeHint);
         setBit(one);
+    }
+    static BitVector *newVector(Allocator *a, BitIndex sizeHint, BitIndex one) {
+        void *v = a->allocate<BitVector>(1);
+        return new (v) BitVector(a, sizeHint, one);
     }
 
     BitVector(Allocator *a, BitIndex sizeHint, BitIndex one, BitIndex two)
@@ -222,6 +234,10 @@ public:
         setBit(one);
         setBit(two);
     }
+    static BitVector *newVector(Allocator *a, BitIndex sizeHint, BitIndex one, BitIndex two) {
+        void *v = a->allocate<BitVector>(1);
+        return new (v) BitVector(a, sizeHint, one, two);
+    }
 
     BitVector(Allocator *a, BitIndex sizeHint, BitIndex one, BitIndex two, BitIndex three)
         : _mem(a)
@@ -233,6 +249,10 @@ public:
         setBit(one);
         setBit(two);
         setBit(three);
+    }
+    static BitVector *newVector(Allocator *a, BitIndex sizeHint, BitIndex one, BitIndex two, BitIndex three) {
+        void *v = a->allocate<BitVector>(1);
+        return new (v) BitVector(a, sizeHint, one, two, three);
     }
 
     BitIndex length() const { return _length; }
@@ -248,7 +268,8 @@ public:
         return getBit(index);
     }
     void setBit(BitIndex index, bool v=true) {
-        if (index >= _length)
+        // could improve: continue sharing if setting the bit as requested won't change a shared vector
+        if (index >= _length || !_ownWords)
             grow(index);
         _changeID++; // assume A[i] = x but imperfect accounting unless we wrap the T
         if (v)
@@ -266,6 +287,63 @@ public:
         _length = 0;
         _ownWords = false;
         _changeID++;
+    }
+    void operator|=(const BitVector & other) {
+        BitIndex needed = _length;
+        if (other._length > needed)
+            needed = other._length;
+        if (needed > _length || !_ownWords)
+            grow(needed);
+        for (auto i=0;i < TOTALWORDS(needed);i++)
+            _words[i] |= other._words[i];
+    }
+    void operator&=(const BitVector & other) {
+        BitIndex needed = _length;
+        if (other._length > needed)
+            needed = other._length;
+        if (needed > _length || !_ownWords)
+            grow(needed);
+        for (auto i=0;i < TOTALWORDS(needed);i++)
+            _words[i] &= other._words[i];
+    }
+
+    bool isExactMatch(BitVector & matcher) {
+        size_t matchedLen = _length;
+        if (matchedLen > matcher._length)
+            matchedLen = matcher._length;
+
+        for (WordType w=0;w < TOTALWORDS(matchedLen); w++) {
+            WordType matcher_word = matcher._words[w];
+            if (_words[w] != matcher._words[w])
+                return false;
+        }
+        // now verify any remaining bits are zero in any longer vector
+        if (matchedLen == _length) {
+            for (WordType w=TOTALWORDS(matchedLen);w < TOTALWORDS(matcher._length);w++)
+                if (matcher._words[w] != 0)
+                    return false;
+        } else {
+            for (WordType w=TOTALWORDS(matchedLen);w < TOTALWORDS(_length);w++)
+                if (_words[w] != 0)
+                    return false;
+        }
+        return true;
+    }
+    bool isMatch(BitVector & matcher) {
+        size_t matchedLen = _length;
+        if (matchedLen > matcher._length)
+            matchedLen = matcher._length;
+
+        for (WordType w=0;w < TOTALWORDS(matchedLen); w++) {
+            WordType mask = matcher._words[w];
+            if ((_words[w] & mask) != mask)
+                return false;
+        }
+        // now verify any remaining bits in the matcher are zero
+        for (WordType w=TOTALWORDS(matchedLen);w < TOTALWORDS(matcher._length);w++)
+            if (matcher._words[w] != 0)
+                return false;
+        return true;
     }
 
     ForwardIterator iterator(bool detectChanges=true) {
@@ -293,11 +371,15 @@ protected:
         return mem;
     }
 
+    // sometimes grow() is called to duplicate a shared vector that's about to be changed
+    // in this case, the length may not have to change but need to reallocate and copy
     void grow(BitIndex indexNeeded) {
-        if (indexNeeded < _length)
+        if (indexNeeded < _length && !_ownWords)
             return;
 
         BitIndex newLength = indexNeeded+1;
+        if (newLength < _length)
+            newLength = _length;
         bool needDeallocate = _length > 0;
 
         WordType *newWords = _mem->allocate<WordType>(TOTALWORDS(newLength));
