@@ -26,6 +26,9 @@
 #include <cstddef>
 #include <map>
 #include "Allocatable.hpp"
+#include "AllocatorRaw.hpp"
+#include "Array.hpp"
+#include "BitVector.hpp"
 #include "IDs.hpp"
 #include "String.hpp"
 
@@ -38,32 +41,27 @@ class KindService : public Allocatable {
 
 public:
     typedef uint64_t Kind;
-    KindService()
-        : Allocatable()
-        , _id(kindServiceID++)
-        , _nextKind(AnyKind+1) {
-    }
-    virtual ~KindService() { }
+    KindService();
+    virtual ~KindService();
 
     const static Kind NoKind=0;
     const static Kind AnyKind=1;
 
-    Kind getNextKind(Kind k);
     String getName(Kind k);
 
     Kind assignKind(Kind baseKind, String name);
-    bool isExactMatch(Kind matchee, Kind matcher) {
-        return (matchee == matcher);
-    }
-    bool isMatch(Kind matchee, Kind matcher) {
-        return ((matchee & matcher) == matcher);
-    }
+    bool isExactMatch(Kind matchee, Kind matcher);
+    bool isMatch(Kind matchee, Kind matcher);
 
 protected:
+    Allocator *kmem() { return &_mem; }
+
+    AllocatorRaw _mem;
     KindServiceID _id;
     Kind _nextKind;
     std::map<String,Kind> _kindFromNameMap;
-    std::map<Kind,String> _nameFromKindMap;
+    Array<String *> _nameFromKind;
+    Array<BitVector *> _kindVectors;
 
     static KindServiceID kindServiceID;
 };

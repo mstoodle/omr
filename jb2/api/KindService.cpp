@@ -29,39 +29,94 @@ namespace JitBuilder {
 INIT_JBALLOC_REUSECAT(KindService, Compiler)
 
 KindServiceID KindService::kindServiceID = 0;
+const KindService::Kind KindService::NoKind;
+const KindService::Kind KindService::AnyKind;
 
-KindService::Kind
-KindService::getNextKind(Kind k) {
-    if (k == NoKind) // 0 cannot be shifted
-        return AnyKind;
-    Kind _nextKind = k << 1;
-    return _nextKind;
+KindService::KindService()
+    : Allocatable()
+    , _mem("KindServiceAllocator")
+    , _id(kindServiceID++)
+    , _nextKind(NoKind+1)
+    , _nameFromKind(NULL, kmem())
+    , _kindVectors(NULL, kmem()) {
+
+    BitVector *newVector = BitVector::newVector(kmem(), NoKind, NoKind);
+    assert(newVector != NULL);
+    _kindVectors.assign(NoKind, newVector);
+    String *noKindName = new (kmem()) String(kmem(), "NoKind");
+    _nameFromKind.assign(NoKind, noKindName);
+    _kindFromNameMap.insert({*noKindName, NoKind});
+
+    assignKind(NoKind, String("AnyKind"));
+}
+
+KindService::~KindService() {
+    // need to clear allocated strings and bitvectors
+}
+
+static void printBits(BitVector::ForwardIterator &it, BitIndex nextOne=0) {
+    if (!it.hasItem())
+        return;
+    BitIndex oneBit = it.item();
+    it++;
+    printBits(it, oneBit);
+    std::cout << "1";
+    while (oneBit != 0 && --oneBit > nextOne)
+        std::cout << "0";
 }
 
 KindService::Kind
 KindService::assignKind(Kind baseKind, String name) {
+    // make sure name isn't already in use, if so return its id
     auto found = _kindFromNameMap.find(name);
     if (found != _kindFromNameMap.end()) {
         return found->second;
     }
-            
-    Kind kind = _nextKind;
-    assert(kind != 0); // will eventually need a bit vector
-    _nextKind = getNextKind(_nextKind);
+ 
+    // Need to create a new kind vector and associate woth the next KindID
 
-    Kind fullKind = baseKind | kind;
-    _kindFromNameMap.insert({name, fullKind});
-    _nameFromKindMap.insert({fullKind, name});
-    return fullKind;
+    // first though, base kind had better exist
+    assert(_kindVectors.exists(baseKind));
+
+    Kind kind = _nextKind++;
+    BitVector *newVector = BitVector::newVector(kmem(), kind, kind);
+    assert(newVector != NULL);
+    BitVector *baseVector = _kindVectors[baseKind];
+    *newVector |= *baseVector;
+
+    String *kindName = new (kmem()) String(kmem(), name);
+    _kindVectors.assign(kind, newVector);
+    _kindFromNameMap.insert({*kindName, kind});
+    _nameFromKind.assign(kind, kindName);
+    
+    std::cout << "Kind " << kindName->c_str() << " allocated with kindID " << (size_t) kind << "\n\t";
+    BitIndex b=0;
+    auto it = newVector->iterator();
+    std::cout << "\t";
+    printBits(it);
+    std::cout << "\n";
+
+    return kind;
 }
 
 String
 KindService::getName(Kind kind) {
-    auto found = _nameFromKindMap.find(kind);
-    if (found != _nameFromKindMap.end()) {
-        return found->second;
+    if (_nameFromKind.exists(kind)) {
+        return *_nameFromKind[kind];
     }
     return "";
+}
+
+bool
+KindService::isExactMatch(Kind matchee, Kind matcher) {
+    assert(_kindVectors.exists(matchee) && _kindVectors.exists(matcher));
+    return (_kindVectors[matchee]->isExactMatch(*_kindVectors[matcher]));
+}
+
+bool
+KindService::isMatch(Kind matchee, Kind matcher) {
+    assert(_kindVectors.exists(matchee) && _kindVectors.exists(matcher));
+    return (_kindVectors[matchee]->isMatch(*_kindVectors[matcher]));
 }
 
 } // namespace JitBuilder
