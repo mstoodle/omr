@@ -59,14 +59,17 @@ class ExtensibleIR : public Extensible {
     friend class IRCloner;
 
 public:
-    DYNAMIC_ALLOC_ONLY(ExtensibleIR, Extension *ext, IR *ir, KINDTYPE(Extensible)=KIND(Extensible));
     IR *ir() const { return _ir; }
 
 protected:
+    DYNAMIC_ALLOC_ONLY(ExtensibleIR, Extension *ext, IR *ir, KINDTYPE(Extensible)=KIND(Extensible));
+    DYNAMIC_ALLOC_ONLY(ExtensibleIR, Extension *ext, Compiler *compiler, KINDTYPE(Extensible)=KIND(Extensible));
+
     ExtensibleIR(Allocator *a, const ExtensibleIR *source, IRCloner *cloner);
 
     virtual ExtensibleIR *clone(Allocator *a, IRCloner *cloner) const;
 
+private:
     IR *_ir;
 
     SUBCLASS_KINDSERVICE_DECL(Extensible, ExtensibleIR);

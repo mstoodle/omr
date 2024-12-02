@@ -24,6 +24,7 @@
 //#include "Case.hpp"
 #include "Compilation.hpp"
 #include "Extension.hpp"
+#include "IR.hpp"
 #include "Literal.hpp"
 #include "Location.hpp"
 #include "Operation.hpp"
@@ -39,9 +40,10 @@ namespace JitBuilder {
 
 
 INIT_JBALLOC(Operation)
+SUBCLASS_KINDSERVICE_IMPL(Operation,"Operation",ExtensibleIR, Extensible)
 
 Operation::Operation(MEM_LOCATION(a), ActionID action, Extension *ext, Builder * parent, Operation *next, Operation *prev)
-    : Allocatable(a)
+    : ExtensibleIR(a, ext, parent->ir(), CLASSKIND(Operation, Extensible))
     , _id(parent->ir()->getOperationID())
     , _ext(ext)
     , _parent(parent)
@@ -55,7 +57,7 @@ Operation::Operation(MEM_LOCATION(a), ActionID action, Extension *ext, Builder *
     } 
 
 Operation::Operation(Allocator *a, const Operation *source, IRCloner *cloner)
-    : Allocatable(a)
+    : ExtensibleIR(a, source, cloner)
     , _id(source->_id)
     , _ext(source->_ext)
     , _parent(cloner->clonedBuilder(source->_parent))

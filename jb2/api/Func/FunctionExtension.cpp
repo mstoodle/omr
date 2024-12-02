@@ -64,6 +64,7 @@ FunctionExtension::FunctionExtension(MEM_LOCATION(a), Compiler *compiler, bool e
     }
 
     registerForExtensible(CLASSKIND(IR,Extensible), this);
+    createAddon(compiler->irPrototype());
 }
 
 FunctionExtension::~FunctionExtension() {
@@ -172,7 +173,7 @@ FunctionExtension::Call(LOCATION, Builder *b, FunctionSymbol *target, ...) {
     va_start(args, target);
 
     Value *result = NULL;
-    if (target->functionType()->returnType() == compiler()->coreExt()->NoType) {
+    if (target->functionType()->returnType() == b->ir()->NoType) {
         addOperation(b, new (mem) Op_CallVoid(MEM_PASSLOC(mem), this, b, aCallVoid, target, args));
     } else {
         result = createValue(b, target->functionType()->returnType());

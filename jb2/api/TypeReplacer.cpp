@@ -414,7 +414,7 @@ TypeReplacer::transformTypeIfNeeded(const Type *type) {
          auto it = _typesToReplace.find(typeID);
          if (it != _typesToReplace.end())
             {
-            Type *typeToReplace = dict->LookupType(it->second);
+            Type *typeToReplace = dict->Lookup(it->second);
             Allocator *mem = _comp->mem();
             TypeMapper *m = new (mem) TypeMapper(mem, typeToReplace);
             recordMapper(type, m);
@@ -439,7 +439,7 @@ TypeReplacer::transformTypes(TypeDictionary *dict)
       lgr->indent() << "Types to explode:" << lgr->endl();
       LOG_INDENT_REGION(lgr)
          {
-         for (auto it = dict->typesIterator();it.hasItem();it++)
+         for (auto it = dict->iterator();it.hasItem();it++)
             {
             const Type *type = it.item();
             if (_typesToExplode.find(type->id()) != _typesToExplode.end())
@@ -452,12 +452,12 @@ TypeReplacer::transformTypes(TypeDictionary *dict)
       lgr->indent() << "Types to replace:" << lgr->endl();
       LOG_INDENT_REGION(lgr)
          {
-         for (auto it = dict->typesIterator();it.hasItem();it++)
+         for (auto it = dict->iterator();it.hasItem();it++)
             {
             const Type *type = it.item();
             auto it2 = _typesToReplace.find(type->id());
             if (it2 != _typesToReplace.end())
-               lgr->indent() << "Replace " << type << " with " << dict->LookupType(it2->second) << lgr->endl();
+               lgr->indent() << "Replace " << type << " with " << dict->Lookup(it2->second) << lgr->endl();
             }
          }
       LOG_OUTDENT
@@ -471,7 +471,7 @@ TypeReplacer::transformTypes(TypeDictionary *dict)
 
    LOG_INDENT_REGION(lgr)
       {
-      for (auto it = dict->typesIterator(); it.hasItem(); it++)
+      for (auto it = dict->iterator(); it.hasItem(); it++)
          {
          const Type *type = it.item();
          transformTypeIfNeeded(type);
@@ -488,7 +488,7 @@ TypeReplacer::transformTypes(TypeDictionary *dict)
       lgr->indent() << "Types to remove in final step:" << lgr->endl();
       LOG_INDENT_REGION(lgr)
          {
-         for (auto it = dict->typesIterator();it.hasItem();it++)
+         for (auto it = dict->iterator();it.hasItem();it++)
             {
             const Type *type = it.item();
             if (_typesToRemove.find(type) != _typesToRemove.end())
@@ -512,7 +512,7 @@ TypeReplacer::visitPreCompilation(Compilation * comp) {
     if (lgr) lgr->indent() << "TypeReplacer::look for new Types:" << lgr->endl();
     LOG_INDENT_REGION(lgr) {
         TypeDictionary *dict = comp->ir()->typedict();
-        for (auto it = dict->typesIterator(); it.hasItem(); it++) {
+        for (auto it = dict->iterator(); it.hasItem(); it++) {
             const Type *type = it.item();
             transformTypeIfNeeded(type);
         }
@@ -747,7 +747,7 @@ TypeReplacer::finalCleanup() {
             #endif
             if (lgr) lgr->indent() << "Removing ";
             if (lgr) typeToRemove->logType(*lgr);
-            dict->RemoveType(typeToRemove);
+            dict->Remove(typeToRemove);
         }
     }
     LOG_OUTDENT

@@ -97,13 +97,13 @@ namespace Base {
 
 // assign these in reverse order so VFT only has to be grown once (technically only last one has to go first)
 #define INIT_CG_BASE_HANDLERS(C) \
-    _regtypeVFT.assign(bx->Address->id(), &C::regtypeAddress); \
-    _regtypeVFT.assign(bx->Float64->id(), &C::regtypeFloat64); \
-    _regtypeVFT.assign(bx->Float32->id(), &C::regtypeFloat32); \
-    _regtypeVFT.assign(bx->Int64->id(), &C::regtypeInt64); \
-    _regtypeVFT.assign(bx->Int32->id(), &C::regtypeInt32); \
-    _regtypeVFT.assign(bx->Int16->id(), &C::regtypeInt16); \
-    _regtypeVFT.assign(bx->Int8->id(), &C::regtypeInt8); \
+    _regtypeVFT.assign(bx->tAddress, &C::regtypeAddress); \
+    _regtypeVFT.assign(bx->tFloat64, &C::regtypeFloat64); \
+    _regtypeVFT.assign(bx->tFloat32, &C::regtypeFloat32); \
+    _regtypeVFT.assign(bx->tInt64, &C::regtypeInt64); \
+    _regtypeVFT.assign(bx->tInt32, &C::regtypeInt32); \
+    _regtypeVFT.assign(bx->tInt16, &C::regtypeInt16); \
+    _regtypeVFT.assign(bx->tInt8, &C::regtypeInt8); \
     _gencodeVFT.assign(bx->aIndexAt, &C::gencodeIndexAt); \
     _gencodeVFT.assign(bx->aCreateLocalStruct, &C::gencodeCreateLocalStruct); \
     _gencodeVFT.assign(bx->aCreateLocalArray, &C::gencodeCreateLocalArray); \
@@ -137,13 +137,13 @@ namespace Base {
     _gencodeVFT.assign(bx->aAdd, &C::gencodeAdd); \
     _gencodeVFT.assign(bx->aAnd, &C::gencodeAnd); \
     _gencodeVFT.assign(bx->aConst, &C::gencodeConst); \
-    _genconstVFT.assign(bx->Address->id(), &C::genconstAddress); \
-    _genconstVFT.assign(bx->Float64->id(), &C::genconstFloat64); \
-    _genconstVFT.assign(bx->Float32->id(), &C::genconstFloat32); \
-    _genconstVFT.assign(bx->Int64->id(), &C::genconstInt64); \
-    _genconstVFT.assign(bx->Int32->id(), &C::genconstInt32); \
-    _genconstVFT.assign(bx->Int16->id(), &C::genconstInt16); \
-    _genconstVFT.assign(bx->Int8->id(), &C::genconstInt8)
+    _genconstVFT.assign(bx->tAddress, &C::genconstAddress); \
+    _genconstVFT.assign(bx->tFloat64, &C::genconstFloat64); \
+    _genconstVFT.assign(bx->tFloat32, &C::genconstFloat32); \
+    _genconstVFT.assign(bx->tInt64, &C::genconstInt64); \
+    _genconstVFT.assign(bx->tInt32, &C::genconstInt32); \
+    _genconstVFT.assign(bx->tInt16, &C::genconstInt16); \
+    _genconstVFT.assign(bx->tInt8, &C::genconstInt8)
 
 #define DEFINE_OP_HANDLERS_DISPATCH(C) \
     Builder * \

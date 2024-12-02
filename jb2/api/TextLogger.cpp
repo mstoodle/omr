@@ -163,6 +163,12 @@ operator<< (TextLogger &log, const Scope *s) {
 }
 
 TextLogger &
+operator<< (TextLogger &log, const Symbol *sym) {
+    sym->log(log);
+    return log;
+}
+
+TextLogger &
 operator<< (TextLogger &log, const SymbolDictionary *sd) {
     return log << "S" << sd->id();
 }

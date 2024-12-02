@@ -1,4 +1,4 @@
-/*******************************************************************************
+/********************************************************************************
  * Copyright (c) 2022, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
@@ -19,8 +19,8 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef BASEIR_INCL
-#define BASEIR_INCL
+#ifndef BASEIRADDON_INCL
+#define BASEIRADDON_INCL
 
 #include <map>
 #include "JBCore.hpp"
@@ -29,7 +29,15 @@ namespace OMR {
 namespace JitBuilder {
 namespace Base {
 
+class AddressType;
 class BaseExtension;
+class Float32Type;
+class Float64Type;
+class Int8Type;
+class Int16Type;
+class Int32Type;
+class Int64Type;
+class IntegerType;
 class PointerType;
 class StructType;
 
@@ -39,6 +47,15 @@ class BaseIRAddon : public AddonIR {
     friend class BaseExtension;
 
 public:
+    const Int8Type *Int8;
+    const Int16Type *Int16;
+    const Int32Type *Int32;
+    const Int64Type *Int64;
+    const Float32Type *Float32;
+    const Float64Type *Float64;
+    const AddressType *Address;
+    const IntegerType *Word;
+
     const PointerType * pointerTypeFromBaseType(const Type * baseType);
     void registerPointerType(const PointerType * pType);
     const StructType * structTypeFromName(const String & name);
@@ -47,7 +64,7 @@ public:
     CaseID getCaseID() { return _nextCaseID++; }
 
 protected:
-    BaseIRAddon(Allocator *a, BaseExtension *bx, IR *root);
+    BaseIRAddon(MEM_LOCATION(a), BaseExtension *bx, IR *root);
     BaseIRAddon(Allocator *a, const BaseIRAddon *source, IRCloner *cloner);
 
     virtual AddonIR *clone(Allocator *a, IRCloner *cloner) const;
@@ -64,4 +81,4 @@ protected:
 } // namespace JitBuilder
 } // namespace OMR
 
-#endif // !defined(BASEIR_INCL)
+#endif // !defined(BASEIRADDON_INCL)

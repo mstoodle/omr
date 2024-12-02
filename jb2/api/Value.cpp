@@ -30,6 +30,7 @@ namespace OMR {
 namespace JitBuilder {
 
 INIT_JBALLOC_ON(Value, IL)
+SUBCLASS_KINDSERVICE_IMPL(Value,"Value",ExtensibleIR, Extensible)
 
 Value *
 Value::create(Builder * parent, const Type * type) {
@@ -39,7 +40,7 @@ Value::create(Builder * parent, const Type * type) {
 }
 
 Value::Value(Allocator *a, Builder * parent, const Type * type)
-    : Allocatable(a)
+    : ExtensibleIR(a, parent->ext(), parent->ir(), CLASSKIND(Value,Extensible))
     , _id(parent->ir()->getValueID())
     , _parent(parent)
     , _type(type)
@@ -48,7 +49,7 @@ Value::Value(Allocator *a, Builder * parent, const Type * type)
 }
 
 Value::Value(Allocator *a, const Value *source, IRCloner *cloner)
-    : Allocatable(a)
+    : ExtensibleIR(a, source, cloner)
     , _id(source->_id)
     , _parent(cloner->clonedBuilder(source->_parent))
     , _type(cloner->clonedType(source->_type))

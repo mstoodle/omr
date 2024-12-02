@@ -44,7 +44,7 @@ VirtualMachineRegister::VirtualMachineRegister(MEM_LOCATION(a),
     const Type *regBaseType = _pRegisterType->baseType();
     _integerTypeForAdjustments = regBaseType;
     if (regBaseType->isKind<Base::PointerType>()) {
-        _integerTypeForAdjustments = vmx->bx()->Word;
+        _integerTypeForAdjustments = vmx->bx()->Word(comp->ir());
         const Type *baseType = regBaseType->refine<Base::PointerType>()->baseType();
         _adjustByStep = baseType->size();
         _isAdjustable = true;
@@ -143,7 +143,8 @@ VirtualMachineRegister::Adjust(LOCATION, Builder *b, Value *amount) {
 void
 VirtualMachineRegister::Adjust(LOCATION, Builder *b, size_t amount) {
     Base::BaseExtension *bx = this->bx();
-    Literal *amountLiteral = bx->Word->literal(PASSLOC, b->ir(), reinterpret_cast<LiteralBytes *>(&amount));
+    IR *ir = b->ir();
+    Literal *amountLiteral = bx->Word(ir)->literal(PASSLOC, reinterpret_cast<LiteralBytes *>(&amount));
     Value *amountValue = bx->ConvertTo(LOC, b, _integerTypeForAdjustments, bx->Const(PASSLOC, b, amountLiteral));
     Adjust(PASSLOC, b, amountValue);
 }

@@ -23,71 +23,30 @@
 #define LITERALDICTIONARY_INCL
 
 
-#include <map>
-#include "common.hpp"
-#include "CreateLoc.hpp"
-#include "ExtensibleIR.hpp"
+#include "Dictionary.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 
-class Compiler;
-class DebugDictionary;
-class DynamicType;
-class Extension;
-class IR;
-class OperationBuilder;
-class TextLogger;
+class CompilerLiteralDictionary;
 
-class LiteralDictionary : public Extensible {
+class LiteralDictionary : public Dictionary<Literal, LiteralID, NoLiteral, LiteralList> {
+    typedef Dictionary<Literal, LiteralID, NoLiteral, LiteralList> DictBaseType;
     JBALLOC_(LiteralDictionary)
 
-    friend class Compiler;
-    friend class Compilation;
-    friend class DebugDictionary;
-    friend class DynamicType;
-    friend class Extension;
     friend class IR;
     friend class IRCloner;
     friend class Literal;
-    friend class OperationBuilder;
 
-public:
-    DYNAMIC_ALLOC_ONLY(LiteralDictionary, Compiler *compiler);
-    DYNAMIC_ALLOC_ONLY(LiteralDictionary, Compiler *compiler, String name);
-    DYNAMIC_ALLOC_ONLY(LiteralDictionary, Compiler *compiler, String name, LiteralDictionary *linkedTypes);
-
-    LiteralListIterator literalIterator() const { return _literals.iterator(); }
-
-    Literal *LookupLiteral(LiteralID id);
-    void RemoveLiteral(Literal *literal);
-
-    LiteralDictionaryID id() const { return _id; }
-    const String & name() const { return _name; }
-    bool hasLinkedDictionary() const { return _linkedDictionary != NULL; }
-    LiteralDictionary *linkedDictionary() const { return _linkedDictionary; }
-
-    void log(TextLogger &lgr);
+  public:
+    DYNAMIC_ALLOC_ONLY(LiteralDictionary, IR *ir, String name);
 
 protected:
     LiteralDictionary(Allocator *a, const LiteralDictionary *source, IRCloner *cloner);
-    virtual void logContents(TextLogger &lgr);
+    virtual ExtensibleIR *clone(Allocator *mem, IRCloner *cloner) const { return cloneDictionary(mem, cloner); }
+    virtual LiteralDictionary *cloneDictionary(Allocator *mem, IRCloner *cloner) const;
 
-    LiteralID getLiteralID() { return _nextLiteralID++; }
-    void addNewLiteral(Literal *literal);
     Literal *registerLiteral(LOCATION, const Type *type, const LiteralBytes *value);
-    virtual ExtensibleIR *clone(Allocator *mem, IRCloner *cloner) const { return reinterpret_cast<ExtensibleIR *>(cloneDictionary(mem, cloner)); }; // TODO: FIX!
-    LiteralDictionary *cloneDictionary(Allocator *mem, IRCloner *cloner) const;
-
-    LiteralDictionaryID _id;
-    Compiler * _compiler;
-    Allocator *_mem;
-    String _name;
-    LiteralList _literals;
-    LiteralList _ownedLiterals;
-    std::map<const Type *,LiteralList *> _literalsByType;
-    LiteralID _nextLiteralID;
-    LiteralDictionary * _linkedDictionary;
 
     SUBCLASS_KINDSERVICE_DECL(Extensible, LiteralDictionary);
 };
@@ -96,4 +55,3 @@ protected:
 } // namespace OMR
 
 #endif // defined(LITERALDICTIONARY_INCL)
-

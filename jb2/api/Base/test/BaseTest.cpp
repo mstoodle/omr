@@ -86,7 +86,7 @@ class BaseFunc : public Func::Function {
 public:
     BaseFunc(MEM_LOCATION(a), Compiler *c, String name, String line, String file)
         : Func::Function(MEM_PASSLOC(a), c)
-        , _cx(c->lookupExtension<CoreExtension>())
+        , _cx(c->coreExt())
         , _bx(c->lookupExtension<Base::BaseExtension>())
         , _fx(c->lookupExtension<Func::FunctionExtension>()) {
         DefineName(name);
@@ -131,7 +131,7 @@ protected:
 #define COMPILER(c,cfg,cx,fx,bx) \
     Config cfg; \
     Compiler c("testBase", &cfg); \
-    CoreExtension *cx = c.lookupExtension<CoreExtension>(); \
+    CoreExtension *cx = c.coreExt(); \
     Func::FunctionExtension *fx = c.loadExtension<Func::FunctionExtension>(LOC); \
     Base::BaseExtension *bx = c.loadExtension<Base::BaseExtension>(LOC); \
     JB::JBExtension *jx = c.loadExtension<JB::JBExtension>(LOC);
@@ -180,14 +180,14 @@ protected:
 #define CONSTFUNC(type,seq,v) \
     BASE_FUNC(Const ## type ## Function ## seq, "0", #type ".cpp", , b, \
         { }, \
-        { ctx->DefineReturnType(_bx->type); }, \
+        { ctx->DefineReturnType(_bx->type(comp->ir())); }, \
         { _fx->Return(LOC, b, _bx->Const ## type(LOC, b, v)); })
 
 #define TESTONECONSTFUNC(fl,ln,fn,type,ctype,seq,v) \
     CONSTFUNC(type, seq, v) \
     TEST(BaseExtension, createConst ## type ## Function ## seq) { \
         typedef ctype (FuncProto)(); \
-        COMPILE_FUNC(fl,ln,fn,Const ## type ## Function ## seq, FuncProto, f, true); \
+        COMPILE_FUNC(fl,ln,fn,Const ## type ## Function ## seq, FuncProto, f, false); \
         EXPECT_EQ(f(), v) << "Compiled f() returns " << v; \
     }
 
@@ -208,7 +208,7 @@ TESTCONSTFUNC(__FILE__, __LINE__, __func__, Float64, double, 3.0, 0.0)
 #define TYPEFUNC(type) \
     BASE_FUNC(type ## Function, "0", #type ".cpp", , b, \
         { }, \
-        { ctx->DefineReturnType(_bx->type); ctx->DefineParameter("val", _bx->type); }, \
+        { ctx->DefineReturnType(_bx->type(comp->ir())); ctx->DefineParameter("val", _bx->type(comp->ir())); }, \
         { auto parmSym=ctx->LookupLocal("val"); _fx->Return(LOC, b, _fx->Load(LOC, b, parmSym)); })
 
 #define TESTTYPEFUNC(fl,ln,fn,type,ctype,a,b) \
@@ -246,7 +246,7 @@ TEST(BaseExtension, createAddressFunction) {
     BASE_FUNC(Store ## type ## Function, "0", "Store" #type ".cpp", \
         Func::LocalSymbol * _val, b, \
         { }, \
-        { ctx->DefineReturnType(_bx->type); ctx->DefineParameter("parm", _bx->type); _val = ctx->DefineLocal("val", _bx->type); }, \
+        { ctx->DefineReturnType(_bx->type(comp->ir())); ctx->DefineParameter("parm", _bx->type(comp->ir())); _val = ctx->DefineLocal("val", _bx->type(comp->ir())); }, \
         { auto parm=ctx->LookupLocal("parm"); _fx->Store(LOC, b, _val, _fx->Load(LOC, b, parm)); _fx->Return(LOC, b, _fx->Load(LOC, b, _val)); })
 
 #define TESTSTORETYPEFUNC(fl,ln,fn,type,ctype,a,b) \
@@ -283,7 +283,7 @@ TEST(BaseExtension, createStoreAddressFunction) {
 #define POINTERTOTYPEFUNC(type) \
     BASE_FUNC(PointerTo ## type ## Function, "0", "PointerTo" #type ".cpp", , b, \
         { }, \
-        { ctx->DefineReturnType(_bx->type); ctx->DefineParameter("ptr", _bx->PointerTo(LOC, comp, _bx->type)); }, \
+        { ctx->DefineReturnType(_bx->type(comp->ir())); ctx->DefineParameter("ptr", _bx->PointerTo(LOC, _bx->type(comp->ir()))); }, \
         { auto parmSym = ctx->LookupLocal("ptr"); _fx->Return(LOC, b, _bx->LoadAt(LOC, b, _fx->Load(LOC, b, parmSym))); })
 
 #define TESTPOINTERTOTYPEFUNC(fl,ln,fn,type,ctype,a,b) \
@@ -319,9 +319,9 @@ TEST(BaseExtension, createPointerAddressFunction) {
 #define STOREPOINTERTOTYPEFUNC(type) \
     BASE_FUNC(StorePointerTo ## type ## Function, "0", "StorePointerTo" #type ".cpp", , b, \
         { }, \
-        { ctx->DefineReturnType(_cx->NoType); \
-          ctx->DefineParameter("ptr", _bx->PointerTo(LOC, comp, _bx->type)); \
-          ctx->DefineParameter("val", _bx->type); }, \
+        { ctx->DefineReturnType(_cx->NoType(comp->ir())); \
+          ctx->DefineParameter("ptr", _bx->PointerTo(LOC, _bx->type(comp->ir()))); \
+          ctx->DefineParameter("val", _bx->type(comp->ir())); }, \
         { auto ptrParm = ctx->LookupLocal("ptr"); \
           auto valParm = ctx->LookupLocal("val"); \
           _bx->StoreAt(LOC, b, _fx->Load(LOC, b, ptrParm), _fx->Load(LOC, b, valParm)); \
@@ -364,11 +364,11 @@ TEST(BaseExtension, createStorePointerAddressFunction) {
         { }, \
         { Base::StructTypeBuilder stb(_bx, comp); \
           stb.setName("Struct") \
-             ->addField("field", _bx->type, 0); \
+             ->addField("field", _bx->type(comp->ir()), 0); \
           _structType = stb.create(LOC); \
-          _pStructType = _bx->PointerTo(LOC, comp, _structType); \
+          _pStructType = _bx->PointerTo(LOC, _structType); \
           _parm = ctx->DefineParameter("parm", _pStructType); \
-          ctx->DefineReturnType(_bx->type); }, \
+          ctx->DefineReturnType(_bx->type(comp->ir())); }, \
         { Value *base = _fx->Load(LOC, b, _parm); \
           const Base::FieldType *field = _structType->LookupField("field"); \
           Value *fieldVal = _bx->LoadFieldAt(LOC, b, field, base); \
@@ -415,15 +415,15 @@ TEST(BaseExtension, createOneFieldStructAddress) {
         { Base::StructTypeBuilder stb(_bx, comp); \
           typedef struct { ctype f1; ctype f2; ctype f3; ctype f4; ctype f5; } TheStructType; \
           stb.setName("Struct") \
-             ->addField("f1", _bx->type, 8*offsetof(TheStructType,f1)) \
-             ->addField("f2", _bx->type, 8*offsetof(TheStructType,f2)) \
-             ->addField("f3", _bx->type, 8*offsetof(TheStructType,f3)) \
-             ->addField("f4", _bx->type, 8*offsetof(TheStructType,f4)) \
-             ->addField("f5", _bx->type, 8*offsetof(TheStructType,f5)); \
+             ->addField("f1", _bx->type(comp->ir()), 8*offsetof(TheStructType,f1)) \
+             ->addField("f2", _bx->type(comp->ir()), 8*offsetof(TheStructType,f2)) \
+             ->addField("f3", _bx->type(comp->ir()), 8*offsetof(TheStructType,f3)) \
+             ->addField("f4", _bx->type(comp->ir()), 8*offsetof(TheStructType,f4)) \
+             ->addField("f5", _bx->type(comp->ir()), 8*offsetof(TheStructType,f5)); \
           _structType = stb.create(LOC); \
-          _pStructType = _bx->PointerTo(LOC, comp, _structType); \
+          _pStructType = _bx->PointerTo(LOC, _structType); \
           _parm = ctx->DefineParameter("parm", _pStructType); \
-          ctx->DefineReturnType(_bx->type); }, \
+          ctx->DefineReturnType(_bx->type(comp->ir())); }, \
         { Value *base = _fx->Load(LOC, b, _parm); \
           const Base::FieldType *field = _structType->LookupField("f5"); \
           Value *fieldVal = _bx->LoadFieldAt(LOC, b, field, base); \
@@ -470,16 +470,16 @@ TEST(BaseExtension, createFiveFieldStructAddress) {
         { Base::StructTypeBuilder stb(_bx, comp); \
           typedef struct { ctype f1; ctype f2; ctype f3; ctype f4; ctype f5; } TheStructType; \
           stb.setName("Struct") \
-             ->addField("f1", _bx->type, 8*offsetof(TheStructType,f1)) \
-             ->addField("f2", _bx->type, 8*offsetof(TheStructType,f2)) \
-             ->addField("f3", _bx->type, 8*offsetof(TheStructType,f3)) \
-             ->addField("f4", _bx->type, 8*offsetof(TheStructType,f4)) \
-             ->addField("f5", _bx->type, 8*offsetof(TheStructType,f5)); \
+             ->addField("f1", _bx->type(comp->ir()), 8*offsetof(TheStructType,f1)) \
+             ->addField("f2", _bx->type(comp->ir()), 8*offsetof(TheStructType,f2)) \
+             ->addField("f3", _bx->type(comp->ir()), 8*offsetof(TheStructType,f3)) \
+             ->addField("f4", _bx->type(comp->ir()), 8*offsetof(TheStructType,f4)) \
+             ->addField("f5", _bx->type(comp->ir()), 8*offsetof(TheStructType,f5)); \
           _structType = stb.create(LOC); \
-          _pStructType = _bx->PointerTo(LOC, comp, _structType); \
-          _valParm = ctx->DefineParameter("val", _bx->type); \
+          _pStructType = _bx->PointerTo(LOC, _structType); \
+          _valParm = ctx->DefineParameter("val", _bx->type(comp->ir())); \
           _baseParm = ctx->DefineParameter("pStruct", _pStructType); \
-          ctx->DefineReturnType(_cx->NoType); }, \
+          ctx->DefineReturnType(comp->ir()->NoType); }, \
         { Value *base = _fx->Load(LOC, b, _baseParm); \
           const Base::FieldType *field = _structType->LookupField("f5"); \
           Value *val = _fx->Load(LOC, b, _valParm); \
@@ -527,14 +527,14 @@ TEST(BaseExtension, createStoreFiveFieldStructAddress) {
         { Base::StructTypeBuilder stb(_bx, comp); \
           typedef struct { ctype1 f1; ctype2 f2; ctype3 f3; } cStruct; \
           stb.setName("MyStruct") \
-             ->addField("f1", _bx->type1, 8*offsetof(cStruct, f1)) \
-             ->addField("f2", _bx->type2, 8*offsetof(cStruct, f2)) \
-             ->addField("f3", _bx->type3, 8*offsetof(cStruct, f3)); \
+             ->addField("f1", _bx->type1(comp->ir()), 8*offsetof(cStruct, f1)) \
+             ->addField("f2", _bx->type2(comp->ir()), 8*offsetof(cStruct, f2)) \
+             ->addField("f3", _bx->type3(comp->ir()), 8*offsetof(cStruct, f3)); \
           _structType = stb.create(LOC); \
-          _pStructType = _bx->PointerTo(LOC, comp, _structType); \
+          _pStructType = _bx->PointerTo(LOC, _structType); \
           _f2Type = _structType->LookupField("f2"); \
           _parm = ctx->DefineParameter("parm", _pStructType); \
-          ctx->DefineReturnType(_bx->type2); }, \
+          ctx->DefineReturnType(_bx->type2(comp->ir())); }, \
         { Value *base = _fx->Load(LOC, b, _parm); \
           Value *f2val_parm = _bx->LoadFieldAt(LOC, b, _f2Type, base); \
           Value *pLocalStruct = _bx->CreateLocalStruct(LOC, b, _pStructType); \
@@ -602,8 +602,8 @@ typedef struct MyRecursiveStruct {
 void
 MyRecursiveStructHelper(const Base::StructType *sType, Base::StructTypeBuilder *builder) {
     Base::BaseExtension *bx = builder->extension();
-    builder->addField("x", bx->Int32, 8*offsetof(MyRecursiveStruct, x))
-           ->addField("next", bx->PointerTo(LOC, builder->ir(), sType), 8*offsetof(MyRecursiveStruct, next));
+    builder->addField("x", bx->Int32(builder->ir()), 8*offsetof(MyRecursiveStruct, x))
+           ->addField("next", bx->PointerTo(LOC, sType), 8*offsetof(MyRecursiveStruct, next));
 }
 
 BASE_FUNC(CreateRecursiveStructFunction, "0", "CreateRecursiveStruct.cpp", \
@@ -618,11 +618,11 @@ BASE_FUNC(CreateRecursiveStructFunction, "0", "CreateRecursiveStruct.cpp", \
       stb.setName("MyRecursiveStruct") \
          ->setHelper(&MyRecursiveStructHelper); \
       _structType = stb.create(LOC); \
-      _pStructType = _bx->PointerTo(LOC, comp, _structType); \
+      _pStructType = _bx->PointerTo(LOC, _structType); \
       _parm = ctx->DefineParameter("parm", _pStructType); \
       _nextType = _structType->LookupField("next"); \
       _xType = _structType->LookupField("x"); \
-      ctx->DefineReturnType(_bx->Int32); }, \
+      ctx->DefineReturnType(_bx->Int32(comp->ir())); }, \
     { Value *base = _fx->Load(LOC, b, _parm); \
       Value *nextval = _bx->LoadFieldAt(LOC, b, _nextType, base); \
       Value *nextnextval = _bx->LoadFieldAt(LOC, b, _nextType, nextval); \
@@ -643,9 +643,9 @@ TEST(BaseExtension, createRecursiveStructFunction) {
 #define ARRAYTYPEFUNC(type) \
     BASE_FUNC(type ## ArrayFunction, "0", #type ".cpp", , b, \
         { }, \
-        { ctx->DefineReturnType(_bx->type); \
-          ctx->DefineParameter("array", _bx->PointerTo(LOC, comp, _bx->type)); \
-          ctx->DefineParameter("index", _bx->Int32); }, \
+        { ctx->DefineReturnType(_bx->type(comp->ir())); \
+          ctx->DefineParameter("array", _bx->PointerTo(LOC, _bx->type(comp->ir()))); \
+          ctx->DefineParameter("index", _bx->Int32(comp->ir())); }, \
         { auto arraySym=ctx->LookupLocal("array"); \
           Value * array = _fx->Load(LOC, b, arraySym); \
           auto indexSym=ctx->LookupLocal("index"); \
@@ -695,9 +695,9 @@ TEST(BaseExtension, createAddressArrayFunction) {
 #define ADDTWOTYPEFUNC(leftType,rightType,suffix) \
     BASE_FUNC(leftType ## _ ## rightType ## _AddFunction ## suffix, "0", #leftType "_" #rightType ".cpp", , b, \
         { }, \
-        { ctx->DefineReturnType(_bx->leftType); \
-          ctx->DefineParameter("left", _bx->leftType); \
-          ctx->DefineParameter("right", _bx->rightType); }, \
+        { ctx->DefineReturnType(_bx->leftType(comp->ir())); \
+          ctx->DefineParameter("left", _bx->leftType(comp->ir())); \
+          ctx->DefineParameter("right", _bx->rightType(comp->ir())); }, \
         { auto leftSym=ctx->LookupLocal("left"); \
           Value * left = _fx->Load(LOC, b, leftSym); \
           auto rightSym=ctx->LookupLocal("right"); \
@@ -784,9 +784,9 @@ TESTBADADDTYPES(__FILE__, __LINE__, __func__,Float64,Int8,Int16,Int32,Int64,Floa
 #define MULTWOTYPEFUNC(leftType,rightType,suffix) \
     BASE_FUNC(leftType ## _ ## rightType ## _MulFunction ## suffix, "0", #leftType "_" #rightType ".cpp", , b, \
         { }, \
-        { ctx->DefineReturnType(_bx->leftType); \
-          ctx->DefineParameter("left", _bx->leftType); \
-          ctx->DefineParameter("right", _bx->rightType); }, \
+        { ctx->DefineReturnType(_bx->leftType(comp->ir())); \
+          ctx->DefineParameter("left", _bx->leftType(comp->ir())); \
+          ctx->DefineParameter("right", _bx->rightType(comp->ir())); }, \
         { auto leftSym=ctx->LookupLocal("left"); \
           Value * left = _fx->Load(LOC, b, leftSym); \
           auto rightSym=ctx->LookupLocal("right"); \
@@ -850,9 +850,9 @@ TESTMULTYPESINVALID(__FILE__, __LINE__, __func__,Address,Address);
 #define SUBTYPEFUNC(returnType,leftType,rightType,suffix) \
     BASE_FUNC(returnType ## _ ## leftType ## _ ## rightType ## _SubFunction ## suffix, "0", #returnType "_" #leftType "_" #rightType ".cpp", , b, \
         { }, \
-        { ctx->DefineReturnType(_bx->returnType); \
-          ctx->DefineParameter("left", _bx->leftType); \
-          ctx->DefineParameter("right", _bx->rightType); }, \
+        { ctx->DefineReturnType(_bx->returnType(comp->ir())); \
+          ctx->DefineParameter("left", _bx->leftType(comp->ir())); \
+          ctx->DefineParameter("right", _bx->rightType(comp->ir())); }, \
         { auto leftSym=ctx->LookupLocal("left"); \
           Value * left = _fx->Load(LOC, b, leftSym); \
           auto rightSym=ctx->LookupLocal("right"); \
@@ -950,15 +950,15 @@ TESTBADSUBTYPES(__FILE__, __LINE__, __func__,Float64,Float64,Int8,Int16,Int32,In
 #define IFTHENFUNC(selectorType) \
     BASE_FUNC(IFTHENFUNCNAME(selectorType), "0", "IfThen.cpp", , b, \
         { }, \
-        { ctx->DefineReturnType(_bx->Word); \
-          ctx->DefineParameter("selector", _bx->selectorType); }, \
+        { ctx->DefineReturnType(_bx->Word(comp->ir())); \
+          ctx->DefineParameter("selector", _bx->selectorType(comp->ir())); }, \
         { auto selectorSym=ctx->LookupLocal("selector"); \
           Value * selector = _fx->Load(LOC, b, selectorSym); \
           Base::IfThenElseBuilder bldr = _bx->IfThenElse(LOC, b, selector); { \
               Builder *thenPath = bldr.thenPath(); \
-              _fx->Return(LOC, thenPath, _bx->One(LOC, thenPath, _bx->Word)); \
+              _fx->Return(LOC, thenPath, _bx->One(LOC, thenPath, _bx->Word(comp->ir()))); \
           } \
-          _fx->Return(LOC, b, _bx->Zero(LOC, b, _bx->Word)); })
+          _fx->Return(LOC, b, _bx->Zero(LOC, b, _bx->Word(comp->ir()))); })
 
 #define TESTIFTHENTYPEFUNC(fl,ln,fn,type,ctype) \
     IFTHENFUNC(type) \
@@ -987,20 +987,20 @@ TESTIFTHENTYPEFUNC(__FILE__, __LINE__, __func__,Address,size_t)
 #define IFTHENELSEFUNC(selectorType) \
     BASE_FUNC(IFTHENELSEFUNCNAME(selectorType), "0", "IfThenElse.cpp", , b, \
         { }, \
-        { ctx->DefineReturnType(_bx->Word); \
-          ctx->DefineParameter("selector", _bx->selectorType); }, \
+        { ctx->DefineReturnType(_bx->Word(comp->ir())); \
+          ctx->DefineParameter("selector", _bx->selectorType(comp->ir())); }, \
         { auto selectorSym=ctx->LookupLocal("selector"); \
           Value * selector = _fx->Load(LOC, b, selectorSym); \
           Base::IfThenElseBuilder bldr = _bx->IfThenElse(LOC, b, selector); { \
               Builder *thenPath = bldr.thenPath(); \
-              _fx->Return(LOC, thenPath, _bx->One(LOC, thenPath, _bx->Word)); \
+              _fx->Return(LOC, thenPath, _bx->One(LOC, thenPath, _bx->Word(comp->ir()))); \
           } ELSE { \
               Builder *elsePath = bldr.elsePath(); \
-              _fx->Return(LOC, elsePath, _bx->Zero(LOC, elsePath, _bx->Word)); \
+              _fx->Return(LOC, elsePath, _bx->Zero(LOC, elsePath, _bx->Word(comp->ir()))); \
           } \
           size_t allOnes=~(size_t)0; \
           LiteralBytes *p = reinterpret_cast<LiteralBytes *>(&allOnes); \
-          _fx->Return(LOC, b, _bx->Const(LOC, b, _bx->Word->literal(LOC, comp->ir(), p))); })
+          _fx->Return(LOC, b, _bx->Const(LOC, b, _bx->Word(comp->ir())->literal(LOC, p))); })
 
 #define TESTIFTHENELSETYPEFUNC(fl,ln,fn,type,ctype) \
     IFTHENELSEFUNC(type) \
@@ -1036,12 +1036,12 @@ TESTIFTHENELSETYPEFUNC_Address(__FILE__, __LINE__, __func__)
 #define FORLOOPFUNC(iterType,initialType,finalType,bumpType,suffix) \
     BASE_FUNC(iterType ## _ ## initialType ## _ ## finalType ## _ ## bumpType ## _ForLoopFunction ## suffix, "0", "ForLoop.cpp", , b, \
         { }, \
-        { ctx->DefineReturnType(_bx->Word); \
-          ctx->DefineParameter("initial", _bx->initialType); \
-          ctx->DefineParameter("final", _bx->finalType); \
-          ctx->DefineParameter("bump", _bx->bumpType); \
-          ctx->DefineLocal("i", _bx->iterType); \
-          ctx->DefineLocal("counter", _bx->Word); }, \
+        { ctx->DefineReturnType(_bx->Word(comp->ir())); \
+          ctx->DefineParameter("initial", _bx->initialType(comp->ir())); \
+          ctx->DefineParameter("final", _bx->finalType(comp->ir())); \
+          ctx->DefineParameter("bump", _bx->bumpType(comp->ir())); \
+          ctx->DefineLocal("i", _bx->iterType(comp->ir())); \
+          ctx->DefineLocal("counter", _bx->Word(comp->ir())); }, \
         { auto counterSym=ctx->LookupLocal("counter"); \
           _fx->Store(LOC, b, counterSym, _bx->Zero(LOC, b, counterSym->type())); \
           auto iterVarSym = ctx->LookupLocal("i"); \

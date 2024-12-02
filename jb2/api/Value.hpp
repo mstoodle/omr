@@ -35,7 +35,7 @@ class Operation;
 class OperationCloner;
 class Type;
 
-class Value : public Allocatable {
+class Value : public ExtensibleIR {
     JBALLOC_(Value)
 
     friend class Builder;
@@ -67,6 +67,8 @@ protected:
     Builder * _parent;
     const Type * _type;
     List<Operation *> _definitions;
+
+    SUBCLASS_KINDSERVICE_DECL(Extensible,Value);
 };
 
 } // namespace JitBuilder

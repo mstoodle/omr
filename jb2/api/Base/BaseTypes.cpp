@@ -30,9 +30,13 @@ namespace Base {
 
 #define DEFINE_BASETYPE_CLASS(C,Super,user_code) \
     INIT_JBALLOC_REUSECAT(C, Type) \
-    SUBCLASS_KINDSERVICE_IMPL(C, #C, Super, Type); \
-    C::C(MEM_LOCATION(a), TypeKind kind, Extension *ext, String name, size_t size, TypeDictionary *dict) \
-        : Super(MEM_PASSLOC(a), kind, ext, name, size, dict) { } \
+    SUBCLASS_KINDSERVICE_IMPL(C, #C, Super, Extensible); \
+    C::C(MEM_LOCATION(a), ExtensibleKind kind, Extension *ext, String name, size_t size) \
+        : Super(MEM_PASSLOC(a), kind, ext, name, size) { } \
+    C::C(MEM_LOCATION(a), ExtensibleKind kind, Extension *ext, IR *ir, String name, size_t size) \
+        : Super(MEM_PASSLOC(a), kind, ext, ir, name, size) { } \
+    C::C(MEM_LOCATION(a), ExtensibleKind kind, Extension *ext, IR *ir, TypeID tid, String name, size_t size) \
+        : Super(MEM_PASSLOC(a), kind, ext, ir, tid, name, size) { } \
     C::C(Allocator *a, const C *source, IRCloner *cloner) \
         : Super(a, source, cloner) { } \
     C::~C() { } \
@@ -48,12 +52,14 @@ namespace Base {
     )
 
 
-#define DEFINE_CONCRETE_BASETYPE_CLASS(C,Super,size,user_code) \
+#define DEFINE_CONCRETE_BASETYPE_CLASS(C,Name,Super,size,user_code) \
     DEFINE_BASETYPE_CLASS(C,Super, \
-        C::C(MEM_LOCATION(a), Extension *ext) : Super(MEM_PASSLOC(a), getTypeClassKind(), ext, #C, size) { } \
+        C::C(MEM_LOCATION(a), Extension *ext) : Super(MEM_PASSLOC(a), getExtensibleClassKind(), ext, #Name, size) { } \
+        C::C(MEM_LOCATION(a), Extension *ext, IR *ir) : Super(MEM_PASSLOC(a), getExtensibleClassKind(), ext, ir, #Name, size) { } \
+        C::C(MEM_LOCATION(a), Extension *ext, IR *ir, TypeID tid) : Super(MEM_PASSLOC(a), getExtensibleClassKind(), ext, ir, tid, #Name, size) { } \
         const Type * \
         C::cloneType(Allocator *a, IRCloner *cloner) const { \
-            assert(_kind == KIND(Type)); \
+            assert(_kind == KIND(Extensible)); \
             return new (a) C(a, this, cloner); \
         } \
         user_code \
@@ -81,18 +87,18 @@ DEFINE_ABSTRACT_BASETYPE_CLASS(NumericType, BaseType,)
 DEFINE_ABSTRACT_BASETYPE_CLASS(IntegerType, NumericType,)
 
 #define DEFINE_INTTYPE_CLASS(size) \
-    DEFINE_CONCRETE_BASETYPE_CLASS(Int ## size ## Type, IntegerType, size, \
+    DEFINE_CONCRETE_BASETYPE_CLASS(Int ## size ## Type, Int ## size, IntegerType, size, \
         Literal * \
-        Int ## size ## Type::zero(LOCATION, IR *ir) const { \
-            return literal(PASSLOC, ir, (int ## size ## _t) 0); \
+        Int ## size ## Type::zero(LOCATION) const { \
+            return literal(PASSLOC, (int ## size ## _t) 0); \
         } \
         Literal * \
-        Int ## size ## Type::identity(LOCATION, IR *ir) const { \
-            return literal(PASSLOC, ir, (int ## size ## _t) 1); \
+        Int ## size ## Type::identity(LOCATION) const { \
+            return literal(PASSLOC, (int ## size ## _t) 1); \
         } \
         Literal * \
-        Int ## size ## Type::literal(LOCATION, IR *ir, const int ## size ## _t value) const { \
-            return this->Type::literal(PASSLOC, ir, reinterpret_cast<const LiteralBytes *>(&value)); \
+        Int ## size ## Type::literal(LOCATION, const int ## size ## _t value) const { \
+            return this->Type::literal(PASSLOC, reinterpret_cast<const LiteralBytes *>(&value)); \
         } \
         bool \
         Int ## size ## Type::literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const { \
@@ -124,18 +130,18 @@ DEFINE_INTTYPE_CLASS(64)
 DEFINE_ABSTRACT_BASETYPE_CLASS(FloatingPointType, NumericType,)
 
 #define DEFINE_FLOATTYPE_CLASS(size, ctype) \
-    DEFINE_CONCRETE_BASETYPE_CLASS(Float ## size ## Type, FloatingPointType, size, \
+    DEFINE_CONCRETE_BASETYPE_CLASS(Float ## size ## Type, Float ## size, FloatingPointType, size, \
         Literal * \
-        Float ## size ## Type::zero(LOCATION, IR *ir) const { \
-            return literal(PASSLOC, ir, (ctype) 0.0); \
+        Float ## size ## Type::zero(LOCATION) const { \
+            return literal(PASSLOC, (ctype) 0.0); \
         } \
         Literal * \
-        Float ## size ## Type::identity(LOCATION, IR *ir) const { \
-            return literal(PASSLOC, ir, (ctype) 1.0); \
+        Float ## size ## Type::identity(LOCATION) const { \
+            return literal(PASSLOC, (ctype) 1.0); \
         } \
         Literal * \
-        Float ## size ## Type::literal(LOCATION, IR *ir, const ctype value) const { \
-            return this->Type::literal(PASSLOC, ir, reinterpret_cast<const LiteralBytes *>(&value)); \
+        Float ## size ## Type::literal(LOCATION, const ctype value) const { \
+            return this->Type::literal(PASSLOC, reinterpret_cast<const LiteralBytes *>(&value)); \
         } \
         bool \
         Float ## size ## Type::literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const { \
@@ -159,21 +165,21 @@ DEFINE_FLOATTYPE_CLASS(32, float)
 DEFINE_FLOATTYPE_CLASS(64, double)
 
 
-DEFINE_CONCRETE_BASETYPE_CLASS(AddressType, IntegerType, ext->compiler()->platformWordSize(),
+DEFINE_CONCRETE_BASETYPE_CLASS(AddressType, Address, IntegerType, ext->compiler()->platformWordSize(),
     Literal *
-    AddressType::zero(LOCATION, IR *ir) const {
-        return literal(PASSLOC, ir, (const void *) 0);
+    AddressType::zero(LOCATION) const {
+        return literal(PASSLOC, (const void *) 0);
     }
 
     Literal *
-    AddressType::identity(LOCATION, IR *ir) const {
+    AddressType::identity(LOCATION) const {
         assert(0);
         return NULL;
     }
 
     Literal *
-    AddressType::literal(LOCATION, IR *ir, const void * value) const {
-        return this->Type::literal(PASSLOC, ir, reinterpret_cast<const LiteralBytes *>(&value));
+    AddressType::literal(LOCATION, const void * value) const {
+        return this->Type::literal(PASSLOC, reinterpret_cast<const LiteralBytes *>(&value));
     }
 
     bool
@@ -198,7 +204,6 @@ PointerTypeBuilder::PointerTypeBuilder(Allocator *a, BaseExtension *ext, Compila
     : Allocatable(a)
     , _ext(ext)
     , _ir(comp->ir())
-    , _dict(_ir->typedict())
     , _baseType(NULL)
     , _helper(NULL) {
 
@@ -208,7 +213,6 @@ PointerTypeBuilder::PointerTypeBuilder(BaseExtension *ext, Compilation *comp)
     : Allocatable()
     ,  _ext(ext)
     , _ir(comp->ir())
-    , _dict(_ir->typedict())
     , _baseType(NULL)
     , _helper(NULL) {
 
@@ -218,7 +222,6 @@ PointerTypeBuilder::PointerTypeBuilder(Allocator *a, BaseExtension *ext, IR *ir)
     : Allocatable(a)
     , _ext(ext)
     , _ir(ir)
-    , _dict(ir->typedict())
     , _baseType(NULL)
     , _helper(NULL) {
 
@@ -228,7 +231,6 @@ PointerTypeBuilder::PointerTypeBuilder(BaseExtension *ext, IR *ir)
     : Allocatable()
     ,  _ext(ext)
     , _ir(ir)
-    , _dict(ir->typedict())
     , _baseType(NULL)
     , _helper(NULL) {
 
@@ -250,9 +252,9 @@ PointerTypeBuilder::create(LOCATION) {
 }
 
 
-DEFINE_CONCRETE_BASETYPE_CLASS(PointerType, AddressType, ext->compiler()->platformWordSize(),
+DEFINE_CONCRETE_BASETYPE_CLASS(PointerType, Pointer, AddressType, ext->compiler()->platformWordSize(),
     PointerType::PointerType(MEM_LOCATION(a), PointerTypeBuilder *builder)
-        : AddressType(MEM_PASSLOC(a), getTypeClassKind(), builder->extension(), builder->name(), builder->extension()->compiler()->platformWordSize(), builder->dict()) {
+        : AddressType(MEM_PASSLOC(a), getExtensibleClassKind(), builder->extension(), builder->ir(), builder->name(), builder->extension()->compiler()->platformWordSize()) {
 
         if (builder->helper())
             builder->helper()(this, builder);
@@ -263,19 +265,19 @@ DEFINE_CONCRETE_BASETYPE_CLASS(PointerType, AddressType, ext->compiler()->platfo
     }
 
     Literal *
-    PointerType::zero(LOCATION, IR *ir) const {
-        return literal(PASSLOC, ir, (const void *) 0);
+    PointerType::zero(LOCATION) const {
+        return literal(PASSLOC, (const void *) 0);
     }
 
     Literal *
-    PointerType::identity(LOCATION, IR *ir) const {
+    PointerType::identity(LOCATION) const {
         assert(0);
         return NULL;
     }
 
     Literal *
-    PointerType::literal(LOCATION, IR *ir, const void * value) const {
-        return this->Type::literal(PASSLOC, ir, reinterpret_cast<const LiteralBytes *>(&value));
+    PointerType::literal(LOCATION, const void * value) const {
+        return this->Type::literal(PASSLOC, reinterpret_cast<const LiteralBytes *>(&value));
     }
 
     bool
@@ -304,7 +306,7 @@ DEFINE_CONCRETE_BASETYPE_CLASS(PointerType, AddressType, ext->compiler()->platfo
         const Type *currentBaseType = baseType();
         const Type *newBaseType = repl->replacedType(currentBaseType);
         Compilation *comp = repl->comp();
-        const Type *newPtrType = baseExt()->PointerTo(LOC, comp, newBaseType);
+        const Type *newPtrType = baseExt()->PointerTo(LOC, newBaseType);
         return newPtrType;
     }
 )
@@ -312,7 +314,7 @@ DEFINE_CONCRETE_BASETYPE_CLASS(PointerType, AddressType, ext->compiler()->platfo
 
 
 INIT_JBALLOC_REUSECAT(FieldType, BaseType)
-SUBCLASS_KINDSERVICE_IMPL(FieldType, "FieldType", BaseType, Type);
+SUBCLASS_KINDSERVICE_IMPL(FieldType, "FieldType", BaseType, Extensible);
 
 FieldType::FieldType(Allocator *a, const FieldType *source, IRCloner *cloner)
     : BaseType(a, source, cloner)
@@ -328,8 +330,8 @@ FieldType::cloneType(Allocator *a, IRCloner *cloner) const {
     return new (a) FieldType(a, this, cloner);
 }
 
-FieldType::FieldType(MEM_LOCATION(a), BaseExtension *ext, const StructType *structType, String name, const Type *type, size_t offset, TypeDictionary *dict)
-    : BaseType(MEM_PASSLOC(a), getTypeClassKind(), ext, name, type->size(), dict)
+FieldType::FieldType(MEM_LOCATION(a), BaseExtension *ext, const StructType *structType, String name, const Type *type, size_t offset)
+    : BaseType(MEM_PASSLOC(a), getExtensibleClassKind(), ext, type->ir(), name, type->size())
     , _structType(structType)
     , _fieldName(name)
     , _type(type)
@@ -367,7 +369,6 @@ StructTypeBuilder::StructTypeBuilder(Allocator *a, BaseExtension *ext, Compilati
     , _ext(ext)
     , _ir(comp->ir())
     , _unit(_ir->unit())
-    , _dict(_ir->typedict())
     , _size(0)
     , _fields(NULL, a)
     , _helper(NULL) {
@@ -379,7 +380,6 @@ StructTypeBuilder::StructTypeBuilder(BaseExtension *ext, Compilation *comp)
     , _ext(ext)
     , _ir(comp->ir())
     , _unit(_ir->unit())
-    , _dict(_ir->typedict())
     , _size(0)
     , _fields(NULL, _ir->mem())
     , _helper(NULL) {
@@ -391,7 +391,6 @@ StructTypeBuilder::StructTypeBuilder(Allocator *a, BaseExtension *ext, IR *ir)
     , _ext(ext)
     , _ir(ir)
     , _unit(ir->unit())
-    , _dict(ir->typedict())
     , _size(0)
     , _fields(NULL, a)
     , _helper(NULL) {
@@ -403,7 +402,6 @@ StructTypeBuilder::StructTypeBuilder(BaseExtension *ext, IR *ir)
     , _ext(ext)
     , _ir(ir)
     , _unit(ir->unit())
-    , _dict(ir->typedict())
     , _size(0)
     , _fields(NULL, ir->mem())
     , _helper(NULL) {
@@ -418,7 +416,7 @@ void
 StructTypeBuilder::createFields(MEM_LOCATION(a)) {
     for (auto it = _fields.iterator(); it.hasItem(); it++) {
         FieldInfo info = it.item();
-        _structType->addField(MEM_PASSLOC(a), _ext, info._name, info._type, info._offset, _dict);
+        _structType->addField(MEM_PASSLOC(a), _ext, info._name, info._type, info._offset);
     }
 }
 
@@ -445,10 +443,10 @@ StructTypeBuilder::create(LOCATION) {
 
 
 INIT_JBALLOC_REUSECAT(StructType, BaseType)
-SUBCLASS_KINDSERVICE_IMPL(StructType, "StructType", BaseType, Type);
+SUBCLASS_KINDSERVICE_IMPL(StructType, "StructType", BaseType, Extensible);
 
 StructType::StructType(MEM_LOCATION(a), StructTypeBuilder *builder)
-    : BaseType(MEM_PASSLOC(a), getTypeClassKind(), builder->extension(), builder->name(), builder->size(), builder->dict())
+    : BaseType(MEM_PASSLOC(a), getExtensibleClassKind(), builder->extension(), builder->ir(), builder->name(), builder->size())
     , _structSize(0) {
 
     if (builder->helper())
@@ -480,7 +478,7 @@ StructType::~StructType() {
 }
 
 const FieldType *
-StructType::addField(MEM_LOCATION(a), Extension *ext, String name, const Type *type, size_t offset, TypeDictionary *dict) {
+StructType::addField(MEM_LOCATION(a), Extension *ext, String name, const Type *type, size_t offset) {
     const FieldType *preExistingField = LookupField(name);
     if (preExistingField) {
         if (preExistingField->type() == type && preExistingField->offset() == offset)
@@ -488,7 +486,7 @@ StructType::addField(MEM_LOCATION(a), Extension *ext, String name, const Type *t
         return NULL;
     }
 
-    FieldType *field = new (a) FieldType(MEM_PASSLOC(a), baseExt(), this, name, type, offset, dict);
+    FieldType *field = new (a) FieldType(MEM_PASSLOC(a), baseExt(), this, name, type, offset);
     _fieldsByName.insert({name, field});
     _fieldsByOffset.insert({offset, field});
 
@@ -511,8 +509,8 @@ StructType::to_string(Allocator *mem, bool useHeader) const {
 }
 
 Literal *
-StructType::literal(LOCATION, IR *ir, const LiteralBytes * structValue) const {
-    return this->Type::literal(PASSLOC, ir, structValue);
+StructType::literal(LOCATION, const LiteralBytes * structValue) const {
+    return this->Type::literal(PASSLOC, structValue);
 }
 
 bool

@@ -24,6 +24,7 @@
 
 #include "common.hpp"
 #include "CreateLoc.hpp"
+#include "ExtensibleIR.hpp"
 #include "KindService.hpp"
 #include "Mapper.hpp"
 
@@ -43,9 +44,7 @@ class Type;
 class TypeDictionary;
 class TypeReplacer;
 
-KINDSERVICE_CATEGORY(Type);
-
-class Type : public Allocatable {
+class Type : public ExtensibleIR {
     JBALLOC_(Type)
 
     friend class Compiler;
@@ -57,20 +56,20 @@ public:
     Extension *ext() const                         { return _ext; }
     TypeID id() const                              { return _id; }
     const String & name() const                    { return _name; }
-    TypeDictionary *owningDictionary() const       { return _dict; }
+    TypeDictionary *owningDictionary() const;
     virtual size_t size() const                    { return _size; } // some Types cannot set size at construction
     const Type *type() const                       { return this; } // bit weird, but dictionaries depend on it
 
     bool operator!=(const Type & other) const {
-        return _dict != other._dict || _id != other._id;
+        return ir() != other.ir() || _id != other._id;
     }
     bool operator==(const Type & other) const {
-        return _dict == other._dict && _id == other._id;
+        return ir() == other.ir() && _id == other._id;
     }
 
     String base_string(Allocator *mem, bool useHeader=false) const;
     virtual String to_string(Allocator *mem, bool useHeader=false) const;
-    void log(TextLogger & lgr) const;
+    void log(TextLogger & lgr, bool indent=false) const;
     virtual void logContents(TextLogger & lgr) const;
     void logType(TextLogger & lgr, bool useHeader=false) const;
     virtual void logValue(TextLogger & lgr, const void *p) const { }
@@ -84,11 +83,11 @@ public:
     virtual bool isManaged() const { return false; }
 
     // creates a Literal of this Type from the raw LiteralBytes
-    virtual Literal * literal(LOCATION, IR *ir, const LiteralBytes *value) const;
+    virtual Literal * literal(LOCATION, const LiteralBytes *value) const;
 
     // for Types that can, return a zero or "one" literal (NULL means it doesn't exist for this Type)
-    virtual Literal *zero(LOCATION, IR *comp) const { return NULL; }
-    virtual Literal *identity(LOCATION, IR *comp) const { return NULL; }
+    virtual Literal *zero(LOCATION) const { return NULL; }
+    virtual Literal *identity(LOCATION) const { return NULL; }
 
     // returning NULL from the next function means that values of this Type cannot be broken down further
     virtual const Type *layout() const { return _layout; }
@@ -108,23 +107,30 @@ public:
     }
 
 protected:
-    DYNAMIC_ALLOC_ONLY(Type, LOCATION, TypeKind kind, Extension *ext, String name, size_t size=0, TypeDictionary *dict=NULL, const Type *layout=NULL);
+    // For Types that should be installed into the prototype IR on the Compiler for Extension
+    DYNAMIC_ALLOC_ONLY(Type, LOCATION, ExtensibleKind kind, Extension *ext, String name, size_t size=0, const Type *layout=NULL);
+
+    // For Types that should be installed in the given IR object
+    DYNAMIC_ALLOC_ONLY(Type, LOCATION, ExtensibleKind kind, Extension *ext, IR *ir, String name, size_t size=0, const Type *layout=NULL);
+    
+    // For Types that should be installed in the given IR object using the given TypeID
+    DYNAMIC_ALLOC_ONLY(Type, LOCATION, ExtensibleKind kind, Extension *ext, IR *ir, TypeID tid, String name, size_t size=0, const Type *layout=NULL);
+
     Type(Allocator *a, const Type *source, IRCloner *cloner); // used by clone
 
     void transformTypeIfNeeded(TypeReplacer *repl, const Type *type) const;
 
-    virtual ExtensibleIR *clone(Allocator *mem, IRCloner *cloner) const { return const_cast<ExtensibleIR *>(reinterpret_cast<const ExtensibleIR *>(cloneType(mem, cloner))); } // TODO: FIX!
+    virtual ExtensibleIR *clone(Allocator *mem, IRCloner *cloner) const { return const_cast<ExtensibleIR *>(static_cast<const ExtensibleIR *>(cloneType(mem, cloner))); }
     virtual const Type *cloneType(Allocator *mem, IRCloner *cloner) const;
 
     Extension *_ext;
     CreateLocation _createLoc;
-    TypeDictionary * _dict;
     const TypeID _id;
     const String _name;
     const size_t _size;
     const Type * _layout;
 
-    BASECLASS_KINDSERVICE_DECL_CONST_ONLY(Type);
+    SUBCLASS_KINDSERVICE_DECL(Extensible,Type);
 };
 
 // All DECL_* macros are designed to be used in headers
@@ -133,13 +139,14 @@ protected:
     class C : public Super { \
         JBALLOC_NO_DESTRUCTOR_(C); \
         friend class Ext; \
+        friend class IR; \
     public: \
         virtual bool literalsAreEqual(const LiteralBytes *l1, const LiteralBytes *l2) const; \
         virtual void logValue(TextLogger &lgr, const void *p) const; \
         virtual void logLiteral(TextLogger & lgr, const Literal *lv) const; \
     protected: \
         virtual const Type *cloneType(Allocator *mem, IRCloner *cloner) const; \
-        SUBCLASS_KINDSERVICE_DECL(Type, C); \
+        SUBCLASS_KINDSERVICE_DECL(Extensible, C); \
         user_decl \
     };
 
@@ -149,8 +156,10 @@ protected:
     DECL_TYPE_CLASS_COMMON(C,Super,Ext, \
         C(Allocator *a, const C *source, IRCloner *cloner); \
         virtual ~C(); \
-    protected: \
-        DYNAMIC_ALLOC_ONLY(C, LOCATION, Extension *ext, TypeDictionary *dict=NULL); \
+    public: \
+        DYNAMIC_ALLOC_ONLY(C, LOCATION, Extension *ext); \
+        DYNAMIC_ALLOC_ONLY(C, LOCATION, Extension *ext, IR *ir); \
+        DYNAMIC_ALLOC_ONLY(C, LOCATION, Extension *ext, IR *ir, TypeID tid); \
     user_decl \
     )
 
@@ -162,7 +171,9 @@ protected:
         C(Allocator *a, const C *source, IRCloner *cloner); \
         virtual ~C(); \
     protected: \
-        DYNAMIC_ALLOC_ONLY(C, LOCATION, TypeKind kind, Extension *ext, String name, TypeDictionary *dict=NULL); \
+        DYNAMIC_ALLOC_ONLY(C, LOCATION, ExtensibleKind kind, Extension *ext, String name); \
+        DYNAMIC_ALLOC_ONLY(C, LOCATION, ExtensibleKind kind, Extension *ext, IR *ir, String name); \
+        DYNAMIC_ALLOC_ONLY(C, LOCATION, ExtensibleKind kind, Extension *ext, IR *ir, TypeID tid, String name); \
     user_decl \
     )
 
@@ -173,10 +184,11 @@ protected:
 // All DEFINE_* macros are designed to be used in cpp file
 #define DEFINE_TYPE_CLASS_COMMON(C,Super,name,user_code) \
     INIT_JBALLOC_REUSECAT(C, Type) \
-    SUBCLASS_KINDSERVICE_IMPL(C, name, Super, Super); \
+    SUBCLASS_KINDSERVICE_IMPL(C, name, Super, Extensible); \
     const Type * \
     C::cloneType(Allocator *a, IRCloner *cloner) const { \
-        assert(_kind == KIND(Type)); \
+        assert(_kind == KIND(Extensible)); \
+        assert(a == cloner->mem()); \
         return new (a) C(a, this, cloner); \
     } \
     user_code
@@ -184,21 +196,29 @@ protected:
 // Define class C extending Super with the given name
 #define DEFINE_TYPE_CLASS(C,Super,name,user_code) \
     DEFINE_TYPE_CLASS_COMMON(C,Super,name, \
+        C::C(MEM_LOCATION(a), Extension *ext) \
+            : Super(MEM_PASSLOC(a), getExtensibleClassKind(), ext, name) { } \
+        C::C(MEM_LOCATION(a), Extension *ext, IR *ir) \
+            : Super(MEM_PASSLOC(a), getExtensibleClassKind(), ext, ir, name) { } \
+        C::C(MEM_LOCATION(a), Extension *ext, IR *ir, TypeID tid) \
+            : Super(MEM_PASSLOC(a), getExtensibleClassKind(), ext, ir, tid, name) { } \
         C::C(Allocator *a, const C *source, IRCloner *cloner) \
             : Super(a, source, cloner) { } \
         C::~C() { } \
-        C::C(MEM_LOCATION(a), Extension *ext, TypeDictionary *dict) \
-            : Super(MEM_PASSLOC(a), getTypeClassKind(), ext, name, 0, dict) { } \
         user_code \
     )
 
 #define DEFINE_TYPE_CLASS_WITH_KIND(C,Super,name,user_code) \
     DEFINE_TYPE_CLASS_COMMON(C,Super,name, \
+        C::C(MEM_LOCATION(a), ExtensibleKind kind, Extension *ext) \
+            : Super(MEM_PASSLOC(a), kind, ext, name) { } \
+        C::C(MEM_LOCATION(a), ExtensibleKind kind, Extension *ext, IR *ir) \
+            : Super(MEM_PASSLOC(a), kind, ext, ir, name) { } \
+        C::C(MEM_LOCATION(a), ExtensibleKind kind, Extension *ext, IR *ir, TypeID tid) \
+            : Super(MEM_PASSLOC(a), kind, ext, ir, name, tid) { } \
         C::C(Allocator *a, const C *source, IRCloner *cloner) \
             : Super(a, source, cloner) { } \
         C::~C() { } \
-        C::C(MEM_LOCATION(a), TYPEKind kind, Extension *ext, TypeDictionary *dict) \
-            : Super(MEM_PASSLOC(a), kind, ext, name, 0, dict) { } \
         user_code \
     )
 
@@ -213,4 +233,3 @@ public:
 } // namespace OMR
 
 #endif // defined(TYPE_INCL)
-

@@ -103,7 +103,7 @@ OMRIlGen::OMRIlGen(Compilation *jb2comp, OMRCodeGenerator *jb2cg)
         }
     }
 
-    SymbolID numSymbols = ir->symdict()->numSymbols() + 1;
+    SymbolID numSymbols = ir->maxSymbolID() + 1;
     if (numSymbols > 0) {
         _symrefs = mem->allocate<TR::SymbolReference *>(numSymbols);
         for (auto i=0;i < numSymbols;i++)

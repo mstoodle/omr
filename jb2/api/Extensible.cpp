@@ -20,6 +20,7 @@
  *******************************************************************************/
 
 #include "Compiler.hpp"
+#include "CoreExtension.hpp"
 #include "Extensible.hpp"
 #include "Extension.hpp"
 
@@ -32,6 +33,7 @@ BASECLASS_KINDSERVICE_IMPL(Extensible);
 Extensible::Extensible(Allocator *a, Extension *ext, KINDTYPE(Extensible) kind)
     : Loggable(a)
     , _ext(ext)
+    , _compiler(ext->compiler())
     , _addons(NULL)
     , BASECLASS_KINDINIT(kind) {
 }
@@ -46,11 +48,6 @@ Extensible::~Extensible() {
         //#endif
         delete _addons;
     }
-}
-
-Compiler *
-Extensible::compiler() const {
-    return _ext->compiler();
 }
 
 void

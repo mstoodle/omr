@@ -20,6 +20,9 @@
  *******************************************************************************/
 
 #include "Compilation.hpp"
+#include "Compiler.hpp"
+#include "CoreExtension.hpp"
+#include "IR.hpp"
 #include "IRCloner.hpp"
 #include "Literal.hpp"
 #include "LiteralDictionary.hpp"
@@ -33,8 +36,8 @@ namespace JitBuilder {
 INIT_JBALLOC_ON(Literal, LiteralDictionary)
 
 Literal::Literal(MEM_LOCATION(a), IR *ir, const Type *type, const LiteralBytes *v)
-    : Allocatable(a)
-    , _id(ir->litdict()->getLiteralID())
+    : ExtensibleIR(a, ir->compiler()->coreExt(), ir)
+    , _id(ir->getLiteralID())
     , _creator(PASSLOC)
     , _litDict(ir->litdict())
     , _type(type) {
@@ -46,23 +49,9 @@ Literal::Literal(MEM_LOCATION(a), IR *ir, const Type *type, const LiteralBytes *
     _pValue = newBytes;
 }
 
-Literal::Literal(MEM_LOCATION(a), LiteralDictionary *litDict, const Type *type, const LiteralBytes *v)
-    : Allocatable(a)
-    , _id(litDict->getLiteralID())
-    , _creator(PASSLOC)
-    , _litDict(litDict)
-    , _type(type) {
-
-    // privatize the literal value
-    size_t numBytes = (type->size() / 8) + (((type->size() & 7) > 0) ? 1 : 0);
-    LiteralBytes *newBytes = reinterpret_cast<LiteralBytes *>(a->allocate(numBytes, NoAllocationCategory));
-    memcpy(newBytes, v, numBytes);
-    _pValue = newBytes;
-}
-
 // used only by clone()
 Literal::Literal(Allocator *a, const Literal *source, IRCloner *cloner)
-    : Allocatable(a)
+    : ExtensibleIR(a, source, cloner)
     , _id(source->_id)
     , _creator(source->_creator)
     , _litDict(cloner->clonedLiteralDictionary(source->_litDict))
@@ -88,10 +77,14 @@ Literal::operator==(Literal & other) {
 }
 
 void
-Literal::log(TextLogger & lgr) const {
-    lgr.indent() << lgr.irStart() << "literal l" << id() << "_t" << type()->id() << " ";
+Literal::log(TextLogger & lgr, bool indent) const {
+    if (indent)
+        lgr.indent();
+    lgr << lgr.irStart() << "literal l" << id() << "_t" << type()->id() << " ";
     type()->logLiteral(lgr, this);
-    lgr << lgr.irStop() << lgr.endl();
+    lgr << lgr.irStop();
+    if (indent) 
+        lgr << lgr.endl();
 }
 
 const int64_t

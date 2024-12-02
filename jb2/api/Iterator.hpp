@@ -24,9 +24,12 @@
 
 #include <assert.h>
 #include <stdarg.h>
+#include "AllocationCategoryClasses.hpp"
 
 namespace OMR {
 namespace JitBuilder {
+
+class Allocator;
 
 // Establish the public interface for any Iterator class
 // This is an abstract class with non-virtual functions so it cannot be used directly

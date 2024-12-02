@@ -429,12 +429,13 @@ OperandStackTestFunction::OperandStackTestFunction(MEM_LOCATION(a), VM::VMExtens
 
 bool
 OperandStackTestFunction::buildContext(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
-    const Type *NoType = _cx->NoType;
+    IR *ir = comp->ir();
+    const Type *NoType = ir->NoType;
     ctx->DefineReturnType(NoType);
 
     _realStackSize = 32;
-    _valueType = _bx->STACKVALUETYPE;
-    const Type *pValueType = _bx->PointerTo(LOC, comp, _valueType);
+    _valueType = _bx->STACKVALUETYPE(ir);
+    const Type *pValueType = _bx->PointerTo(LOC, _valueType);
 
     _createStack = ctx->DefineFunction(LOC, comp, "createStack", "0", "0", (void *)&OperandStackTestFunction::createStack, NoType, 0);
     _moveStack = ctx->DefineFunction(LOC, comp, "moveStack", "0", "0", (void *)&OperandStackTestFunction::moveStack, pValueType, 0);
@@ -472,9 +473,9 @@ OperandStackTestFunction::buildContext(LOCATION, Func::FunctionCompilation *comp
 #define PICK(b,d)          (STACK(b)->Pick(d))
 
 Builder *
-OperandStackTestFunction::testStack(Builder *b, IR *ir, bool useEqual) {
+OperandStackTestFunction::testStack(Builder *b, bool useEqual) {
     STACKVALUECTYPE one=1;
-    Literal *lv1 = _valueType->literal(LOC, ir, reinterpret_cast<LiteralBytes *>(&one));
+    Literal *lv1 = _valueType->literal(LOC, reinterpret_cast<LiteralBytes *>(&one));
     PUSH(b, _bx->Const(LOC, b, lv1));
     _fx->Call(LOC, b, _verifyResult0);
 
@@ -482,11 +483,11 @@ OperandStackTestFunction::testStack(Builder *b, IR *ir, bool useEqual) {
     _fx->Call(LOC, b, _verifyResult1);
 
     STACKVALUECTYPE two=2;
-    Literal *lv2 = _valueType->literal(LOC, ir, reinterpret_cast<LiteralBytes *>(&two));
+    Literal *lv2 = _valueType->literal(LOC, reinterpret_cast<LiteralBytes *>(&two));
     PUSH(b, _bx->Const(LOC, b, lv2));
 
     STACKVALUECTYPE three=3;
-    Literal *lv3 = _valueType->literal(LOC, ir, reinterpret_cast<LiteralBytes *>(&three));
+    Literal *lv3 = _valueType->literal(LOC, reinterpret_cast<LiteralBytes *>(&three));
     PUSH(b, _bx->Const(LOC, b, lv3));
     _fx->Call(LOC, b, _verifyResult2, TOP(b));
 
@@ -513,9 +514,9 @@ OperandStackTestFunction::testStack(Builder *b, IR *ir, bool useEqual) {
     _fx->Call(LOC, b, _verifyResult7);
 
     STACKVALUECTYPE four=4;
-    Literal *lv4 = _valueType->literal(LOC, ir, reinterpret_cast<LiteralBytes *>(&four));
+    Literal *lv4 = _valueType->literal(LOC, reinterpret_cast<LiteralBytes *>(&four));
     STACKVALUECTYPE five=5;
-    Literal *lv5 = _valueType->literal(LOC, ir, reinterpret_cast<LiteralBytes *>(&five));
+    Literal *lv5 = _valueType->literal(LOC, reinterpret_cast<LiteralBytes *>(&five));
 
     PUSH(b, _bx->Const(LOC, b, lv5));
     PUSH(b, _bx->Const(LOC, b, lv4));
@@ -548,12 +549,12 @@ OperandStackTestFunction::testStack(Builder *b, IR *ir, bool useEqual) {
     _vmx->Goto(LOC, b, elseBB);
 
     STACKVALUECTYPE eleven=11;
-    Literal *lv11 = _valueType->literal(LOC, ir, reinterpret_cast<LiteralBytes *>(&eleven));
+    Literal *lv11 = _valueType->literal(LOC, reinterpret_cast<LiteralBytes *>(&eleven));
     PUSH(thenBB, _bx->Const(LOC, thenBB, lv11));
     _vmx->Goto(LOC, thenBB, mergeBB);
 
     STACKVALUECTYPE ninetynine=99;
-    Literal *lv99 = _valueType->literal(LOC, ir, reinterpret_cast<LiteralBytes *>(&ninetynine));
+    Literal *lv99 = _valueType->literal(LOC, reinterpret_cast<LiteralBytes *>(&ninetynine));
     PUSH(elseBB, _bx->Const(LOC, elseBB, lv99));
     _vmx->Goto(LOC, elseBB, mergeBB);
 
@@ -563,7 +564,7 @@ OperandStackTestFunction::testStack(Builder *b, IR *ir, bool useEqual) {
     _fx->Call(LOC, mergeBB, _verifyResult12, TOP(mergeBB));
  
     STACKVALUECTYPE amountToAdd = 10;
-    Literal *lvAmount = _valueType->literal(LOC, ir, reinterpret_cast<LiteralBytes *>(&amountToAdd));
+    Literal *lvAmount = _valueType->literal(LOC, reinterpret_cast<LiteralBytes *>(&amountToAdd));
 
     // Reload test. Call a routine that modifies stack elements passed to it. 
     // Test by reloading and test the popped values
@@ -576,19 +577,19 @@ OperandStackTestFunction::testStack(Builder *b, IR *ir, bool useEqual) {
 
     Value *modifiedStackElement = POP(mergeBB);
     STACKVALUECTYPE amountPlus3 = 3+amountToAdd;
-    Literal *lvAmountPlus3 = _valueType->literal(LOC, ir, reinterpret_cast<LiteralBytes *>(&amountPlus3));
+    Literal *lvAmountPlus3 = _valueType->literal(LOC, reinterpret_cast<LiteralBytes *>(&amountPlus3));
     Value *expected =  _bx->Const(LOC, mergeBB, lvAmountPlus3); 
     _fx->Call(LOC, mergeBB, _verifyValuesEqual, modifiedStackElement, expected);  
 
     modifiedStackElement = POP(mergeBB);
     STACKVALUECTYPE amountPlus2 = 2+amountToAdd;
-    Literal *lvAmountPlus2 = _valueType->literal(LOC, ir, reinterpret_cast<LiteralBytes *>(&amountPlus2));
+    Literal *lvAmountPlus2 = _valueType->literal(LOC, reinterpret_cast<LiteralBytes *>(&amountPlus2));
     expected = _bx->Const(LOC, mergeBB, lvAmountPlus2);
     _fx->Call(LOC, mergeBB, _verifyValuesEqual, modifiedStackElement, expected);  
 
     modifiedStackElement = POP(mergeBB);
     STACKVALUECTYPE amountPlus1 = 1+amountToAdd;
-    Literal *lvAmountPlus1 = _valueType->literal(LOC, ir, reinterpret_cast<LiteralBytes *>(&amountPlus1));
+    Literal *lvAmountPlus1 = _valueType->literal(LOC, reinterpret_cast<LiteralBytes *>(&amountPlus1));
     expected =  _bx->Const(LOC, mergeBB, lvAmountPlus1);
     _fx->Call(LOC, mergeBB, _verifyValuesEqual, modifiedStackElement, expected);  
 
@@ -601,7 +602,8 @@ OperandStackTestFunction::testStack(Builder *b, IR *ir, bool useEqual) {
 
 bool
 OperandStackTestFunction::buildIL(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
-    const Base::PointerType *pElementType = _bx->PointerTo(LOC, comp, _bx->PointerTo(LOC, comp, _bx->STACKVALUETYPE));
+    IR *ir = comp->ir();
+    const Base::PointerType *pElementType = _bx->PointerTo(LOC, _bx->PointerTo(LOC, _bx->STACKVALUETYPE(ir)));
 
     Builder *entry = scope->entryPoint<BuilderEntry>()->builder();
     _fx->Call(LOC, entry, _createStack);
@@ -609,7 +611,7 @@ OperandStackTestFunction::buildIL(LOCATION, Func::FunctionCompilation *comp, Fun
     Value *realStackTopAddress = _bx->ConstPointer(LOC, entry, pElementType, &_realStackTop);
     Allocator *mem = comp->mem();
     VM::VirtualMachineRegister *stackTop = new (mem) VM::VirtualMachineRegister(MEM_LOC(mem), _vmx, "SP", comp, realStackTopAddress);
-    VM::VirtualMachineOperandStack *stack = new (mem) VM::VirtualMachineOperandStack(MEM_LOC(mem), _vmx, comp, 1, stackTop, _bx->STACKVALUETYPE);
+    VM::VirtualMachineOperandStack *stack = new (mem) VM::VirtualMachineOperandStack(MEM_LOC(mem), _vmx, comp, 1, stackTop, _bx->STACKVALUETYPE(ir));
 
     TestState *vmState = new (mem) TestState(MEM_LOC(mem), _vmx, stack, stackTop);
 
@@ -617,7 +619,7 @@ OperandStackTestFunction::buildIL(LOCATION, Func::FunctionCompilation *comp, Fun
     bb->addon<VM::VMBuilderAddon>()->setVMState(vmState); // ownership passed to bb so we should never delete vmState ourselves
     _bx->Goto(LOC, entry, bb);
 
-    testStack(bb, comp->ir(), true);
+    testStack(bb, true);
 
     return true;
 }
@@ -632,35 +634,36 @@ OperandStackTestUsingStructFunction::OperandStackTestUsingStructFunction(MEM_LOC
 
 bool
 OperandStackTestUsingStructFunction::buildContext(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
-
+    IR *ir = comp->ir();
     OperandStackTestFunction::buildContext(PASSLOC, comp, scope, ctx);
 
     Base::StructTypeBuilder builder(_bx, comp);
     builder.setName("Thread")
-           ->addField("sp", _bx->PointerTo(LOC, comp, _bx->STACKVALUETYPE), 8*offsetof(Thread, sp));
+           ->addField("sp", _bx->PointerTo(LOC, _bx->STACKVALUETYPE(ir)), 8*offsetof(Thread, sp));
     _threadType = builder.create(LOC);
     _spField = _threadType->LookupField("sp");
 
-    _threadParam = ctx->DefineParameter("thread", _bx->PointerTo(LOC, comp, _threadType));
+    _threadParam = ctx->DefineParameter("thread", _bx->PointerTo(LOC, _threadType));
 
     return true;
 }
 
 bool
 OperandStackTestUsingStructFunction::buildIL(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
+    IR *ir = comp->ir();
     Builder *entry = scope->entryPoint<BuilderEntry>()->builder();
     _fx->Call(LOC, entry, _createStack);
 
     Allocator *mem = comp->mem();
     VM::VirtualMachineRegisterInStruct *stackTop = new (mem) VM::VirtualMachineRegisterInStruct(MEM_LOC(mem), _vmx, "SP", comp, _spField, _threadParam);
-    VM::VirtualMachineOperandStack *stack = new (mem) VM::VirtualMachineOperandStack(MEM_LOC(mem), _vmx, comp, 1, stackTop, _bx->STACKVALUETYPE);
+    VM::VirtualMachineOperandStack *stack = new (mem) VM::VirtualMachineOperandStack(MEM_LOC(mem), _vmx, comp, 1, stackTop, _bx->STACKVALUETYPE(ir));
 
     TestState *vmState = new (mem) TestState(MEM_LOC(mem), _vmx, stack, stackTop);
     Builder *bb = _vmx->OrphanBuilder(PASSLOC, entry, 0, 0, scope, String("entry"));
     bb->addon<VM::VMBuilderAddon>()->setVMState(vmState); // ownership transferred to bb so should never delete it ourselves
     _bx->Goto(LOC, entry, bb);
 
-    testStack(bb, comp->ir(), false);
+    testStack(bb, false);
 
     return true;
 }

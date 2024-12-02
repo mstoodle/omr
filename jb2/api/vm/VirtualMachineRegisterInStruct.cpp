@@ -44,7 +44,7 @@ VirtualMachineRegisterInStruct::VirtualMachineRegisterInStruct(MEM_LOCATION(a),
     const Type *regBaseType = fieldType->type();
     _integerTypeForAdjustments = regBaseType;
     if (regBaseType->isKind<Base::PointerType>()) {
-        _integerTypeForAdjustments = bx()->Word;
+        _integerTypeForAdjustments = bx()->Word(comp->ir());
         const Type *baseType = regBaseType->refine<Base::PointerType>()->baseType();
         _adjustByStep = baseType->size();
         _isAdjustable = true;

@@ -149,7 +149,7 @@ OMRCodeGenerator::visitPreCompilation(Compilation *comp) {
 void
 OMRCodeGenerator::registerSymbols(Compilation *comp) {
     SymbolDictionary *symdict = comp->ir()->symdict();
-    for (auto it = symdict->symbolIterator(); it.hasItem(); it++) {
+    for (auto it = symdict->iterator(); it.hasItem(); it++) {
         Symbol *sym = it.item();
         CodeGeneratorForExtension *cgForExt = sym->ext()->addon<OMRCodeGeneratorExtensionAddon>()->cgForExtension();
         if (cgForExt)
@@ -161,13 +161,14 @@ OMRCodeGenerator::registerSymbols(Compilation *comp) {
 
 void
 OMRCodeGenerator::registerTypes(Compilation *comp) {
-    TypeDictionary *typedict = comp->ir()->typedict();
-    TypeID numTypes = typedict->numTypes();
+    IR *ir = comp->ir();
+    TypeDictionary *typedict = ir->typedict();
+    TypeID numTypes = ir->maxTypeID() + 1;
     Allocator myMem("Type mapping", comp->mem());
     BitVector mappedTypes(&myMem, numTypes);
     while (numTypes > 0) {
         TypeID startNumTypes = numTypes;
-        for (auto it = typedict->typesIterator(); it.hasItem(); it++) {
+        for (auto it = typedict->iterator(); it.hasItem(); it++) {
             const Type *type = it.item();
             if (mappedTypes.getBit(type->id()) != true) {
                 CodeGeneratorForExtension *cgForExt = type->ext()->addon<OMRCodeGeneratorExtensionAddon>()->cgForExtension();

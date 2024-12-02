@@ -22,75 +22,35 @@
 #ifndef SYMBOLDICTIONARY_INCL
 #define SYMBOLDICTIONARY_INCL
 
-#include "common.hpp"
 #include <map>
-#include "Extensible.hpp"
+#include "Symbol.hpp"
+#include "Dictionary.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 
-class Compiler;
-class DebugDictionary;
-class DynamicType;
-class ExtensibleIR;
-class Extension;
-class IR;
-class IRCloner;
-class OperationBuilder;
-class TextLogger;
-class Type;
+class CompilerSymbolDictionary;
 
-class SymbolDictionary : public Extensible {
+class SymbolDictionary : public Dictionary<Symbol, SymbolID, NoSymbol, SymbolList> {
+    typedef Dictionary<Symbol, SymbolID, NoSymbol, SymbolList> DictBaseType;
     JBALLOC_(SymbolDictionary)
 
-    friend class Compiler;
-    friend class DebugDictionary;
-    friend class DynamicType;
-    friend class Extension;
     friend class IR;
     friend class IRCloner;
-    friend class OperationBuilder;
+    friend class Symbol;
 
 public:
-    DYNAMIC_ALLOC_ONLY(SymbolDictionary, Compiler *compiler);
-    DYNAMIC_ALLOC_ONLY(SymbolDictionary, Compiler *compiler, String name);
-    DYNAMIC_ALLOC_ONLY(SymbolDictionary, Compiler *compiler, String name, SymbolDictionary *linkedTypes);
+    DYNAMIC_ALLOC_ONLY(SymbolDictionary, IR *ir, String name);
 
-    SymbolListIterator symbolIterator() const { return _symbols.iterator(); }
-
-    Symbol *LookupSymbol(SymbolID id);
-    Symbol *LookupSymbol(String name);
-    void RemoveSymbol(Symbol *symbol);
-
-    SymbolDictionaryID id() const { return _id; }
-    const String & name() const { return _name; }
-    bool hasLinkedDictionary() const { return _linkedDictionary != NULL; }
-    SymbolDictionary *linkedDictionary() const { return _linkedDictionary; }
-
-    void registerSymbol(Symbol *symbol);
-
-    void log(TextLogger &w) const;
-
-    SymbolID numSymbols() const { return _nextSymbolID; }
+    virtual void addNewEntry(Symbol *symbol);
+    Symbol *Lookup(String name);
 
 protected:
     SymbolDictionary(Allocator *a, const SymbolDictionary *source, IRCloner *cloner);
-
-    void internalRegisterSymbol(Symbol *symbol);
-    virtual ExtensibleIR *clone(Allocator *mem, IRCloner *cloner) const { return reinterpret_cast<ExtensibleIR *>(cloneDictionary(mem, cloner)); } // TODO: FIX!
+    virtual ExtensibleIR *clone(Allocator *mem, IRCloner *cloner) const { return cloneDictionary(mem, cloner); }
     virtual SymbolDictionary *cloneDictionary(Allocator *mem, IRCloner *cloner) const;
-    virtual void logContents(TextLogger &w) const {}
 
-    SymbolDictionaryID _id;
-    Compiler * _compiler;
-    Allocator * _mem;
-    String _name;
-    SymbolList _symbols;
-    SymbolList _ownedSymbols;
-    std::map<const Type *,SymbolList *> _symbolsByType;
     std::map<String, Symbol *> _symbolsByName;
-    SymbolID _nextSymbolID;
-    SymbolDictionary * _linkedDictionary;
 
     SUBCLASS_KINDSERVICE_DECL(Extensible, SymbolDictionary);
 };

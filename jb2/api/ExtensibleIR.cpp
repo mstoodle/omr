@@ -36,6 +36,11 @@ ExtensibleIR::ExtensibleIR(Allocator *a, Extension *ext, IR *ir, KINDTYPE(Extens
 
 }
 
+ExtensibleIR::ExtensibleIR(Allocator *a, Extension *ext, Compiler *compiler, KINDTYPE(Extensible) kind)
+    : Extensible(a, ext, kind)
+    , _ir(compiler->irPrototype()) {
+}
+
 ExtensibleIR::ExtensibleIR(Allocator *a, const ExtensibleIR *source, IRCloner *cloner)
     : Extensible(a, source->ext(), source->kind())
     , _ir(cloner->clonedIR()) {

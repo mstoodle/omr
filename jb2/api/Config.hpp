@@ -93,6 +93,10 @@ public:
     bool traceTypeReplacer() const                            { return _traceTypeReplacer; }
     Config * setTraceTypeReplacer(bool v=true)                { _traceTypeReplacer = v; return this; }
 
+    // when true, logs irPototype before logging compilation
+    bool tracePrototypeIR() const                             { return _tracePrototypeIR; }
+    Config * setTracePrototypeIR(bool v=true)                 { _tracePrototypeIR = v; return this; }
+
     // when true, turn on tracking for allocations made by the Compilation
     Config * setTrackCompilationAllocations(bool v=true)      { _trackCompilationAllocations = v; return this; }
 
@@ -131,6 +135,7 @@ protected:
     bool _traceCompilationAllocations;
     bool _traceCompilerAllocations;
     bool _traceTypeReplacer;
+    bool _tracePrototypeIR;
 
     bool _trackCompilationAllocations;
     bool _trackCompilerAllocations;

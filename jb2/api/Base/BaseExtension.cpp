@@ -59,14 +59,14 @@ extern "C" {
 BaseExtension::BaseExtension(MEM_LOCATION(a), Compiler *compiler, bool extended, String extensionName)
     : Extension(MEM_PASSLOC(a), CLASSKIND(BaseExtension,Extensible), compiler, (extended ? extensionName : NAME))
     , _cx(compiler->coreExt()) 
-    , Int8(new (a) Int8Type(MEM_PASSLOC(a), this))
-    , Int16(new (a) Int16Type(MEM_PASSLOC(a), this))
-    , Int32(new (a) Int32Type(MEM_PASSLOC(a), this))
-    , Int64(new (a) Int64Type(MEM_PASSLOC(a), this))
-    , Float32(new (a) Float32Type(MEM_PASSLOC(a), this))
-    , Float64(new (a) Float64Type(MEM_PASSLOC(a), this))
-    , Address(new (a) AddressType(MEM_PASSLOC(a), this))
-    , Word(compiler->platformWordSize() == 64 ? static_cast<const Type *>(this->Int64) : static_cast<const Type *>(this->Int32))
+    , tInt8(registerType())
+    , tInt16(registerType())
+    , tInt32(registerType())
+    , tInt64(registerType())
+    , tFloat32(registerType())
+    , tFloat64(registerType())
+    , tAddress(registerType())
+    , tWord(compiler->platformWordSize() == 64 ? tInt64 : tInt32)
     , aConst(registerAction(String(a, "Const")))
     , aAdd(registerAction(String(a, "Add")))
     , aAnd(registerAction(String(a, "And")))
@@ -138,6 +138,7 @@ BaseExtension::BaseExtension(MEM_LOCATION(a), Compiler *compiler, bool extended,
     }
 
     registerForExtensible(CLASSKIND(IR,Extensible), this);
+    createAddon(compiler->irPrototype());
     registerForExtensible(CLASSKIND(IRCloner,Extensible), this);
     
     Func::FunctionExtension *fx = compiler->lookupExtension<Func::FunctionExtension>();
@@ -166,8 +167,8 @@ BaseExtension::createAddon(Extensible *e) {
     Allocator *mem = e->allocator();
 
     if (e->isKind<IR>()) {
-        BaseIRAddon *bc = new (mem) BaseIRAddon(mem, this, e->refine<IR>());
-        e->attach(bc);
+        BaseIRAddon *bira = new (mem) BaseIRAddon(MEM_LOC(mem), this, e->refine<IR>());
+        e->attach(bira);
     } else if (e->isKind<Func::FunctionExtension>()) {
         BaseFunctionExtensionAddon *bfe = new (mem) BaseFunctionExtensionAddon(mem, e->refine<Func::FunctionExtension>(), this);
         e->attach(bfe);
@@ -175,6 +176,46 @@ BaseExtension::createAddon(Extensible *e) {
         BaseIRClonerAddon *bc = new (mem) BaseIRClonerAddon(mem, this, e->refine<IRCloner>());
         e->attach(bc);
     }
+}
+
+const Int8Type *
+BaseExtension::Int8(IR *ir) const {
+    return ir->addon<BaseIRAddon>()->Int8;
+}
+
+const Int16Type *
+BaseExtension::Int16(IR *ir) const {
+    return ir->addon<BaseIRAddon>()->Int16;
+}
+
+const Int32Type *
+BaseExtension::Int32(IR *ir) const {
+    return ir->addon<BaseIRAddon>()->Int32;
+}
+
+const Int64Type *
+BaseExtension::Int64(IR *ir) const {
+    return ir->addon<BaseIRAddon>()->Int64;
+}
+
+const Float32Type *
+BaseExtension::Float32(IR *ir) const {
+    return ir->addon<BaseIRAddon>()->Float32;
+}
+
+const Float64Type *
+BaseExtension::Float64(IR *ir) const {
+    return ir->addon<BaseIRAddon>()->Float64;
+}
+
+const AddressType *
+BaseExtension::Address(IR *ir) const {
+    return ir->addon<BaseIRAddon>()->Address;
+}
+
+const IntegerType *
+BaseExtension::Word(IR *ir) const {
+    return ir->addon<BaseIRAddon>()->Word;
 }
 
 
@@ -199,30 +240,35 @@ BaseExtensionChecker::~BaseExtensionChecker() {
 //
 bool
 BaseExtensionChecker::validateAdd(LOCATION, Builder *b, Value *left, Value *right) {
+    IR *ir = b->ir();
+
     const Type *lType = left->type();
     const Type *rType = right->type();
 
-    const Type *Address = _base->Address;
-    const Type *Word = _base->Word;
+    const TypeID ltID = lType->id();
+    const TypeID rtID = rType->id();
 
-    if (lType == Address) {
-        if (rType != Word)
+    const TypeID tAddress = _base->tAddress;
+    const TypeID tWord = _base->tWord;
+
+    if (ltID == tAddress) {
+        if (rtID != tWord)
             failValidateAdd(PASSLOC, b, left, right);
         return true;
     }
 
-    if (rType == Address) {
-        if (lType != Word)
+    if (rtID == tAddress) {
+        if (ltID != tWord)
             failValidateAdd(PASSLOC, b, left, right);
         return true;
     }
 
-    if (lType == _base->Int8
-     || lType == _base->Int16
-     || lType == _base->Int32
-     || lType == _base->Int64
-     || lType == _base->Float32
-     || lType == _base->Float64) {
+    if (ltID == _base->tInt8
+     || ltID == _base->tInt16
+     || ltID == _base->tInt32
+     || ltID == _base->tInt64
+     || ltID == _base->tFloat32
+     || ltID == _base->tFloat64) {
         if (rType != lType)
             failValidateAdd(PASSLOC, b, left, right);
         return true;
@@ -238,10 +284,11 @@ BaseExtensionChecker::validateAnd(LOCATION, Builder *b, Value *left, Value *righ
     const Type *lType = left->type();
     const Type *rType = right->type();
 
-    if (lType == _base->Int8
-     || lType == _base->Int16
-     || lType == _base->Int32
-     || lType == _base->Int64) {
+    const TypeID ltID = lType->id();
+    if (ltID == _base->tInt8
+     || ltID == _base->tInt16
+     || ltID == _base->tInt32
+     || ltID == _base->tInt64) {
         if (rType != lType)
             failValidateAnd(PASSLOC, b, left, right);
         return true;
@@ -287,7 +334,7 @@ BaseExtension::Add(LOCATION, Builder *b, Value *left, Value *right) {
             break;
     }
 
-    if (right->type() == Address) { // reverse left and right
+    if (right->type()->id() == tAddress) { // reverse left and right
         Value *save = left;
         left = right;
         right = save;
@@ -317,20 +364,30 @@ bool
 BaseExtensionChecker::validateConvertTo(LOCATION, Builder *b, const Type *type, Value *value) {
     // TODO: enhance type checking
     const Type *vType = value->type();
-    if (type == _base->Int8
-     || type == _base->Int16
-     || type == _base->Int32
-     || type == _base->Int64
-     || type == _base->Float32
-     || type == _base->Float64
-     || type == _base->Address) {
-        if (vType == _base->Int8
-         || vType == _base->Int16
-         || vType == _base->Int32
-         || vType == _base->Int64
-         || vType == _base->Float32
-         || vType == _base->Float64
-         || vType == _base->Address) {
+    const TypeID vtID = vType->id();
+    const TypeID tID = type->id();
+    
+    const TypeID tInt8 = _base->tInt8;
+    const TypeID tInt16 = _base->tInt16;
+    const TypeID tInt32 = _base->tInt32;
+    const TypeID tInt64 = _base->tInt64;
+    const TypeID tFloat32 = _base->tFloat32;
+    const TypeID tFloat64 = _base->tFloat64;
+    const TypeID tAddress = _base->tAddress;
+    if (tID == tInt8
+     || tID == tInt16
+     || tID == tInt32
+     || tID == tInt64
+     || tID == tFloat32
+     || tID == tFloat64
+     || tID == tAddress) {
+        if (vtID == tInt8
+         || vtID == tInt16
+         || vtID == tInt32
+         || vtID == tInt64
+         || vtID == tFloat32
+         || vtID == tFloat64
+         || vtID == tAddress) {
 
             return true;
         }
@@ -373,12 +430,13 @@ BaseExtensionChecker::validateDiv(LOCATION, Builder *b, Value *left, Value *righ
     const Type *lType = left->type();
     const Type *rType = right->type();
 
-    if (lType == _base->Int8
-     || lType == _base->Int16
-     || lType == _base->Int32
-     || lType == _base->Int64
-     || lType == _base->Float32
-     || lType == _base->Float64) {
+    const TypeID ltID = lType->id();
+    if (ltID == _base->tInt8
+     || ltID == _base->tInt16
+     || ltID == _base->tInt32
+     || ltID == _base->tInt64
+     || ltID == _base->tFloat32
+     || ltID == _base->tFloat64) {
         if (rType != lType)
             failValidateDiv(PASSLOC, b, left, right);
         return true;
@@ -453,8 +511,9 @@ BaseExtension::EqualTo(LOCATION, Builder *b, Value *left, Value *right) {
             break;
     }
 
-    Allocator *mem = b->ir()->mem();
-    Value *result = createValue(b, Int32);
+    IR *ir = b->ir();
+    Allocator *mem = ir->mem();
+    Value *result = createValue(b, Int32(ir));
     addOperation(b, new (mem) Op_EqualTo(MEM_PASSLOC(mem), this, b, aEqualTo, result, left, right));
     return result;
 }
@@ -464,13 +523,14 @@ bool
 BaseExtensionChecker::validateMul(LOCATION, Builder *b, Value *left, Value *right) {
     const Type *lType = left->type();
     const Type *rType = right->type();
+    const TypeID ltID = lType->id();
 
-    if (lType == _base->Int8
-     || lType == _base->Int16
-     || lType == _base->Int32
-     || lType == _base->Int64
-     || lType == _base->Float32
-     || lType == _base->Float64) {
+    if (ltID == _base->tInt8
+     || ltID == _base->tInt16
+     || ltID == _base->tInt32
+     || ltID == _base->tInt64
+     || ltID == _base->tFloat32
+     || ltID == _base->tFloat64) {
         if (rType != lType)
             failValidateMul(PASSLOC, b, left, right);
         return true;
@@ -545,7 +605,7 @@ BaseExtension::NotEqualTo(LOCATION, Builder *b, Value *left, Value *right) {
     }
 
     Allocator *mem = b->ir()->mem();
-    Value *result = createValue(b, Int32);
+    Value *result = createValue(b, Int32(b->ir()));
     addOperation(b, new (mem) Op_NotEqualTo(MEM_PASSLOC(mem), this, b, aNotEqualTo, result, left, right));
     return result;
 }
@@ -556,22 +616,25 @@ BaseExtensionChecker::validateSub(LOCATION, Builder *b, Value *left, Value *righ
     const Type *lType = left->type();
     const Type *rType = right->type();
 
-    const Type *Address = _base->Address;
-    if (lType == Address) {
-        if (rType != Address && rType != _base->Word)
+    const TypeID ltID = lType->id();
+    const TypeID rtID = rType->id();
+
+    const TypeID tAddress = _base->tAddress;
+    if (ltID == tAddress) {
+        if (rtID != tAddress && rtID != _base->tWord)
             failValidateSub(PASSLOC, b, left, right);
         return true;
     }
 
-    if (rType == Address) // lType cannot be Address
+    if (rtID == tAddress) // lType cannot be Address
         failValidateSub(PASSLOC, b, left, right);
 
-    if (lType == _base->Int8
-     || lType == _base->Int16
-     || lType == _base->Int32
-     || lType == _base->Int64
-     || lType == _base->Float32
-     || lType == _base->Float64) {
+    if (ltID == _base->tInt8
+     || ltID == _base->tInt16
+     || ltID == _base->tInt32
+     || ltID == _base->tInt64
+     || ltID == _base->tFloat32
+     || ltID == _base->tFloat64) {
         if (rType != lType)
             failValidateSub(PASSLOC, b, left, right);
         return true;
@@ -617,10 +680,11 @@ BaseExtension::Sub(LOCATION, Builder *b, Value *left, Value *right) {
 bool
 BaseExtensionChecker::validateForLoopUp(LOCATION, Builder *b, Symbol *loopVariable, Value *initial, Value *final, Value *bump) {
     const Type *counterType = loopVariable->type();
-    if (counterType != _base->Int8
-     && counterType != _base->Int16
-     && counterType != _base->Int32
-     && counterType != _base->Int64)
+    const TypeID counterID = counterType->id();
+    if (counterID != _base->tInt8
+     && counterID != _base->tInt16
+     && counterID != _base->tInt32
+     && counterID != _base->tInt64)
         failValidateForLoopUp(PASSLOC, b, loopVariable, initial, final, bump);
 
     if (initial->type() != loopVariable->type())
@@ -682,13 +746,14 @@ BaseExtensionChecker::validateIfCmp(LOCATION, Builder *b, Builder *target, Value
     const Type *lType = left->type();
     const Type *rType = right->type();
 
-    if (lType == _base->Int8
-     || lType == _base->Int16
-     || lType == _base->Int32
-     || lType == _base->Int64
-     || lType == _base->Float32
-     || lType == _base->Float64
-     || lType == _base->Address) {
+    const TypeID ltID = lType->id();
+    if (ltID == _base->tInt8
+     || ltID == _base->tInt16
+     || ltID == _base->tInt32
+     || ltID == _base->tInt64
+     || ltID == _base->tFloat32
+     || ltID == _base->tFloat64
+     || ltID == _base->tAddress) {
         if (rType != lType)
             failValidateIfCmp(PASSLOC, b, target, left, right, failCode, opCodeName);
         return true;
@@ -704,10 +769,11 @@ BaseExtensionChecker::validateIfCmpUnsigned(LOCATION, Builder *b, Builder *targe
     const Type *lType = left->type();
     const Type *rType = right->type();
 
-    if (lType == _base->Int8
-     || lType == _base->Int16
-     || lType == _base->Int32
-     || lType == _base->Int64) {
+    const TypeID ltID = lType->id();
+    if (ltID == _base->tInt8
+     || ltID == _base->tInt16
+     || ltID == _base->tInt32
+     || ltID == _base->tInt64) {
         if (rType != lType)
             failValidateIfCmp(PASSLOC, b, target, left, right, failCode, opCodeName);
         return true;
@@ -735,14 +801,15 @@ BaseExtensionChecker::failValidateIfCmp(LOCATION, Builder *b, Builder *target, V
 bool
 BaseExtensionChecker::validateIfCmpZero(LOCATION, Builder *b, Builder *target, Value *value, CompilerReturnCode failCode, String opCodeName) {
     const Type *type = value->type();
+    const TypeID tID = type->id();
 
-    if (type == _base->Int8
-     || type == _base->Int16
-     || type == _base->Int32
-     || type == _base->Int64
-     || type == _base->Float32
-     || type == _base->Float64
-     || type == _base->Address) {
+    if (tID == _base->tInt8
+     || tID == _base->tInt16
+     || tID == _base->tInt32
+     || tID == _base->tInt64
+     || tID == _base->tFloat32
+     || tID == _base->tFloat64
+     || tID == _base->tAddress) {
         return true;
     }
 
@@ -1051,62 +1118,69 @@ BaseExtension::IndexAt(LOCATION, Builder *b, Value *base, Value *index) {
 //
 Value *
 BaseExtension::ConstInt8(LOCATION, Builder *b, int8_t v) {
-    Literal *lv = this->Int8->literal(PASSLOC, b->ir(), v);
+    IR *ir = b->ir();
+    Literal *lv = this->Int8(ir)->literal(PASSLOC, v);
     return Const(PASSLOC, b, lv);
 }
 
 Value *
 BaseExtension::ConstInt16(LOCATION, Builder *b, int16_t v) {
-    Literal *lv = this->Int16->literal(PASSLOC, b->ir(), v);
+    IR *ir = b->ir();
+    Literal *lv = this->Int16(ir)->literal(PASSLOC, v);
     return Const(PASSLOC, b, lv);
 }
 
 Value *
 BaseExtension::ConstInt32(LOCATION, Builder *b, int32_t v) {
-    Literal *lv = this->Int32->literal(PASSLOC, b->ir(), v);
+    IR *ir = b->ir();
+    Literal *lv = this->Int32(ir)->literal(PASSLOC, v);
     return Const(PASSLOC, b, lv);
 }
 
 Value *
 BaseExtension::ConstInt64(LOCATION, Builder *b, int64_t v) {
-    Literal *lv = this->Int64->literal(PASSLOC, b->ir(), v);
+    IR *ir = b->ir();
+    Literal *lv = this->Int64(ir)->literal(PASSLOC, v);
     return Const(PASSLOC, b, lv);
 }
 
 Value *
 BaseExtension::ConstFloat32(LOCATION, Builder *b, float v) {
-    Literal *lv = this->Float32->literal(PASSLOC, b->ir(), v);
+    IR *ir = b->ir();
+    Literal *lv = this->Float32(ir)->literal(PASSLOC, v);
     return Const(PASSLOC, b, lv);
 }
 
 Value *
 BaseExtension::ConstFloat64(LOCATION, Builder *b, double v) {
-    Literal *lv = this->Float64->literal(PASSLOC, b->ir(), v);
+    IR *ir = b->ir();
+    Literal *lv = this->Float64(ir)->literal(PASSLOC, v);
     return Const(PASSLOC, b, lv);
 }
 
 Value *
 BaseExtension::ConstAddress(LOCATION, Builder *b, void * v) {
-    Literal *lv = this->Address->literal(PASSLOC, b->ir(), v);
+    IR *ir = b->ir();
+    Literal *lv = this->Address(ir)->literal(PASSLOC, v);
     return Const(PASSLOC, b, lv);
 }
 
 Value *
 BaseExtension::ConstPointer(LOCATION, Builder *b, const PointerType *type, void * v) {
-    Literal *lv = type->literal(PASSLOC, b->ir(), v);
+    Literal *lv = type->literal(PASSLOC, v);
     return Const(PASSLOC, b, lv);
 }
 
 Value *
 BaseExtension::Zero(LOCATION, Builder *b, const Type *type) {
-    Literal *zero = type->zero(PASSLOC, b->ir());
+    Literal *zero = type->zero(PASSLOC);
     assert(zero);
     return Const(PASSLOC, b, zero);
 }
 
 Value *
 BaseExtension::One(LOCATION, Builder *b, const Type *type) {
-    Literal *one = type->identity(PASSLOC, b->ir());
+    Literal *one = type->identity(PASSLOC);
     assert(one);
     return Const(PASSLOC, b, one);
 }
@@ -1144,9 +1218,10 @@ BaseExtension::OffsetAt(LOCATION, Builder *b, Value *array, size_t elementIndex)
     if (!pElement->isKind<Base::PointerType>())
         failValidateOffsetAt(PASSLOC, b, array);
 
+    IR *ir = b->ir();
     const Type *Element = pElement->refine<PointerType>()->baseType();
     size_t offset = elementIndex; // * Element->size()/8;
-    Literal *elementOffset = this->Word->literal(PASSLOC, b->ir(), reinterpret_cast<LiteralBytes *>(&offset));
+    Literal *elementOffset = this->Word(ir)->literal(PASSLOC, reinterpret_cast<LiteralBytes *>(&offset));
     return IndexAt(PASSLOC, b, array, Const(PASSLOC, b, elementOffset));
 }
 
@@ -1189,8 +1264,8 @@ BaseExtension::StoreArray(LOCATION, Builder *b, Value *array, Value *indexValue,
 
 
 const PointerType *
-BaseExtension::PointerTo(LOCATION, IR *ir, const Type *baseType) {
-    PointerTypeBuilder pb(this, ir);
+BaseExtension::PointerTo(LOCATION, const Type *baseType) {
+    PointerTypeBuilder pb(this, baseType->ir());
     pb.setBaseType(baseType);
     return pb.create(PASSLOC);
 }

@@ -25,6 +25,7 @@
 #include <cstdarg>
 #include "common.hpp"
 #include "CreateLoc.hpp"
+#include "ExtensibleIR.hpp"
 #include "IRCloner.hpp"
 #include "Mapper.hpp"
 #include "String.hpp"
@@ -34,6 +35,7 @@ namespace JitBuilder {
 
 class Builder;
 class Extension;
+class IR;
 class IRCloner;
 class Literal;
 class Location;
@@ -51,7 +53,7 @@ class Value;
 // be instantiated directly. Specific concrete operations (e.g. Op_MergeDef) can leverage
 // structural classes or inherit directly from the Operation base class to add specific elements.
 
-class Operation : public Allocatable {
+class Operation : public ExtensibleIR {
     JBALLOC_(Operation)
 
     friend class Builder;
@@ -144,6 +146,8 @@ protected:
     const String _name;               // name for this operation: this should be by action and probably moved to Extension
     Location * _location;             // the source program location responsible for creation of this operation
     CreateLocation _creationLocation; // the compiler code location that caused this operation to be created
+
+    SUBCLASS_KINDSERVICE_DECL(Extensible,Operation);
 };
 
 

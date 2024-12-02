@@ -58,7 +58,7 @@ main(int argc, char *argv[]) {
     Compiler c("VirtualMachineRegisterTest");
 
     cout << "Step 2: load extensions (core, Func, Base and VM)\n";
-    CoreExtension *cx = c.lookupExtension<CoreExtension>();
+    CoreExtension *cx = c.coreExt();
     JB::JBExtension *jx = c.loadExtension<JB::JBExtension>(LOC);
     //omrgen::OMRExtension *jx = c.loadExtension<omrgen::OMRExtension>(LOC);
     Base::BaseExtension *bx = c.loadExtension<Base::BaseExtension>(LOC);
@@ -133,22 +133,24 @@ VMRegisterFunction::VMRegisterFunction(MEM_LOCATION(a), Compiler *compiler)
 
 bool
 VMRegisterFunction::buildContext(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
-    _values = ctx->DefineParameter("valuesPtr", _bx->PointerTo(LOC, comp, _bx->PointerTo(LOC, comp, _bx->Int8)));
-    _count = ctx->DefineParameter("count", _bx->Int32);
-    ctx->DefineReturnType(_bx->Int32);
+    IR *ir = comp->ir();
+    _values = ctx->DefineParameter("valuesPtr", _bx->PointerTo(LOC, _bx->PointerTo(LOC, _bx->Int8(ir))));
+    _count = ctx->DefineParameter("count", _bx->Int32(ir));
+    ctx->DefineReturnType(_bx->Int32(ir));
     return true;
 }
 
 bool
 VMRegisterFunction::buildIL(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
+    IR *ir = comp->ir();
     Builder *entry = comp->scope<Func::FunctionScope>()->entryPoint<BuilderEntry>()->builder();
     Allocator *mem = comp->mem();
     VM::VirtualMachineRegister *vmreg = new (mem) VM::VirtualMachineRegister(MEM_LOC(mem), _vmx, "MYBYTES", comp, _fx->Load(LOC, entry, _values));
 
-    Func::LocalSymbol *result = ctx->DefineLocal("result", _bx->Int32);
+    Func::LocalSymbol *result = ctx->DefineLocal("result", _bx->Int32(ir));
     _fx->Store(LOC, entry, result, _bx->ConstInt32(LOC, entry, 0));
 
-    Func::LocalSymbol *iterVar = ctx->DefineLocal("i", _bx->Int32);
+    Func::LocalSymbol *iterVar = ctx->DefineLocal("i", _bx->Int32(ir));
     Base::ForLoopBuilder loop = _bx->ForLoopUp(LOC, entry, iterVar, 
                                                _bx->ConstInt32(LOC, entry, 0),
                                                _fx->Load(LOC, entry, _count),
@@ -158,7 +160,7 @@ VMRegisterFunction::buildIL(LOCATION, Func::FunctionCompilation *comp, Func::Fun
 
         Value *val = _bx->LoadAt(LOC, body, vmreg->Load(LOC, body));
 
-        Value *bumpAmount = _bx->ConvertTo(LOC, body, _bx->Int32, val);
+        Value *bumpAmount = _bx->ConvertTo(LOC, body, _bx->Int32(ir), val);
         Value *newval = _bx->Add(LOC, body, _fx->Load(LOC, body, result), bumpAmount);
         _fx->Store(LOC, body, result, newval);
         vmreg->Adjust(LOC, body, 1);
@@ -186,28 +188,30 @@ VMRegisterInStructFunction::VMRegisterInStructFunction(MEM_LOCATION(a), Compiler
 
 bool
 VMRegisterInStructFunction::buildContext(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
+    IR *ir = comp->ir();
     Base::StructTypeBuilder builder(_bx, comp);
     builder.setName("VMRegisterStruct")
-           ->addField("values", _bx->PointerTo(LOC, comp, _bx->Int8), 8*offsetof(VMRegisterStruct, values))
-           ->addField("count", _bx->Int32, 8*offsetof(VMRegisterStruct, count));
+           ->addField("values", _bx->PointerTo(LOC, _bx->Int8(ir)), 8*offsetof(VMRegisterStruct, values))
+           ->addField("count", _bx->Int32(ir), 8*offsetof(VMRegisterStruct, count));
     const Base::StructType *vmRegisterStruct = builder.create(LOC);
     _valuesField = vmRegisterStruct->LookupField("values");
     _countField = vmRegisterStruct->LookupField("count");
-    _param = ctx->DefineParameter("param", _bx->PointerTo(LOC, comp, vmRegisterStruct));
-    ctx->DefineReturnType(_bx->Int32);
+    _param = ctx->DefineParameter("param", _bx->PointerTo(LOC, vmRegisterStruct));
+    ctx->DefineReturnType(_bx->Int32(ir));
     return true;
 }
 
 bool
 VMRegisterInStructFunction::buildIL(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
+    IR *ir = comp->ir();
     Builder *entry = scope->entryPoint<BuilderEntry>()->builder();
     Allocator *mem = comp->mem();
     VM::VirtualMachineRegisterInStruct *vmreg = new (mem) VM::VirtualMachineRegisterInStruct(MEM_LOC(mem), _vmx, "VALUES", comp, _valuesField, _param);
 
-    Func::LocalSymbol *result = ctx->DefineLocal("result", _bx->Int32);
+    Func::LocalSymbol *result = ctx->DefineLocal("result", _bx->Int32(ir));
     _fx->Store(LOC, entry, result, _bx->ConstInt32(LOC, entry, 0));
 
-    Func::LocalSymbol *iterVar = ctx->DefineLocal("i", _bx->Int32);
+    Func::LocalSymbol *iterVar = ctx->DefineLocal("i", _bx->Int32(ir));
     Base::ForLoopBuilder loop = _bx->ForLoopUp(LOC, entry, iterVar, 
                                                _bx->ConstInt32(LOC, entry, 0),
                                                _bx->LoadFieldAt(LOC, entry, _countField, _fx->Load(LOC, entry, _param)),
@@ -217,7 +221,7 @@ VMRegisterInStructFunction::buildIL(LOCATION, Func::FunctionCompilation *comp, F
 
         Value *val = _bx->LoadAt(LOC, body, vmreg->Load(LOC, body));
 
-        Value *bumpAmount = _bx->ConvertTo(LOC, body, _bx->Int32, val);
+        Value *bumpAmount = _bx->ConvertTo(LOC, body, _bx->Int32(ir), val);
         Value *newval = _bx->Add(LOC, body, _fx->Load(LOC, body, result), bumpAmount);
         _fx->Store(LOC, body, result, newval);
         vmreg->Adjust(LOC, body, 1);

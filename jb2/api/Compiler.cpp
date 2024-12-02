@@ -31,14 +31,15 @@
 #include "Config.hpp"
 #include "CoreExtension.hpp"
 #include "Extension.hpp"
-#include "LiteralDictionary.hpp"
+#include "IR.hpp"
+#include "IRCloner.hpp"
+#include "Literal.hpp"
 #include "Pass.hpp"
 #include "SemanticVersion.hpp"
 #include "Strategy.hpp"
-#include "SymbolDictionary.hpp"
+#include "Symbol.hpp"
 #include "TextWriter.hpp"
 #include "Type.hpp"
-#include "TypeDictionary.hpp"
 
 namespace OMR {
 namespace JitBuilder {
@@ -60,36 +61,26 @@ INIT_JBALLOC(Compiler);
     , _parent(p) \
     , _nextExtensionID(NoExtension+1) \
     , _extensions() \
-    , _core(NULL) \
     , _nextActionID(NoAction+1) \
     , _actionNames() \
     , _nextPassID(NoPass+1) \
     , _passNames() \
     , _extensiblesByKind() \
-    , _nextCompilationID(NoCompilation+1) \
-    , _nextCompileUnitID(NoCompileUnit+1) \
-    , _nextCompiledBodyID(NoCompiledBody+1) \
     , _nextContextID(NoContext+1) \
     , _nextExecutorID(NoExecutor+1) \
     , _nextReturnCode(0) \
     , _returnCodeNames() \
     , _nextStrategyID(NoStrategy+1) \
     , _strategies() \
-    , _nextTypeID(NoTypeID+1) \
-    , _types() \
     , _nextIRID(0) \
-    , _nextLiteralDictionaryID(0) /* remove */ \
-    , _nextSymbolDictionaryID(0) /* remove */ \
-    , _nextTypeDictionaryID(0) /* remove */ \
-    , _nextDictionaryID(NoDictionary+1) \
     , _targetPlatform(NULL) \
     , _compilerPlatform(NULL) \
     , _clientPlatform(NULL) \
-    , _litdict(new (_mem) LiteralDictionary(_mem, this, _name + " Compiler Literal Dictionary")) \
-    , _symdict(new (_mem) SymbolDictionary(_mem, this, _name + " Compiler Symbol Dictionary")) \
-    , _typedict(new (_mem) TypeDictionary(_mem, this, _name + " Compiler Type Dictionary")) \
+    , _coreExtension(NULL) \
+    , _primordialExtension(new (_mem) Extension(MEM_LOC(_mem), CLASSKIND(Extension, Extensible), this, "Primordial")) \
     , _textWriters(NULL, _mem) \
     , _errorCondition(NULL) \
+    , _irPrototype(new (_mem) IR(_mem, this)) \
     , CompileSuccessful(assignReturnCode("CompileSuccessful")) \
     , CompileNotStarted(assignReturnCode("CompileNotStarted")) \
     , CompileFailed(assignReturnCode("CompileFailed")) \
@@ -107,41 +98,27 @@ Compiler::Compiler(Allocator *a, String name, Config *config)
     : Allocatable(a)
     CTOR_FIELDS(NULL, name, config, a) {
 
-    init();
 }
 
 Compiler::Compiler(String name, Config *config)
     : Allocatable()
     CTOR_FIELDS(NULL, name, config, NULL) {
 
-    init();
 }
 
 Compiler::Compiler(Allocator *a, Compiler *parent, String name, Config *config)
     : Allocatable(a)
     CTOR_FIELDS(parent, name, config, a) {
 
-    init();
 }
 
 Compiler::Compiler(Compiler *parent, String name, Config *config)
     : Allocatable()
     CTOR_FIELDS(parent, name, config, NULL) {
 
-    init();
 }
 
 #undef CTOR_FIELDS
-
-void
-Compiler::init() {
-    if (_parent != NULL) {
-        _core = _parent->lookupExtension<CoreExtension>();
-    } else {
-        _core = new (_mem) CoreExtension(MEM_LOC(_mem), this);
-    }
-    addExtension(_core);
-}
 
 Compiler::~Compiler() {
     for (auto it = _extensionsForAddonsByKind.begin(); it != _extensionsForAddonsByKind.end(); it++) {
@@ -176,12 +153,7 @@ Compiler::~Compiler() {
     }
     _strategies.clear();
 
-    if (_litdict != NULL)
-        delete _litdict;
-    if (_symdict != NULL)
-        delete _symdict;
-    if (_typedict != NULL)
-        delete _typedict;
+    delete _irPrototype;
 
     for (auto wIt = _textWriters.iterator(); wIt.hasItem(); wIt++) {
         TextWriter *w = wIt.item();
@@ -200,6 +172,40 @@ Compiler::~Compiler() {
     if (_myConfig && _config != NULL)
         delete _config;
 
+}
+
+CoreExtension *
+Compiler::coreExt() {
+    if (_coreExtension == NULL) {
+        if (_parent != NULL) {
+            _coreExtension = _parent->lookupExtension<CoreExtension>();
+        } else {
+            _coreExtension = new (_mem) CoreExtension(MEM_LOC(_mem), this);
+        }
+        addExtension(_coreExtension);
+    }
+
+    return _coreExtension;
+}
+
+LiteralDictionary *
+Compiler::litdict() const {
+    return _irPrototype->litdict();
+}
+
+SymbolDictionary *
+Compiler::symdict() const {
+    return _irPrototype->symdict();
+}
+
+TypeDictionary *
+Compiler::typedict() const {
+    return _irPrototype->typedict();
+}
+
+IR *
+Compiler::createIR(Allocator *mem) const {
+    return _irPrototype->clone(mem);
 }
 
 bool
@@ -293,8 +299,8 @@ Compiler::addExtension(Extension *ext) {
         other->notifyNewExtension(ext);
     }
     this->_extensions.insert({ext->name(),ext});
-    for (auto it2=_extensions.begin(); it2 != this->_extensions.end();it2++) {
-    }
+    //for (auto it2=_extensions.begin(); it2 != this->_extensions.end();it2++) {
+    //}
 }
 
 bool
@@ -436,6 +442,11 @@ Compiler::compile(LOCATION, Compilation *comp, StrategyID strategyID) {
     CompiledBody *body = new (_mem) CompiledBody(_mem, unit, strategyID);
     if (_errorCondition != NULL) // error should be clear at the start
         return body->setReturnCode(CompileFail_CompilerError);
+
+    if (config()->tracePrototypeIR()) {
+        AllocatorRaw raw;
+        irPrototype()->log(comp, *comp->logger());
+    }
 
     CompilerReturnCode rc = CompileSuccessful;
     try {

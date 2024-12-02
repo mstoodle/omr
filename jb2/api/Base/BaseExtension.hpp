@@ -75,20 +75,25 @@ public:
     // Types
     //
 
-    const NoTypeType *NoType; // from core extension
-    const Int8Type *Int8;
-    const Int16Type *Int16;
-    const Int32Type *Int32;
-    const Int64Type *Int64;
-    const Float32Type *Float32;
-    const Float64Type *Float64;
-    const AddressType *Address;
-    const Type *Word;
+    const TypeID tInt8;
+    const TypeID tInt16;
+    const TypeID tInt32;
+    const TypeID tInt64;
+    const TypeID tFloat32;
+    const TypeID tFloat64;
+    const TypeID tAddress;
+    const TypeID tWord;
 
-    const PointerType *PointerTo(LOCATION, Compilation *comp, const Type *baseType) {
-        return PointerTo(PASSLOC, comp->ir(), baseType);
-    };
-    const PointerType *PointerTo(LOCATION, IR *ir, const Type *baseType);
+    const Int8Type *Int8(IR *ir) const;
+    const Int16Type *Int16(IR *ir) const;
+    const Int32Type *Int32(IR *ir) const;
+    const Int64Type *Int64(IR *ir) const;
+    const Float32Type *Float32(IR *ir) const;
+    const Float64Type *Float64(IR *ir) const;
+    const AddressType *Address(IR *ir) const;
+    const IntegerType *Word(IR *ir) const;
+    const PointerType *PointerTo(LOCATION, const Type *baseType);
+
 
     //
     // Actions

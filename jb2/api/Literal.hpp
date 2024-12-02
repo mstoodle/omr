@@ -22,8 +22,7 @@
 #ifndef LITERAL_INCL
 #define LITERAL_INCL
 
-#include <map>
-#include "common.hpp"
+#include "ExtensibleIR.hpp"
 #include "CreateLoc.hpp"
 
 namespace OMR {
@@ -37,7 +36,7 @@ class LiteralDictionary;
 class TextLogger;
 class Type;
 
-class Literal : public Allocatable {
+class Literal : public ExtensibleIR {
     JBALLOC_(Literal)
 
     friend class Compilation;
@@ -47,14 +46,13 @@ class Literal : public Allocatable {
 
 public:
     Literal(MEM_LOCATION(a), IR *ir, const Type *t, const LiteralBytes *v);
-    Literal(MEM_LOCATION(a), LiteralDictionary *litDict, const Type *t, const LiteralBytes *v);
 
     LiteralID id() const { return _id; }
     const Type *type() const { return _type; }
     template<typename T>
     const T value() const { return *reinterpret_cast<const T *>(_pValue); }
     const LiteralBytes *value() const { return _pValue; }
-    void log(TextLogger & lgr) const;
+    void log(TextLogger & lgr, bool indent=false) const;
     bool operator==(Literal & other);
 
     const int64_t getInteger() const;
@@ -63,7 +61,7 @@ public:
 protected:
     Literal(Allocator *a, const Literal *source, IRCloner *cloner);
 
-    virtual ExtensibleIR *clone(Allocator *mem, IRCloner *cloner) { return reinterpret_cast<ExtensibleIR *>(cloneLiteral(mem, cloner)); }; // TODO: FIX!
+    virtual ExtensibleIR *clone(Allocator *mem, IRCloner *cloner) { return cloneLiteral(mem, cloner); }
     virtual Literal *cloneLiteral(Allocator *mem, IRCloner *cloner);
 
     LiteralID _id;

@@ -32,22 +32,39 @@ namespace JitBuilder {
 
 INIT_JBALLOC_ON(Symbol, SymbolDictionary)
 
-BASECLASS_KINDSERVICE_IMPL(Symbol);
+SUBCLASS_KINDSERVICE_IMPL(Symbol, "Symbol", ExtensibleIR, Extensible)
+
+Symbol::Symbol(Allocator *mem, Extension *ext, IR *ir, String name, const Type * type)
+    : ExtensibleIR(mem, ext, ir, CLASSKIND(Symbol, Extensible))
+    , _ext(ext)
+    , _id(ir->getSymbolID())
+    , _name(name)
+    , _type(type) {
+
+}
+
+Symbol::Symbol(Allocator *mem, ExtensibleKind kind, Extension *ext, IR *ir, String name, const Type * type)
+    : ExtensibleIR(mem, ext, ir, kind)
+    , _ext(ext)
+    , _id(ir->getSymbolID())
+    , _name(name)
+    , _type(type) {
+
+}
 
 // only used by clone()
 Symbol::Symbol(Allocator *mem, const Symbol *source, IRCloner *cloner)
-    : Allocatable(mem)
+    : ExtensibleIR(mem, source, cloner)
     , _ext(source->_ext)
-    , _id(NoSymbol)
+    , _id(source->_id)
     , _name(source->_name)
-    , _type(cloner->clonedType(source->_type))
-    , BASECLASS_KINDINIT(KIND(Symbol)) {
+    , _type(cloner->clonedType(source->_type)) {
 
 }
 
 Symbol *
 Symbol::cloneSymbol(Allocator *mem, IRCloner *cloner) {
-    assert(_kind == KIND(Symbol));
+    assert(_kind == KIND(Extensible));
     return new (mem) Symbol(mem, this, cloner);
 }
 
@@ -56,10 +73,14 @@ Symbol::~Symbol() {
 }
 
 void
-Symbol::log(TextLogger &lgr) const {
+Symbol::log(TextLogger &lgr, bool indent) const {
+    if (indent)
+        lgr.indent();
     lgr << lgr.irStart() << "s" << id() << "_" << type() << " \"" << name() << "\"";
     logDetails(lgr);
-    lgr << lgr.irStop();
+    lgr << lgr.irSpacedStop();
+    if (indent)
+        lgr << lgr.endl();
 }
 
 } // namespace JitBuilder
