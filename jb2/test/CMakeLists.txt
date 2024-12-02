@@ -35,7 +35,7 @@ set(GTEST_DIR $(omr_SOURCE_DIR)/third_party/gtest-1.8.0)
 		SemVerTest.cpp
 	)
 	target_link_libraries(testsemver
-		jb2core
+		#jb2core
 		jb2
 		omrGtest
 		${CMAKE_DL_LIBS}
@@ -55,7 +55,7 @@ set(GTEST_DIR $(omr_SOURCE_DIR)/third_party/gtest-1.8.0)
 		CompilerTest.cpp
 	)
 	target_link_libraries(testcompiler
-		jb2core
+		#jb2core
 		jb2
 		omrGtest
 		${CMAKE_DL_LIBS}
@@ -75,7 +75,7 @@ set(GTEST_DIR $(omr_SOURCE_DIR)/third_party/gtest-1.8.0)
 		ListTest.cpp
 	)
 	target_link_libraries(testlist
-		jb2core
+		#jb2core
 		jb2
 		omrGtest
 		${CMAKE_DL_LIBS}
@@ -95,7 +95,7 @@ set(GTEST_DIR $(omr_SOURCE_DIR)/third_party/gtest-1.8.0)
 		BitVectorTest.cpp
 	)
 	target_link_libraries(testbv
-		jb2core
+		#jb2core
 		jb2
 		omrGtest
 		${CMAKE_DL_LIBS}
