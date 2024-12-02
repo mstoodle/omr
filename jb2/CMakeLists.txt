@@ -23,66 +23,143 @@
 include(OmrCompilerSupport)
 
 omr_assert(
-	TEST OMR_COMPILER
-	MESSAGE "OMR_COMPILER must be set."
+	TEST OMR_JB2
+	MESSAGE "OMR_JB2 must be set."
 )
 
-# JitBuilder Files
-set(JB2_OBJECTS
-	env/FrontEnd.cpp
-	compile/ResolvedMethod.cpp
-	control/Jit.cpp
-	ilgen/JBIlGeneratorMethodDetails.cpp
-	optimizer/JBOptimizer.hpp
-	optimizer/JBOptimizer.cpp
-	optimizer/Optimizer.hpp
-	runtime/JBCodeCacheManager.cpp
-	runtime/JBJitConfig.cpp
-#
-	api/jb/JBCodeGenerator.cpp		# jb extension
-	api/jb/JBMethodBuilder.cpp		# jb extension
-	api/jb/OMRJB.cpp				# jb extension
-#
-	compile/JB2ResolvedMethod.cpp	# omrgen extension
-	ilgen/JB2MethodDetails.cpp		# omrgen extension
-	api/omrgen/OMRCodeGenerator.cpp # omrgen extension
-	api/omrgen/OMRIlGen.cpp			# omrgen extension
-	api/omrgen/OMRJB.cpp			# omrgen extension
-)
+#target_link_libraries(jb2
+#	PUBLIC
+#		${OMR_PORT_LIB}
+#)
 
-if(OMR_ARCH_X86)
-	list(APPEND JB2_OBJECTS
-		x/codegen/Evaluator.cpp
-	)
-elseif(OMR_ARCH_S390)
-	list(APPEND JB2_OBJECTS
-		z/codegen/Evaluator.cpp
-	)
-elseif(OMR_ARCH_POWER)
-	list(APPEND JB2_OBJECTS
-		p/codegen/Evaluator.cpp
-		p/runtime/CodeSync.cpp
-		p/runtime/AsmUtil.spp
-		p/runtime/CodeDispatch.spp
-		${omr_SOURCE_DIR}/compiler/p/env/OMRDebugEnv.cpp
-	)
+if (NOT APPLE)
+    add_compile_options(
+	    -Wplacement-new=0
+    )
 endif()
 
-
-if(OMR_ARCH_X86 OR OMR_ARCH_S390)
-	set(OMR_ENHANCED_WARNINGS OFF)
-else()
-	set(OMR_WARNINGS_AS_ERRORS OFF)
-	set(OMR_ENHANCED_WARNINGS OFF)
-endif()
-
-# Create jitbuilder library.
-create_omr_compiler_library(
-	NAME    jb2
-	OBJECTS ${JB2_OBJECTS}
-	DEFINES PROD_WITH_ASSUMES JITTEST
+add_compile_options(
+    -I${CMAKE_BINARY_DIR}
 )
 
-target_include_directories(jb2 PRIVATE ${omr_SOURCE_DIR}/jb2/api/ )
+if (0)
+if (APPLE)
+    add_link_options(
+        -undefined dynamic_lookup
+    )
+endif()
+endif()
 
-add_subdirectory(api)
+set(JB2_CORE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/)
+set(JB2_BASE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Base/)
+set(JB2_DEBUG_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Debug/)
+set(JB2_VM_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vm/)
+set(JB2_COMPLEX_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Complex/)
+set(JB2_JB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/jb)
+set(JB2_OMRGEN_DIR ${CMAKE_CURRENT_SOURCE_DIR}/omrgen)
+
+add_library(jb2 SHARED
+    Addon.cpp
+    AddonIR.cpp
+    AllocationCategoryClasses.cpp
+    AllocationCategoryService.cpp
+    Allocator.cpp
+    AllocatorRaw.cpp
+    AllocatorTracer.cpp
+    AllocatorTracker.cpp
+    Builder.cpp
+    BuilderEntry.cpp
+    CodeGenerator.cpp
+    CodeGeneratorExtensionAddon.cpp
+    CodeGeneratorForCore.cpp
+    CodeGeneratorForExtension.cpp
+    Compilation.cpp
+    CompiledBody.cpp
+    Compiler.cpp
+    CompileUnit.cpp
+    Config.cpp
+    Context.cpp
+    CoreExtension.cpp
+    CreateLoc.cpp
+    EntryPoint.cpp
+    Extensible.cpp
+    ExtensibleIR.cpp
+    Extension.cpp
+    InputReader.cpp
+    IR.cpp
+    IRCloner.cpp
+    KindService.cpp
+    Literal.cpp
+    LiteralDictionary.cpp
+    Location.cpp
+    Loggable.cpp
+    NativeEntry.cpp
+    Operation.cpp
+    OperationCloner.cpp
+    OperationReplacer.cpp
+    Pass.cpp
+    Scope.cpp
+    SemanticVersion.cpp
+    Strategy.cpp
+    String.cpp
+    Symbol.cpp
+    SymbolDictionary.cpp
+    TextLogger.cpp
+    TextWriter.cpp
+    Transformer.cpp
+    Type.cpp
+    TypeDictionary.cpp
+    TypeReplacer.cpp
+    Value.cpp
+    Visitor.cpp
+)
+
+#set(VALGRIND "valgrind --error-exitcode=1 --leak-check=full --show-leak-kinds=all ")
+#set(VALGRIND "leaks --atExit -- ")
+
+add_subdirectory(test)
+
+# Extensions can be turned on individually, but by default the ones below will be built
+if (NOT OMR_JB2_PICK_EXTS)
+	set(OMR_JB2_EXT_BASE OFF CACHE BOOL "jb2 include Base extension")
+	set(OMR_JB2_EXT_COMPLEX OFF CACHE BOOL "jb2 include Complex extension")
+	set(OMR_JB2_EXT_DEBUG OFF CACHE BOOL "jb2 include Debug extension")
+	set(OMR_JB2_EXT_FUNC OFF CACHE BOOL "jb2 include Function extension")
+	set(OMR_JB2_EXT_JB OFF CACHE BOOL "jb2 include jb extension")
+	set(OMR_JB2_EXT_SIM OFF CACHE BOOL "jb2 include Sim extension")
+	set(OMR_JB2_EXT_OMRGEN OFF CACHE BOOL "jb2 include omrgen extension")
+	set(OMR_JB2_EXT_VM OFF CACHE BOOL "jb2 include vm extension")
+
+endif()
+
+if (OMR_JB2_EXT_BASE)
+	add_subdirectory(Base)
+endif()
+
+if (OMR_JB2_EXT_COMPLEX)
+	add_subdirectory(Complex)
+endif()
+
+if (OMR_JB2_EXT_DEBUG)
+	add_subdirectory(Debug)
+endif()
+
+if (OMR_JB2_EXT_FUNC)
+	add_subdirectory(Func)
+endif()
+
+if (OMR_JB2_EXT_JB)
+	add_subdirectory(jb)
+endif()
+
+if (OMR_JB2_EXT_OMRGEN)
+	add_subdirectory(omrgen)
+endif()
+
+if (OMR_JB2_EXT_SIM)
+	add_subdirectory(Sim)
+endif()
+
+if (OMR_JB2_EXT_VM)
+	add_subdirectory(vm)
+endif()
