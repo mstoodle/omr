@@ -61,7 +61,7 @@ OMRCodeGeneratorForCore::ilgen() const {
 
 bool
 OMRCodeGeneratorForCore::registerType(const Type *t) {
-    assert(t == cx()->NoType);
+    assert(t->id() == cx()->tNoType);
     ilgen()->registerNoType(t);
     return true;
 }

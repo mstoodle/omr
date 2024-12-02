@@ -53,7 +53,9 @@ namespace OMR {
 namespace JitBuilder {
 
 class Addon;
+class Compiler;
 class Extension;
+class IR;
 class IRCloner;
 
 KINDSERVICE_CATEGORY(Extensible);
@@ -61,12 +63,14 @@ KINDSERVICE_CATEGORY(Extensible);
 class Extensible : public Loggable {
     JBALLOC_(Extensible)
 
-    friend TextLogger;
+    friend class Compiler;
+    friend class IR;
+    friend class TextLogger;
 
 public:
     DYNAMIC_ALLOC_ONLY(Extensible, Extension *ext, KINDTYPE(Extensible)=KIND(Extensible));
 
-    Compiler *compiler() const;
+    Compiler *compiler() const { return _compiler; }
     Extension *ext() const { return _ext; }
 
     template<class T>
@@ -80,6 +84,7 @@ protected:
 
 private:
     Extension *_ext;
+    Compiler *_compiler;
     List<Addon *> *_addons;
 
     BASECLASS_KINDSERVICE_DECL(Extensible);

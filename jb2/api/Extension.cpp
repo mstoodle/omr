@@ -24,13 +24,16 @@
 #include "CodeGenerator.hpp"
 #include "Compilation.hpp"
 #include "Compiler.hpp"
+#include "Config.hpp"
 #include "Dispatcher.hpp"
 #include "Extension.hpp"
+#include "IDs.hpp"
 #include "IR.hpp"
 #include "Location.hpp"
 #include "Operation.hpp"
 #include "SemanticVersion.hpp"
 #include "Strategy.hpp"
+#include "TextLogger.hpp"
 #include "Type.hpp"
 #include "TypeDictionary.hpp"
 #include "Value.hpp"
@@ -42,7 +45,7 @@ INIT_JBALLOC_ON(Extension, Compiler);
 SUBCLASS_KINDSERVICE_IMPL(Extension,"Extension",Extensible,Extensible);
 
 const SemanticVersion Extension::version((MajorID)0,(MinorID)0,(PatchID)0);
-const String Extension::NAME("core");
+const String Extension::NAME("primordial");
 
 Extension::Extension(MEM_LOCATION(a), KINDTYPE(Extensible) kind, Compiler *compiler, String name)
     : Extensible(a, this, kind)
@@ -53,6 +56,10 @@ Extension::Extension(MEM_LOCATION(a), KINDTYPE(Extensible) kind, Compiler *compi
     , _types((Allocator *)NULL, a)
     , _codegenStrategy(NULL) {
 
+    Config *cfg = compiler->config();
+    TextLogger *lgr = cfg->logger();
+    if (lgr)
+        (*lgr) << "Extension loaded " << name << lgr->endl();
 }
 
 Extension::~Extension() {
@@ -68,17 +75,22 @@ Extension::actionName(ActionID id) const {
     return _compiler->actionName(id);
 }
 
-ActionID
-Extension::registerAction(String name) {
+const ActionID
+Extension::registerAction(String name) const {
     return _compiler->assignActionID(name);
 }
 
-CompilerReturnCode
-Extension::registerReturnCode(String name) {
+const CompilerReturnCode
+Extension::registerReturnCode(String name) const {
     return _compiler->assignReturnCode(name);
 }
 
-PassID
+const TypeID
+Extension::registerType() const {
+    return _compiler->irPrototype()->getTypeID();
+}
+
+const PassID
 Extension::addPass(Pass *pass) {
     return _compiler->addPass(pass);
 }

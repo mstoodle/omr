@@ -24,15 +24,17 @@
 
 
 #include "common.hpp"
+#include "Compiler.hpp"
 #include "CompileUnit.hpp"
 #include "CreateLoc.hpp"
-#include "ExtensibleIR.hpp"
+#include "Extensible.hpp"
 #include "Scope.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 
 class Allocator;
+class BaseDictionary;
 class Builder;
 class Compilation;
 class Compiler;
@@ -41,6 +43,7 @@ class IRCloner;
 class Literal;
 class LiteralDictionary;
 class Location;
+class NoTypeType;
 class Operation;
 class Scope;
 class Symbol;
@@ -50,31 +53,36 @@ class Type;
 class TypeDictionary;
 class Value;
 
-class IR : public ExtensibleIR {
+class IR : public Extensible {
     JBALLOC_(IR)
 
     friend class Builder;
     friend class Compilation; // to be removed after refactoring
+    friend class Compiler;
     friend class Context;
+    friend class BaseDictionary;
     friend class EntryPoint;
     friend class Extension; // maybe to be removed after refactoring
     friend class Literal;
+    friend class LiteralDictionary;
     friend class Location;
     friend class Operation;
     friend class Scope;
     friend class Symbol;
+    friend class SymbolDictionary;
     friend class Type;
+    friend class TypeDictionary;
     friend class Value;
 
 public:
-    DYNAMIC_ALLOC_ONLY(IR, CompileUnit *unit);
+    //DYNAMIC_ALLOC_ONLY(IR, CompileUnit *unit);
 
     IRID id() const                      { return _id; }
-    Compiler *compiler() const           { return _unit->compiler(); }
+    Compiler *compiler() const           { return _compiler; }
     Allocator *mem() const               { return _mem; }
     CompileUnit *unit() const            { return _unit; }
-    template<class T> T *scope() const   { return _scope->refine<T>(); }
-    template<class T> T *context() const { return _context->refine<T>(); }
+    template<class T> T *scope() const   { return (_scope == NULL) ? NULL : _scope->refine<T>(); }
+    template<class T> T *context() const { return (_context == NULL) ? NULL : _context->refine<T>(); }
 
     BuilderListIterator builders()       { return _builders.iterator(); }
 
@@ -82,13 +90,16 @@ public:
     LiteralDictionary *litdict() const   { return _litdict; }
     SymbolDictionary *symdict() const    { return _symdict; }
 
+    void setUnit(CompileUnit *unit)      { _unit = unit; }
     BuilderID maxBuilderID() const       { return _nextBuilderID-1; }
     EntryPointID maxContextID() const    { return _nextContextID-1; }
     EntryPointID maxEntryPointID() const { return _nextEntryPointID-1; }
     LiteralID maxLiteralID() const       { return _nextLiteralID-1; }
     LocationID maxLocationID() const     { return _nextLocationID-1; }
     OperationID maxOperationID() const   { return _nextOperationID-1; }
-    OperationID maxScopeID() const       { return _nextScopeID-1; }
+    ScopeID maxScopeID() const           { return _nextScopeID-1; }
+    SymbolID maxSymbolID() const         { return _nextSymbolID-1; }
+    TypeID maxTypeID() const             { return _nextTypeID-1; }
     ValueID maxValueID() const           { return _nextValueID-1; }
 
     void addInitialBuildersToWorklist(BuilderList & worklist);
@@ -102,17 +113,23 @@ public:
     void log(Compilation *comp, TextLogger &lgr) const;
 
 protected:
+    // only used by Compiler
+    DYNAMIC_ALLOC_ONLY(IR, Compiler *compiler);
+
     // only used by clone()
     DYNAMIC_ALLOC_ONLY(IR, const IR *source, IRCloner *cloner);
 
     BuilderID getBuilderID()               { return _nextBuilderID++; }
     ContextID getContextID()               { return _nextContextID++; }
+    ContextID getDictionaryID()            { return _nextDictionaryID++; }
     ContextID getEntryPointID()            { return _nextEntryPointID++; }
     LiteralID getLiteralID()               { return _nextLiteralID++; }
     LocationID getLocationID()             { return _nextLocationID++; }
     OperationID getOperationID()           { return _nextOperationID++; }
     ScopeID getScopeID()                   { return _nextScopeID++; }
+    SymbolID getSymbolID()                 { return _nextSymbolID++; }
     TransformationID getTransformationID() { return _nextTransformationID++; }
+    TypeID getTypeID()                     { return _nextTypeID++; }
     ValueID getValueID()                   { return _nextValueID++; }
 
     // IR takes ownership of Context / Scope object passed here so must be dynamically allocated by this->_mem
@@ -131,26 +148,35 @@ protected:
     IRID _id;
     BuilderID _nextBuilderID;
     ContextID _nextContextID;
+    ContextID _nextDictionaryID;
     ContextID _nextEntryPointID;
     LiteralID _nextLiteralID;
     LocationID _nextLocationID;
     OperationID _nextOperationID;
     ScopeID _nextScopeID;
+    SymbolID _nextSymbolID;
     TransformationID _nextTransformationID;
+    TypeID _nextTypeID;
     ValueID _nextValueID;
 
+    Compiler *_compiler;
     CompileUnit *_unit;
     Allocator *_mem;
     Scope *_scope;
     Context *_context;
 
+    TypeDictionary *_typedict;
     LiteralDictionary *_litdict;
     SymbolDictionary *_symdict;
-    TypeDictionary *_typedict;
 
     List<Builder *> _builders;
     List<Location *> _locations;
 
+// has to go at least after the type dictionary and type id initialization
+public:
+    const NoTypeType *NoType;
+
+protected:
     SUBCLASS_KINDSERVICE_DECL(Extensible,IR);
 };
 

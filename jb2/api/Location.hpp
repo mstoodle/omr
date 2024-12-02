@@ -23,6 +23,7 @@
 #define LOCATION_INCL
 
 #include "common.hpp"
+#include "ExtensibleIR.hpp"
 #include "String.hpp"
 
 namespace OMR {
@@ -33,7 +34,7 @@ class ExtensibleIR;
 class IR;
 class IRCloner;
 
-class Location : public Allocatable {
+class Location : public ExtensibleIR {
     JBALLOC_(Location)
 
     friend class IR;
@@ -56,10 +57,11 @@ protected:
     virtual Location *cloneLocation(Allocator *mem, IRCloner *cloner) const;
 
     LocationID    _id;
-    IR * _ir;
-    String _fileName;
-    String _lineNumber;
+    String        _fileName;
+    String        _lineNumber;
     ByteCodeIndex _bcIndex;
+
+    SUBCLASS_KINDSERVICE_DECL(Extensible,Location);
 };
 
 } // namespace JitBuilder

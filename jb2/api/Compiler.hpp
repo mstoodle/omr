@@ -37,18 +37,19 @@ namespace JitBuilder {
 class Compilation;
 class CompilationException;
 class CompiledBody;
+class LiteralDictionary;
 class CompileUnit;
 class Config;
 class CoreExtension;
 class Extension;
-class LiteralDictionary;
 class Pass;
 class Platform;
+class PrimordialExtension;
 class SemanticVersion;
 class Strategy;
+class SymbolDictionary;
 class TextWriter;
 class Type;
-class SymbolDictionary;
 class TypeDictionary;
 
 
@@ -59,20 +60,16 @@ class Compiler : public Allocatable {
     friend class Compilation;
     friend class CompilationException;
     friend class CompiledBody;
-    friend class CompilerLiteralDictionary;
-    friend class CompilerSymbolDictionary;
-    friend class CompilerTypeDictionary;
     friend class CompileUnit;
     friend class Context;
     friend class Executor;
     friend class Extensible;
+    friend class ExtensibleIR;
     friend class Extension;
     friend class IR;
-    friend class LiteralDictionary;
     friend class Pass;
     friend class Strategy;
-    friend class SymbolDictionary;
-    friend class TypeDictionary;
+    friend class Type;
 
 public:
     ALL_ALLOC_ALLOWED(Compiler, String name, Config *config=NULL);
@@ -83,13 +80,15 @@ public:
     Config *config() const { return _config; }
     Compiler *parent() const { return _parent; }
     Allocator *mem() const { return _mem; }
-    LiteralDictionary *litdict() const { return _litdict; }
-    SymbolDictionary *symdict() const { return _symdict; }
-    TypeDictionary *typedict() const { return _typedict; }
+    IR *irPrototype() const { return _irPrototype; }
+    IR *createIR(Allocator *mem) const;
+    LiteralDictionary *litdict() const;
+    SymbolDictionary *symdict() const;
+    TypeDictionary *typedict() const;
     TextWriter *textWriter(TextLogger & lgr);
 
     ExtensionID getExtensionID() { return _nextExtensionID++; }
-    CoreExtension *coreExt() const { return _core; }
+    CoreExtension *coreExt();
     template<typename T>
     T *loadExtension(LOCATION, const SemanticVersion *version=NULL, String name=T::NAME) {
         return static_cast<T *>(internalLoadExtension(PASSLOC, version, name));
@@ -139,7 +138,7 @@ public:
     void clearErrorCondition();
 
 protected:
-    void init();
+    Extension *primordialExtension() const { return _primordialExtension; }
 
     void addExtension(Extension *ext);
     void createAnyAddons(Extensible *e, KINDTYPE(Extensible) kind);
@@ -148,15 +147,7 @@ protected:
     PassID addPass(Pass *pass);
     StrategyID addStrategy(Strategy *st);
 
-    LiteralDictionaryID maxLiteralDictionaryID() const { return _nextLiteralDictionaryID-1; }
-    SymbolDictionaryID maxSymbolDictionaryID() const { return _nextSymbolDictionaryID-1; }
-    SymbolDictionaryID maxTypeDictionaryID() const { return _nextTypeDictionaryID-1; }
-
     IRID getIRID() { return _nextIRID++; }
-    LiteralDictionaryID getLiteralDictionaryID() { return _nextLiteralDictionaryID++; } // remove
-    SymbolDictionaryID getSymbolDictionaryID() { return _nextSymbolDictionaryID++; } // remove
-    TypeDictionaryID getTypeDictionaryID() { return this->_nextTypeDictionaryID++; } // remove
-    DictionaryID getDictionaryID() { return this->_nextDictionaryID++; }
 
     Extension *internalLoadExtension(LOCATION, const SemanticVersion * version, String name);
     Extension *internalLookupExtension(String name);
@@ -180,7 +171,6 @@ protected:
 
     ExtensionID _nextExtensionID;
     std::map<String, Extension *> _extensions;
-    CoreExtension *_core;
 
     std::map<KINDTYPE(Extensible), List<Extensible *> *> _extensiblesByKind;
     std::map<KINDTYPE(Extensible), List<Extension *> *> _extensionsForAddonsByKind;
@@ -214,44 +204,34 @@ protected:
     StrategyID _nextStrategyID;
     std::map<StrategyID, Strategy *> _strategies;
 
-    TypeID _nextTypeID;
-    std::map<TypeID, Type *> _types;
-
     IRID _nextIRID;
-    LiteralDictionaryID _nextLiteralDictionaryID; // remove
-    SymbolDictionaryID _nextSymbolDictionaryID; // remove
-    TypeDictionaryID _nextTypeDictionaryID; // remove
-    DictionaryID _nextDictionaryID;
 
     Platform *_targetPlatform;
     Platform *_compilerPlatform;
     Platform *_clientPlatform;
 
-    // must come AFTER _nextTypeDictionaryID for proper initialization
-    LiteralDictionary *_litdict;
-    SymbolDictionary *_symdict;
-    TypeDictionary *_typedict;
-    
+    Extension *_primordialExtension;
+    CoreExtension *_coreExtension;
     List<TextWriter *> _textWriters;
-
     CompilationException *_errorCondition;
+    IR * _irPrototype;
 
     static EyeCatcher EYE_CATCHER_COMPILER;
     static CompilerID nextCompilerID;
 
 // put these at end so they're initialized after everthing else
 public:
-    CompilerReturnCode CompileSuccessful;
-    CompilerReturnCode CompileNotStarted;
-    CompilerReturnCode CompileFailed;
-    CompilerReturnCode CompileFail_CompilerError;
-    CompilerReturnCode CompileFail_UnknownStrategyID;
-    CompilerReturnCode CompileFail_IlGen;
-    CompilerReturnCode CompileFail_TypeMustBeReduced;
-    CompilerReturnCode CompilerError_Extension_CouldNotLoad;
-    CompilerReturnCode CompilerError_Extension_HasNoCreateFunction;
-    CompilerReturnCode CompilerError_Extension_CouldNotCreate;
-    CompilerReturnCode CompilerError_Extension_VersionMismatch;
+    const CompilerReturnCode CompileSuccessful;
+    const CompilerReturnCode CompileNotStarted;
+    const CompilerReturnCode CompileFailed;
+    const CompilerReturnCode CompileFail_CompilerError;
+    const CompilerReturnCode CompileFail_UnknownStrategyID;
+    const CompilerReturnCode CompileFail_IlGen;
+    const CompilerReturnCode CompileFail_TypeMustBeReduced;
+    const CompilerReturnCode CompilerError_Extension_CouldNotLoad;
+    const CompilerReturnCode CompilerError_Extension_HasNoCreateFunction;
+    const CompilerReturnCode CompilerError_Extension_CouldNotCreate;
+    const CompilerReturnCode CompilerError_Extension_VersionMismatch;
 };
 
 class CompilationException : public Allocatable, public std::exception {

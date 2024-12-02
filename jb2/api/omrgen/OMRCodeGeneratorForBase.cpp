@@ -429,7 +429,7 @@ OMRCodeGeneratorForBase::gencodeConst(Operation *op) {
     assert(op->action() == _bx->aConst);
     const Type *retType = op->result()->type();
     if (retType->isKind<Base::PointerType>())
-        retType = _bx->Address;
+        retType = _bx->Address(retType->ir());
     genconstFunction f = _genconstVFT[retType->id()];
     (this->*f)(op->location(), op->parent(), op->result(), op->literal());
     return NULL;

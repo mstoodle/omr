@@ -82,7 +82,7 @@ FunctionTypeBuilder::create(MEM_LOCATION(a), FunctionExtension *fx, IR *ir) {
 DEFINE_TYPE_CLASS_COMMON(FunctionType, Type, "FunctionType",)
 
 FunctionType::FunctionType(MEM_LOCATION(a), FunctionExtension *fx, FunctionTypeBuilder &ftb)
-    : Type(MEM_PASSLOC(a), getTypeClassKind(), fx, typeName(a, ftb), 0, ftb.ir()->typedict())
+    : Type(MEM_PASSLOC(a), CLASSKIND(FunctionType, Extensible), fx, ftb.ir(), typeName(a, ftb))
     , _returnType(ftb.returnType())
     , _numParms(ftb.numParameters())
     , _parmTypes((_numParms > 0) ? a->allocate<const Type *>(_numParms) : NULL) {

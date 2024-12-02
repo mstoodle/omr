@@ -100,8 +100,8 @@ Compilation::log(TextLogger &lgr) {
 
 bool
 Compilation::prepareIL(LOCATION) {
-    IR *ir = new (_mem) IR(_mem, _unit);
-    Allocator *irmem = ir->mem();
+    Allocator *irmem = mem();
+    IR *ir = compiler()->irPrototype()->clone(irmem);
 
     // ownership of the Context and Scope objects are passed to ir during construction
     Context *context = new (irmem) Context(irmem, _compiler->coreExt(), ir, "Compilation Context");

@@ -19,6 +19,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#include "AddonIR.hpp"
 #include "Builder.hpp"
 #include "Compilation.hpp"
 #include "Compiler.hpp"
@@ -36,6 +37,7 @@
 #include "SymbolDictionary.hpp"
 #include "TextLogger.hpp"
 #include "TextWriter.hpp"
+#include "Type.hpp"
 #include "TypeDictionary.hpp"
 
 namespace OMR {
@@ -44,40 +46,52 @@ namespace JitBuilder {
 INIT_JBALLOC_ON(IR, Compilation)
 SUBCLASS_KINDSERVICE_IMPL(IR,"IR",Extensible,Extensible)
 
-IR::IR(Allocator *a, CompileUnit *unit)
-    : ExtensibleIR(a, unit->compiler()->coreExt(), this, KIND(Extensible))
-    , _id(unit->compiler()->getIRID())
+IR::IR(Allocator *a, Compiler *compiler)
+    : Extensible(a, compiler->primordialExtension(), KIND(Extensible))
+    , _id(compiler->getIRID())
     , _nextBuilderID(NoBuilder+1)
     , _nextContextID(NoContext+1)
+    , _nextDictionaryID(NoDictionary+1)
+    , _nextEntryPointID(NoEntryPoint+1)
     , _nextLiteralID(NoLiteral+1)
     , _nextLocationID(NoLocation+1)
     , _nextOperationID(NoOperation+1)
     , _nextScopeID(NoScope+1)
-    , _nextTransformationID(NoTransformation)
-    , _nextValueID(NoValue)
-    , _unit(unit)
+    , _nextSymbolID(NoSymbol+1)
+    , _nextTransformationID(NoTransformation+1)
+    , _nextTypeID(NoTypeID+1)
+    , _nextValueID(NoValue+1)
+    , _compiler(compiler)
+    , _unit(NULL)
     , _mem(a)
     , _scope(NULL)
     , _context(NULL)
-    , _litdict(new (a) LiteralDictionary(a, unit->compiler(), "CompileUnit Literal Dictionary", unit->compiler()->litdict()))
-    , _symdict(new (a) SymbolDictionary(a, unit->compiler(), "CompileUnit Symbol Dictionary", unit->compiler()->symdict()))
-    , _typedict(new (a) TypeDictionary(a, unit->compiler(), "CompileUnit Type Dictionary", unit->compiler()->typedict()))
+    , _typedict(new (a) TypeDictionary(a, this, "Compiler Type Dictionary"))
+    , _litdict(new (a) LiteralDictionary(a, this, "Compiler Literal Dictionary"))
+    , _symdict(new (a) SymbolDictionary(a, this, "Compiler Symbol Dictionary"))
     , _builders(NULL, a)
-    , _locations(NULL, a) {
+    , _locations(NULL, a)
+    , NoType(new (a) NoTypeType(MEM_LOC(a), compiler->coreExt(), this, NoTypeID)) {
 
     notifyCreation(KIND(Extensible));
 }
 
 IR::IR(Allocator *a, const IR *source, IRCloner *cloner)
-    : ExtensibleIR(a, source->ext(), this, KIND(Extensible))
-    , _nextBuilderID(NoBuilder+1)
-    , _nextContextID(NoContext+1)
-    , _nextLiteralID(NoLiteral+1)
-    , _nextLocationID(NoLocation+1)
-    , _nextOperationID(NoOperation+1)
-    , _nextScopeID(NoScope+1)
-    , _nextTransformationID(NoTransformation)
-    , _nextValueID(NoValue)
+    : Extensible(a, source->ext(), KIND(Extensible))
+    , _id(source->compiler()->getIRID())
+    , _nextBuilderID(source->_nextBuilderID)
+    , _nextContextID(source->_nextContextID)
+    , _nextDictionaryID(source->_nextDictionaryID)
+    , _nextEntryPointID(source->_nextEntryPointID)
+    , _nextLiteralID(source->_nextLiteralID)
+    , _nextLocationID(source->_nextLocationID)
+    , _nextOperationID(source->_nextOperationID)
+    , _nextScopeID(source->_nextScopeID)
+    , _nextSymbolID(source->_nextSymbolID)
+    , _nextTransformationID(source->_nextTransformationID)
+    , _nextTypeID(source->_nextTypeID)
+    , _nextValueID(source->_nextValueID)
+    , _compiler(source->compiler())
     , _unit(source->unit())
     , _mem(a)
     , _scope(NULL)
@@ -101,19 +115,20 @@ IR::IR(Allocator *a, const IR *source, IRCloner *cloner)
     // having cloned Symbol, we can clone the Context
     _context = cloner->clonedContext(source->context<Context>());
 
-    // we can now clone Builders which clones Operations and Values which depend on Literals, Symbols, and Types
+    // we can now clone Scopes which clone Builders, Operations and Values which depend on Literals, Symbols, and Types
     _scope = cloner->clonedScope(source->scope<Scope>());
 
+    this->NoType = cloner->clonedType(source->NoType)->template refine<const NoTypeType>();
 
-    // Literals, Symbols, TypeDictionaries, and Values reference Types
-    // LiteralDictionaries reference Literals
-    // Contexts and SymbolDictionaries reference Symbols
-    // Builders and Operations reference each other as well as Literals, Symbols, Types, and Values
-    // Scopes reference Builders
-    // Cases reference Builders and Literals
-    // IR references Builders, Contexts, and Scopes
-
-    notifyCreation(KIND(Extensible));
+    // don't call notifyCreation() because it won't have cloner so it might duplicate IR elements as it replicates Addons
+    if (source->addons() != NULL) {
+        for (auto it = source->addons()->iterator(); it.hasItem(); it++) {
+            Addon *sourceAddon = it.item();
+            AddonIR *addon = sourceAddon->refine<AddonIR>();
+            AddonIR *clonedAddon = addon->clone(a, cloner);
+            this->attach(clonedAddon);
+        }
+    }
 }
 
 IR::~IR() {
@@ -122,14 +137,14 @@ IR::~IR() {
         delete b;
     }
 
-    delete _typedict;
     delete _symdict;
     delete _litdict;
+    delete _typedict;
 
     // scope and context objects may not be (but probably are) dynamically allocated
-    if (_scope->allocator())
+    if (_scope != NULL && _scope->allocator())
         delete _scope;
-    if (_context->allocator())
+    if (_context != NULL && _context->allocator())
         delete _context;
 }
 
@@ -168,25 +183,35 @@ IR::build(LOCATION, Compilation *comp) {
 
 IR *
 IR::clone(Allocator *mem) const {
-    IRCloner cloner(mem, compiler()->coreExt());
-    return new (mem) IR(mem, this, &cloner);
+    IRCloner *cloner = new (mem) IRCloner(mem, ext());
+    IR *clonedIR = new (mem) IR(mem, this, cloner);
+    delete cloner;
+    return clonedIR;
 }
 
 void
 IR::log(Compilation *comp, TextLogger &lgr) const {
-   lgr.irSectionBegin("ir", "ir", id(), kind(), unit()->createLoc()->functionName(mem()));
-   unit()->log(lgr);
-   typedict()->log(lgr);
-   symdict()->log(lgr);
-   litdict()->log(lgr);
+    if (unit()) {
+        lgr.irSectionBegin("ir", "ir", id(), kind(), unit()->createLoc()->functionName(mem()));
+        unit()->log(lgr);
+    } else {
+        lgr.irSectionBegin("ir", "ir", id(), kind(), "irPrototype");
+    }
 
-   _context->log(lgr);
-   _scope->log(lgr);
+    typedict()->log(lgr);
+    litdict()->log(lgr);
+    symdict()->log(lgr);
 
-   //TextWriter *wrtr = new (mem()) TextWriter(mem(), compiler(), lgr);
-   //wrtr->print(comp);
+    if (_context != NULL)
+        _context->log(lgr);
 
-   lgr.irSectionEnd();
+    if (_scope != NULL)
+        _scope->log(lgr);
+
+    //TextWriter *wrtr = new (mem()) TextWriter(mem(), compiler(), lgr);
+    //wrtr->print(comp);
+
+    lgr.irSectionEnd();
 }
 
 } // namespace JitBuilder

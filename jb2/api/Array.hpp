@@ -24,10 +24,13 @@
 
 #include <cassert>
 #include <cstring>
+#include "Allocatable.hpp"
 #include "Iterator.hpp"
 
 namespace OMR {
 namespace JitBuilder {
+
+class Allocator;
 
 template <typename T>
 class Array : public Allocatable {

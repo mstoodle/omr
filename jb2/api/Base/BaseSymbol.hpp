@@ -43,7 +43,7 @@ public:
     const FieldType *fieldType() const { return _fieldType; }
 
 protected:
-    FieldSymbol(Allocator *a, SymbolKind kind, Extension *ext, String name, const StructType *structType, const FieldType *fieldType);
+    FieldSymbol(Allocator *a, ExtensibleKind kind, Extension *ext, String name, const StructType *structType, const FieldType *fieldType);
     FieldSymbol(Allocator *mem, const FieldSymbol *source, IRCloner *cloner);
 
     virtual Symbol *clone(Allocator *a, IRCloner *cloner) const;
@@ -51,7 +51,7 @@ protected:
     const StructType *_structType;
     const FieldType *_fieldType;
 
-    SUBCLASS_KINDSERVICE_DECL(Symbol, FieldSymbol);
+    SUBCLASS_KINDSERVICE_DECL(Extensible, FieldSymbol);
 };
 
 } // namespace Base

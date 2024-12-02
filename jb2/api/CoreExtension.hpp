@@ -31,6 +31,7 @@ namespace JitBuilder {
 class Compilation;
 class CompileUnit;
 class Config;
+class IR;
 class NoTypeType;
 
 class CoreExtension : public Extension {
@@ -48,6 +49,10 @@ protected:
     Pass *_dispatcher;
 
 public:
+    // Core Types
+    //
+    const TypeID tNoType;
+
     //
     // Core actions
     //
@@ -62,7 +67,7 @@ public:
     // 
     // Core types
     //
-    const NoTypeType *NoType;
+    const NoTypeType *NoType(IR *ir);
 
     // 
     // Core operations

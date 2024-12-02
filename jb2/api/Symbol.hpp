@@ -23,6 +23,7 @@
 #define SYMBOL_INCL
 
 #include <cassert>
+#include "ExtensibleIR.hpp"
 #include "IDs.hpp"
 #include "KindService.hpp"
 #include "String.hpp"
@@ -38,9 +39,7 @@ class TextLogger;
 class Type;
 class TypeDictionary;
 
-KINDSERVICE_CATEGORY(Symbol);
-
-class Symbol : public Allocatable {
+class Symbol : public ExtensibleIR {
     JBALLOC_(Symbol)
 
     friend class IRCloner;
@@ -51,28 +50,12 @@ public:
     const Type * type() const { return _type; }
     SymbolID id() const { return _id; }
     Extension *ext() const { return _ext; }
-    void log(TextLogger & lgr) const;
+    void log(TextLogger & lgr, bool indent=false) const;
     virtual void logDetails(TextLogger & lgr) const { }
 
 protected:
-    Symbol(Allocator *mem, Extension *ext, String name, const Type * type)
-        : Allocatable(mem)
-        , _ext(ext)
-        , _id(NoSymbol)
-        , _name(name)
-        , _type(type)
-        , BASECLASS_KINDINIT(getSymbolClassKind()) {
-
-    }
-    Symbol(Allocator *mem, SymbolKind kind, Extension *ext, String name, const Type * type)
-        : Allocatable(mem)
-        , _ext(ext)
-        , _id(NoSymbol)
-        , _name(name)
-        , _type(type)
-        , BASECLASS_KINDINIT(kind) {
-
-    }
+    Symbol(Allocator *mem, Extension *ext, IR *ir, String name, const Type * type);
+    Symbol(Allocator *mem, ExtensibleKind kind, Extension *ext, IR *ir, String name, const Type * type);
     Symbol(Allocator *mem, const Symbol *source, IRCloner *cloner);
 
     virtual ExtensibleIR *clone(Allocator *mem, IRCloner *cloner) { return reinterpret_cast<ExtensibleIR *>(cloneSymbol(mem, cloner)); } // TODO: FIX!
@@ -90,7 +73,7 @@ protected:
     String _name;
     const Type * _type;
 
-    BASECLASS_KINDSERVICE_DECL(Symbol);
+    SUBCLASS_KINDSERVICE_DECL(Extensible, Symbol);
 };
 
 } // namespace JitBuilder

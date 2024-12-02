@@ -27,11 +27,11 @@ namespace OMR {
 namespace JitBuilder {
 
 INIT_JBALLOC_ON(Location, IL)
+SUBCLASS_KINDSERVICE_IMPL(Location,"Location",ExtensibleIR, Extensible)
 
 Location::Location(Allocator *a, IR *ir, String fileName, String lineNumber)
-    : Allocatable(a)
+    : ExtensibleIR(a, ir->ext(), ir, CLASSKIND(Location, Extensible))
     , _id(ir->getLocationID())
-    , _ir(ir)
     , _fileName(fileName)
     , _lineNumber(lineNumber)
     , _bcIndex(_id-1) { // LocationIDs start at 1 but bcIndex can start at 0
@@ -40,9 +40,8 @@ Location::Location(Allocator *a, IR *ir, String fileName, String lineNumber)
 }
 
 Location::Location(Allocator *a, IR *ir, String fileName, String lineNumber, int32_t bcIndex)
-    : Allocatable(a)
+    : ExtensibleIR(a, ir->ext(), ir, CLASSKIND(Location, Extensible))
     , _id(ir->getLocationID())
-    , _ir(ir)
     , _fileName(fileName)
     , _lineNumber(lineNumber)
     , _bcIndex(bcIndex) {
@@ -51,9 +50,8 @@ Location::Location(Allocator *a, IR *ir, String fileName, String lineNumber, int
 }
 
 Location::Location(Allocator *a, const Location *source, IRCloner *cloner)
-    : Allocatable(a)
+    : ExtensibleIR(a, source, cloner)
     , _id(source->_id)
-    , _ir(cloner->clonedIR())
     , _fileName(source->_fileName)
     , _lineNumber(source->_lineNumber)
     , _bcIndex(source->_bcIndex) {

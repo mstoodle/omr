@@ -47,7 +47,7 @@ const String CoreExtension::NAME("core");
 CoreExtension::CoreExtension(Allocator *a, LOCATION, Compiler *compiler)
     : Extension(MEM_PASSLOC(a), CLASSKIND(CoreExtension,Extensible), compiler, NAME)
     , _codegenStrategy(new (a) Strategy(a, compiler, "CodeGen"))
-    , NoType(new (a) NoTypeType(MEM_LOC(a), this))
+    , tNoType(NoTypeID)
     , aAppendBuilder(registerAction(String(a, "AppendBuilder")))
     , aMergeDef(registerAction(String(a, "MergeDef")))
     , CompileFail_CodeGeneratorMissingOperationHandler(registerReturnCode(String(a, "CompileFail_CodeGeneratorMissingOperationHandler")))
@@ -61,6 +61,10 @@ CoreExtension::~CoreExtension() {
     delete _dispatcher;
 }
 
+const NoTypeType *
+CoreExtension::NoType(IR *ir) {
+    return ir->NoType;
+}
 
 //
 // Core Operations

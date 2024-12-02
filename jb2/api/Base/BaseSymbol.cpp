@@ -28,17 +28,17 @@ namespace Base {
 
 
 INIT_JBALLOC_REUSECAT(FieldSymbol,Symbol);
-SUBCLASS_KINDSERVICE_IMPL(FieldSymbol, "FieldSymbol", Symbol, Symbol);
+SUBCLASS_KINDSERVICE_IMPL(FieldSymbol, "FieldSymbol", Symbol, Extensible);
 
 FieldSymbol::FieldSymbol(Allocator *a, Extension *ext, String name, const StructType *structType, const FieldType *fieldType)
-    : Symbol (a, getSymbolClassKind(), ext, name, fieldType->type())
+    : Symbol (a, getExtensibleClassKind(), ext, fieldType->ir(), name, fieldType->type())
     , _structType(structType)
     , _fieldType(fieldType) {
 
 }
 
-FieldSymbol::FieldSymbol(Allocator *a, SymbolKind kind, Extension *ext, String name, const StructType *structType, const FieldType *fieldType)
-    : Symbol (a, kind, ext, name, fieldType->type())
+FieldSymbol::FieldSymbol(Allocator *a, ExtensibleKind kind, Extension *ext, String name, const StructType *structType, const FieldType *fieldType)
+    : Symbol (a, kind, ext, fieldType->ir(), name, fieldType->type())
     , _structType(structType)
     , _fieldType(fieldType) {
 
@@ -54,7 +54,7 @@ FieldSymbol::FieldSymbol(Allocator *mem, const FieldSymbol *source, IRCloner *cl
 
 Symbol *
 FieldSymbol::clone(Allocator *mem, IRCloner *cloner) const {
-    assert(_kind == KIND(Symbol));
+    assert(_kind == KIND(Extensible));
     return new (mem) FieldSymbol(mem, this, cloner);
 }
 

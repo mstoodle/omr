@@ -49,14 +49,14 @@ protected:
     FunctionIRAddon(Allocator *a, FunctionExtension *bx, IR *root);
     FunctionIRAddon(Allocator *a, const FunctionIRAddon *source, IRCloner *cloner);
 
+    FunctionExtension *fx() const { return static_cast<FunctionExtension *>(ext()); }
+
     virtual AddonIR *clone(Allocator *a, IRCloner *cloner) const;
 
     std::map<String,const FunctionType *> _functionTypesFromName;
     FunctionSymbolList _functions;
 
     SUBCLASS_KINDSERVICE_DECL(Extensible, FunctionIRAddon);
-
-    FunctionExtension *fx() const { return static_cast<FunctionExtension *>(ext()); }
 };
 
 } // namespace Func

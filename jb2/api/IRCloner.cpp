@@ -38,26 +38,48 @@
 namespace OMR {
 namespace JitBuilder {
 
-IRCloner::IRCloner(Allocator *mem, Extension *ext, KINDTYPE(Extensible) kind)
-    : Extensible(mem, ext, kind)
+IRCloner::IRCloner(Allocator *mem, Extension *ext)
+    : Extensible(mem, ext, CLASSKIND(IR, Extensible))
     , _mem(mem)
     , _clonedIR(NULL)
-    , _clonedBuilders(NULL, mem)
-    , _clonedContexts(NULL, mem)
-    , _clonedEntryPoints(NULL, mem)
-    , _clonedLiterals(NULL, mem)
-    , _clonedLiteralDictionaries(NULL, mem)
-    , _clonedLocations(NULL, mem)
-    , _clonedOperations(NULL, mem)
-    , _clonedScopes(NULL, mem)
-    , _clonedSymbols(NULL, mem)
-    , _clonedSymbolDictionaries(NULL, mem)
-    , _clonedTypes(NULL, mem)
-    , _clonedTypeDictionaries(NULL, mem)
-    , _clonedValues(NULL, mem) {
+    , _clonedBuilders(NULL, _mem)
+    , _clonedContexts(NULL, _mem)
+    , _clonedEntryPoints(NULL, _mem)
+    , _clonedLiterals(NULL, _mem)
+    , _clonedLiteralDictionaries(NULL, _mem)
+    , _clonedLocations(NULL, _mem)
+    , _clonedOperations(NULL, _mem)
+    , _clonedScopes(NULL, _mem)
+    , _clonedSymbols(NULL, _mem)
+    , _clonedSymbolDictionaries(NULL, _mem)
+    , _clonedTypes(NULL, _mem)
+    , _clonedTypeDictionaries(NULL, _mem)
+    , _clonedValues(NULL, _mem) {
+
+}
+
+IRCloner::IRCloner(IR *ir)
+    : Extensible(ir->mem(), ir->ext(), CLASSKIND(IR, Extensible))
+    , _mem(ir->mem())
+    , _clonedIR(ir)
+    , _clonedBuilders(NULL, _mem)
+    , _clonedContexts(NULL, _mem)
+    , _clonedEntryPoints(NULL, _mem)
+    , _clonedLiterals(NULL, _mem)
+    , _clonedLiteralDictionaries(NULL, _mem)
+    , _clonedLocations(NULL, _mem)
+    , _clonedOperations(NULL, _mem)
+    , _clonedScopes(NULL, _mem)
+    , _clonedSymbols(NULL, _mem)
+    , _clonedSymbolDictionaries(NULL, _mem)
+    , _clonedTypes(NULL, _mem)
+    , _clonedTypeDictionaries(NULL, _mem)
+    , _clonedValues(NULL, _mem) {
+
 }
 
 IRCloner::~IRCloner() {
+    #if 0
     for (auto it=_clonedBuilders.iterator();it.hasItem();it++)
         delete (it.item());
 
@@ -93,6 +115,7 @@ IRCloner::~IRCloner() {
 
     for (auto it=_clonedValues.iterator();it.hasItem();it++)
         delete (it.item());
+    #endif
 }
 
 void
@@ -117,6 +140,9 @@ IRCloner::clonedBuilder(Builder *b) {
 
 Context *
 IRCloner::clonedContext(Context *ctx) {
+    if (ctx == NULL)
+        return NULL;
+
     ContextID id=ctx->id();
     Context *clonedContext = NULL;
     if (id < _clonedContexts.length())
@@ -176,6 +202,7 @@ IRCloner::clonedLiteralDictionary(LiteralDictionary *d) {
     if (clonedDict == NULL) {
         clonedDict = d->cloneDictionary(_mem, this);
         _clonedLiteralDictionaries.assign(id, clonedDict);
+        clonedDict->cloneFrom(d, this);
     }
 
     return clonedDict;
@@ -213,6 +240,9 @@ IRCloner::clonedOperation(Operation *op) {
 
 Scope *
 IRCloner::clonedScope(Scope *s) {
+    if (s == NULL)
+        return NULL;
+
     ScopeID id=s->id();
     Scope *clonedScope = NULL;
     if (id < _clonedScopes.length())
@@ -254,6 +284,7 @@ IRCloner::clonedSymbolDictionary(SymbolDictionary *d) {
     if (clonedDict == NULL) {
         clonedDict = d->cloneDictionary(_mem, this);
         _clonedSymbolDictionaries.assign(id, clonedDict);
+        clonedDict->cloneFrom(d, this);
     }
 
     return clonedDict;
@@ -297,6 +328,7 @@ IRCloner::clonedTypeDictionary(TypeDictionary *d) {
     if (clonedDict == NULL) {
         clonedDict = d->cloneDictionary(_mem, this);
         _clonedTypeDictionaries.assign(id, clonedDict);
+        clonedDict->cloneFrom(d, this);
     }
 
     return clonedDict;
@@ -318,7 +350,7 @@ IRCloner::clonedValue(Value *v) {
 }
 
 ExtensibleIR *
-IRCloner::clone(ExtensibleIR *item) {
+IRCloner::clone(const ExtensibleIR *item) {
     return item->clone(_mem, this);
 }
 

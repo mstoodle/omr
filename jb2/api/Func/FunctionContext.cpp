@@ -112,7 +112,7 @@ FunctionContext::clone(Allocator *mem, IRCloner *cloner) const {
 ParameterSymbol *
 FunctionContext::DefineParameter(String name, const Type * type) {
     Allocator *mem = _ir->mem();
-    ParameterSymbol *parm = new (mem) ParameterSymbol(mem, ext(), name, type, this->_parameters.length());
+    ParameterSymbol *parm = new (mem) ParameterSymbol(mem, ext(), _ir, name, type, this->_parameters.length());
     this->_parameters.push_back(parm);
     addSymbol(parm);
     return parm;
@@ -132,7 +132,7 @@ FunctionContext::DefineLocal(String name, const Type * type) {
        return sym->refine<LocalSymbol>();
 
     Allocator *mem = _ir->mem();
-    LocalSymbol *local = new (mem) LocalSymbol(mem, ext(), name, type);
+    LocalSymbol *local = new (mem) LocalSymbol(mem, ext(), _ir, name, type);
     this->_locals.push_back(local);
     addSymbol(local);
     return local;
@@ -253,7 +253,7 @@ FunctionContext::internalDefineFunction(LOCATION,
         ftb.addParameterType(parmTypes[p]);
     const FunctionType *type = fx->DefineFunctionType(PASSLOC, comp, ftb);
     Allocator *mem = _ir->mem();
-    FunctionSymbol *sym = new (mem) FunctionSymbol(mem, ext(), type, name, fileName, lineNumber, entryPoint);
+    FunctionSymbol *sym = new (mem) FunctionSymbol(mem, ext(), _ir, type, name, fileName, lineNumber, entryPoint);
     _functions.push_back(sym);
     addSymbol(sym);
     return sym;
@@ -287,23 +287,19 @@ FunctionContext::logContents(TextLogger & lgr) const {
     lgr.irListBegin("locals", _locals.length());
     for (auto it=_locals.iterator(); it.hasItem(); it++) {
         const LocalSymbol *sym = it.item();
-        lgr.indent();
-        sym->log(lgr);
+        sym->log(lgr, true);
     }
     lgr.irListEnd(_locals.length());
     lgr.irListBegin("parameters", _parameters.length());
     for (auto it=_parameters.iterator(); it.hasItem(); it++) {
         const ParameterSymbol *sym = it.item();
-        lgr.indent();
-        sym->log(lgr);
+        sym->log(lgr, true);
     }
     lgr.irListEnd(_parameters.length());
     lgr.irListBegin("returnTypes", _returnTypes.length());
     for (auto it=_returnTypes.constIterator(); it.hasItem(); it++) {
         const Type *rt = it.item();
-        lgr.indent();
-        rt->logType(lgr);
-        lgr << lgr.endl();
+        rt->log(lgr, true);
     }
     lgr.irListEnd(_returnTypes.length());
 }

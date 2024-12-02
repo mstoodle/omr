@@ -260,7 +260,7 @@ VirtualMachineOperandStack::init(LOCATION) {
     String name(allocator(), "VMOS_StackBase_");
     name.append(String::to_string(allocator(), _id));
     Func::FunctionContext *fc = _comp->context<Func::FunctionContext>();
-    _stackBaseLocal = fc->DefineLocal(name, bx->PointerTo(LOC, _comp, _elementType));
+    _stackBaseLocal = fc->DefineLocal(name, bx->PointerTo(LOC, _elementType));
 
     // store current operand stack pointer base address so we can use it whenever we need
     // to recreate the stack as the interpreter would have

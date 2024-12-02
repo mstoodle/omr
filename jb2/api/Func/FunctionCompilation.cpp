@@ -68,8 +68,9 @@ FunctionCompilation::addInitialBuildersToWorklist(BuilderList & worklist) {
 
 bool
 FunctionCompilation::prepareIL(LOCATION) {
-    _ir = new (_mem) IR(_mem, _unit);
-    Allocator *irmem = _ir->mem();
+    Allocator *irmem = mem();
+    _ir = compiler()->irPrototype()->clone(irmem);
+    _ir->setUnit(unit());
 
     // ownership of the Context and Scope objects are passed to ir during construction
     FunctionContext *context = new (irmem) FunctionContext(irmem, ext(), _ir, "Function Context");

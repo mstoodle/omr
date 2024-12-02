@@ -113,9 +113,11 @@ protected:
 
     static void registerExtendedPass(Extension *ext, KINDTYPE(Extensible) kind, Pass *extendedPass);
 
-    ActionID registerAction(String name);
-    CompilerReturnCode registerReturnCode(String name);
-    PassID addPass(Pass *pass); 
+    const ActionID registerAction(String name) const;
+    const CompilerReturnCode registerReturnCode(String name) const;
+    const TypeID registerType() const;
+
+    const PassID addPass(Pass *pass); 
 
     Value *createValue(Builder *parent, const Type *type);
     void addOperation(Builder *b, Operation *op);

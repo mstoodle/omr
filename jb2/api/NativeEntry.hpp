@@ -30,8 +30,6 @@ namespace JitBuilder {
 
 class Compilation;
 
-KINDSERVICE_CATEGORY(NativeEntry);
-
 class NativeEntry : public EntryPoint {
     JBALLOC_(NativeEntry)
 

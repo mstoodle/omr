@@ -29,7 +29,7 @@ namespace JitBuilder {
 namespace Func {
 
 INIT_JBALLOC_REUSECAT(FunctionIRAddon, IR)
-SUBCLASS_KINDSERVICE_IMPL(FunctionIRAddon,"FunctionIRAddon",Addon,Extensible)
+SUBCLASS_KINDSERVICE_IMPL(FunctionIRAddon,"FunctionIRAddon",AddonIR,Extensible)
 
 FunctionIRAddon::FunctionIRAddon(Allocator *a, FunctionExtension *fx, IR *root)
     : AddonIR(a, fx, root, KIND(Extensible))

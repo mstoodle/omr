@@ -70,6 +70,7 @@ public:
     friend TextLogger & operator<<(TextLogger &log, const LiteralDictionary *ld);
     friend TextLogger & operator<<(TextLogger &log, const Operation *op);
     friend TextLogger & operator<<(TextLogger &log, const Scope *s);
+    friend TextLogger & operator<<(TextLogger &log, const Symbol *sym);
     friend TextLogger & operator<<(TextLogger &log, const SymbolDictionary *sd);
     friend TextLogger & operator<<(TextLogger &log, const Type *t);
     friend TextLogger & operator<<(TextLogger &log, const TypeDictionary *dict);

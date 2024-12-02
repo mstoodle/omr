@@ -29,21 +29,21 @@ namespace Func {
 
 INIT_JBALLOC_CAT(FunctionSymbol, (Symbol::allocCat()))
 
-SUBCLASS_KINDSERVICE_IMPL(FunctionSymbol, "FunctionSymbol", Symbol, Symbol);
+SUBCLASS_KINDSERVICE_IMPL(FunctionSymbol, "FunctionSymbol", Symbol, Extensible);
 
 FunctionSymbol::~FunctionSymbol() {
 }
 
-FunctionSymbol::FunctionSymbol(Allocator *a, Extension *ext, const FunctionType *type, String name, String fileName, String lineNumber, void *entryPoint)
-    : Symbol(a, getSymbolClassKind(), ext, name, type)
+FunctionSymbol::FunctionSymbol(Allocator *a, Extension *ext, IR *ir, const FunctionType *type, String name, String fileName, String lineNumber, void *entryPoint)
+    : Symbol(a, getExtensibleClassKind(), ext, ir, name, type)
     , _fileName(fileName)
     , _lineNumber(lineNumber)
     , _entryPoint(entryPoint) {
 
 }
 
-FunctionSymbol::FunctionSymbol(Allocator *a, SymbolKind kind, Extension *ext, const FunctionType *type, String name, String fileName, String lineNumber, void *entryPoint)
-    : Symbol(a, kind, ext, name, type)
+FunctionSymbol::FunctionSymbol(Allocator *a, ExtensibleKind kind, Extension *ext, IR *ir, const FunctionType *type, String name, String fileName, String lineNumber, void *entryPoint)
+    : Symbol(a, kind, ext, ir, name, type)
     , _fileName(fileName)
     , _lineNumber(lineNumber)
     , _entryPoint(entryPoint) {
@@ -60,7 +60,7 @@ FunctionSymbol::FunctionSymbol(Allocator *a, const FunctionSymbol *source, IRClo
 
 Symbol *
 FunctionSymbol::clone(Allocator *mem, IRCloner *cloner) const {
-    assert(_kind == KIND(Symbol));
+    assert(_kind == KIND(Extensible));
     return new (mem) FunctionSymbol(mem, this, cloner);
 }
 
@@ -75,7 +75,7 @@ FunctionSymbol::logDetails(TextLogger & lgr) const {
 }
 
 INIT_JBALLOC_REUSECAT(LocalSymbol, Symbol)
-SUBCLASS_KINDSERVICE_IMPL(LocalSymbol, "LocalSymbol", Symbol, Symbol);
+SUBCLASS_KINDSERVICE_IMPL(LocalSymbol, "LocalSymbol", Symbol, Extensible);
 
 LocalSymbol::LocalSymbol(Allocator *a, const LocalSymbol *source, IRCloner *cloner)
     : Symbol(a, source, cloner) {
@@ -84,7 +84,7 @@ LocalSymbol::LocalSymbol(Allocator *a, const LocalSymbol *source, IRCloner *clon
 
 Symbol *
 LocalSymbol::clone(Allocator *mem, IRCloner *cloner) const {
-    assert(_kind == KIND(Symbol));
+    assert(_kind == KIND(Extensible));
     return new (mem) LocalSymbol(mem, this, cloner);
 }
 
@@ -98,7 +98,7 @@ LocalSymbol::logDetails(TextLogger & lgr) const {
 }
 
 INIT_JBALLOC_REUSECAT(ParameterSymbol, Symbol)
-SUBCLASS_KINDSERVICE_IMPL(ParameterSymbol, "ParameterSymbol", LocalSymbol, Symbol);
+SUBCLASS_KINDSERVICE_IMPL(ParameterSymbol, "ParameterSymbol", LocalSymbol, Extensible);
 
 ParameterSymbol::ParameterSymbol(Allocator *a, const ParameterSymbol *source, IRCloner *cloner)
     : LocalSymbol(a, source, cloner)
@@ -108,7 +108,7 @@ ParameterSymbol::ParameterSymbol(Allocator *a, const ParameterSymbol *source, IR
 
 Symbol *
 ParameterSymbol::clone(Allocator *mem, IRCloner *cloner) const {
-    assert(_kind == KIND(Symbol));
+    assert(_kind == KIND(Extensible));
     return new (mem) ParameterSymbol(mem, this, cloner);
 }
 

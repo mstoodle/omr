@@ -58,12 +58,12 @@ JBMethodBuilder::~JBMethodBuilder() {
 
 void
 JBMethodBuilder::registerTypes(TypeDictionary *dict) {
-    TypeID numTypes = dict ->numTypes();
+    TypeID numTypes = dict->ir()->maxTypeID() + 1;
     Allocator myMem("Type mapping", _comp->mem());
     BitVector mappedTypes(&myMem, numTypes);
     while (numTypes > 0) {
         TypeID startNumTypes = numTypes;
-        for (auto it = dict->typesIterator(); it.hasItem(); it++) {
+        for (auto it = dict->iterator(); it.hasItem(); it++) {
             const Type *type = it.item();
             if (mappedTypes.getBit(type->id()) != true) {
                 CodeGeneratorForExtension *cgForExt = type->ext()->addon<JBCodeGeneratorExtensionAddon>()->cgForExtension();

@@ -61,7 +61,7 @@ JBCodeGeneratorForCore::jbmb() const {
 
 bool
 JBCodeGeneratorForCore::registerType(const Type *t) {
-    assert(t == cx()->NoType);
+    assert(t->id() == cx()->tNoType);
     jbmb()->registerNoType(t);
     return true;
 }

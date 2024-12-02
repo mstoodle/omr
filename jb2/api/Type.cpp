@@ -32,37 +32,57 @@ namespace OMR {
 namespace JitBuilder {
 
 INIT_JBALLOC_ON(Type, TypeDictionary)
-BASECLASS_KINDSERVICE_IMPL(Type)
+SUBCLASS_KINDSERVICE_IMPL(Type,"Type",ExtensibleIR, Extensible)
 
-Type::Type(MEM_LOCATION(a), TypeKind kind, Extension *ext, String name, size_t size, TypeDictionary *dict, const Type *layout)
-    : Allocatable(a)
+// For installation into the Compiler's prototype IR
+Type::Type(MEM_LOCATION(a), ExtensibleKind kind, Extension *ext, String name, size_t size, const Type *layout)
+    : ExtensibleIR(a, ext, ext->compiler(), kind)
     , _ext(ext)
     , _createLoc(PASSLOC)
-    , _dict((dict!=NULL)?dict:ext->compiler()->typedict())
-    , _id(_dict->getTypeID())
+    , _id(ext->compiler()->irPrototype()->getTypeID())
     , _name(name)
     , _size(size)
-    , _layout(layout)
-    , BASECLASS_KINDINIT(kind) {
+    , _layout(layout) {
 
-    _dict->registerType(this);
+    ir()->typedict()->registerType(this);
+}
+
+Type::Type(MEM_LOCATION(a), ExtensibleKind kind, Extension *ext, IR *ir, String name, size_t size, const Type *layout)
+    : ExtensibleIR(a, ext, ir, kind)
+    , _ext(ext)
+    , _createLoc(PASSLOC)
+    , _id(ir->getTypeID())
+    , _name(name)
+    , _size(size)
+    , _layout(layout) {
+
+    ir->typedict()->registerType(this);
+}
+
+Type::Type(MEM_LOCATION(a), ExtensibleKind kind, Extension *ext, IR *ir, TypeID tid, String name, size_t size, const Type *layout)
+    : ExtensibleIR(a, ext, ir, kind)
+    , _ext(ext)
+    , _createLoc(PASSLOC)
+    , _id(tid)
+    , _name(name)
+    , _size(size)
+    , _layout(layout) {
+
+    ir->typedict()->registerType(this);
 }
 
 // only used by clone
 Type::Type(Allocator *a, const Type *source, IRCloner *cloner)
-    : Allocatable(a)
+    : ExtensibleIR(a, source, cloner)
     , _ext(source->_ext)
     , _createLoc(source->_createLoc)
-    , _dict(cloner->clonedTypeDictionary(source->_dict))
     , _id(source->_id)
     , _name(source->_name)
     , _size(source->_size)
-    , _layout(NULL)
-    , BASECLASS_KINDINIT(KIND(Type)) {
+    , _layout(NULL) {
     
     if (source->_layout)
         _layout = cloner->clonedType(source->_layout);
-    _dict->registerType(this);
 }
 
 Type::~Type() {
@@ -72,13 +92,13 @@ Type::~Type() {
 const Type *
 Type::cloneType(Allocator *a, IRCloner *cloner) const {
     assert(0); // Should not be any Type objets
-    assert(_kind == KIND(Type));
+    assert(_kind == KIND(Extensible));
     return new (a) Type(a, this, cloner);
 }
 
 Literal *
-Type::literal(LOCATION, IR *ir, const LiteralBytes *value) const {
-    return ir->registerLiteral(PASSLOC, this, value);
+Type::literal(LOCATION, const LiteralBytes *value) const {
+    return ir()->registerLiteral(PASSLOC, this, value);
 }
 
 String
@@ -97,7 +117,7 @@ Type::base_string(Allocator *mem, bool useHeader) const {
 }
 
 void
-Type::log(TextLogger &lgr) const {
+Type::log(TextLogger &lgr, bool indent) const {
     lgr.irOneLinerBegin("type", "t", _id);
     this->logContents(lgr);
     lgr.irOneLinerEnd();

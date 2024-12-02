@@ -50,10 +50,15 @@ class IRCloner : public Extensible {
     friend class IR;
 
 public:
-    IRCloner(Allocator *mem, Extension *ext, KINDTYPE(Extensible) kind=CLASSKIND(IRCloner,Extensible));
+    IRCloner(Allocator *mem, Extension *ext);
+    IRCloner(IR *ir);
     virtual ~IRCloner();
 
+    void setClonedIR(IR *clonedIR);
+
+    Allocator *mem() const { return _mem; }
     IR *clonedIR() { return _clonedIR; }
+
     Builder *clonedBuilder(Builder *b);
     Context *clonedContext(Context *c);
     EntryPoint *clonedEntryPoint(EntryPoint *e);
@@ -68,12 +73,10 @@ public:
     const Type **clonedTypeArray(int32_t numTypes, const Type **typeArray);
     TypeDictionary *clonedTypeDictionary(TypeDictionary *d);
     Value *clonedValue(Value *v);
-    ExtensibleIR *clone(ExtensibleIR *item);
+    ExtensibleIR *clone(const ExtensibleIR *item);
 
 protected:
-    void setClonedIR(IR *clonedIR);
-
-    Allocator *_mem;
+    Allocator                 * _mem;
     IR                        * _clonedIR;
     Array<Builder *>            _clonedBuilders;
     Array<Context *>            _clonedContexts;

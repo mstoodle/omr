@@ -22,74 +22,29 @@
 #ifndef TYPEDICTIONARY_INCL
 #define TYPEDICTIONARY_INCL
 
-#include "common.hpp"
-#include "Extensible.hpp"
-#include "String.hpp"
+#include "Dictionary.hpp"
 
 namespace OMR {
 namespace JitBuilder {
 
-class Compiler;
-class DebugDictionary;
-class DynamicType;
-class ExtensibleIR;
-class Extension;
-class IR;
-class IRCloner;
-class OperationBuilder;
 
-class TypeDictionary : public Extensible {
+class TypeDictionary : public Dictionary<const Type, TypeID, NoTypeID, TypeList> {
+    typedef Dictionary<const Type, TypeID, NoTypeID, TypeList> DictBaseType;
     JBALLOC_(TypeDictionary)
 
-    friend class DynamicType;
-    friend class Extension;
     friend class IR;
     friend class IRCloner;
-    friend class OperationBuilder;
     friend class Type;
 
 public:
-    DYNAMIC_ALLOC_ONLY(TypeDictionary, Compiler *compiler);
-    DYNAMIC_ALLOC_ONLY(TypeDictionary, Compiler *compiler, String name);
-    DYNAMIC_ALLOC_ONLY(TypeDictionary, Compiler *compiler, String name, TypeDictionary *linkedDict);
+    DYNAMIC_ALLOC_ONLY(TypeDictionary, IR *ir, String name);
 
-    Compiler *compiler() const { return _compiler; }
-    Allocator *mem() const { return _mem; }
-
-    TypeListIterator typesIterator() const { return _types.iterator(); }
-    TypeListIterator modifiableTypesIterator() { return _types.iterator(true, false, false); }
-
-    const Type *LookupType(uint64_t id) const;
-    void RemoveType(const Type *type);
-    TypeID numTypes() const { return _nextTypeID; }
-
-    TypeDictionaryID id() const { return _id; }
-    String name() const { return _name; }
-    bool hasLinkedDictionary() const { return _linkedDictionary != NULL; }
-    TypeDictionary *linkedDictionary() const { return _linkedDictionary; }
-
-    void log(TextLogger &lgr) const;
-
-    void registerType(const Type *type);
+    void registerType(const Type *type) { addNewEntry(type); }
 
 protected:
     TypeDictionary(Allocator *a, const TypeDictionary *source, IRCloner *cloner);
-
-    virtual ExtensibleIR *clone(Allocator *mem, IRCloner *cloner) const { return reinterpret_cast<ExtensibleIR *>(cloneDictionary(mem, cloner)); } // TODO: FIX!
+    virtual ExtensibleIR *clone(Allocator *mem, IRCloner *cloner) const { return cloneDictionary(mem, cloner); }
     virtual TypeDictionary *cloneDictionary(Allocator *mem, IRCloner *cloner) const;
-
-    virtual void logContents(TextLogger &lgr) const;
-    void internalRegisterType(const Type *type);
-    TypeID getTypeID() { return _nextTypeID++; }
-
-    TypeDictionaryID _id;
-    String _name;
-    Compiler * _compiler;
-    Allocator * _mem;
-    List<const Type *> _types;
-    List<const Type *> _ownedTypes;
-    TypeID _nextTypeID;
-    TypeDictionary * _linkedDictionary;
 
     SUBCLASS_KINDSERVICE_DECL(Extensible, TypeDictionary);
 };
@@ -98,4 +53,3 @@ protected:
 } // namespace OMR
 
 #endif // defined(TYPEDICTIONARY_INCL)
-
