@@ -60,7 +60,7 @@
                 { "name": "name"
                 , "overloadsuffix": ""
                 , "flags": []
-                , "return": "string"
+                , "return": "constString"
                 , "parms": []
                 },
                 { "name": "vmState"
