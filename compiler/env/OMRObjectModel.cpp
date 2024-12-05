@@ -39,8 +39,7 @@ OMR::ObjectModel::ObjectModel()
 int32_t
 OMR::ObjectModel::sizeofReferenceField()
    {
-   TR_UNIMPLEMENTED();
-   return 0;
+   return sizeofReferenceAddress();
    }
 
 intptr_t
