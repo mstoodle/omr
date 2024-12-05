@@ -32,7 +32,7 @@ namespace OMR { typedef OMR::FrontEnd FrontEndConnector; }
 #endif
 
 #include "compile/CompilationTypes.hpp"
-#include "compiler/env/FrontEnd.hpp"
+#include "compiler/env/TRFrontEnd.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/JitConfig.hpp"
 #include "env/jittypes.h"
