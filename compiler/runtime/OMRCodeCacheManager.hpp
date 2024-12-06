@@ -116,6 +116,10 @@ public:
 
    CodeCacheManager(TR::RawAllocator rawAllocator);
 
+   void *operator new(size_t s, TR::CodeCacheManager *m) { return m; }
+
+   static TR::CodeCacheManager *instance()  { return _codeCacheManager; }
+
    class CacheListCriticalSection : public CriticalSection
       {
       public:
@@ -322,20 +326,17 @@ public:
    void registerCompiledMethod(const char *sig, uint8_t *startPC, uint32_t codeSize);
    void registerStaticRelocation(const TR::StaticRelocation &relocation);
 
+   TR::CodeCacheMemorySegment *allocateCodeCacheSegment(size_t segmentSize,
+                                                        size_t &codeCacheSizeToAllocate,
+                                                        void *preferredStartAddress);
+
    /**
     * @brief Hint to free a given code cache segment.
-    *
-    * This function is intended to allow code cache segments allocated by
-    * `allocateCodeCacheSegment()` to be freed. Because it may not always
-    * be safe to actually free code cache memory, callers should treat
-    * this function as a hint. It is up to downstream projects to decide
-    * how to handle these requests. By default, if no overrides are
-    * provided, no memory is ever freed.
     *
     * @param memSegment is a pointer to the TR::CodeCacheMemorySegment instance
     *        that handles the segment memory to be freed.
     */
-   void freeCodeCacheSegment(TR::CodeCacheMemorySegment * memSegment) {}
+   void freeCodeCacheSegment(TR::CodeCacheMemorySegment * memSegment);
 
    void increaseCurrTotalUsedInBytes(size_t size);
    void decreaseCurrTotalUsedInBytes(size_t size);
@@ -403,6 +404,9 @@ protected:
 
 
 #endif // HOST_OS == OMR_LINUX
+
+private :
+   static TR::CodeCacheManager *_codeCacheManager;
    };
 
 } // namespace OMR
