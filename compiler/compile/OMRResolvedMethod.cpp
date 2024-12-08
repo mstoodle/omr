@@ -1,17 +1,18 @@
 /*******************************************************************************
- * Copyright IBM Corp. and others 2000
+ * Copyright IBM Corp. and others 2014
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
  * distribution and is available at https://www.eclipse.org/legal/epl-2.0/
- * or the Apache License, Version 2.0 which accompanies this distribution
- * and is available at https://www.apache.org/licenses/LICENSE-2.0.
+ * or the Apache License, Version 2.0 which accompanies this distribution and
+ * is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
- * This Source Code may also be made available under the following Secondary
- * Licenses when the conditions for such availability set forth in the
- * Eclipse Public License, v. 2.0 are satisfied: GNU General Public License,
- * version 2 with the GNU Classpath Exception [1] and GNU General Public
- * License, version 2 with the OpenJDK Assembly Exception [2].
+ * This Source Code may also be made available under the following
+ * Secondary Licenses when the conditions for such availability set
+ * forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+ * General Public License, version 2 with the GNU Classpath
+ * Exception [1] and GNU General Public License, version 2 with the
+ * OpenJDK Assembly Exception [2].
  *
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
@@ -21,25 +22,19 @@
 
 #include "compile/Compilation.hpp"
 #include "compile/ResolvedMethod.hpp"
-#include "compile/SymbolReferenceTable.hpp"
-#include "il/ParameterSymbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "ilgen/TypeDictionary.hpp"
 #include "ilgen/IlInjector.hpp"
 #include "ilgen/IlBuilder.hpp"
+#include "ilgen/IlType.hpp"
 #include "ilgen/MethodBuilder.hpp"
 #include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
 
-namespace TestCompiler
-{
-
 // needs major overhaul
-ResolvedMethod::ResolvedMethod(TR_OpaqueMethodBlock *method)
+OMR::ResolvedMethod::ResolvedMethod(TR_OpaqueMethodBlock *method)
    {
-   // trouble! trouble! where do we get TypeDictionary from now?
    _ilInjector = reinterpret_cast<TR::IlInjector *>(method);
 
-   TR::ResolvedMethod * resolvedMethod = _ilInjector->resolvedMethod();
+   TR::ResolvedMethod * resolvedMethod = (TR::ResolvedMethod *)_ilInjector->methodSymbol()->getResolvedMethod();
    _fileName = resolvedMethod->classNameChars();
    _name = resolvedMethod->nameChars();
    _numParms = resolvedMethod->getNumArgs();
@@ -47,31 +42,19 @@ ResolvedMethod::ResolvedMethod(TR_OpaqueMethodBlock *method)
    _lineNumber = resolvedMethod->getLineNumber();
    _returnType = resolvedMethod->returnIlType();
    _signature = resolvedMethod->getSignature();
+   _externalName = 0;
    _entryPoint = resolvedMethod->getEntryPoint();
-   strncpy(_signatureChars, resolvedMethod->signatureChars(), 62); // TODO: introduce concept of robustness
-   }
-
-ResolvedMethod::ResolvedMethod(TR::MethodBuilder *m)
-   : _fileName(m->getDefiningFile()),
-     _lineNumber(m->getDefiningLine()),
-     _name((char *)m->GetMethodName()), // sad cast
-     _numParms(m->getNumParameters()),
-     _parmTypes(m->getParameterTypes()),
-     _returnType(m->getReturnType()),
-     _entryPoint(0),
-     _signature(0),
-     _ilInjector(static_cast<TR::IlInjector *>(m))
-   {
-   computeSignatureChars();
+   strncpy(_signatureChars, resolvedMethod->signatureChars(), MAX_SIGNATURE_LENGTH); // TODO: introduce concept of robustness
    }
 
 const char *
-ResolvedMethod::signature(TR_Memory * trMemory, TR_AllocationKind allocKind)
+OMR::ResolvedMethod::signature(TR_Memory * trMemory, TR_AllocationKind allocKind)
    {
    if( !_signature )
       {
-      char * s = (char *)trMemory->allocateMemory(strlen(_fileName) + 1 + strlen(_lineNumber) + 1 + strlen(_name) + 1, allocKind);
-      sprintf(s, "%s:%s:%s", _fileName, _lineNumber, _name);
+      size_t len = strlen(_fileName) + 1 + strlen(_lineNumber) + 1 + strlen(_name) + 1;
+      char * s = (char *)trMemory->allocateMemory(len, allocKind);
+      snprintf(s, len, "%s:%s:%s", _fileName, _lineNumber, _name);
 
       if ( allocKind == heapAlloc)
         _signature = s;
@@ -82,15 +65,35 @@ ResolvedMethod::signature(TR_Memory * trMemory, TR_AllocationKind allocKind)
       return _signature;
    }
 
+const char *
+OMR::ResolvedMethod::externalName(TR_Memory *trMemory, TR_AllocationKind allocKind)
+   {
+   if( !_externalName)
+      {
+      // For C++, need to mangle name
+      //char * s = (char *)trMemory->allocateMemory(1 + strlen(_name) + 1, allocKind);
+      //sprintf(s, "_Z%d%si", (int32_t)strlen(_name), _name);
+
+
+      // functions must be defined as extern "C"
+      _externalName = _name;
+
+      //if ( allocKind == heapAlloc)
+      //  _externalName = s;
+      }
+
+   return _externalName;
+   }
+
 TR::DataType
-ResolvedMethod::parmType(uint32_t slot)
+OMR::ResolvedMethod::parmType(uint32_t slot)
    {
    TR_ASSERT((slot < unsigned(_numParms)), "Invalid slot provided for Parameter Type");
    return _parmTypes[slot]->getPrimitiveType();
    }
 
 void
-ResolvedMethod::computeSignatureChars()
+OMR::ResolvedMethod::computeSignatureChars()
    {
    char *name=NULL;
    uint32_t len=3;
@@ -100,7 +103,7 @@ ResolvedMethod::computeSignatureChars()
       len += static_cast<uint32_t>(strlen(type->getSignatureName()));
       }
    len += static_cast<uint32_t>(strlen(_returnType->getSignatureName()));
-   TR_ASSERT(len < 64, "signature array may not be large enough"); // TODO: robustness
+   TR_ASSERT(len < MAX_SIGNATURE_LENGTH, "signature array may not be large enough"); // TODO: robustness
 
    int32_t s = 0;
    _signatureChars[s++] = '(';
@@ -108,20 +111,20 @@ ResolvedMethod::computeSignatureChars()
       {
       name = _parmTypes[p]->getSignatureName();
       len = static_cast<uint32_t>(strlen(name));
-      strncpy(_signatureChars+s, name, len);
+      strncpy(_signatureChars+s, name, MAX_SIGNATURE_LENGTH-s);
       s += len;
       }
    _signatureChars[s++] = ')';
    name = _returnType->getSignatureName();
    len = static_cast<uint32_t>(strlen(name));
-   strncpy(_signatureChars+s, name, len);
+   strncpy(_signatureChars+s, name, MAX_SIGNATURE_LENGTH-s);
    s += len;
    _signatureChars[s++] = 0;
    }
 
 
 char *
-ResolvedMethod::localName(uint32_t slot,
+OMR::ResolvedMethod::localName(uint32_t slot,
                           uint32_t bcIndex,
                           int32_t &nameLength,
                           TR_Memory *trMemory)
@@ -138,8 +141,9 @@ ResolvedMethod::localName(uint32_t slot,
       }
    else
       {
-      name = (char *) trMemory->allocateHeapMemory(8 * sizeof(char));
-      sprintf(name, "Parm %2d", slot);
+      size_t len = 8 * sizeof(char);
+      name = (char *) trMemory->allocateHeapMemory(len);
+      snprintf(name, len, "Parm %2d", slot);
       }
 
    nameLength = static_cast<int32_t>(strlen(name));
@@ -147,7 +151,7 @@ ResolvedMethod::localName(uint32_t slot,
    }
 
 TR::IlInjector *
-ResolvedMethod::getInjector (TR::IlGeneratorMethodDetails * details,
+OMR::ResolvedMethod::getInjector (TR::IlGeneratorMethodDetails * details,
    TR::ResolvedMethodSymbol *methodSymbol,
    TR::FrontEnd *fe,
    TR::SymbolReferenceTable *symRefTab)
@@ -157,15 +161,13 @@ ResolvedMethod::getInjector (TR::IlGeneratorMethodDetails * details,
    }
 
 TR::DataType
-ResolvedMethod::returnType()
+OMR::ResolvedMethod::returnType()
    {
    return _returnType->getPrimitiveType();
    }
 
 char *
-ResolvedMethod::getParameterTypeSignature(int32_t parmIndex)
+OMR::ResolvedMethod::getParameterTypeSignature(int32_t parmIndex)
    {
    return _parmTypes[parmIndex]->getSignatureName();
    }
-
-} // namespace TestCompiler
