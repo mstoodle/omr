@@ -26,13 +26,11 @@ find_package(PythonInterp REQUIRED)
 
 # JitBuilder Files
 set(JITBUILDER_OBJECTS
-	compile/ResolvedMethod.cpp
 	control/Jit.cpp
 	ilgen/JBIlGeneratorMethodDetails.cpp
 	optimizer/JBOptimizer.hpp
 	optimizer/JBOptimizer.cpp
 	optimizer/Optimizer.hpp
-	#runtime/JBCodeCacheManager.cpp
 )
 
 if(OMR_ARCH_X86)
