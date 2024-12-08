@@ -94,56 +94,48 @@ OMR::Method::returnOpCode()
 uint16_t
 OMR::Method::classNameLength()
    {
-   TR_UNIMPLEMENTED();
-   return 0;
+   return static_cast<uint16_t>(strlen(classNameChars()));
    }
 
 uint16_t
 OMR::Method::nameLength()
    {
-   TR_UNIMPLEMENTED();
-   return 0;
+   return static_cast<uint16_t>(strlen(nameChars()));
    }
 
 uint16_t
 OMR::Method::signatureLength()
    {
-   TR_UNIMPLEMENTED();
-   return 0;
+   return static_cast<uint16_t>(strlen(signatureChars()));
    }
 
 char *
 OMR::Method::classNameChars()
    {
-   TR_UNIMPLEMENTED();
-   return 0;
+   return ""; // easy default
    }
 
 char *
 OMR::Method::nameChars()
    {
-   TR_UNIMPLEMENTED();
-   return 0;
+   return "Method"; // easy default
    }
 
 char *
 OMR::Method::signatureChars()
    {
-   TR_UNIMPLEMENTED();
-   return 0;
+   return "()V";
    }
 
 bool
 OMR::Method::isConstructor()
    {
-   TR_UNIMPLEMENTED();
    return false;
    }
 
 bool
 OMR::Method::isFinalInObject()
    {
-   TR_UNIMPLEMENTED();
    return false;
    }
 

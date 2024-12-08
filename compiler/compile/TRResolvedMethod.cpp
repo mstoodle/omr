@@ -40,7 +40,7 @@ class TR_PrexArgInfo;
 namespace TR { class IlGeneratorMethodDetails; }
 namespace TR { class LabelSymbol; }
 
-TR::Method *TR_ResolvedMethod::convertToMethod()                           { TR_UNIMPLEMENTED(); return 0; }
+TR::Method * TR_ResolvedMethod::convertToMethod()                          { TR_UNIMPLEMENTED(); return 0; }
 uint32_t     TR_ResolvedMethod::numberOfParameters()                       { TR_UNIMPLEMENTED(); return 0; }
 uint32_t     TR_ResolvedMethod::numberOfExplicitParameters()               { TR_UNIMPLEMENTED(); return 0; }
 TR::DataType TR_ResolvedMethod::parmType(uint32_t)                         { TR_UNIMPLEMENTED(); return TR::NoType; }
@@ -51,34 +51,34 @@ TR::DataType TR_ResolvedMethod::returnType()                               { TR_
 uint32_t     TR_ResolvedMethod::returnTypeWidth()                          { TR_UNIMPLEMENTED(); return 0; }
 bool         TR_ResolvedMethod::returnTypeIsUnsigned()                     { TR_UNIMPLEMENTED(); return 0; }
 TR::ILOpCodes TR_ResolvedMethod::returnOpCode()                            { TR_UNIMPLEMENTED(); return TR::BadILOp; }
-uint16_t     TR_ResolvedMethod::classNameLength()                          { TR_UNIMPLEMENTED(); return 0; }
-uint16_t     TR_ResolvedMethod::nameLength()                               { TR_UNIMPLEMENTED(); return 0; }
-uint16_t     TR_ResolvedMethod::signatureLength()                          { TR_UNIMPLEMENTED(); return 0; }
+uint16_t     TR_ResolvedMethod::classNameLength()                          { return static_cast<uint16_t>(strlen(classNameChars())); }
+uint16_t     TR_ResolvedMethod::nameLength()                               { return static_cast<uint16_t>(strlen(nameChars())); }
+uint16_t     TR_ResolvedMethod::signatureLength()                          { return static_cast<uint16_t>(strlen(signatureChars())); }
 char *       TR_ResolvedMethod::classNameChars()                           { TR_UNIMPLEMENTED(); return 0; }
 char *       TR_ResolvedMethod::nameChars()                                { TR_UNIMPLEMENTED(); return 0; }
 char *       TR_ResolvedMethod::signatureChars()                           { TR_UNIMPLEMENTED(); return 0; }
-bool         TR_ResolvedMethod::isConstructor()                            { TR_UNIMPLEMENTED(); return false; }
-bool         TR_ResolvedMethod::isStatic()                                 { TR_UNIMPLEMENTED(); return false; }
-bool         TR_ResolvedMethod::isAbstract()                               { TR_UNIMPLEMENTED(); return false; }
-bool         TR_ResolvedMethod::isCompilable(TR_Memory *)                  { TR_UNIMPLEMENTED(); return false; }
+bool         TR_ResolvedMethod::isConstructor()                            { return false; }
+bool         TR_ResolvedMethod::isStatic()                                 { return true; } // useful default
+bool         TR_ResolvedMethod::isAbstract()                               { return false; }
+bool         TR_ResolvedMethod::isCompilable(TR_Memory *)                  { return true; } // useful default
 bool         TR_ResolvedMethod::isInlineable(TR::Compilation *)            { TR_UNIMPLEMENTED(); return false; }
-bool         TR_ResolvedMethod::isNative()                                 { TR_UNIMPLEMENTED(); return false; }
-bool         TR_ResolvedMethod::isSynchronized()                           { TR_UNIMPLEMENTED(); return false; }
-bool         TR_ResolvedMethod::isPrivate()                                { TR_UNIMPLEMENTED(); return false; }
-bool         TR_ResolvedMethod::isProtected()                              { TR_UNIMPLEMENTED(); return false; }
-bool         TR_ResolvedMethod::isPublic()                                 { TR_UNIMPLEMENTED(); return false; }
-bool         TR_ResolvedMethod::isFinal()                                  { TR_UNIMPLEMENTED(); return false; }
+bool         TR_ResolvedMethod::isNative()                                 { return false; }
+bool         TR_ResolvedMethod::isSynchronized()                           { return false; }
+bool         TR_ResolvedMethod::isPrivate()                                { return false; }
+bool         TR_ResolvedMethod::isProtected()                              { return false; }
+bool         TR_ResolvedMethod::isPublic()                                 { return true; } // useful default
+bool         TR_ResolvedMethod::isFinal()                                  { return false; }
 bool         TR_ResolvedMethod::isInterpreted()                            { TR_UNIMPLEMENTED(); return false; }
 bool         TR_ResolvedMethod::isInterpretedForHeuristics()               { TR_UNIMPLEMENTED(); return false; }
-bool         TR_ResolvedMethod::hasBackwardBranches()                      { TR_UNIMPLEMENTED(); return false; }
+bool         TR_ResolvedMethod::hasBackwardBranches()                      { return false; }
 bool         TR_ResolvedMethod::isObjectConstructor()                      { TR_UNIMPLEMENTED(); return false; }
-bool         TR_ResolvedMethod::isNonEmptyObjectConstructor()              { TR_UNIMPLEMENTED(); return false; }
+bool         TR_ResolvedMethod::isNonEmptyObjectConstructor()              { return false; }
 bool         TR_ResolvedMethod::isCold(TR::Compilation *, bool, TR::ResolvedMethodSymbol * /* = NULL */)             { TR_UNIMPLEMENTED(); return false; }
-bool         TR_ResolvedMethod::isSubjectToPhaseChange(TR::Compilation *) { TR_UNIMPLEMENTED(); return false; }
-bool         TR_ResolvedMethod::isSameMethod(TR_ResolvedMethod *)          { TR_UNIMPLEMENTED(); return false; }
-bool         TR_ResolvedMethod::isNewInstanceImplThunk()                   { TR_UNIMPLEMENTED(); return false; }
-bool         TR_ResolvedMethod::isJNINative()                              { TR_UNIMPLEMENTED(); return false; }
-bool         TR_ResolvedMethod::isJITInternalNative()                      { TR_UNIMPLEMENTED(); return false; }
+bool         TR_ResolvedMethod::isSubjectToPhaseChange(TR::Compilation *)  { return false; }
+bool         TR_ResolvedMethod::isSameMethod(TR_ResolvedMethod *other)     { return getPersistentIdentifier() == other->getPersistentIdentifier(); }
+bool         TR_ResolvedMethod::isNewInstanceImplThunk()                   { return false; }
+bool         TR_ResolvedMethod::isJNINative()                              { return false; }
+bool         TR_ResolvedMethod::isJITInternalNative()                      { return false; }
 void *       TR_ResolvedMethod::resolvedMethodAddress()                    { TR_UNIMPLEMENTED(); return 0; }
 void *       TR_ResolvedMethod::startAddressForJittedMethod()              { TR_UNIMPLEMENTED(); return 0; }
 void *       TR_ResolvedMethod::startAddressForJNIMethod(TR::Compilation *) { TR_UNIMPLEMENTED(); return 0; }
@@ -145,7 +145,7 @@ bool         TR_ResolvedMethod::virtualMethodIsOverridden()                { TR_
 void         TR_ResolvedMethod::setVirtualMethodIsOverridden()             { TR_UNIMPLEMENTED(); }
 void *       TR_ResolvedMethod::addressContainingIsOverriddenBit()         { TR_UNIMPLEMENTED(); return 0; }
 int32_t     TR_ResolvedMethod::virtualCallSelector()                       { TR_UNIMPLEMENTED(); return 0; }
-uint32_t     TR_ResolvedMethod::numberOfExceptionHandlers()                { TR_UNIMPLEMENTED(); return 0; }
+uint32_t     TR_ResolvedMethod::numberOfExceptionHandlers()                { return 0; }
 uint8_t *    TR_ResolvedMethod::allocateException(uint32_t,TR::Compilation*){ TR_UNIMPLEMENTED(); return 0; }
 
 int32_t      TR_ResolvedMethod::exceptionData(int32_t, int32_t *, int32_t *, int32_t *) { TR_UNIMPLEMENTED(); return 0; }
