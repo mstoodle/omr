@@ -1287,7 +1287,7 @@ TR_Debug::loadCustomStrategy(char *fileName)
          int32_t optNum;
          for (optNum = 0; optNum < OMR::numOpts; optNum++)
             {
-            const char *actualName = OMR::Optimizer::getOptimizationName((OMR::Optimizations)optNum);
+            const char *actualName = TR::Optimizer::getOptimizationName((OMR::Optimizations)optNum);
             if (!strncmp(name, actualName, nameLen))
                {
                int32_t flags = 0;

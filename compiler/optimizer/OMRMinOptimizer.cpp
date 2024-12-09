@@ -19,9 +19,9 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
+#include "optimizer/MinOptimizer.hpp"
 #include "optimizer/Optimizer.hpp"
 
-#include "optimizer/Optimizer_inlines.hpp"
 #include <limits.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -642,7 +642,7 @@ TR_Stats statGlobalValNumTiming("Global Value Numbering");
 #endif // OPT_TIMING
 
 
-TR::Optimizer *OMR::Optimizer::createOptimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *methodSymbol, bool isIlGen)
+TR::Optimizer *OMR::MinOptimizer::createOptimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *methodSymbol, bool isIlGen)
    {
    // returns IL optimizer, performs tree-to-tree optimizing transformations.
    if (isIlGen)
@@ -685,7 +685,7 @@ TR::Optimizer *OMR::Optimizer::createOptimizer(TR::Compilation *comp, TR::Resolv
 //
 // ************************************************************************
 
-OMR::Optimizer::Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *methodSymbol, bool isIlGen,
+OMR::MinOptimizer::MinOptimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *methodSymbol, bool isIlGen,
       const OptimizationStrategy *strategy, uint16_t VNType)
    : _compilation(comp),
      _cg(comp->cg()),
@@ -921,31 +921,31 @@ static const char * optimizer_name[] =
     };
 
 const char *
-OMR::Optimizer::getOptimizationName(OMR::Optimizations opt)
+OMR::MinOptimizer::getOptimizationName(OMR::Optimizations opt)
    {
    return ::optimizer_name[opt];
    }
 
 bool
-OMR::Optimizer::isEnabled(OMR::Optimizations i)
+OMR::MinOptimizer::isEnabled(OMR::Optimizations i)
    {
    if (_opts[i] != NULL)
       return _opts[i]->enabled();
    return false;
    }
 
-TR_Debug *OMR::Optimizer::getDebug()
+TR_Debug *OMR::MinOptimizer::getDebug()
    {
    return _compilation->getDebug();
    }
 
-void OMR::Optimizer::setCachedExtendedBBInfoValid(bool b)
+void OMR::MinOptimizer::setCachedExtendedBBInfoValid(bool b)
    {
    TR_ASSERT(!comp()->isPeekingMethod(), "ERROR: Should not modify _cachedExtendedBBInfoValid while peeking");
    _cachedExtendedBBInfoValid = b;
    }
 
-TR_UseDefInfo *OMR::Optimizer::setUseDefInfo(TR_UseDefInfo * u)
+TR_UseDefInfo *OMR::MinOptimizer::setUseDefInfo(TR_UseDefInfo * u)
    {
    if(_useDefInfo != NULL)
       {
@@ -956,7 +956,7 @@ TR_UseDefInfo *OMR::Optimizer::setUseDefInfo(TR_UseDefInfo * u)
    }
 
 
-TR_ValueNumberInfo *OMR::Optimizer::setValueNumberInfo(TR_ValueNumberInfo *v)
+TR_ValueNumberInfo *OMR::MinOptimizer::setValueNumberInfo(TR_ValueNumberInfo *v)
    {
    if (_valueNumberInfo && !v)
      dumpOptDetails(comp(), "     (Invalidating value number info)\n");
@@ -966,7 +966,7 @@ TR_ValueNumberInfo *OMR::Optimizer::setValueNumberInfo(TR_ValueNumberInfo *v)
    return (_valueNumberInfo = v);
    }
 
-TR_UseDefInfo* OMR::Optimizer::createUseDefInfo(TR::Compilation* comp,
+TR_UseDefInfo* OMR::MinOptimizer::createUseDefInfo(TR::Compilation* comp,
     bool requiresGlobals, bool prefersGlobals, bool loadsShouldBeDefs, bool cannotOmitTrivialDefs,
     bool conversionRegsOnly, bool doCompletion)
     {
@@ -974,7 +974,7 @@ TR_UseDefInfo* OMR::Optimizer::createUseDefInfo(TR::Compilation* comp,
         cannotOmitTrivialDefs, conversionRegsOnly, doCompletion, getCallsAsUses());
     }
 
-TR_ValueNumberInfo *OMR::Optimizer::createValueNumberInfo(bool requiresGlobals, bool preferGlobals, bool noUseDefInfo)
+TR_ValueNumberInfo *OMR::MinOptimizer::createValueNumberInfo(bool requiresGlobals, bool preferGlobals, bool noUseDefInfo)
    {
    LexicalTimer t("global value numbering (for globals definitely)", comp()->phaseTimer());
    TR::LexicalMemProfiler mp("global value numbering (for globals definitely)", comp()->phaseMemProfiler());
@@ -997,7 +997,7 @@ TR_ValueNumberInfo *OMR::Optimizer::createValueNumberInfo(bool requiresGlobals, 
    return valueNumberInfo;
    }
 
-void OMR::Optimizer::optimize()
+void OMR::MinOptimizer::optimize()
    {
    TR::Compilation::CompilationPhaseScope mainCompilationPhaseScope(comp());
 
@@ -1157,7 +1157,7 @@ void OMR::Optimizer::optimize()
    _stackedOptimizer = false;
    }
 
-void OMR::Optimizer::dumpPostOptTrees()
+void OMR::MinOptimizer::dumpPostOptTrees()
    {
    // do nothing for IlGen optimizer
    if (isIlGenOpt()) return;
@@ -1202,7 +1202,7 @@ void dumpName(TR::Optimizer * op, TR_FrontEnd *fe,  TR::Compilation * comp, OMR:
    trfprintf(comp->getOutFile(), "\n");
    }
 
-void OMR::Optimizer::dumpStrategy(const OptimizationStrategy * opt)
+void OMR::MinOptimizer::dumpStrategy(const OptimizationStrategy * opt)
    {
    TR_FrontEnd * fe = comp()->fe();
 
@@ -1242,7 +1242,7 @@ static void breakForTesting(int index)
       }
    }
 
-int32_t OMR::Optimizer::performOptimization(const OptimizationStrategy *optimization, int32_t firstOptIndex, int32_t lastOptIndex, int32_t doTiming)
+int32_t OMR::MinOptimizer::performOptimization(const OptimizationStrategy *optimization, int32_t firstOptIndex, int32_t lastOptIndex, int32_t doTiming)
    {
    OMR::Optimizations optNum = optimization->_num;
    TR::OptimizationManager *manager = getOptimization(optNum);
@@ -2221,7 +2221,7 @@ int32_t OMR::Optimizer::performOptimization(const OptimizationStrategy *optimiza
    return actualCost;
    }
 
-void OMR::Optimizer::enableAllLocalOpts()
+void OMR::MinOptimizer::enableAllLocalOpts()
    {
    setRequestOptimization(lateLocalGroup, true);
    setRequestOptimization(localCSE, true);
@@ -2237,7 +2237,7 @@ void OMR::Optimizer::enableAllLocalOpts()
    }
 
 
-int32_t OMR::Optimizer::doStructuralAnalysis()
+int32_t OMR::MinOptimizer::doStructuralAnalysis()
    {
 
    // Only perform structural analysis if there may be loops in the method
@@ -2262,7 +2262,7 @@ int32_t OMR::Optimizer::doStructuralAnalysis()
    }
 
 
-int32_t OMR::Optimizer::changeContinueLoopsToNestedLoops()
+int32_t OMR::MinOptimizer::changeContinueLoopsToNestedLoops()
    {
    TR_RegionStructure *rootStructure = comp()->getFlowGraph()->getStructure()->asRegion();
    if (rootStructure && rootStructure->changeContinueLoopsToNestedLoops(rootStructure))
@@ -2275,7 +2275,7 @@ int32_t OMR::Optimizer::changeContinueLoopsToNestedLoops()
    }
 
 
-bool OMR::Optimizer::prepareForNodeRemoval(TR::Node *node , bool deferInvalidatingUseDefInfo)
+bool OMR::MinOptimizer::prepareForNodeRemoval(TR::Node *node , bool deferInvalidatingUseDefInfo)
    {
    int32_t index;
 
@@ -2319,7 +2319,7 @@ bool OMR::Optimizer::prepareForNodeRemoval(TR::Node *node , bool deferInvalidati
    return useDefInfoAreInvalid;
    }
 
-void OMR::Optimizer::getStaticFrequency(TR::Block *block, int32_t *currentWeight)
+void OMR::MinOptimizer::getStaticFrequency(TR::Block *block, int32_t *currentWeight)
    {
    if (comp()->getUsesBlockFrequencyInGRA())
       *currentWeight = block->getFrequency();
@@ -2328,7 +2328,7 @@ void OMR::Optimizer::getStaticFrequency(TR::Block *block, int32_t *currentWeight
    }
 
 
-TR_Hotness OMR::Optimizer::checkMaxHotnessOfInlinedMethods( TR::Compilation *comp)
+TR_Hotness OMR::MinOptimizer::checkMaxHotnessOfInlinedMethods( TR::Compilation *comp)
    {
    TR_Hotness strategy = comp->getMethodHotness();
 #ifdef J9_PROJECT_SPECIFIC
@@ -2358,7 +2358,7 @@ TR_Hotness OMR::Optimizer::checkMaxHotnessOfInlinedMethods( TR::Compilation *com
    return strategy;
    }
 
-bool OMR::Optimizer::checkNumberOfLoopsAndBasicBlocks( TR::Compilation *comp, TR_Structure *rootStructure)
+bool OMR::MinOptimizer::checkNumberOfLoopsAndBasicBlocks( TR::Compilation *comp, TR_Structure *rootStructure)
    {
    TR::CFGNode *node;
    _numBasicBlocksInMethod = 0;
@@ -2394,7 +2394,7 @@ bool OMR::Optimizer::checkNumberOfLoopsAndBasicBlocks( TR::Compilation *comp, TR
    return false;
    }
 
-void OMR::Optimizer::countNumberOfLoops(TR_Structure *rootStructure)
+void OMR::MinOptimizer::countNumberOfLoops(TR_Structure *rootStructure)
    {
    TR_RegionStructure *regionStructure = rootStructure->asRegion();
    if (regionStructure)
@@ -2408,7 +2408,7 @@ void OMR::Optimizer::countNumberOfLoops(TR_Structure *rootStructure)
       }
    }
 
-bool OMR::Optimizer::areNodesEquivalent(TR::Node *node1, TR::Node *node2,  TR::Compilation *_comp, bool allowBCDSignPromotion)
+bool OMR::MinOptimizer::areNodesEquivalent(TR::Node *node1, TR::Node *node2,  TR::Compilation *_comp, bool allowBCDSignPromotion)
    {
    // WCodeLinkageFixup runs a version of LocalCSE that is not owned by
    // an optimizer, so it has to pass in a TR_Compilation
@@ -2627,7 +2627,7 @@ bool OMR::Optimizer::areNodesEquivalent(TR::Node *node1, TR::Node *node2,  TR::C
    }
 
 #ifdef J9_PROJECT_SPECIFIC
-bool OMR::Optimizer::areBCDAggrConstantNodesEquivalent(TR::Node *node1, TR::Node *node2,  TR::Compilation *_comp)
+bool OMR::MinOptimizer::areBCDAggrConstantNodesEquivalent(TR::Node *node1, TR::Node *node2,  TR::Compilation *_comp)
    {
    size_t size1 = (node1->getDataType().isBCD()) ? node1->getDecimalPrecision() : 0;
    size_t size2 = (node2->getDataType().isBCD()) ? node2->getDecimalPrecision() : 0;
@@ -2645,7 +2645,7 @@ bool OMR::Optimizer::areBCDAggrConstantNodesEquivalent(TR::Node *node1, TR::Node
    }
 #endif
 
-bool OMR::Optimizer::areSyntacticallyEquivalent(TR::Node *node1, TR::Node *node2, vcount_t visitCount)
+bool OMR::MinOptimizer::areSyntacticallyEquivalent(TR::Node *node1, TR::Node *node2, vcount_t visitCount)
    {
    if (node1->getVisitCount() == visitCount)
       {
@@ -2695,7 +2695,7 @@ bool OMR::Optimizer::areSyntacticallyEquivalent(TR::Node *node1, TR::Node *node2
  * This table allows a fast determination of whether two symbol references
  * represent the same symbol.
  */
-int32_t *OMR::Optimizer::getSymReferencesTable()
+int32_t *OMR::MinOptimizer::getSymReferencesTable()
    {
    if (_symReferencesTable == NULL)
       {
@@ -2737,7 +2737,7 @@ int32_t *OMR::Optimizer::getSymReferencesTable()
    }
 
 #ifdef DEBUG
-void OMR::Optimizer::doStructureChecks()
+void OMR::MinOptimizer::doStructureChecks()
    {
     TR::CFG * cfg = getMethodSymbol()->getFlowGraph();
    if (cfg)
@@ -2756,20 +2756,20 @@ void OMR::Optimizer::doStructureChecks()
    }
 #endif
 
-bool OMR::Optimizer::getLastRun(OMR::Optimizations opt)
+bool OMR::MinOptimizer::getLastRun(OMR::Optimizations opt)
    {
    if (!_opts[opt])
       return false;
    return _opts[opt]->getLastRun();
    }
 
-void OMR::Optimizer::setRequestOptimization(OMR::Optimizations opt, bool value, TR::Block *block)
+void OMR::MinOptimizer::setRequestOptimization(OMR::Optimizations opt, bool value, TR::Block *block)
    {
    if (_opts[opt])
       _opts[opt]->setRequested(value, block);
    }
 
-void OMR::Optimizer::setAliasSetsAreValid(bool b, bool setForWCode)
+void OMR::MinOptimizer::setAliasSetsAreValid(bool b, bool setForWCode)
    {
    if (_aliasSetsAreValid && !b)
      dumpOptDetails(comp(), "     (Invalidating alias info)\n");
@@ -2777,17 +2777,17 @@ void OMR::Optimizer::setAliasSetsAreValid(bool b, bool setForWCode)
    _aliasSetsAreValid = b;
    }
 
-const OptimizationStrategy *OMR::Optimizer::_mockStrategy = NULL;
+const OptimizationStrategy *OMR::MinOptimizer::_mockStrategy = NULL;
 
 const OptimizationStrategy *
-OMR::Optimizer::optimizationStrategy(TR::Compilation *c)
+OMR::MinOptimizer::optimizationStrategy(TR::Compilation *c)
    {
    // Mock strategies are used for testing, and override
    // the compilation strategy.
-   if (NULL != OMR::Optimizer::_mockStrategy)
+   if (NULL != OMR::MinOptimizer::_mockStrategy)
       {
-      traceMsg(c, "Using mock optimization strategy %p\n", OMR::Optimizer::_mockStrategy);
-      return OMR::Optimizer::_mockStrategy;
+      traceMsg(c, "Using mock optimization strategy %p\n", OMR::MinOptimizer::_mockStrategy);
+      return OMR::MinOptimizer::_mockStrategy;
       }
 
    TR_Hotness strategy = c->getMethodHotness();
@@ -2802,22 +2802,22 @@ OMR::Optimizer::optimizationStrategy(TR::Compilation *c)
 
 
 ValueNumberInfoBuildType
-OMR::Optimizer::valueNumberInfoBuildType()
+OMR::MinOptimizer::valueNumberInfoBuildType()
    {
    return PrePartitionVN;
    }
 
-TR::Optimizer *OMR::Optimizer::self()
+TR::Optimizer *OMR::MinOptimizer::self()
    {
    return (static_cast<TR::Optimizer *>(this));
    }
 
-OMR_InlinerPolicy* OMR::Optimizer::getInlinerPolicy()
+OMR_InlinerPolicy* OMR::MinOptimizer::getInlinerPolicy()
    {
    return new (comp()->allocator()) OMR_InlinerPolicy(comp());
    }
 
-OMR_InlinerUtil* OMR::Optimizer::getInlinerUtil()
+OMR_InlinerUtil* OMR::MinOptimizer::getInlinerUtil()
    {
    return new (comp()->allocator()) OMR_InlinerUtil(comp());
    }

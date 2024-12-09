@@ -19,16 +19,16 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
-#ifndef OMR_OPTIMIZER_INCL
-#define OMR_OPTIMIZER_INCL
+#ifndef OMR_MINOPTIMIZER_INCL
+#define OMR_MINOPTIMIZER_INCL
 
 /*
  * The following #define and typedef must appear before any #includes in this file
  */
-#ifndef OMR_OPTIMIZER_CONNECTOR
-#define OMR_OPTIMIZER_CONNECTOR
-namespace OMR { class Optimizer; }
-namespace OMR { typedef OMR::Optimizer OptimizerConnector; }
+#ifndef OMR_MINOPTIMIZER_CONNECTOR
+#define OMR_MINOPTIMIZER_CONNECTOR
+namespace OMR { class MinOptimizer; }
+namespace OMR { typedef OMR::MinOptimizer MinOptimizerConnector; }
 #endif
 
 #include <stddef.h>
@@ -52,6 +52,7 @@ namespace TR { class Block; }
 namespace TR { class CodeGenerator; }
 namespace TR { class Compilation; }
 namespace TR { class OptimizationManager; }
+namespace TR { class MinOptimizer; }
 namespace TR { class Optimizer; }
 namespace TR { class ResolvedMethodSymbol; }
 struct OptimizationStrategy;
@@ -139,7 +140,7 @@ enum
    MarkLastRun
    };
 
-class Optimizer
+class MinOptimizer
    {
    public:
 
@@ -148,7 +149,7 @@ class Optimizer
    // Create an optimizer object.
    static TR::Optimizer *createOptimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *methodSymbol, bool isIlGen);
 
-   Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *methodSymbol, bool isIlGen,
+   MinOptimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *methodSymbol, bool isIlGen,
          const OptimizationStrategy *strategy = NULL, uint16_t VNType = 0);
 
    // Optimize the current method
@@ -414,4 +415,4 @@ class Optimizer
 
 }
 
-#endif
+#endif // defined(OMR_MINOPTIMIZER_INCL)

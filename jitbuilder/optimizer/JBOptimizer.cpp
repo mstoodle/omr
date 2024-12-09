@@ -134,7 +134,7 @@ static const OptimizationStrategy JBwarmStrategyOpts[] =
 
 JitBuilder::Optimizer::Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *methodSymbol, bool isIlGen,
       const OptimizationStrategy *strategy, uint16_t VNType)
-   : OMR::Optimizer(comp, methodSymbol, isIlGen, strategy, VNType)
+   : OMR::MinOptimizerConnector(comp, methodSymbol, isIlGen, strategy, VNType)
    {
    // Initialize individual optimizations
    _opts[OMR::trivialDeadBlockRemover] =

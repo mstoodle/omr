@@ -34,7 +34,7 @@ namespace JitBuilder { typedef JitBuilder::Optimizer OptimizerConnector; }
 
 #define TR_OVERRIDE_OPTIMIZATION_INITIALIZATION 1
 
-#include "optimizer/OMROptimizer.hpp"
+#include "optimizer/OMRMinOptimizer.hpp"
 
 #include <stddef.h>
 #include <stdint.h>
@@ -47,7 +47,7 @@ struct OptimizationStrategy;
 namespace JitBuilder
 {
 
-class Optimizer : public OMR::OptimizerConnector
+class Optimizer : public OMR::MinOptimizerConnector
    {
    public:
 
