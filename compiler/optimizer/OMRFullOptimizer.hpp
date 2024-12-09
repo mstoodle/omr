@@ -19,16 +19,41 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
-#ifndef OPTIMIZATIONSTRATEGIES_INCL
-#define OPTIMIZATIONSTRATEGIES_INCL
+#ifndef OMR_FULLOPTIMIZER_INCL
+#define OMR_FULLOPTIMIZER_INCL
 
+/*
+ * The following #define and typedef must appear before any #includes in this file
+ */
+#ifndef OMR_FULLOPTIMIZER_CONNECTOR
+#define OMR_FULLOPTIMIZER_CONNECTOR
+namespace OMR { class FullOptimizer; }
+namespace OMR { typedef OMR::FullOptimizer FullOptimizerConnector; }
+#endif
+
+#include <stddef.h>
 #include <stdint.h>
-#include "optimizer/Optimizations.hpp"
+#include "optimizer/SmallOptimizer.hpp"
 
-struct OptimizationStrategy
+namespace TR { class Compilation; }
+namespace TR { class ResolvedMethodSymbol; }
+struct OptimizationStrategy;
+
+namespace OMR
+{
+
+class FullOptimizer : public TR::SmallOptimizer
    {
-   OMR::Optimizations _num;
-   uint16_t      _options;
+   public:
+
+   TR_ALLOC(TR_Memory::Machine)
+
+   FullOptimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *methodSymbol, bool isIlGen,
+         const OptimizationStrategy *strategy = NULL, uint16_t VNType = 0);
+
+   virtual void enableAllLocalOpts();
    };
 
-#endif
+}
+
+#endif // defined(OMR_FULLOPTIMIZER_INCL)

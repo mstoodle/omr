@@ -154,7 +154,7 @@ class TR_UseDefInfo
       friend class TR_OSRDefInfo;
       };
 
-   friend class OMR::Optimizer;
+   friend class OMR::SmallOptimizer;
 
    protected:
    /**
