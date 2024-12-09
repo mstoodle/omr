@@ -70,6 +70,7 @@ compiler_library(optimizer
 	${CMAKE_CURRENT_LIST_DIR}/OMROptimization.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OMROptimizationManager.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OMRTransformUtil.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OMRFullOptimizer.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OMRMinOptimizer.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OrderBlocks.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OSRDefAnalysis.cpp
