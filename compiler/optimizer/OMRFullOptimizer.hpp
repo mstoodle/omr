@@ -19,30 +19,40 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
-#ifndef TR_OPTIMIZER_INCL
-#define TR_OPTIMIZER_INCL
+#ifndef OMR_FULLOPTIMIZER_INCL
+#define OMR_FULLOPTIMIZER_INCL
 
-#include "optimizer/FullOptimizer.hpp"
+/*
+ * The following #define and typedef must appear before any #includes in this file
+ */
+#ifndef OMR_FULLOPTIMIZER_CONNECTOR
+#define OMR_FULLOPTIMIZER_CONNECTOR
+namespace OMR { class FullOptimizer; }
+namespace OMR { typedef OMR::FullOptimizer FullOptimizerConnector; }
+#endif
 
 #include <stddef.h>
 #include <stdint.h>
+#include "optimizer/MinOptimizer.hpp"
 
 namespace TR { class Compilation; }
 namespace TR { class ResolvedMethodSymbol; }
 struct OptimizationStrategy;
 
-namespace TR
+namespace OMR
 {
 
-class Optimizer : public TR::FullOptimizer
+class FullOptimizer : public TR::MinOptimizer
    {
    public:
 
-   Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *methodSymbol, bool isIlGen,
-         const OptimizationStrategy *strategy = NULL, uint16_t VNType = 0) :
-      TR::FullOptimizer(comp, methodSymbol, isIlGen, strategy, VNType) {}
+   TR_ALLOC(TR_Memory::Machine)
+
+   FullOptimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *methodSymbol, bool isIlGen,
+         const OptimizationStrategy *strategy = NULL, uint16_t VNType = 0);
+
    };
 
 }
 
-#endif
+#endif // defined(OMR_FULLOPTIMIZER_INCL)
