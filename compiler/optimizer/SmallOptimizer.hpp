@@ -19,16 +19,30 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
-#ifndef OPTIMIZATIONSTRATEGIES_INCL
-#define OPTIMIZATIONSTRATEGIES_INCL
+#ifndef TR_SMALLOPTIMIZER_INCL
+#define TR_SMALLOPTIMIZER_INCL
 
+#include "optimizer/OMRSmallOptimizer.hpp"
+
+#include <stddef.h>
 #include <stdint.h>
-#include "optimizer/Optimizations.hpp"
 
-struct OptimizationStrategy
+namespace TR { class Compilation; }
+namespace TR { class ResolvedMethodSymbol; }
+struct OptimizationStrategy;
+
+namespace TR
+{
+
+class SmallOptimizer : public OMR::SmallOptimizerConnector
    {
-   OMR::Optimizations _num;
-   uint16_t      _options;
+   public:
+
+   SmallOptimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *methodSymbol, bool isIlGen,
+         const OptimizationStrategy *strategy = NULL, uint16_t VNType = 0) :
+      OMR::SmallOptimizerConnector(comp, methodSymbol, isIlGen, strategy, VNType) {}
    };
 
-#endif
+}
+
+#endif // defined(TR_SMALLOPTIMIZER_INCL)

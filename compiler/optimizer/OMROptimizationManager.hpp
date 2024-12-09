@@ -98,7 +98,7 @@ class OMR_EXTENSIBLE OptimizationManager
 
    OptimizationFactory       factory()                       { return _factory; }
    OMR::Optimizations        id()                            { return _id; }
-   const char *              name()                          { return OMR::Optimizer::getOptimizationName(_id); }
+   const char *              name()                          { return TR::Optimizer::getOptimizationName(_id); }
    const OptimizationStrategy *    groupOfOpts()                   { return _groupOfOpts; }
 
    int32_t                   numPassesCompleted()            { return _numPassesCompleted; }
