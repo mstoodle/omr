@@ -68,30 +68,16 @@
 #include "optimizer/SwitchAnalyzer.hpp"
 
 
-static const OptimizationStrategy tacticalGlobalRegisterAllocatorOpts[] =
-   {
-   { OMR::inductionVariableAnalysis,             OMR::IfLoops                      },
-   { OMR::loopCanonicalization,                  OMR::IfLoops                      },
-   { OMR::liveRangeSplitter,                     OMR::IfLoops                      },
-   { OMR::redundantGotoElimination,              OMR::IfNotProfiling               }, // need to be run before global register allocator
-   { OMR::treeSimplification,                    OMR::MarkLastRun                  }, // Cleanup the trees after redundantGotoElimination
-   { OMR::tacticalGlobalRegisterAllocator,       OMR::IfEnabled                    },
-   { OMR::localCSE                                                                 },
-   { OMR::globalCopyPropagation,                 OMR::IfEnabledAndMoreThanOneBlock }, // if live range splitting created copies
-   { OMR::localCSE                                                                 }, // localCSE after post-PRE + post-GRA globalCopyPropagation to clean up whole expression remat (rtc 64659)
-   { OMR::globalDeadStoreGroup,                  OMR::IfEnabled                    },
-   { OMR::redundantGotoElimination,              OMR::IfEnabled                    }, // if global register allocator created new block
-   { OMR::deadTreesElimination                                                     }, // remove dangling GlRegDeps
-   { OMR::deadTreesElimination,                  OMR::IfEnabled                    }, // remove dead RegStores produced by previous deadTrees pass
-   { OMR::deadTreesElimination,                  OMR::IfEnabled                    }, // remove dead RegStores produced by previous deadTrees pass
-   { OMR::endGroup                                                                 }
-   };
-
 static const OptimizationStrategy cheapTacticalGlobalRegisterAllocatorOpts[] =
    {
    { OMR::redundantGotoElimination,              OMR::IfNotProfiling               }, // need to be run before global register allocator
    { OMR::tacticalGlobalRegisterAllocator,       OMR::IfEnabled                    },
-   { OMR::endGroup                        }
+   { OMR::endGroup                                                                 }
+   };
+
+static const OptimizationStrategy JBnoOptStrategyOpts[] =
+   {
+   { OMR::endOpts }
    };
 
 static const OptimizationStrategy JBcoldStrategyOpts[] =
@@ -101,6 +87,7 @@ static const OptimizationStrategy JBcoldStrategyOpts[] =
    { OMR::localCSE                                                                 },
    { OMR::basicBlockExtension                                                      },
    { OMR::cheapTacticalGlobalRegisterAllocatorGroup                                },
+   { OMR::endOpts                                                                       }
    };
 
 static const OptimizationStrategy JBwarmStrategyOpts[] =
@@ -145,10 +132,7 @@ static const OptimizationStrategy JBwarmStrategyOpts[] =
    };
 
 
-namespace JitBuilder
-{
-
-Optimizer::Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *methodSymbol, bool isIlGen,
+JitBuilder::Optimizer::Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *methodSymbol, bool isIlGen,
       const OptimizationStrategy *strategy, uint16_t VNType)
    : OMR::Optimizer(comp, methodSymbol, isIlGen, strategy, VNType)
    {
@@ -211,18 +195,15 @@ Optimizer::Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *methodSymb
    self()->setRequestOptimization(OMR::tacticalGlobalRegisterAllocatorGroup, true);
    self()->setRequestOptimization(OMR::tacticalGlobalRegisterAllocator, true);
 
-
-   omrCompilationStrategies[noOpt] = JBwarmStrategyOpts;
-   omrCompilationStrategies[cold]  = JBwarmStrategyOpts;
+   omrCompilationStrategies[noOpt] = JBnoOptStrategyOpts;
+   omrCompilationStrategies[cold]  = JBcoldStrategyOpts;
    omrCompilationStrategies[warm]  = JBwarmStrategyOpts;
    omrCompilationStrategies[hot]   = JBwarmStrategyOpts;
 
    }
 
 inline
-TR::Optimizer *Optimizer::self()
+TR::Optimizer *JitBuilder::Optimizer::self()
    {
    return (static_cast<TR::Optimizer *>(this));
    }
-
-} // namespace JitBuilder
