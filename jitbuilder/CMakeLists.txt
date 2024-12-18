@@ -28,9 +28,6 @@ find_package(PythonInterp REQUIRED)
 set(JITBUILDER_OBJECTS
 	control/Jit.cpp
 	ilgen/JBIlGeneratorMethodDetails.cpp
-	optimizer/JBOptimizer.hpp
-	optimizer/JBOptimizer.cpp
-	optimizer/Optimizer.hpp
 )
 
 if(OMR_ARCH_X86)
@@ -119,6 +116,7 @@ create_omr_compiler_library(
 	NAME    jitbuilder
 	OBJECTS ${JITBUILDER_OBJECTS}
 	DEFINES PROD_WITH_ASSUMES JITTEST
+	FILTER	${omr_SOURCE_DIR}/compiler/optimizer/OMRFullOptimizer.cpp
 )
 
 # Add interface path so that include paths propagate.

@@ -50,24 +50,24 @@ set(GTEST_DIR $(omr_SOURCE_DIR)/third_party/gtest-1.8.0)
 		COMMAND ${VALGRIND} ${VALGRIND_A1} ${VALGRIND_A2} ${VALGRIND_A3} $<TARGET_FILE:testsemver>
 	)
 
-	## testcompiler
-	add_executable(testcompiler
+	## testjb2compiler
+	add_executable(testjb2compiler
 		CompilerTest.cpp
 	)
-	target_link_libraries(testcompiler
+	target_link_libraries(testjb2compiler
 		#jb2core
 		jb2
 		omrGtest
 		${CMAKE_DL_LIBS}
 	)
-	target_include_directories(testcompiler PRIVATE
+	target_include_directories(testjb2compiler PRIVATE
 		${JB2_CORE_DIR}
 	       	${GTEST_DIR}/include
 	)
 
 	add_test(
 		NAME JB2TestCompiler
-		COMMAND ${VALGRIND} ${VALGRIND_A1} ${VALGRIND_A2} ${VALGRIND_A3}  $<TARGET_FILE:testcompiler>
+		COMMAND ${VALGRIND} ${VALGRIND_A1} ${VALGRIND_A2} ${VALGRIND_A3}  $<TARGET_FILE:testjb2compiler>
 	)
 
 	## testlist

@@ -188,7 +188,7 @@ class MinOptimizer
 
    static ValueNumberInfoBuildType valueNumberInfoBuildType();
 
-   void enableAllLocalOpts();
+   virtual void enableAllLocalOpts();
 
    bool getAliasSetsAreValid()       { return _aliasSetsAreValid; }
    void setAliasSetsAreValid(bool b, bool setForWCode = false);
