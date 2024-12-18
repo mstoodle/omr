@@ -30,11 +30,7 @@ set(JITBUILDER_OBJECTS
 	ilgen/JBIlGeneratorMethodDetails.cpp
 )
 
-if(OMR_ARCH_S390)
-	list(APPEND JITBUILDER_OBJECTS
-		z/codegen/Evaluator.cpp
-	)
-elseif(OMR_ARCH_POWER)
+if(OMR_ARCH_POWER)
 	list(APPEND JITBUILDER_OBJECTS
 		p/runtime/CodeSync.cpp
 		p/runtime/AsmUtil.spp
