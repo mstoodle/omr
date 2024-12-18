@@ -30,30 +30,20 @@
 #include "compile/ResolvedMethod.hpp"
 #include "env/IO.hpp"
 
-namespace JitBuilder
-{
-
-IlGeneratorMethodDetails::IlGeneratorMethodDetails(TR_ResolvedMethod *method) :
-   OMR::IlGeneratorMethodDetailsConnector(),
-   _method(static_cast<TR::ResolvedMethod *>(method))
+OMR::IlGeneratorMethodDetails::IlGeneratorMethodDetails(TR_ResolvedMethod *method)
+   : _method(static_cast<TR::ResolvedMethod *>(method))
+   , _ilVerifier(NULL)
    {
-   }
-
-
-bool
-IlGeneratorMethodDetails::sameAs(TR::IlGeneratorMethodDetails & other, TR_FrontEnd *fe)
-   {
-   return self()->getMethod() == other.getMethod();
    }
 
 
 TR_IlGenerator *
-IlGeneratorMethodDetails::getIlGenerator(TR::ResolvedMethodSymbol *methodSymbol,
-                                         TR_FrontEnd * fe,
-                                         TR::Compilation *comp,
-                                         TR::SymbolReferenceTable *symRefTab,
-                                         bool forceClassLookahead,
-                                         TR_InlineBlocks *blocksToInline)
+OMR::IlGeneratorMethodDetails::getIlGenerator(TR::ResolvedMethodSymbol *methodSymbol,
+                                              TR_FrontEnd * fe,
+                                              TR::Compilation *comp,
+                                              TR::SymbolReferenceTable *symRefTab,
+                                              bool forceClassLookahead,
+                                              TR_InlineBlocks *blocksToInline)
    {
    TR_ASSERT(forceClassLookahead == false, "IlGenerator does not support class lookahead");
    TR_ASSERT(blocksToInline == 0, "IlGenerator does not yet support partial inlining");
@@ -62,13 +52,17 @@ IlGeneratorMethodDetails::getIlGenerator(TR::ResolvedMethodSymbol *methodSymbol,
    }
 
 
+bool
+OMR::IlGeneratorMethodDetails::sameAs(TR::IlGeneratorMethodDetails & other) const
+   {
+   return self()->getMethod() == other.getMethod();
+   }
+
 void
-IlGeneratorMethodDetails::print(TR_FrontEnd *fe, TR::FILE *file)
+OMR::IlGeneratorMethodDetails::print(TR_FrontEnd *fe, TR::FILE *file)
    {
    if (file == NULL)
       return;
 
    trfprintf(file, "( %p )", self()->getMethod());
    }
-
-} // namespace JitBuilder

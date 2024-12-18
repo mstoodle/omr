@@ -27,7 +27,6 @@ find_package(PythonInterp REQUIRED)
 # JitBuilder Files
 set(JITBUILDER_OBJECTS
 	control/Jit.cpp
-	ilgen/JBIlGeneratorMethodDetails.cpp
 )
 
 if(OMR_ARCH_POWER)
