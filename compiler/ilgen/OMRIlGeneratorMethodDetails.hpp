@@ -36,9 +36,16 @@ namespace OMR { typedef OMR::IlGeneratorMethodDetails IlGeneratorMethodDetailsCo
 #include "infra/Annotations.hpp"
 
 class TR_FrontEnd;
+class TR_IlGenerator;
+class TR_IlVerifier;
+class TR_InlineBlocks;
 class TR_ResolvedMethod;
+namespace TR { class Compilation; }
 namespace TR { class IlGeneratorMethodDetails; }
 namespace TR { class IlVerifier; }
+namespace TR { class ResolvedMethod; }
+namespace TR { class ResolvedMethodSymbol; }
+namespace TR { class SymbolReferenceTable; }
 
 namespace OMR
 {
@@ -50,24 +57,38 @@ namespace OMR
  */
 class OMR_EXTENSIBLE IlGeneratorMethodDetails
    {
-
 public:
+   IlGeneratorMethodDetails(TR_ResolvedMethod *method);
 
    inline TR::IlGeneratorMethodDetails *self();
    inline const TR::IlGeneratorMethodDetails *self() const;
 
+   TR::ResolvedMethod * getMethod() const { return _method; }
+   TR_ResolvedMethod * getResolvedMethod() const { return (TR_ResolvedMethod *) _method; }
+
    virtual bool isMethodInProgress() const { return false; }
-   bool supportsInvalidation() { return false; }
-   bool sameAs(TR::IlGeneratorMethodDetails & other) { return false; }
-   void print(TR_FrontEnd *fe, TR::FILE *file) { }
+   bool supportsInvalidation() const { return false; }
+   bool sameAs(TR::IlGeneratorMethodDetails & other) const;
+   void print(TR_FrontEnd *fe, TR::FILE *file);
 
    inline static TR::IlGeneratorMethodDetails & create(TR::IlGeneratorMethodDetails & target, TR_ResolvedMethod *method);
+
+   TR_IlGenerator *getIlGenerator(TR::ResolvedMethodSymbol *methodSymbol,
+                                  TR_FrontEnd * fe,
+                                  TR::Compilation *comp,
+                                  TR::SymbolReferenceTable *symRefTab,
+                                  bool forceClassLookahead,
+                                  TR_InlineBlocks *blocksToInline);
 
    TR::IlVerifier * getIlVerifier()                     { return _ilVerifier; }
    void setIlVerifier(TR::IlVerifier * ilVerifier)      { _ilVerifier = ilVerifier; }
 
 protected:
-   IlGeneratorMethodDetails() : _ilVerifier(NULL) { }
+   IlGeneratorMethodDetails()
+      : _method(NULL)
+      , _ilVerifier(NULL)
+      { }
+
    virtual ~IlGeneratorMethodDetails() {}
 
    void *operator new(size_t size, TR::IlGeneratorMethodDetails *p){ return (void*) p; }
@@ -76,6 +97,7 @@ protected:
    void operator delete(void *pMem, TR::IlGeneratorMethodDetails &p) {};
    void operator delete(void *pMem, size_t size) { ::operator delete(pMem); };
 
+   TR::ResolvedMethod * _method;
    TR::IlVerifier     * _ilVerifier;
    };
 
