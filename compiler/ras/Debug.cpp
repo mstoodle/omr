@@ -3451,6 +3451,13 @@ TR_Debug::print(TR::FILE *pOutFile, TR_GCStackMap * map, TR::GCStackAtlas *atlas
    print(pOutFile, &map->_registerMap);
    }
 
+#if defined(TR_TARGET_S390)
+void
+TR_Debug::print(TR::FILE *pOutFile, TR::S390RestoreGPR7Snippet *snippet)
+   {
+   }
+#endif // defined(TR_TARGET_S390)
+
 #ifdef J9_PROJECT_SPECIFIC
 void
 TR_Debug::dump(TR::FILE *pOutFile, TR_CHTable * chTable)
