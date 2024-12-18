@@ -51,6 +51,7 @@ class FullOptimizer : public TR::MinOptimizer
    FullOptimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *methodSymbol, bool isIlGen,
          const OptimizationStrategy *strategy = NULL, uint16_t VNType = 0);
 
+   virtual void enableAllLocalOpts();
    };
 
 }
