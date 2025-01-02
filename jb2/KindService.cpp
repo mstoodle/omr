@@ -23,6 +23,9 @@
 #include "KindService.hpp"
 #include "String.hpp"
 
+// Uncomment next line to have the service output the kind ids and vectors to cout as they are assigned
+// #define DEBUG_KINDS
+
 namespace OMR {
 namespace JitBuilder {
 
@@ -89,12 +92,14 @@ KindService::assignKind(Kind baseKind, String name) {
     _kindFromNameMap.insert({*kindName, kind});
     _nameFromKind.assign(kind, kindName);
     
+    #if DEBUG_KINDS
     std::cout << "Kind " << kindName->c_str() << " allocated with kindID " << (size_t) kind << "\n\t";
     BitIndex b=0;
     auto it = newVector->iterator();
     std::cout << "\t";
     printBits(it);
     std::cout << "\n";
+    #endif
 
     return kind;
 }
