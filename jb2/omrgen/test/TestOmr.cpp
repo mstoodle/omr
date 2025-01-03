@@ -4712,8 +4712,8 @@ TEST(omrgenExtension, SubAddressAndInt) {
         SubFunc<FuncProto, intptr_t, int64_t, intptr_t> *sub_addressint64s = new (c->mem()) SubFunc<FuncProto,intptr_t,int64_t,intptr_t>(MEM_LOC(c->mem()), "sub_addressint64s", c, false);
         sub_addressint64s->test(LOC, tAddress, static_cast<intptr_t>(NULL), tInt64, static_cast<int64_t>(0), tAddress, static_cast<intptr_t>(NULL));
         sub_addressint64s->test(LOC, tAddress, static_cast<intptr_t>(NULL), tInt64, static_cast<int64_t>(4), tAddress, static_cast<intptr_t>(-4));
-        sub_addressint64s->test(LOC, tAddress, static_cast<intptr_t>(0xdeadbeef), tInt64, static_cast<int64_t>(0), tAddress, static_cast<intptr_t>(0xdeadbeef));
-        sub_addressint64s->test(LOC, tAddress, static_cast<intptr_t>(0xdeadbeef), tInt64, static_cast<int64_t>(16), tAddress, static_cast<intptr_t>(0xdeadbeef)-16);
+        sub_addressint64s->test(LOC, tAddress, static_cast<intptr_t>(0xdeadbeefdeadbeef), tInt64, static_cast<int64_t>(0), tAddress, static_cast<intptr_t>(0xdeadbeefdeadbeef));
+        sub_addressint64s->test(LOC, tAddress, static_cast<intptr_t>(0xdeadbeefdeadbeef), tInt64, static_cast<int64_t>(16), tAddress, static_cast<intptr_t>(0xdeadbeefdeadbeef)-16);
         sub_addressint64s->test(LOC, tAddress, std::numeric_limits<intptr_t>::max(), tInt64, static_cast<int64_t>(0), tAddress, std::numeric_limits<intptr_t>::max());
         sub_addressint64s->test(LOC, tAddress, std::numeric_limits<intptr_t>::min(), tInt64, static_cast<int64_t>(0), tAddress, std::numeric_limits<intptr_t>::min());
         delete sub_addressint64s;
