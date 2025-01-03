@@ -28,10 +28,11 @@
 #include "compile/Method.hpp"
 #include "compile/OMRResolvedMethod.hpp"
 
+class TR_ILGenerator;
 namespace TR { class IlGeneratorMethodDetails; }
+namespace TR { class IlInjector; }
 namespace TR { class IlType; }
 namespace TR { class TypeDictionary; }
-namespace TR { class IlInjector; }
 namespace TR { class MethodBuilder; }
 namespace TR { class FrontEnd; }
 
@@ -45,18 +46,20 @@ class ResolvedMethod : public OMR::ResolvedMethodConnector
          : OMR::ResolvedMethodConnector(method)
          { }
 
-      ResolvedMethod(char            * fileName,
-                     char            * lineNumber,
-                     char            * name,
+      ResolvedMethod(const char      * fileName,
+                     const char      * lineNumber,
+                     const char      * name,
                      int32_t           numArgs,
-                     TR::IlType     ** parmTypes,
-                     TR::IlType      * returnType,
+                     const char     ** parmNames,
+                     TR::DataType    * parmTypes,
+                     TR::DataType      returnType,
                      void            * entryPoint,
-                     TR::IlInjector  * ilInjector)
-         : OMR::ResolvedMethodConnector(fileName, lineNumber, name, numArgs,
-                                        parmTypes, returnType,
-                                        entryPoint, ilInjector)
+                     TR_IlGenerator  * ilgen)
+         : OMR::ResolvedMethodConnector(fileName, lineNumber, name,
+                                        numArgs, parmNames, parmTypes, returnType,
+                                        entryPoint, ilgen)
          { }
+
    };
 
 } // namespace TR

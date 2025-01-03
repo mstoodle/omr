@@ -37,9 +37,10 @@ namespace OMR { typedef OMR::ResolvedMethod ResolvedMethodConnector; }
 #include "compile/Method.hpp"
 #include "compile/TRResolvedMethod.hpp"
 
+class TR_IlGenerator;
 namespace TR { class IlGeneratorMethodDetails; }
-namespace TR { class IlType; }
 namespace TR { class IlInjector; }
+namespace TR { class IlType; }
 namespace TR { class FrontEnd; }
 
 
@@ -57,25 +58,13 @@ class ResolvedMethod : public ::TR_ResolvedMethod, public TR::Method
    ResolvedMethod(TR_OpaqueMethodBlock *method);
    ResolvedMethod(const char      * fileName,
                   const char      * lineNumber,
-                  char            * name,
+                  const char      * name,
                   int32_t           numParms,
-                  TR::IlType     ** parmTypes,
-                  TR::IlType      * returnType,
+                  const char     ** parmNames,
+                  TR::DataType    * parmTypes,
+                  TR::DataType      returnType,
                   void            * entryPoint,
-                  TR::IlInjector  * ilInjector)
-      : _fileName(fileName),
-        _lineNumber(lineNumber),
-        _name(name),
-        _signature(0),
-        _externalName(0),
-        _numParms(numParms),
-        _parmTypes(parmTypes),
-        _returnType(returnType),
-        _entryPoint(entryPoint),
-        _ilInjector(ilInjector)
-      {
-      computeSignatureChars();
-      }
+                  TR_IlGenerator  * ilgen);
 
    virtual TR::Method          * convertToMethod()                          { return this; }
 
@@ -84,14 +73,14 @@ class ResolvedMethod : public ::TR_ResolvedMethod, public TR::Method
    char                        * localName (uint32_t slot, uint32_t bcIndex, int32_t &nameLength, TR_Memory *trMemory);
 
    virtual char                * classNameChars()                           { return (char *)_fileName; }
-   virtual char                * nameChars()                                { return _name; }
+   virtual char                * nameChars()                                { return const_cast<char *>(_name); } // ugly
    virtual char                * signatureChars()                           { return _signatureChars; }
    virtual uint16_t              signatureLength()                          { return static_cast<uint16_t>(strlen(signatureChars())); }
 
-   virtual void                * resolvedMethodAddress()                    { return (void *)_ilInjector; }
+   virtual void                * resolvedMethodAddress()                    { return (void *)_ilgen; }
 
    virtual uint16_t              numberOfParameterSlots()                   { return _numParms; }
-   virtual TR::DataType         parmType(uint32_t slot);
+   virtual TR::DataType          parmType(uint32_t slot);
    virtual uint16_t              numberOfTemps()                            { return 0; }
 
    virtual char                * getParameterTypeSignature(int32_t parmIndex);
@@ -101,13 +90,12 @@ class ResolvedMethod : public ::TR_ResolvedMethod, public TR::Method
 
    virtual uint32_t              maxBytecodeIndex()                         { return 0; }
    virtual uint8_t             * code()                                     { return NULL; }
-   virtual TR_OpaqueMethodBlock* getPersistentIdentifier()                  { return (TR_OpaqueMethodBlock *) _ilInjector; }
+   virtual TR_OpaqueMethodBlock* getPersistentIdentifier()                  { return (TR_OpaqueMethodBlock *) getEntryPoint(); }
    virtual bool                  isInterpreted()                            { return startAddressForJittedMethod() == 0; }
 
    const char                  * getLineNumber()                            { return _lineNumber;}
    char                        * getSignature()                             { return _signature;}
-   TR::DataType                 returnType();
-   TR::IlType                  * returnIlType()                             { return _returnType; }
+   TR::DataType                  returnType();
    int32_t                       getNumArgs()                               { return _numParms;}
    void                          setEntryPoint(void *ep)                    { _entryPoint = ep; }
    void                        * getEntryPoint()                            { return _entryPoint; }
@@ -115,27 +103,31 @@ class ResolvedMethod : public ::TR_ResolvedMethod, public TR::Method
    void                          computeSignatureCharsPrimitive();
    void                          computeSignatureChars();
 
-   TR::IlInjector *getInjector(TR::IlGeneratorMethodDetails * details,
-                               TR::ResolvedMethodSymbol *methodSymbol,
-                               TR::FrontEnd *fe,
-                               TR::SymbolReferenceTable *symRefTab);
+   TR_IlGenerator *getIlGenerator(TR::IlGeneratorMethodDetails * details,
+                                  TR::ResolvedMethodSymbol *methodSymbol,
+                                  TR::FrontEnd *fe,
+                                  TR::SymbolReferenceTable *symRefTab);
 
    protected:
    const char *_fileName;
    const char *_lineNumber;
 
-   char *_name;
+   const char *_name;
    char *_signature;
    char  _signatureChars[MAX_SIGNATURE_LENGTH];
-   char *_externalName;
+   const char *_externalName;
 
    int32_t          _numParms;
-   TR::IlType    ** _parmTypes;
-   TR::IlType     * _returnType;
+   const char    ** _parmNames;
+   TR::DataType   * _parmTypes;
+   TR::DataType     _returnType;
    void           * _entryPoint;
-   TR::IlInjector * _ilInjector;
-   };
+   TR_IlGenerator * _ilgen;
 
+   static const char * signatureNameForType[];
+   static const char * signatureNameForVectorType[];
+   static const char * signatureNameForMaskType[];
+   };
 
 } // namespace OMR
 
