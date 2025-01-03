@@ -26,7 +26,7 @@ omr_assert(
 )
 
 add_library(jb2jb SHARED
-    JBCodeGeneratorExtensionAddon.cpp
+	JBCodeGeneratorExtensionAddon.cpp
 	JBCodeGeneratorForBase.cpp
 	JBCodeGeneratorForCore.cpp
 	JBCodeGeneratorForFunc.cpp

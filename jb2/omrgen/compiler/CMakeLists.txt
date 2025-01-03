@@ -24,9 +24,9 @@ include(OmrCompilerSupport)
 
 # Compiler Files
 set(JB2OMRCOMPILER_OBJECTS
-	${JB2_OMRGEN_DIR}/OMRCodeGenerator.cpp
-	${JB2_OMRGEN_DIR}/OMRIlGen.cpp
-	${JB2_OMRGEN_DIR}/OMRJB.cpp
+	OMRCodeGenerator.cpp
+	OMRIlGen.cpp
+	OMRJB.cpp
 	control/Jit.cpp
 	${omr_SOURCE_DIR}/compiler/control/SimpleJit.cpp
 )

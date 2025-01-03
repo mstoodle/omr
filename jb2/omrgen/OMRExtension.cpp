@@ -25,7 +25,7 @@
 #include "omrgen/OMRCodeGeneratorForFunc.hpp"
 #include "omrgen/OMRCodeGeneratorForVM.hpp"
 #include "omrgen/OMRExtension.hpp"
-#include "omrgen/OMRJB.hpp"
+#include "omrgen/compiler/OMRJB.hpp"
 #include "Base/Base.hpp"
 #include "Func/Func.hpp"
 #include "vm/VMExtension.hpp"

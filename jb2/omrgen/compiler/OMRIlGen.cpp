@@ -19,7 +19,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "jb2/omrgen/OMRIlGen.hpp"
+#include "OMRIlGen.hpp"
 #include "jb2/omrgen/OMRCodeGenerator.hpp"
 #include "jb2/omrgen/OMRCodeGeneratorExtensionAddon.hpp"
 
@@ -84,11 +84,6 @@ OMRIlGen::OMRIlGen(Compilation *jb2comp, OMRCodeGenerator *jb2cg)
 
     Allocator *mem = jb2comp->mem();
     IR *ir = jb2comp->ir();
-#if 0
-    _builderEntries = mem->allocate<TR::Block *>(ir->maxBuilderID());
-    for (auto i=0;i < ir->maxBuilderID();i++)
-        _builderEntries[i] = NULL;
-#endif
     ValueID numValues = ir->maxValueID() + 1;
     if (numValues > 0) {
         _valueNodes = mem->allocate<TR::Node *>(numValues);
@@ -388,12 +383,6 @@ OMRIlGen::createFunctionSymbol(Symbol *funcSym,
         trParmTypes[p] = mapType(parmTypes[p]);
 
         parmNames[p] = "(unknown parameter name)";
-        #if 0
-        size_t len=(1+10+1) * sizeof(char);
-        char *name = static_cast<char *>(_comp->trMemory()->allocateHeapMemory(len));
-        snprintf(name, len, "p%u", p);
-        parmNames[p] = name;
-        #endif
     }
     TR::DataType trReturnType = mapType(returnType);
     TR::ResolvedMethod *method = new (_comp->trMemory()->heapMemoryRegion()) TR::ResolvedMethod(name,

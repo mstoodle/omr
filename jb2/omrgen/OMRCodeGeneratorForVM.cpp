@@ -23,7 +23,7 @@
 #include "JBCore.hpp"
 #include "omrgen/OMRCodeGenerator.hpp"
 #include "omrgen/OMRCodeGeneratorForVM.hpp"
-#include "omrgen/OMRIlGen.hpp"
+#include "omrgen/compiler/OMRIlGen.hpp"
 
 
 namespace OMR {

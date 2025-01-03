@@ -23,7 +23,7 @@
 #include "Func/Func.hpp"
 #include "omrgen/OMRCodeGenerator.hpp"
 #include "omrgen/OMRCodeGeneratorExtensionAddon.hpp"
-#include "omrgen/OMRIlGen.hpp"
+#include "omrgen/compiler/OMRIlGen.hpp"
 
 #include "compile/Compilation.hpp"
 #include "compile/CompilationTypes.hpp"
