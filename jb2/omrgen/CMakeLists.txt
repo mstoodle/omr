@@ -25,6 +25,9 @@ omr_assert(
 	MESSAGE "OMR_JB2 must be set."
 )
 
+# Build jb2omrcompiler
+add_subdirectory(compiler)
+
 add_library(jb2omrgen SHARED
 	OMRCodeGeneratorExtensionAddon.cpp
 	OMRCodeGeneratorForBase.cpp
@@ -32,12 +35,15 @@ add_library(jb2omrgen SHARED
 	OMRCodeGeneratorForFunc.cpp
 	OMRCodeGeneratorForVM.cpp
 	OMRExtension.cpp
-	#OMRIlGen.cpp
 )
 
-target_include_directories(jb2omrgen PRIVATE ${JB2_CORE_DIR} ${omr_SOURCE_DIR}/compiler)
+target_include_directories(jb2omrgen PRIVATE
+	${JB2_CORE_DIR}
+	${JB2_CORE_DIR}/omrgen/compiler
+	${omr_SOURCE_DIR}/compiler
+)
 
 # Need this so OMRGen can identify VM extension
-target_link_libraries(jb2omrgen jb2vm jb2)
+target_link_libraries(jb2omrgen jb2vm jb2 jb2omrcompiler)
 
 add_subdirectory(test)

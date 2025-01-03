@@ -27,7 +27,6 @@
 
 #include "compile/Compilation.hpp"
 #include "compile/CompilationTypes.hpp"
-#include "compile/JB2ResolvedMethod.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "env/FrontEnd.hpp"
 #include "env/StackMemoryRegion.hpp"
@@ -39,8 +38,8 @@
 #include "il/TreeTop.hpp"
 #include "ilgen/IlGen.hpp"
 #include "ilgen/IlGeneratorMethodDetails.hpp"
+#include "ilgen/IlInjector.hpp"
 #include "ilgen/IlType.hpp"
-#include "ilgen/JB2MethodDetails.hpp"
 #include "infra/BitVector.hpp"
 #include "ras/ILValidationStrategies.hpp"
 #include "ras/ILValidator.hpp"
@@ -83,10 +82,10 @@ OMRCodeGenerator::perform(Compilation *comp) {
         Func::Function *func = (Func::Function *)comp->unit();
         Func::FunctionContext *fctx = comp->context<Func::FunctionContext>();
         int32_t numParms = fctx->numParameters();
-        TR::DataTypes *parmTypes = NULL;
+        TR::DataType *parmTypes = NULL;
         const char **parmNames = NULL;
         if (numParms > 0) {
-            parmTypes = comp->mem()->allocate<TR::DataTypes>(numParms);
+            parmTypes = comp->mem()->allocate<TR::DataType>(numParms);
             parmNames = comp->mem()->allocate<const char *>(numParms);
             int p=0;
             for (auto it=fctx->parameters(); it.hasItem(); it++) {
@@ -95,18 +94,18 @@ OMRCodeGenerator::perform(Compilation *comp) {
                 parmTypes[p++]= ilgen.mapType(parm->type());
             }
         }
-        TR::DataTypes returnType = ilgen.mapType(fctx->returnType());
+        TR::DataType returnType = ilgen.mapType(fctx->returnType());
 
-        JB2ResolvedMethod resolvedMethod(&ilgen,
-                                         func->fileName().c_str(),
-                                         func->lineNumber().c_str(),
-                                         func->name().c_str(),
-                                         numParms,
-                                         parmTypes,
-                                         parmNames,
-                                         returnType,
-                                         NULL);
-        JB2MethodDetails details(&resolvedMethod);
+        TR::ResolvedMethod resolvedMethod(func->fileName().c_str(),
+                                          func->lineNumber().c_str(),
+                                          func->name().c_str(),
+                                          numParms,
+                                          parmNames,
+                                          parmTypes,
+                                          returnType,
+                                          NULL,
+                                          &ilgen);
+        TR::IlGeneratorMethodDetails details(&resolvedMethod);
         TR_Hotness level = warm; // need to get this from somewhere
 
         entryPoint = (void *) compileMethodFromDetails((OMR_VMThread *)NULL, details, level, _omrCompileReturnCode);

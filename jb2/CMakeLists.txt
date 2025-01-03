@@ -27,28 +27,16 @@ omr_assert(
 	MESSAGE "OMR_JB2 must be set."
 )
 
-#target_link_libraries(jb2
-#	PUBLIC
-#		${OMR_PORT_LIB}
-#)
-
 if (NOT APPLE)
     add_compile_options(
 	    -Wplacement-new=0
     )
 endif()
 
+# needed for omrcfg.h
 add_compile_options(
     -I${CMAKE_BINARY_DIR}
 )
-
-if (0)
-if (APPLE)
-    add_link_options(
-        -undefined dynamic_lookup
-    )
-endif()
-endif()
 
 set(JB2_CORE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/)
 set(JB2_BASE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Base/)
@@ -120,15 +108,15 @@ add_library(jb2 SHARED
 add_subdirectory(test)
 
 # Extensions can be turned on individually, but by default the ones below will be built
-if (NOT OMR_JB2_PICK_EXTS)
+if (NOT DEFINED OMR_JB2_PICK_EXTS OR NOT OMR_JB2_PICK_EXTS)
 	set(OMR_JB2_EXT_BASE OFF CACHE BOOL "jb2 include Base extension")
 	set(OMR_JB2_EXT_COMPLEX OFF CACHE BOOL "jb2 include Complex extension")
 	set(OMR_JB2_EXT_DEBUG OFF CACHE BOOL "jb2 include Debug extension")
 	set(OMR_JB2_EXT_FUNC OFF CACHE BOOL "jb2 include Function extension")
 	set(OMR_JB2_EXT_JB OFF CACHE BOOL "jb2 include jb extension")
 	set(OMR_JB2_EXT_SIM OFF CACHE BOOL "jb2 include Sim extension")
-	set(OMR_JB2_EXT_OMRGEN OFF CACHE BOOL "jb2 include omrgen extension")
-	set(OMR_JB2_EXT_VM OFF CACHE BOOL "jb2 include vm extension")
+	set(OMR_JB2_EXT_OMRGEN ON CACHE BOOL "jb2 include omrgen extension")
+	set(OMR_JB2_EXT_VM ON CACHE BOOL "jb2 include vm extension")
 
 endif()
 

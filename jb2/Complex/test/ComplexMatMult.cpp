@@ -155,8 +155,8 @@ main(int argc, char *argv[]) {
         }
     }
 
-    cout << "Step 1: load jb2core.so\n";
-    void *handle = dlopen("libjb2core.so", RTLD_LAZY);
+    cout << "Step 1: load jb2.so\n";
+    void *handle = dlopen("libjb2.so", RTLD_LAZY);
     if (!handle) {
         cerr << dlerror() << "\n";
         return -1;

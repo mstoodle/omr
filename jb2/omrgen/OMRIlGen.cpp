@@ -19,13 +19,13 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "api/omrgen/OMRIlGen.hpp"
-#include "api/omrgen/OMRCodeGenerator.hpp"
-#include "api/omrgen/OMRCodeGeneratorExtensionAddon.hpp"
+#include "jb2/omrgen/OMRIlGen.hpp"
+#include "jb2/omrgen/OMRCodeGenerator.hpp"
+#include "jb2/omrgen/OMRCodeGeneratorExtensionAddon.hpp"
 
 #include "codegen/CodeGenerator.hpp"
 #include "compile/Compilation.hpp"
-#include "compile/JB2ResolvedMethod.hpp"
+#include "compile/ResolvedMethod.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "env/FrontEnd.hpp"
 #include "env/StackMemoryRegion.hpp"
@@ -182,7 +182,7 @@ OMRIlGen::genIL() {
 void
 OMRIlGen::initialize(TR::IlGeneratorMethodDetails * details,
                      TR::ResolvedMethodSymbol     * methodSymbol,
-                     TR_FrontEnd                  * fe,
+                     TR::FrontEnd                 * fe,
                      TR::SymbolReferenceTable     * symRefTab) {
     _details = details;
     _methodSymbol = methodSymbol;
@@ -382,26 +382,29 @@ OMRIlGen::createFunctionSymbol(Symbol *funcSym,
                                void *entryPoint) {
     TR_ASSERT_FATAL(!_functions.exists(funcSym->id()) || _functions[funcSym->id()] == NULL, "Function '%s' already defined", name);
 
-    TR::DataTypes *trParmTypes = static_cast<TR::DataTypes *>(_comp->trMemory()->allocateHeapMemory(numParms * sizeof(TR::DataTypes)));
+    TR::DataType *trParmTypes = static_cast<TR::DataType *>(_comp->trMemory()->allocateHeapMemory(numParms * sizeof(TR::DataType)));
     const char **parmNames = static_cast<const char **>(_comp->trMemory()->allocateHeapMemory(numParms * sizeof (const char *)));
     for (int32_t p=0;p < numParms;p++) {
         trParmTypes[p] = mapType(parmTypes[p]);
 
+        parmNames[p] = "(unknown parameter name)";
+        #if 0
         size_t len=(1+10+1) * sizeof(char);
         char *name = static_cast<char *>(_comp->trMemory()->allocateHeapMemory(len));
         snprintf(name, len, "p%u", p);
         parmNames[p] = name;
+        #endif
     }
-    TR::DataTypes trReturnType = mapType(returnType);
-    JB2ResolvedMethod *method = new (_comp->trMemory()->heapMemoryRegion()) JB2ResolvedMethod(this,
-                                                                                              name,
-                                                                                              fileName,
-                                                                                              lineNumber,
-                                                                                              numParms,
-                                                                                              trParmTypes,
-                                                                                              parmNames,
-                                                                                              trReturnType,
-                                                                                              entryPoint);
+    TR::DataType trReturnType = mapType(returnType);
+    TR::ResolvedMethod *method = new (_comp->trMemory()->heapMemoryRegion()) TR::ResolvedMethod(name,
+                                                                                                fileName,
+                                                                                                lineNumber,
+                                                                                                numParms,
+                                                                                                parmNames,
+                                                                                                trParmTypes,
+                                                                                                trReturnType,
+                                                                                                entryPoint,
+                                                                                                this);
     TR::ResolvedMethodSymbol *sym = TR::ResolvedMethodSymbol::create(_comp->trHeapMemory(), method, _comp);
     sym->setMethodAddress(entryPoint);
     mcount_t id = _comp->addOwningMethod(sym);
@@ -718,7 +721,7 @@ void
 OMRIlGen::call(Location *location, Operation *callOp, bool isDirectCall) {
     assert(_functions[callOp->symbol()->id()] != NULL);
     size_t numArgs = callOp->numOperands();
-    JB2ResolvedMethod *resolvedMethod = _functions[callOp->symbol()->id()];
+    TR::ResolvedMethod *resolvedMethod = _functions[callOp->symbol()->id()];
     TR::SymbolReference *methodSymRef = symRefTab()->findOrCreateStaticMethodSymbol(_functionIDs[callOp->symbol()->id()], -1, resolvedMethod);
     TR::MethodSymbol *methodSym = methodSymRef->getSymbol()->getMethodSymbol();
     methodSym->setLinkage(TR_System);
@@ -828,6 +831,7 @@ OMRIlGen::zeroForType(TR::DataType dt) {
         case TR::Double : {
             TR::Node *constZero = TR::Node::create(TR::dconst, 0);
             constZero->setUnsignedLongInt(DOUBLE_POS_ZERO);
+            return constZero;
         }
         case TR::Address : return TR::Node::aconst(0);
         default: TR_ASSERT_FATAL(0, "should not reach here");
@@ -1087,7 +1091,7 @@ OMRIlGen::sub(Location *location, Value *result, Value *left, Value *right) {
     TR::Node *leftNode = useValue(left);
     TR::DataType leftType = leftNode->getDataType();
     TR::Node *rightNode = useValue(right);
-    TR::DataType rightType = leftNode->getDataType();
+    TR::DataType rightType = rightNode->getDataType();
     TR::Node *resultNode = NULL;
 
     if (leftType == TR::Address) {
@@ -1102,6 +1106,8 @@ OMRIlGen::sub(Location *location, Value *result, Value *left, Value *right) {
                 leftNode = TR::Node::create(TR::a2l, 1, leftNode);
                 rightNode = TR::Node::create(TR::a2l, 1, rightNode);
                 op = TR::lsub;
+            } else {
+                rightNode = TR::Node::create(TR::lsub, 2, TR::Node::lconst(0), rightNode);
             }
         } else if (TR::Compiler->target.is32Bit()) {
             op = TR::aiadd;
@@ -1112,9 +1118,13 @@ OMRIlGen::sub(Location *location, Value *result, Value *left, Value *right) {
                 leftNode = TR::Node::create(TR::a2i, 1, leftNode);
                 rightNode = TR::Node::create(TR::a2i, 1, rightNode);
                 op = TR::isub;
+            } else {
+                rightNode = TR::Node::create(TR::isub, 2, TR::Node::lconst(0), rightNode);
             }
+        } else {
+            assert(0);
         }
-      resultNode = binaryOpNodeFromNodes(op, leftNode, rightNode);
+        resultNode = binaryOpNodeFromNodes(op, leftNode, rightNode);
     } else {
         resultNode = binaryOpFromOpMap(TR::ILOpCode::subtractOpCode, leftNode, rightNode);
     }

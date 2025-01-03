@@ -121,19 +121,13 @@ setupResult12NotEquals() {
     result12Operator = (char *)"!=";
 }
 
-#if defined(OSX)
-    #define CORELIB "libjb2core.dylib"
-#else
-    #define CORELIB "libjb2core.so"
-#endif
-
 int
 main(int argc, char *argv[]) {
     if (argc == 2 && strcmp(argv[1], "--verbose") == 0)
         verbose = true;
 
-    if (verbose) cout << "Step 0: load" << CORELIB << "\n";
-    void *handle = dlopen(CORELIB, RTLD_LAZY);
+    if (verbose) cout << "Step 0: load" << OMR_JB2_CORELIB << "\n";
+    void *handle = dlopen(OMR_JB2_CORELIB, RTLD_LAZY);
     if (!handle) {
         fputs(dlerror(), stderr);
         return -1;

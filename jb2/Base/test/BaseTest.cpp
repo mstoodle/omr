@@ -29,14 +29,8 @@
 
 using namespace OMR::JitBuilder;
 
-#if defined(OSX)
-    #define CORELIB "libjb2core.dylib"
-#else
-    #define CORELIB "libjb2core.so"
-#endif
-
 int main(int argc, char** argv) {
-    void *handle = dlopen(CORELIB, RTLD_LAZY);
+    void *handle = dlopen(OMR_JB2_CORELIB, RTLD_LAZY);
     if (!handle) {
         fputs(dlerror(), stderr);
         return -1;

@@ -34,7 +34,6 @@ set(GTEST_DIR $(omr_SOURCE_DIR)/third_party/gtest-1.8.0)
 	target_link_libraries(testcomplex
 		jb2complex
 		jb2base
-		jb2core
 		jb2
 		omrGtest
 		${CMAKE_DL_LIBS}

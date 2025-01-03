@@ -40,7 +40,6 @@ target_link_libraries(jb2jb
     jb2vm
     jb2func
     jb2base
-    jb2core
     jb2
     ${CMAKE_DL_LIBS}
 )

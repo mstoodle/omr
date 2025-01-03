@@ -78,7 +78,7 @@ static Base::BaseExtension *getBase() {
 
 
 int main(int argc, char** argv) {
-    void *handle = dlopen(CORELIB, RTLD_LAZY);
+    void *handle = dlopen(OMR_JB2_CORELIB, RTLD_LAZY);
     if (!handle) {
         fputs(dlerror(), stderr);
         return -1;

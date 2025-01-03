@@ -75,9 +75,9 @@
 #include "String.hpp"
 
 #if defined(OSX)
-    #define CORELIB "libjb2core.dylib"
+    #define OMR_JB2_CORELIB "libjb2.dylib"
 #else
-    #define CORELIB "libjb2core.so"
+    #define OMR_JB2_CORELIB "libjb2.so"
 #endif
 
 #endif // defined(OMR_JITBUILDER_JBCORE_INCL)

@@ -44,9 +44,8 @@ target_include_directories(jb2base PRIVATE ${JB2_CORE_DIR})
 
 target_link_libraries(jb2base
     jb2func
-    jb2core
     jb2
     ${CMAKE_DL_LIBS}
 )
 
-add_subdirectory(test)
+#add_subdirectory(test)

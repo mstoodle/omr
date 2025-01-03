@@ -39,16 +39,10 @@ using std::cerr;
 
 #define DO_LOGGING false
 
-#if defined(OSX)
-    #define CORELIB "libjb2core.dylib"
-#else
-    #define CORELIB "libjb2core.so"
-#endif
-
 int
 main(int argc, char *argv[]) {
-    cout << "Step 0: load " << CORELIB << "\n";
-    void *handle = dlopen(CORELIB, RTLD_LAZY);
+    cout << "Step 0: load " << OMR_JB2_CORELIB << "\n";
+    void *handle = dlopen(OMR_JB2_CORELIB, RTLD_LAZY);
     if (!handle) {
         fputs(dlerror(), stderr);
         return -1;

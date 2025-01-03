@@ -29,12 +29,13 @@
 #include "il/ILHelpers.hpp"
 #include "il/ILOpCodes.hpp"
 
-class TR_FrontEnd;
 namespace TR { class Block; }
 namespace TR { class CFG; }
 namespace TR { class Compilation; }
+namespace TR { class FrontEnd; }
 namespace TR { class IlGeneratorMethodDetails; }
 namespace TR { class Node; }
+namespace TR { class ResolvedMethod; }
 namespace TR { class ResolvedMethodSymbol; }
 namespace TR { class SymbolReference; }
 namespace TR { class SymbolReferenceTable; }
@@ -46,7 +47,6 @@ namespace OMR {
 namespace JitBuilder {
 namespace omrgen {
 
-class JB2ResolvedMethod;
 class OMRCodeGenerator;
 
 typedef TR::ILOpCodes (*OpCodeMapper)(TR::DataType);
@@ -58,7 +58,7 @@ public:
     virtual bool genIL();
     virtual void initialize(TR::IlGeneratorMethodDetails * details,
                             TR::ResolvedMethodSymbol     * methodSymbol,
-                            TR_FrontEnd                  * fe,
+                            TR::FrontEnd                 * fe,
                             TR::SymbolReferenceTable     * symRefTab);
 
     virtual int32_t currentByteCodeIndex();
@@ -168,7 +168,7 @@ protected:
     TR::SymbolReference *getFieldSymRef(const Type *ft, String baseStructName, String fieldName, const Type *fieldsType, size_t fieldOffset);
 
     TR::Compilation * _comp;
-    TR_FrontEnd * _fe;
+    TR::FrontEnd * _fe;
     TR::SymbolReferenceTable * _symRefTab;
     TR::IlGeneratorMethodDetails * _details;
     TR::ResolvedMethodSymbol * _methodSymbol;
@@ -187,7 +187,7 @@ protected:
     
     std::map<TypeID,TR::DataTypes> _types;
     BitVector _builderInTrees;
-    Array<JB2ResolvedMethod *> _functions;
+    Array<TR::ResolvedMethod *> _functions;
     Array<mcount_t> _functionIDs;
 
     TR::DataTypes _platformWordType;
