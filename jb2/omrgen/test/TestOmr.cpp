@@ -4703,7 +4703,7 @@ TEST(omrgenExtension, SubAddressAndInt) {
         sub_addressint32s->test(LOC, tAddress, static_cast<intptr_t>(NULL), tInt32, static_cast<int32_t>(0), tAddress, static_cast<intptr_t>(NULL));
         sub_addressint32s->test(LOC, tAddress, static_cast<intptr_t>(NULL), tInt32, static_cast<int32_t>(4), tAddress, static_cast<intptr_t>(-4));
         sub_addressint32s->test(LOC, tAddress, static_cast<intptr_t>(0xdeadbeef), tInt32, static_cast<int32_t>(0), tAddress, static_cast<intptr_t>(0xdeadbeef));
-        sub_addressint32s->test(LOC, tAddress, static_cast<intptr_t>(0xdeadbeef), tInt32, static_cast<int32_t>(16), tAddress, static_cast<intptr_t>(0xdeadbeef-16));
+        sub_addressint32s->test(LOC, tAddress, static_cast<intptr_t>(0xdeadbeef), tInt32, static_cast<int32_t>(16), tAddress, static_cast<intptr_t>(0xdeadbeef)-16);
         sub_addressint32s->test(LOC, tAddress, std::numeric_limits<intptr_t>::max(), tInt32, static_cast<int32_t>(0), tAddress, std::numeric_limits<intptr_t>::max());
         sub_addressint32s->test(LOC, tAddress, std::numeric_limits<intptr_t>::min(), tInt32, static_cast<int32_t>(0), tAddress, std::numeric_limits<intptr_t>::min());
         delete sub_addressint32s;
@@ -4713,7 +4713,7 @@ TEST(omrgenExtension, SubAddressAndInt) {
         sub_addressint64s->test(LOC, tAddress, static_cast<intptr_t>(NULL), tInt64, static_cast<int64_t>(0), tAddress, static_cast<intptr_t>(NULL));
         sub_addressint64s->test(LOC, tAddress, static_cast<intptr_t>(NULL), tInt64, static_cast<int64_t>(4), tAddress, static_cast<intptr_t>(-4));
         sub_addressint64s->test(LOC, tAddress, static_cast<intptr_t>(0xdeadbeef), tInt64, static_cast<int64_t>(0), tAddress, static_cast<intptr_t>(0xdeadbeef));
-        sub_addressint64s->test(LOC, tAddress, static_cast<intptr_t>(0xdeadbeef), tInt64, static_cast<int64_t>(16), tAddress, static_cast<intptr_t>(0xdeadbeef-16));
+        sub_addressint64s->test(LOC, tAddress, static_cast<intptr_t>(0xdeadbeef), tInt64, static_cast<int64_t>(16), tAddress, static_cast<intptr_t>(0xdeadbeef)-16);
         sub_addressint64s->test(LOC, tAddress, std::numeric_limits<intptr_t>::max(), tInt64, static_cast<int64_t>(0), tAddress, std::numeric_limits<intptr_t>::max());
         sub_addressint64s->test(LOC, tAddress, std::numeric_limits<intptr_t>::min(), tInt64, static_cast<int64_t>(0), tAddress, std::numeric_limits<intptr_t>::min());
         delete sub_addressint64s;
