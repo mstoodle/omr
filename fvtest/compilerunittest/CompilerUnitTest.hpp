@@ -85,7 +85,7 @@ public:
         _types(),
         _options(),
         _ilGenRequest(),
-        _method("compunittest", "0", "test", 0, NULL, _types.NoType, NULL, NULL),
+        _method("compunittest", "0", "test", 0, NULL, NULL, TR::NoType, NULL, NULL),
         _comp(0, NULL, TR::FrontEnd::instance(), &_method, _ilGenRequest, _options, _dispatchRegion, &_trMemory, TR_OptimizationPlan::alloc(warm)) {
         _symbol = TR::ResolvedMethodSymbol::create(_comp.trStackMemory(), &_method, &_comp);
         TR::CFG* cfg =  new (region()) TR::CFG(&_comp, _symbol, region());

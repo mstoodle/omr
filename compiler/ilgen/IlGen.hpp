@@ -25,7 +25,10 @@
 #include <stdint.h>
 
 namespace TR { class Block; }
+namespace TR { class FrontEnd; }
+namespace TR { class IlGeneratorMethodDetails; }
 namespace TR { class ResolvedMethodSymbol;  } 
+namespace TR { class SymbolReferenceTable;  } 
 
 class TR_IlGenerator
    {
@@ -36,6 +39,13 @@ class TR_IlGenerator
    virtual int32_t currentCallSiteIndex() { return -1; }
    virtual void setCallerMethod(TR::ResolvedMethodSymbol * caller) {}
    virtual TR::ResolvedMethodSymbol *methodSymbol() const = 0;
+
+   virtual void initialize(TR::IlGeneratorMethodDetails * details,
+                           TR::ResolvedMethodSymbol     * methodSymbol,
+                           TR::FrontEnd                 * fe,
+                           TR::SymbolReferenceTable     * symRefTab)
+      {
+      }
 
    // contributes to eliminate warnings in JitBuilder builds
    virtual ~TR_IlGenerator() { }
