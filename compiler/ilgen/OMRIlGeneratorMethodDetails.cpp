@@ -22,8 +22,7 @@
 
 #include "env/FrontEnd.hpp"
 #include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
-#include "ilgen/IlInjector.hpp"
-#include "env/FrontEnd.hpp"
+#include "ilgen/IlGen.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/Method.hpp"
 #include "compile/InlineBlock.hpp"
@@ -39,7 +38,7 @@ OMR::IlGeneratorMethodDetails::IlGeneratorMethodDetails(TR_ResolvedMethod *metho
 
 TR_IlGenerator *
 OMR::IlGeneratorMethodDetails::getIlGenerator(TR::ResolvedMethodSymbol *methodSymbol,
-                                              TR_FrontEnd * fe,
+                                              TR_FrontEnd * trfe,
                                               TR::Compilation *comp,
                                               TR::SymbolReferenceTable *symRefTab,
                                               bool forceClassLookahead,
@@ -48,7 +47,8 @@ OMR::IlGeneratorMethodDetails::getIlGenerator(TR::ResolvedMethodSymbol *methodSy
    TR_ASSERT(forceClassLookahead == false, "IlGenerator does not support class lookahead");
    TR_ASSERT(blocksToInline == 0, "IlGenerator does not yet support partial inlining");
    TR::ResolvedMethod *method = static_cast<TR::ResolvedMethod *>(methodSymbol->getResolvedMethod());
-   return (TR_IlGenerator *) method->getInjector(self(), methodSymbol, static_cast<TR::FrontEnd *>(fe), symRefTab);
+   TR::FrontEnd *fe = static_cast<TR::FrontEnd *>(trfe);
+   return method->getIlGenerator(self(), methodSymbol, fe, symRefTab);
    }
 
 
