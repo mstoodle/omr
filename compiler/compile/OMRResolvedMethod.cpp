@@ -149,10 +149,15 @@ OMR::ResolvedMethod::localName(uint32_t slot,
                                TR_Memory *trMemory)
    {
    // should really just return _parmNames[slot], but since it doesn't return const char *, make a copy and return that
-   char * name = (char *) trMemory->allocateHeapMemory(strlen(_parmNames[slot])+1);
-   strcpy(name, _parmNames[slot]);
-   nameLength = static_cast<int32_t>(strlen(name));
-   return name;
+   if (slot < _numParms)
+      {
+      char * name = (char *) trMemory->allocateHeapMemory(strlen(_parmNames[slot])+1);
+      strcpy(name, _parmNames[slot]);
+      nameLength = static_cast<int32_t>(strlen(name));
+      return name;
+      }
+   else
+      return "(auto)";
    }
 
 TR_IlGenerator *
