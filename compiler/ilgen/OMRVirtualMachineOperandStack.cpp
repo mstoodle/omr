@@ -248,8 +248,9 @@ OMR::VirtualMachineOperandStack::init()
    // Create a temp for the OperandStack base
    TR::SymbolReference *symRef = comp->getSymRefTab()->createTemporary(_mb->methodSymbol(), _mb->typeDictionary()->PointerTo(_elementType)->getPrimitiveType());
    symRef->getSymbol()->setNotCollected();
-   char *name = (char *) comp->trMemory()->allocateHeapMemory((11+10+1) * sizeof(char)); // 11 ("_StackBase_") + max 10 digits + trailing zero
-   sprintf(name, "_StackBase_%u", symRef->getCPIndex());
+   size_t len = (11+10+1) * sizeof(char); // 11 ("_StackBase_") + max 10 digits + trailing zero
+   char *name = (char *) comp->trMemory()->allocateHeapMemory(len);
+   snprintf(name, len, "_StackBase_%u", symRef->getCPIndex());
    symRef->getSymbol()->getAutoSymbol()->setName(name);
    _mb->defineSymbol(name, symRef);
 

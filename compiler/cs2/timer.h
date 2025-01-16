@@ -230,10 +230,10 @@ public:
   }
 
   // alternativeFormat is in seconds/millisecs
-  static uint32_t sprintfMetric(char *line, Metric value, Metric total, bool alternativeFormat = false, bool csv = false) {
+  static uint32_t snprintfMetric(char *line, size_t lineLen, Metric value, Metric total, bool alternativeFormat = false, bool csv = false) {
     uint32_t offset = 0;
     if (csv)
-      offset = sprintf(line, "%.4f", (double) (value) / 1000000.0);
+      offset = snprintf(line, lineLen, "%.4f", (double) (value) / 1000000.0);
     else {
       uint64_t usecs = value;
 
@@ -253,19 +253,19 @@ public:
         float ratio = total?(float(usecs)/float(total))*100:0;
 
         if (alternativeFormat) {
-          offset += sprintf(line+offset, "%8lld.%03d ",(long long)secs, ms);
+          offset += snprintf(line+offset, lineLen-offset, "%8lld.%03d ",(long long)secs, ms);
         } else {
           if (h)
-            offset += sprintf(line+offset, "%0d:%02d:%02d.%03d ",h,m,s,ms);
+            offset += snprintf(line+offset, lineLen-offset, "%0d:%02d:%02d.%03d ",h,m,s,ms);
           else
-            offset += sprintf(line+offset, "   %d:%02d.%03d ",m,s,ms);
+            offset += snprintf(line+offset, lineLen-offset, "   %d:%02d.%03d ",m,s,ms);
         }
         if (ratio<0.01 || ratio>99.99)
-          offset += sprintf(line+offset, " (%d%%)", int(ratio));
+          offset += snprintf(line+offset, lineLen-offset, " (%d%%)", int(ratio));
         else
-          offset += sprintf(line+offset, " (%.2f%%)", ratio);
+          offset += snprintf(line+offset, lineLen-offset, " (%.2f%%)", ratio);
       } else
-        offset += sprintf(line+offset, "nil");
+        offset += snprintf(line+offset, lineLen-offset, "nil");
     }
     return offset;
   }
@@ -407,11 +407,11 @@ template <class Meter, class Allocator>
    return fTotalMetric;
  }
 
- uint32_t sprintfMetric(char *line, Metric total, bool alternativeFormat = false, bool csv = false) const {
+ uint32_t snprintfMetric(char *line, size_t lineLen, Metric total, bool alternativeFormat = false, bool csv = false) const {
    CS2Assert(!fRunning,
              ("Cannot read running meter: %s",
               Name()));
-   return Meter::sprintfMetric(line, fTotalMetric, total, alternativeFormat, csv);
+   return Meter::snprintfMetric(line, lineLen, fTotalMetric, total, alternativeFormat, csv);
  }
 
  ListIndex FindChild(const char *name, HashValue hv=0) const {
@@ -587,17 +587,17 @@ inline void PhaseMeasuringNode<Meter, Allocator>::Dump(ostream &out, uint32_t in
 
   if (csv)
       {
-      uint32_t offset = sprintf(line, "%d,\"%s\",", indent, fName);
-      offset += sprintfMetric(line+offset, total, alternativeFormat, csv);
-      //offset = sprintf(line+offset, "%.4f", (double) (Read()) / 1000000.0);
-      offset += sprintf(line+offset, ",%d", fCount);
+      uint32_t offset = snprintf(line, 2048, "%d,\"%s\",", indent, fName);
+      offset += snprintfMetric(line+offset, 2048-offset, total, alternativeFormat, csv);
+      //offset = snprintf(line+offset, 2048-offset, "%.4f", (double) (Read()) / 1000000.0);
+      offset += snprintf(line+offset, 2048-offset, ",%d", fCount);
       out << line << "\n";
       return;
       }
 
   uint32_t offset=indent;
   if (indent>12)
-    offset = sprintf(line,"|%10.10d>",indent);
+    offset = snprintf(line, 2048-offset, "|%10.10d>",indent);
   else
     if (indent > 0)
       memset(line,'|',indent);
@@ -607,14 +607,14 @@ inline void PhaseMeasuringNode<Meter, Allocator>::Dump(ostream &out, uint32_t in
     Stop();
   }
 
-  offset += sprintf(line+offset, "%-40.40s ", fName);
-  offset += sprintfMetric(line+offset, total, alternativeFormat, csv);
+  offset += snprintf(line+offset, 2048-offset, "%-40.40s ", fName);
+  offset += snprintfMetric(line+offset, 2048-offset, total, alternativeFormat, csv);
 
   if (offset<72)
-    offset += sprintf(line+offset,"%*s",72-offset, "");
-  offset += sprintf(line+offset, "|%d", int(fCount));
+    offset += snprintf(line+offset,2048-offset, "%*s",72-offset, "");
+  offset += snprintf(line+offset, 2048-offset, "|%d", int(fCount));
   if (running)
-    offset += sprintf(line+offset, "*");
+    offset += snprintf(line+offset, 2048-offset, "*");
   out << line << "\n";
 }
 
@@ -652,7 +652,7 @@ inline void PhaseMeasuringSummary<Meter, Allocator>::DumpSummary(ostream & out, 
     out << "Summary of Phase " << Meter::Name(csv) << "\n"
         << "========================================================================" << "\n";
 
-    offset = sprintf(line, "Phase                           %s  |count *=active", Meter::UnitsText(alternativeFormat));
+    offset = snprintf(line,256, "Phase                           %s  |count *=active", Meter::UnitsText(alternativeFormat));
 
     out << line << "\n";
     out << "========================================================================" << "\n";
@@ -748,7 +748,7 @@ private:
   {
     if (s.Collect()) {
       char pname[1024];
-      sprintf(pname, "%s %d", phase, count);
+      snprintf(pname, 1024, "%s %d", phase, count);
       PhaseProfiler<Meter, Allocator>::SetName(pname);
       PhaseProfiler<Meter, Allocator>::Start();
     }
@@ -759,7 +759,7 @@ private:
   {
     if (s.Collect()) {
       char pname[1024];
-      sprintf(pname, "%s %s", phase, name);
+      snprintf(pname, 1024, "%s %s", phase, name);
       PhaseProfiler<Meter, Allocator>::SetName(pname);
       PhaseProfiler<Meter, Allocator>::Start();
     }

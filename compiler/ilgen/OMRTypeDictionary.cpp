@@ -216,7 +216,7 @@ public:
       {
       char *baseName = (char *)_baseType->getName();
       TR_ASSERT_FATAL(strlen(baseName) < 45, "cannot store name of pointer type");
-      sprintf(_nameArray, "L%s;", baseName);
+      snprintf(_nameArray, 48, "L%s;", baseName);
       }
    virtual bool isPointer() { return true; }
 
@@ -320,8 +320,9 @@ OMR::StructType::getFieldSymRef(const char *fieldName)
 
       TR::DataType type = info->getPrimitiveType();
 
-      char *fullName = (char *) comp->trMemory()->allocateHeapMemory((strlen(info->_name) + 1 + strlen(_name) + 1) * sizeof(char));
-      sprintf(fullName, "%s.%s", _name, info->_name);
+      size_t len=(strlen(info->_name) + 1 + strlen(_name) + 1) * sizeof(char);
+      char *fullName = (char *) comp->trMemory()->allocateHeapMemory(len);
+      snprintf(fullName, len, "%s.%s", _name, info->_name);
       TR::Symbol *symbol = TR::Symbol::createNamedShadow(comp->trHeapMemory(), type, static_cast<uint32_t>(info->_type->getSize()), fullName);
 
       // TBD: should we create a dynamic "constant" pool for accesses made by the method being compiled?
@@ -414,8 +415,9 @@ OMR::UnionType::getFieldSymRef(const char *fieldName)
       auto symRefTab = comp->getSymRefTab();
       TR::DataType type = info->getPrimitiveType();
 
-      char *fullName = (char *) comp->trMemory()->allocateHeapMemory((strlen(info->_name) + 1 + strlen(_name) + 1) * sizeof(char));
-      sprintf(fullName, "%s.%s", _name, info->_name);
+      size_t len = (strlen(info->_name) + 1 + strlen(_name) + 1) * sizeof(char);
+      char *fullName = (char *) comp->trMemory()->allocateHeapMemory(len);
+      snprintf(fullName, len, "%s.%s", _name, info->_name);
       TR::Symbol *symbol = TR::Symbol::createNamedShadow(comp->trHeapMemory(), type, static_cast<uint32_t>(info->_type->getSize()), fullName);
       symRef = new (comp->trHeapMemory()) TR::SymbolReference(symRefTab, symbol, comp->getMethodSymbol()->getResolvedMethodIndex(), -1);
       symRef->setOffset(0);

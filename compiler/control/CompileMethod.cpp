@@ -119,7 +119,7 @@ generatePerfToolEntry(uint8_t *startPC, uint8_t *endPC, const char *sig, const c
    char *name;
    if (strlen(sig) + 1 + strlen(hotness) + 1 < 1024)
       {
-      sprintf(buffer, "%s_%s (compiled code)", sig, hotness);
+      snprintf(buffer, 1024, "%s_%s (compiled code)", sig, hotness);
       name = buffer;
       }
    else
