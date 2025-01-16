@@ -1923,8 +1923,9 @@ void OMR::Compilation::dumpMethodTrees(const char *title, TR::ResolvedMethodSymb
 void OMR::Compilation::dumpMethodTrees(const char *title1, const char *title2, TR::ResolvedMethodSymbol *methodSymbol)
    {
    TR::StackMemoryRegion stackMemoryRegion(*self()->trMemory());
-   char *title = (char*)self()->trMemory()->allocateStackMemory(20 + strlen(title1) + strlen(title2));
-   sprintf(title, "%s%s", title1, title2);
+   size_t titleLen = 20 + strlen(title1) + strlen(title2);
+   char *title = (char*)self()->trMemory()->allocateStackMemory(titleLen);
+   snprintf(title, titleLen, "%s%s", title1, title2);
    self()->dumpMethodTrees(title, methodSymbol);
    }
 
@@ -2037,7 +2038,7 @@ void OMR::Compilation::dumpMethodGraph(int index, TR::ResolvedMethodSymbol *meth
    if (cfg)
       {
       char fileName[20];
-      sprintf(fileName, "cfg%d.vcg", index);
+      snprintf(fileName, 20, "cfg%d.vcg", index);
 
       char tmp[1025];
       char *fn = self()->fe()->getFormattedName(tmp, 1025, fileName, NULL, false);
@@ -2637,7 +2638,7 @@ Compilation& operator<< (Compilation &comp, const int n)
 Compilation& operator<< (Compilation &comp, const ::TR_ByteCodeInfo& bcInfo)
    {
    char tmp[20];
-   sprintf(tmp, "%d", bcInfo.getByteCodeIndex());
+   snprintf(tmp, 20, "%d", bcInfo.getByteCodeIndex());
    comp << "{" << bcInfo.getCallerIndex() << ", " << tmp << "}";
    return comp;
    }

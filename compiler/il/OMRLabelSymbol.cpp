@@ -114,7 +114,7 @@ OMR::LabelSymbol::makeRelativeLabelSymbol(intptr_t offset)
    self()->setRelativeLabel();
    _offset = offset;
    char * name = (char*)calloc(10,sizeof(char));  // FIXME: Leaked.
-   sprintf(name, "%d", (int)(offset*2));
+   snprintf(name, 10, "%d", (int)(offset*2));
    self()->setName(name);
    }
 

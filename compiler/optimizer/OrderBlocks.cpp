@@ -2199,8 +2199,9 @@ void checkOrderingConsistency(TR::Compilation *comp)
          if (seenColdBlock)
             {
             const char *fmt = "Non-cold block_%d found after a cold block in method %s\n";
-            char *buffer = (char *) comp->trMemory()->allocateStackMemory((strlen(fmt) + strlen(comp->signature()) + 15) * sizeof(char));
-            sprintf(buffer, const_cast<char *>(fmt), block->getNumber(), comp->signature());
+            size_t len = (strlen(fmt) + strlen(comp->signature()) + 15) * sizeof(char);
+            char *buffer = (char *) comp->trMemory()->allocateStackMemory(len);
+            snprintf(buffer, len, fmt, block->getNumber(), comp->signature());
             //TR_ASSERT(0, buffer);
             }
          }

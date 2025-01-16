@@ -246,7 +246,7 @@ TR_Debug::TR_Debug( TR::Compilation * c)
    if (1) // force block scope
       {
       char buffer[30];
-      addressWidth = sprintf(buffer, POINTER_PRINTF_FORMAT, this);
+      addressWidth = snprintf(buffer, 30, POINTER_PRINTF_FORMAT, this);
       }
 
    _registerAssignmentTraceFlags = 0;
@@ -307,7 +307,7 @@ TR_Debug::newNode(TR::Node *node)
        _comp->getOptions()->getDebugOnCreate())
       {
       char buf[20];
-      sprintf(buf, "ND_%04x", node->getGlobalIndex());
+      snprintf(buf, 20, "ND_%04x", node->getGlobalIndex());
       breakOrDebugOnCreate(buf);
       }
    }
@@ -321,7 +321,7 @@ TR_Debug::newLabelSymbol(TR::LabelSymbol *labelSymbol)
        _comp->getOptions()->getDebugOnCreate())
       {
       char buf[20];
-      sprintf(buf, "L%04x", _nextLabelNumber);
+      snprintf(buf, 20, "L%04x", _nextLabelNumber);
       breakOrDebugOnCreate(buf);
       }
 
@@ -337,7 +337,7 @@ TR_Debug::newInstruction(TR::Instruction *instr)
       {
       char buf[20];
       _comp->getToNumberMap().Add((void *)instr, (intptr_t)_nextInstructionNumber);
-      sprintf(buf, "IN_%04x", _nextInstructionNumber);
+      snprintf(buf, 20, "IN_%04x", _nextInstructionNumber);
       breakOrDebugOnCreate(buf);
       }
 
@@ -354,7 +354,7 @@ TR_Debug::newRegister(TR::Register *reg)
        _comp->getOptions()->getDebugOnCreate())
       {
       char buf[20];
-      sprintf(buf, "GPR_%04x", _nextRegisterNumber );
+      snprintf(buf, 20, "GPR_%04x", _nextRegisterNumber );
       breakOrDebugOnCreate(buf);
       }
 
@@ -366,7 +366,7 @@ TR_Debug::newVariableSizeSymbol(TR::AutomaticSymbol *sym)
    {
    int32_t strLength = static_cast<int32_t>(strlen(TR_VSS_NAME)) + TR::getMaxSignedPrecision<TR::Int32>() + 7;
    char *buf = (char *)_comp->trMemory()->allocateHeapMemory(strLength);
-   sprintf(buf, "%s_%d",  TR_VSS_NAME, _nextVariableSizeSymbolNumber);
+   snprintf(buf, strLength, "%s_%d",  TR_VSS_NAME, _nextVariableSizeSymbolNumber);
 
    _comp->getToStringMap().Add((void *)sym, buf);
 
@@ -651,29 +651,30 @@ TR_Debug::printPrefix(TR::FILE *pOutFile, TR::Instruction *instr, uint8_t *curso
       int prefixWidth         = addressFieldWidth * 2 + codeByteColumnWidth + 12; // 8 bytes of offsets, 2 spaces, and opening and closing brackets
 
       if (instr)
-         sprintf(prefix, POINTER_PRINTF_FORMAT " %08x [%s]", cursor, offset, getName(instr));
+         snprintf(prefix, MAX_PREFIX_WIDTH+1, POINTER_PRINTF_FORMAT " %08x [%s]", cursor, offset, getName(instr));
       else
-         sprintf(prefix, POINTER_PRINTF_FORMAT " %08x %*s", cursor, offset, addressFieldWidth + 2, " ");
+         snprintf(prefix, MAX_PREFIX_WIDTH+1, POINTER_PRINTF_FORMAT " %08x %*s", cursor, offset, addressFieldWidth + 2, " ");
 
       char *p0 = prefix;
       char *p1 = prefix + strlen(prefix);
+      size_t sizeLeft = MAX_PREFIX_WIDTH+1-strlen(prefix);
 
       // Print machine code in bytes on X86, in words on PPC,ARM,ARM64
       // Stop if we try to run over the buffer.
       if (_comp->target().cpu.isX86())
          {
          for (int i = 0; i < size && p1 - p0 + 3 < prefixWidth; i++, p1 += 3)
-            sprintf(p1, " %02x", *cursor++);
+            sizeLeft -= snprintf(p1, sizeLeft, " %02x", *cursor++);
          }
       else if (_comp->target().cpu.isPower() || _comp->target().cpu.isARM() || _comp->target().cpu.isARM64())
          {
          for (int i = 0; i < size && p1 - p0 + 9 < prefixWidth; i += 4, p1 += 9, cursor += 4)
-            sprintf(p1, " %08x", *((uint32_t *)cursor));
+            sizeLeft -= snprintf(p1, sizeLeft, " %08x", *((uint32_t *)cursor));
          }
       else // FIXME: Need a better general form
          {
          for (int i = 0; i < size && p1 - p0 + 3 < prefixWidth; i++, p1 += 3)
-            sprintf(p1, " %02x", *cursor++);
+            sizeLeft -= snprintf(p1, sizeLeft, " %02x", *cursor++);
          }
 
       int32_t leftOver = static_cast<int32_t>(p0 + prefixWidth - p1);
@@ -1256,8 +1257,9 @@ TR_Debug::getName(void * address, const char * prefix, uint32_t nextNumber, bool
       {
       if (!address)
          {
-         char *buf = (char *)_comp->trMemory()->allocateHeapMemory(20 + TR::Compiler->debug.pointerPrintfMaxLenInChars());
-         sprintf(buf, "%0*d", TR::Compiler->debug.hexAddressWidthInChars(), 0);
+         size_t len = 20 + TR::Compiler->debug.pointerPrintfMaxLenInChars();
+         char *buf = (char *)_comp->trMemory()->allocateHeapMemory(len);
+         snprintf(buf, len, "%0*d", TR::Compiler->debug.hexAddressWidthInChars(), 0);
          return buf;
          }
 
@@ -1268,23 +1270,24 @@ TR_Debug::getName(void * address, const char * prefix, uint32_t nextNumber, bool
          }
       else
          {
-         char *buf = (char *)_comp->trMemory()->allocateHeapMemory(20 + TR::Compiler->debug.pointerPrintfMaxLenInChars());
+         size_t len = 20 + TR::Compiler->debug.pointerPrintfMaxLenInChars();
+         char *buf = (char *)_comp->trMemory()->allocateHeapMemory(len);
 
          uint8_t indentation = TR::Compiler->debug.hexAddressFieldWidthInChars() - 4;
-         sprintf(buf, "%*s%04x", indentation, prefix, nextNumber);
+         snprintf(buf, len, "%*s%04x", indentation, prefix, nextNumber);
          _comp->getToStringMap().Add((void *)address, buf);
          return buf;
          }
       }
 
-   char *buf = (char *)_comp->trMemory()->allocateHeapMemory(20 + TR::Compiler->debug.pointerPrintfMaxLenInChars());
+   size_t len = 20 + TR::Compiler->debug.pointerPrintfMaxLenInChars();
+   char *buf = (char *)_comp->trMemory()->allocateHeapMemory(len);
 
    if (address)
-      sprintf(buf, POINTER_PRINTF_FORMAT, address);
+      snprintf(buf, len, POINTER_PRINTF_FORMAT, address);
    else
-      sprintf(buf, "%0*d", TR::Compiler->debug.hexAddressWidthInChars(), 0);
+      snprintf(buf, len, "%0*d", TR::Compiler->debug.hexAddressWidthInChars(), 0);
    return buf;
-
    }
 
 const char *
@@ -1360,11 +1363,11 @@ TR_Debug::getName(TR::CFGNode * node)
    char *buf = (char *)_comp->trMemory()->allocateHeapMemory(25);
    if (_comp->getAddressEnumerationOption(TR_EnumerateBlock))
       {
-      sprintf(buf, "block_%d", node->getNumber());
+      snprintf(buf, 25, "block_%d", node->getNumber());
       }
    else
       {
-      sprintf(buf, POINTER_PRINTF_FORMAT, node);
+      snprintf(buf, 25, POINTER_PRINTF_FORMAT, node);
       }
 
    return buf;
@@ -1393,29 +1396,30 @@ TR_Debug::getName(TR::LabelSymbol *labelSymbol)
       if (labelSymbol->getSnippet())
          {
          buf = (char *)_comp->trMemory()->allocateHeapMemory(25);
-         sprintf(buf, "Snippet Label L%04d", labelNumber);
+         snprintf(buf, 25, "Snippet Label L%04d", labelNumber);
          }
       else if (labelSymbol->isStartOfColdInstructionStream())
          {
          buf = (char *)_comp->trMemory()->allocateHeapMemory(25);
-         sprintf(buf, "Outlined Label L%04d", labelNumber);
+         snprintf(buf, 25, "Outlined Label L%04d", labelNumber);
          }
       else
          {
          buf = (char *)_comp->trMemory()->allocateHeapMemory(25);
-         sprintf(buf, "Label L%04d", labelNumber);
+         snprintf(buf, 25, "Label L%04d", labelNumber);
          }
       _comp->getToStringMap().Add((void *)labelSymbol, buf);
       return buf;
       }
    else
       {
-      char *buf = (char *)_comp->trMemory()->allocateHeapMemory(20+TR::Compiler->debug.pointerPrintfMaxLenInChars());
+      size_t len = 20+TR::Compiler->debug.pointerPrintfMaxLenInChars();
+      char *buf = (char *)_comp->trMemory()->allocateHeapMemory(len);
 
       if (labelSymbol->getSnippet())
-         sprintf(buf, "Snippet Label [" POINTER_PRINTF_FORMAT "]", labelSymbol);
+         snprintf(buf, len, "Snippet Label [" POINTER_PRINTF_FORMAT "]", labelSymbol);
       else
-         sprintf(buf, "Label [" POINTER_PRINTF_FORMAT "]", labelSymbol);
+         snprintf(buf, len, "Label [" POINTER_PRINTF_FORMAT "]", labelSymbol);
 
       _comp->getToStringMap().Add((void *)labelSymbol, buf);
       return buf;
@@ -1686,7 +1690,8 @@ const char *
 TR_Debug::getAutoName(TR::SymbolReference * symRef)
    {
    int32_t slot = symRef->getCPIndex();
-   char * name = (char *)_comp->trMemory()->allocateHeapMemory(50+TR::Compiler->debug.pointerPrintfMaxLenInChars());
+   size_t nameLen = 50+TR::Compiler->debug.pointerPrintfMaxLenInChars();
+   char * name = (char *)_comp->trMemory()->allocateHeapMemory(nameLen);
 
    name[0]=0;  //initialize to empty string
 
@@ -1694,21 +1699,21 @@ TR_Debug::getAutoName(TR::SymbolReference * symRef)
       {
       char * symName = (char *)_comp->trMemory()->allocateHeapMemory(20);
       if (symRef->getSymbol()->getDataType() == TR::Float || symRef->getSymbol()->getDataType() == TR::Double)
-         sprintf(symName, "#FPSPILL%zu_%d", symRef->getSymbol()->getSize(), symRef->getReferenceNumber());
+         snprintf(symName, 20, "#FPSPILL%zu_%d", symRef->getSymbol()->getSize(), symRef->getReferenceNumber());
       else
-         sprintf(symName, "#SPILL%zu_%d", symRef->getSymbol()->getSize(), symRef->getReferenceNumber());
+         snprintf(symName, 20, "#SPILL%zu_%d", symRef->getSymbol()->getSize(), symRef->getReferenceNumber());
 
-      sprintf(name, "<%s " POINTER_PRINTF_FORMAT ">", symName, symRef->getSymbol());
+      snprintf(name, nameLen, "<%s " POINTER_PRINTF_FORMAT ">", symName, symRef->getSymbol());
       }
    else if (symRef->isTempVariableSizeSymRef())
       {
       TR_ASSERT(symRef->getSymbol()->isVariableSizeSymbol(),"symRef #%d must contain a variable size symbol\n",symRef->getReferenceNumber());
       TR::AutomaticSymbol *sym = symRef->getSymbol()->getVariableSizeSymbol();
-      sprintf(name, "<%s rc=%d>",getVSSName(sym),sym->getReferenceCount());
+      snprintf(name, nameLen, "<%s rc=%d>",getVSSName(sym),sym->getReferenceCount());
       }
    else if (symRef->getSymbol()->isPendingPush())
       {
-      sprintf(name, "<pending push temp %d>", -slot - 1);
+      snprintf(name, nameLen, "<pending push temp %d>", -slot - 1);
       }
    else if (slot < getOwningMethodSymbol(symRef)->getFirstJitTempIndex())
       {
@@ -1721,34 +1726,34 @@ TR_Debug::getAutoName(TR::SymbolReference * symRef)
          }
       debugNameLen = std::min(debugNameLen, 15); // Don't overrun the buffer
       if (symRef->getSymbol()->castToAutoSymbol()->isPinningArrayPointer())
-         sprintf(name, "%.*s<pinning array auto slot %d>", debugNameLen, debugName, slot);
+         snprintf(name, nameLen, "%.*s<pinning array auto slot %d>", debugNameLen, debugName, slot);
       else if (symRef->getSymbol()->castToAutoSymbol()->holdsMonitoredObject())
          {
          if (symRef->holdsMonitoredObjectForSyncMethod())
-            sprintf(name, "%.*s<auto slot %d holds monitoredObject syncMethod>", debugNameLen, debugName, slot);
+            snprintf(name, nameLen, "%.*s<auto slot %d holds monitoredObject syncMethod>", debugNameLen, debugName, slot);
          else
-            sprintf(name, "%.*s<auto slot %d holds monitoredObject>", debugNameLen, debugName, slot);
+            snprintf(name, nameLen, "%.*s<auto slot %d holds monitoredObject>", debugNameLen, debugName, slot);
          }
       else
-         sprintf(name, "%.*s<auto slot %d>", debugNameLen, debugName, slot);
+         snprintf(name, nameLen, "%.*s<auto slot %d>", debugNameLen, debugName, slot);
       }
    else
       {
       if (symRef->getSymbol()->castToAutoSymbol()->isInternalPointer())
-         sprintf(name, "<internal pointer temp slot %d>", slot);
+         snprintf(name, nameLen, "<internal pointer temp slot %d>", slot);
       else
          {
          if (symRef->getSymbol()->castToAutoSymbol()->isPinningArrayPointer())
-            sprintf(name, "<pinning array temp slot %d>", slot);
+            snprintf(name, nameLen, "<pinning array temp slot %d>", slot);
          else if (symRef->getSymbol()->castToAutoSymbol()->holdsMonitoredObject())
             {
             if (symRef->holdsMonitoredObjectForSyncMethod())
-               sprintf(name, "<temp slot %d holds monitoredObject syncMethod>", slot);
+               snprintf(name, nameLen, "<temp slot %d holds monitoredObject syncMethod>", slot);
             else
-               sprintf(name, "<temp slot %d holds monitoredObject>", slot);
+               snprintf(name, nameLen, "<temp slot %d holds monitoredObject>", slot);
             }
          else
-            sprintf(name, "<temp slot %d>", slot);
+            snprintf(name, nameLen, "<temp slot %d>", slot);
          }
       }
    return name;
@@ -1770,13 +1775,15 @@ TR_Debug::getParmName(TR::SymbolReference * symRef)
       }
    if (slot == 0 && !getOwningMethodSymbol(symRef)->isStatic())
       {
-      buf = (char *)_comp->trMemory()->allocateHeapMemory(debugNameLen + signatureLen + 17);
-      sprintf(buf, "%.*s<'this' parm %.*s>", debugNameLen, debugName, signatureLen, s);
+      size_t len = debugNameLen + signatureLen + 17;
+      buf = (char *)_comp->trMemory()->allocateHeapMemory(len);
+      snprintf(buf, len, "%.*s<'this' parm %.*s>", debugNameLen, debugName, signatureLen, s);
       }
    else
       {
-      buf = (char *)_comp->trMemory()->allocateHeapMemory(debugNameLen + signatureLen + 15);
-      sprintf(buf, "%.*s<parm %d %.*s>", debugNameLen, debugName, symRef->getCPIndex(), signatureLen, s);
+      size_t len = debugNameLen + signatureLen + 15;
+      buf = (char *)_comp->trMemory()->allocateHeapMemory(len);
+      snprintf(buf, len, "%.*s<parm %d %.*s>", debugNameLen, debugName, symRef->getCPIndex(), signatureLen, s);
       }
    return buf;
    }
@@ -1829,7 +1836,7 @@ TR_Debug::getStaticName(TR::SymbolReference * symRef)
          if (name)
             {
             char * s = (char *)_comp->trMemory()->allocateHeapMemory(len+1);
-            sprintf(s, "%.*s", len, name);
+            snprintf(s, len+1, "%.*s", len, name);
             return s;
             }
          }
@@ -1938,8 +1945,9 @@ TR_Debug::getStaticName(TR::SymbolReference * symRef)
    if (sym->isStaticDefaultValueInstance() && staticAddress)
       {
       const uint8_t EXTRA_SPACE = 5;
-      char * name = (char *)_comp->trMemory()->allocateHeapMemory(TR::Compiler->debug.pointerPrintfMaxLenInChars()+EXTRA_SPACE);
-      sprintf(name, POINTER_PRINTF_FORMAT, staticAddress);
+      size_t len=TR::Compiler->debug.pointerPrintfMaxLenInChars()+EXTRA_SPACE;
+      char * name = (char *)_comp->trMemory()->allocateHeapMemory(len);
+      snprintf(name, len, POINTER_PRINTF_FORMAT, staticAddress);
       return name;
       }
 
@@ -1953,14 +1961,14 @@ TR_Debug::getStaticName(TR::SymbolReference * symRef)
    if (sym->isCallSiteTableEntry())
       {
       char * s = (char *)_comp->trMemory()->allocateHeapMemory(60);
-      sprintf(s, "<callSite entry @%d " POINTER_PRINTF_FORMAT ">", sym->castToCallSiteTableEntrySymbol()->getCallSiteIndex(), staticAddress);
+      snprintf(s, 60, "<callSite entry @%d " POINTER_PRINTF_FORMAT ">", sym->castToCallSiteTableEntrySymbol()->getCallSiteIndex(), staticAddress);
       return s;
       }
 
    if (sym->isMethodTypeTableEntry())
       {
       char * s = (char *)_comp->trMemory()->allocateHeapMemory(62);
-      sprintf(s, "<methodType entry @%d " POINTER_PRINTF_FORMAT ">", sym->castToMethodTypeTableEntrySymbol()->getMethodTypeIndex(), staticAddress);
+      snprintf(s, 62, "<methodType entry @%d " POINTER_PRINTF_FORMAT ">", sym->castToMethodTypeTableEntrySymbol()->getMethodTypeIndex(), staticAddress);
       return s;
       }
 #endif
@@ -1972,8 +1980,9 @@ TR_Debug::getStaticName(TR::SymbolReference * symRef)
 
    if (staticAddress)
       {
-      char * name = (char *)_comp->trMemory()->allocateHeapMemory(TR::Compiler->debug.pointerPrintfMaxLenInChars()+5);
-      sprintf(name, POINTER_PRINTF_FORMAT, staticAddress);
+      size_t len = TR::Compiler->debug.pointerPrintfMaxLenInChars()+5;
+      char * name = (char *)_comp->trMemory()->allocateHeapMemory(len);
+      snprintf(name, len, POINTER_PRINTF_FORMAT, staticAddress);
       return name;
       }
 
@@ -2896,7 +2905,7 @@ TR_Debug::getName(TR::Register *reg, TR_RegisterSizes size)
       }
    else
       {
-      sprintf(prefix, "%s%s%s",
+      snprintf(prefix, maxPrefixSize+1, "%s%s%s",
          reg->containsCollectedReference() ? "&" : "",
          reg->containsInternalPointer()    ? "*" : "",
          reg->isPlaceholderReg()           ? "D_" : "");
@@ -2917,23 +2926,26 @@ TR_Debug::getName(TR::Register *reg, TR_RegisterSizes size)
       {
       const char *high = getName(reg->getHighOrder());
       const char *low  = getName(reg->getLowOrder());
-      char *buf = (char *)_comp->trMemory()->allocateHeapMemory(strlen(high) + strlen(low) + 2);
-      sprintf(buf, "%s:%s", high, low);
+      size_t len = strlen(high) + strlen(low) + 2;
+      char *buf = (char *)_comp->trMemory()->allocateHeapMemory(len);
+      snprintf(buf, len, "%s:%s", high, low);
       _comp->getToStringMap().Add((void *)reg, buf);
       return buf;
       }
    else if (_comp->getAddressEnumerationOption(TR_EnumerateRegister) && _comp->getToNumberMap().Locate((void *)reg, hashIndex))
       {
-      char *buf = (char *)_comp->trMemory()->allocateHeapMemory(maxPrefixSize + 6 + 11); // max register kind name size plus underscore plus 10-digit reg num plus null terminator
+      size_t len = maxPrefixSize + 6 + 11; // max register kind name size plus underscore plus 10-digit reg num plus null terminator
+      char *buf = (char *)_comp->trMemory()->allocateHeapMemory(len);
       uint32_t regNum = (uint32_t)(intptr_t)_comp->getToNumberMap().DataAt(hashIndex);
-      sprintf(buf, "%s%s_%04d", prefix, getRegisterKindName(reg->getKind()), regNum);
+      snprintf(buf, len, "%s%s_%04d", prefix, getRegisterKindName(reg->getKind()), regNum);
       _comp->getToStringMap().Add((void *)reg, buf);
       return buf;
       }
    else
       {
-      char *buf = (char *)_comp->trMemory()->allocateHeapMemory(maxPrefixSize + 6 + TR::Compiler->debug.pointerPrintfMaxLenInChars() + 1);
-      sprintf(buf, "%s%s_" POINTER_PRINTF_FORMAT, prefix, getRegisterKindName(reg->getKind()), reg);
+      size_t len = maxPrefixSize + 6 + TR::Compiler->debug.pointerPrintfMaxLenInChars() + 1;
+      char *buf = (char *)_comp->trMemory()->allocateHeapMemory(len);
+      snprintf(buf, len, "%s%s_" POINTER_PRINTF_FORMAT, prefix, getRegisterKindName(reg->getKind()), reg);
       _comp->getToStringMap().Add((void *)reg, buf);
       return buf;
       }
@@ -3480,7 +3492,7 @@ TR_Debug::dump(TR::FILE *pOutFile, TR_CHTable * chTable)
       for (auto info = vguards.begin(); info != vguards.end(); ++info, ++i)
          {
          char guardKindName[49];
-         sprintf(guardKindName, "%s %s%s", getVirtualGuardKindName((*info)->getKind()),
+         snprintf(guardKindName, 49, "%s %s%s", getVirtualGuardKindName((*info)->getKind()),
             (*info)->mergedWithHCRGuard()?"+ HCRGuard ":"",
             (*info)->mergedWithOSRGuard()?"+ OSRGuard ":"");
 
@@ -4713,7 +4725,7 @@ TR_Debug::traceRegisterAssigned(TR_RegisterAssignmentFlags flags, TR::Register *
    const char *openParen = flags.testAny(TR_ColouringCoercion) ? "{" : (flags.testAny(TR_IndirectCoercion) ? "(" : "");
    const char *closeParen = flags.testAny(TR_ColouringCoercion) ? "}" : (flags.testAny(TR_IndirectCoercion) ? ")" : "");
    const char *equalSign = flags.testAny(TR_ByColouring) ? "#" : (flags.testAny(TR_ByAssociation) ? ":" : "=");
-   sprintf(buf, "%s%s%s%s(%d/%d)%s%s%s%s%s ",
+   snprintf(buf, 30, "%s%s%s%s(%d/%d)%s%s%s%s%s ",
            preCoercionSymbol,
            openParen,
            regReloadSymbol,
@@ -4751,7 +4763,7 @@ TR_Debug::traceRegisterFreed(TR::Register *virtReg, TR::Register *realReg)
        !_comp->getOption(TR_TraceRA))
       return;
    char buf[30];
-   sprintf(buf, "%s(%d/%d)~%s ",
+   snprintf(buf, 30, "%s(%d/%d)~%s ",
            getName(virtReg),
            virtReg->getFutureUseCount(),
            virtReg->getTotalUseCount(),
@@ -4777,7 +4789,7 @@ TR_Debug::traceRegisterInterference(TR::Register *virtReg, TR::Register *interfe
    if (!_comp->getOption(TR_TraceRA))
       return;
    char buf[40];
-   sprintf(buf, "%s{%d,%d}? ", getName(interferingVirtual), interferingVirtual->getAssociation(), distance);
+   snprintf(buf, 40, "%s{%d,%d}? ", getName(interferingVirtual), interferingVirtual->getAssociation(), distance);
    if ((_registerAssignmentTraceCursor += static_cast<int16_t>(strlen(buf))) > 80)
       {
       _registerAssignmentTraceCursor = static_cast<int16_t>(strlen(buf));
@@ -4799,7 +4811,7 @@ TR_Debug::traceRegisterWeight(TR::Register *realReg, uint32_t weight)
    if (!_comp->getOption(TR_TraceRA))
       return;
    char buf[30];
-   sprintf(buf, "%s[0x%x]? ", getName(realReg), weight);
+   snprintf(buf, 30, "%s[0x%x]? ", getName(realReg), weight);
    if ((_registerAssignmentTraceCursor += static_cast<int16_t>(strlen(buf))) > 80)
       {
       _registerAssignmentTraceCursor = static_cast<int16_t>(strlen(buf));
@@ -4834,9 +4846,9 @@ void TR_Debug::setupDebugger(void *addr)
          char *Argv[20];
 
          yield();
-         sprintf(cfname, "_%" OMR_PRId64 "_", (int64_t)getpid());
-         sprintf(pp, "%" OMR_PRId64, (int64_t)ppid);
-         Argv[1] = (char *)"-a";
+         snprintf(cfname, 20, "_%" OMR_PRId64 "_", (int64_t)getpid());
+         snprintf(pp, 20, "%" OMR_PRId64, (int64_t)ppid);
+         Argv[1] = const_cast<char *>("-a");
          Argv[2] = pp;
          Argv[3] = NULL;
 
@@ -4898,8 +4910,8 @@ void TR_Debug::setupDebugger(void *startaddr, void *endaddr, bool before)
       pid_t ppid = getpid();
       if ((p = fork()) == 0)
          {
-         sprintf(cfname, "/tmp/__TRJIT_%d_", getpid());
-         sprintf(pp,"%d", ppid);
+         snprintf(cfname, 256, "/tmp/__TRJIT_%d_", getpid());
+         snprintf(pp,20, "%d", ppid);
 
          if ((Argv[0] =  ::feGetEnv("TR_DEBUGGER")) == NULL)
             Argv[0] = "/usr/bin/gdb";
@@ -4960,10 +4972,10 @@ void TR_Debug::setupDebugger(void *startaddr, void *endaddr, bool before)
       char pp[BUFFER_SIZE];
       char * Argv[MAX_NO_ARGUMENTS];
       pid_t ppid = getpid();
-      volatile int size=sprintf(cfname, "/tmp/_%d_", ppid);
+      volatile int size=snprintf(cfname, BUFFER_SIZE, "/tmp/_%d_", ppid);
       volatile int x;
       TR_ASSERT(size<BUFFER_SIZE, "assertion failure");
-      size=sprintf(pp,"%d", ppid);
+      size=snprintf(pp,BUFFER_SIZE, "%d", ppid);
       TR_ASSERT(size<BUFFER_SIZE, "assertion failure");
       // open new file for writing in the case of break_before
       // in the case of the break_after commands file was already created in final.c
@@ -5069,19 +5081,19 @@ void TR_Debug::setupDebugger(void *startaddr, void *endaddr, bool before)
       int size;
 
       // instrumentation to break out of the infinite loop
-      size = sprintf(cmdBuffer, "?? *((int*)0x%p)=1;", &x);
+      size = snprintf(cmdBuffer, BUFFER_SIZE, "?? *((int*)0x%p)=1;", &x);
       if ( before )
          {
-         size += sprintf(&cmdBuffer[size], "bp 0x%p;" ,startaddr);
-         size += sprintf(&cmdBuffer[size], "bm stopBeforeCompile;g;" );
+         size += snprintf(&cmdBuffer[size], BUFFER_SIZE-size, "bp 0x%p;" ,startaddr);
+         size += snprintf(&cmdBuffer[size], BUFFER_SIZE-size, "bm stopBeforeCompile;g;" );
          }
       else
          {
-         size += sprintf(&cmdBuffer[size], "bp 0x%p;g;" ,startaddr);
+         size += snprintf(&cmdBuffer[size], BUFFER_SIZE-size, "bp 0x%p;g;" ,startaddr);
          }
 
       // check for windbg that cfname file could be read
-      size = sprintf(appBuffer, "\"C:\\Program Files\\Debugging Tools For Windows\\windbg\" -p %d -srcpath %s -c \"%s\"", ppid, srcDir, cmdBuffer);
+      size = snprintf(appBuffer, BUFFER_SIZE, "\"C:\\Program Files\\Debugging Tools For Windows\\windbg\" -p %d -srcpath %s -c \"%s\"", ppid, srcDir, cmdBuffer);
       TR_ASSERT(size<BUFFER_SIZE, "assertion failure");
 
 #ifdef WINDOWS_API_INCLUDED

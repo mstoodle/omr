@@ -736,7 +736,7 @@ OMR::SymbolReferenceTable::createKnownStaticReferenceSymbolRef(void *dataAddress
    if (knownObjectIndex != TR::KnownObjectTable::UNKNOWN)
       {
       char *nameBuffer = (char *)trMemory()->allocateMemory(25, heapAlloc);
-      sprintf(nameBuffer, "<known-obj%d>", knownObjectIndex);
+      snprintf(nameBuffer, 25, "<known-obj%d>", knownObjectIndex);
       name = nameBuffer;
       }
    TR::StaticSymbol * sym = TR::StaticSymbol::createNamed(trHeapMemory(), TR::Address, dataAddress,name);
@@ -978,8 +978,9 @@ OMR::SymbolReferenceTable::methodSymRefFromName(TR::ResolvedMethodSymbol * ownin
    TR::StackMemoryRegion stackMemoryRegion(*trMemory());
 
    auto fullSignatureLength = strlen(className) + 1 + strlen(methodName) + strlen(methodSignature);
-   char *fullSignature = (char*)trMemory()->allocateMemory(1 + fullSignatureLength, stackAlloc);
-   sprintf(fullSignature, "%s.%s%s", className, methodName, methodSignature);
+   size_t len= 1 + fullSignatureLength;
+   char *fullSignature = (char*)trMemory()->allocateMemory(len, stackAlloc);
+   snprintf(fullSignature, len, "%s.%s%s", className, methodName, methodSignature);
    TR_ASSERT(strlen(fullSignature) == fullSignatureLength, "Computed fullSignatureLength must match actual length of fullSignature");
    CS2::HashIndex hashIndex = 0;
    static char *ignoreMBSCache = feGetEnv("TR_ignoreMBSCache");
@@ -1233,8 +1234,10 @@ OMR::SymbolReferenceTable::findOrCreateConstantAreaSymbol()
    {
    if (!_constantAreaSymbol)
       {
-      char * symName = (char *)TR_MemoryBase::jitPersistentAlloc(strlen("CONSTANT_AREA") + 1);
-      sprintf(symName, "CONSTANT_AREA");
+      const char *NAME="CONSTANT_AREA";
+      size_t symLen=strlen(NAME);
+      char * symName = (char *)TR_MemoryBase::jitPersistentAlloc(symLen + 1);
+      snprintf(symName, symLen, "%s", NAME);
       _constantAreaSymbol = TR::StaticSymbol::createNamed(comp()->trHeapMemory(), TR::NoType, symName);
       }
    return _constantAreaSymbol;

@@ -1005,7 +1005,7 @@ TR::Compilation& operator<< (TR::Compilation& out, const TR_OSRCompilationData& 
          if (!first)
             out << ",\n";
          char tmp[20];
-         sprintf(tmp, "%x", (*itr).instructionPC);
+         snprintf(tmp, 20, "%x", (*itr).instructionPC);
          const  TR_OSRCompilationData::TR_ScratchBufferInfos& array2 = (*itr).scratchBufferInfos;
          out << tmp << " -> " << array2.size() << "[ ";
          for (auto j = 0U; j < array2.size(); j++)
@@ -1429,7 +1429,7 @@ TR::Compilation& operator<< (TR::Compilation& out, const TR_OSRMethodData& osrMe
       if (!first)
          out << ",\n";
       char bcIndex[20];
-      sprintf(bcIndex, "%x", table.KeyAt(c));
+      snprintf(bcIndex, 20, "%x", table.KeyAt(c));
 
       out << bcIndex << " -> " << table.DataAt(c);
       first = false;

@@ -3287,7 +3287,7 @@ static void decomposeMultiply(TR::Node *node, TR::Simplifier *s, bool isLong)
             case OP_MINUS: strcat(line, "- "); break;
             }
          char tmp[10] = "";
-         sprintf(tmp, "2^%d ", (int32_t)(bitPosition[i]));
+         snprintf(tmp, 10, "2^%d ", (int32_t)(bitPosition[i]));
          strcat(line, tmp);
          }
       dumpOptDetails(comp, "%s\n", line);

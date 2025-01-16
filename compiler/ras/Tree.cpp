@@ -2539,7 +2539,7 @@ TR_Debug::verifyBlocksPass2(TR::Node *node)
       if (node->getLocalIndex() != 0)
          {
          char buffer[150];
-         sprintf(buffer, "BLOCK VERIFICATION ERROR -- node [%s] accessed outside of its (extended) basic block: %d time(s)\n",
+         snprintf(buffer, 150, "BLOCK VERIFICATION ERROR -- node [%s] accessed outside of its (extended) basic block: %d time(s)\n",
                  getName(node), node->getLocalIndex());
          if (getFile() != NULL)
             trfprintf(getFile(), buffer);

@@ -85,11 +85,11 @@ class TR_Stats
       }
    // make a report on the data collected so far and print it to a string buffer
    // The buffer must be allocated by the caller (256 bytes should be enough)
-   void report(char *str) const
+   void report(char *str, size_t len) const
       {
-      int l = sprintf(str, "Statistics on: %s   Num samples = %u SUM=%f\n", _name, samples(), sum());
+      int l = snprintf(str, len, "Statistics on: %s   Num samples = %u SUM=%f\n", _name, samples(), sum());
       if (_samples > 0)
-         sprintf(str+l, "MAX=%f MIN=%f Mean=%f StdDev=%f\n",
+         snprintf(str+l, len-l, "MAX=%f MIN=%f Mean=%f StdDev=%f\n",
             maxVal(), minVal(), mean(), stddev());
       }
    unsigned samples() const {return _samples;}

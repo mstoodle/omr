@@ -1117,39 +1117,39 @@ namespace TR
             return "allocated (% total)  freed (% total)  maxLive (% total)";
          }
 
-      static uint32_t sprintf_part(char *line, uint64_t bytes, uint64_t total)
+      static uint32_t snprintf_part(char *line, size_t lineLen, uint64_t bytes, uint64_t total)
          {
          uint32_t offset = 0;
 
          float ratio = total?(float(bytes)/float(total))*100:0;
 
-         offset += sprintf(line+offset, "%12llu ", (long long unsigned int)bytes);
-         offset += sprintf(line+offset, " (%5.1f%%)", ratio);
+         offset += snprintf(line+offset, lineLen-offset, "%12llu ", (long long unsigned int)bytes);
+         offset += snprintf(line+offset, lineLen-offset, " (%5.1f%%)", ratio);
          return offset;
          }
 
-      static uint32_t sprintfMetric(char *line, Metric value, Metric total, bool alternativeFormat = false /* ignored */, bool csv = false)
+      static uint32_t snprintfMetric(char *line, size_t lineLen, Metric value, Metric total, bool alternativeFormat = false /* ignored */, bool csv = false)
          {
          uint32_t offset = 0;
          if (csv)
             {
-            offset += sprintf(line, "\"%llu", (long long unsigned int)value._allocated);
-            if (isWithFreed) offset += sprintf(line+offset, "%llu", (long long unsigned int)value._freed);
-            if (isWithHWM) offset += sprintf(line+offset, "%llu", (long long unsigned int)value._maxLive);
-            offset += sprintf(line+offset, "\"");
+            offset += snprintf(line, lineLen, "\"%llu", (long long unsigned int)value._allocated);
+            if (isWithFreed) offset += snprintf(line+offset, lineLen-offset, "%llu", (long long unsigned int)value._freed);
+            if (isWithHWM) offset += snprintf(line+offset, lineLen-offset, "%llu", (long long unsigned int)value._maxLive);
+            offset += snprintf(line+offset, lineLen-offset, "\"");
             }
          else
             {
-            offset += sprintf_part(line+offset, value._allocated, total._allocated);
+            offset += snprintf_part(line+offset, lineLen-offset, value._allocated, total._allocated);
             if (isWithFreed)
                {
-               offset += sprintf(line+offset, " ");
-               offset += sprintf_part(line+offset, value._freed, total._freed);
+               offset += snprintf(line+offset, lineLen-offset, " ");
+               offset += snprintf_part(line+offset, lineLen-offset, value._freed, total._freed);
                }
             if (isWithHWM)
                {
-               offset += sprintf(line+offset, " ");
-               offset += sprintf_part(line+offset, value._maxLive, total._maxLive);
+               offset += snprintf(line+offset, lineLen-offset, " ");
+               offset += snprintf_part(line+offset, lineLen-offset, value._maxLive, total._maxLive);
                }
             }
          return offset;

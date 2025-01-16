@@ -284,8 +284,9 @@ OMR::IlBuilder::Copy(TR::IlValue *value)
    {
    TR::DataType dt = value->getDataType();
    TR::SymbolReference *newSymRef = symRefTab()->createTemporary(_methodSymbol, dt);
-   char *name = (char *) _comp->trMemory()->allocateHeapMemory((2+10+1) * sizeof(char)); // 2 ("_T") + max 10 digits + trailing zero
-   sprintf(name, "_T%u", newSymRef->getCPIndex());
+   size_t len=(2+10+1) * sizeof(char); // 2 ("_T") + max 10 digits + trailing zero
+   char *name = (char *) _comp->trMemory()->allocateHeapMemory(len);
+   snprintf(name, len, "_T%u", newSymRef->getCPIndex());
    newSymRef->getSymbol()->getAutoSymbol()->setName(name);
    newSymRef->getSymbol()->setNotCollected();
    _methodBuilder->defineSymbol(name, newSymRef);
@@ -738,8 +739,9 @@ OMR::IlBuilder::CreateLocalArray(int32_t numElements, TR::IlType *elementType)
    TR::SymbolReference *localArraySymRef = symRefTab()->createLocalPrimArray(size,
                                                                              methodSymbol(),
                                                                              8 /*FIXME: JVM-specific - byte*/);
-   char *name = (char *) _comp->trMemory()->allocateHeapMemory((2+10+1) * sizeof(char)); // 2 ("_T") + max 10 digits + trailing zero
-   sprintf(name, "_T%u", localArraySymRef->getCPIndex());
+   size_t len = (2+10+1) * sizeof(char); // 2 ("_T") + max 10 digits + trailing zero
+   char *name = (char *) _comp->trMemory()->allocateHeapMemory(len);
+   snprintf(name, len, "_T%u", localArraySymRef->getCPIndex());
    localArraySymRef->getSymbol()->getAutoSymbol()->setName(name);
    localArraySymRef->setStackAllocatedArrayAccess();
    _methodBuilder->defineSymbol(name, localArraySymRef);
@@ -760,8 +762,9 @@ OMR::IlBuilder::CreateLocalStruct(TR::IlType *structType)
    TR::SymbolReference *localStructSymRef = symRefTab()->createLocalPrimArray(size,
                                                                              methodSymbol(),
                                                                              8 /*FIXME: JVM-specific - byte*/);
-   char *name = (char *) _comp->trMemory()->allocateHeapMemory((2+10+1) * sizeof(char)); // 2 ("_T") + max 10 digits + trailing zero
-   sprintf(name, "_T%u", localStructSymRef->getCPIndex());
+   size_t len = (2+10+1) * sizeof(char); // 2 ("_T") + max 10 digits + trailing zero
+   char *name = (char *) _comp->trMemory()->allocateHeapMemory(len);
+   snprintf(name, len, "_T%u", localStructSymRef->getCPIndex());
    localStructSymRef->getSymbol()->getAutoSymbol()->setName(name);
    localStructSymRef->setStackAllocatedArrayAccess();
    _methodBuilder->defineSymbol(name, localStructSymRef);
@@ -1271,10 +1274,10 @@ OMR::IlBuilder::Return(TR::IlValue *value)
       char *returnSymbol = (char *)_methodBuilder->returnSymbol();
       if (returnSymbol == NULL)
          {
-         TR::DataType dt = value->getDataType();
-         TR::SymbolReference *newSymRef = symRefTab()->createTemporary(_methodSymbol, dt);
-         returnSymbol = (char *) _comp->trMemory()->allocateHeapMemory((3+10+1) * sizeof(char)); // 3 ("_RV") + max 10 digits + trailing zero
-         sprintf(returnSymbol, "_RV%u", newSymRef->getCPIndex());
+         TR::SymbolReference *newSymRef = symRefTab()->createTemporary(_methodSymbol, retType);
+         size_t len = (3+10+1) * sizeof(char); // 3 ("_RV") + max 10 digits + trailing zero
+         returnSymbol = (char *) _comp->trMemory()->allocateHeapMemory(len);
+         snprintf(returnSymbol, len, "_RV%u", newSymRef->getCPIndex());
          newSymRef->getSymbol()->getAutoSymbol()->setName(returnSymbol);
          newSymRef->getSymbol()->setNotCollected();
          _methodBuilder->defineSymbol(returnSymbol, newSymRef);
@@ -1291,7 +1294,7 @@ OMR::IlBuilder::Return(TR::IlValue *value)
    else
       {
       TraceIL("IlBuilder[ %p ]::Return %d\n", this, value->getID());
-      TR::Node *returnNode = TR::Node::create(TR::ILOpCode::returnOpCode(value->getDataType()), 1, loadValue(value));
+      TR::Node *returnNode = TR::Node::create(TR::ILOpCode::returnOpCode(retType), 1, loadValue(value));
       genTreeTop(returnNode);
       cfg()->addEdge(_currentBlock, cfg()->getEnd());
       setDoesNotComeBack();

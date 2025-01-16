@@ -57,8 +57,9 @@ OMR::IlValue::storeToAuto()
       // first use from another block, need to create symref and insert store tree where node  was computed
       TR::SymbolReference *symRef = comp->getSymRefTab()->createTemporary(_methodBuilder->methodSymbol(), _nodeThatComputesValue->getDataType());
       symRef->getSymbol()->setNotCollected();
-      char *name = (char *) comp->trMemory()->allocateHeapMemory((2+10+1) * sizeof(char)); // 2 ("_T") + max 10 digits + trailing zero
-      sprintf(name, "_T%u", symRef->getCPIndex());
+      size_t len = (2+10+1) * sizeof(char); // 2 ("_T") + max 10 digits + trailing zero
+      char *name = (char *) comp->trMemory()->allocateHeapMemory(len);
+      snprintf(name, len, "_T%u", symRef->getCPIndex());
       symRef->getSymbol()->getAutoSymbol()->setName(name);
       _methodBuilder->defineSymbol(name, symRef);
 
