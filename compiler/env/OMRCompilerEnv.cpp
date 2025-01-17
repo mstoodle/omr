@@ -148,6 +148,11 @@ OMR::CompilerEnv::initializeTargetEnvironment()
    target.setSMP(true);
    }
 
+void
+OMR::CompilerEnv::destroyTargetEnvironment()
+   {
+   TR::CPU::destroyTargetProcessorInfo();
+   }
 
 void
 OMR::CompilerEnv::initializeRelocatableTargetEnvironment()

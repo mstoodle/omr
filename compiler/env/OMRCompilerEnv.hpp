@@ -121,6 +121,9 @@ protected:
    //
    void initializeTargetEnvironment();
 
+   // Deallocate the target environment for this compiler
+   void destroyTargetEnvironment();
+
    // Initialize 'relocatableTarget' environment for this compiler
    //
    void initializeRelocatableTargetEnvironment();
