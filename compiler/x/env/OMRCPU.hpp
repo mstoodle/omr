@@ -64,6 +64,7 @@ public:
    static TR::CPU customize(OMRProcessorDesc processorDescription);
 
    static void initializeTargetProcessorInfo(bool force = false);
+   static void destroyTargetProcessorInfo();
 
    TR_X86CPUIDBuffer *queryX86TargetCPUID();
    const char *getX86ProcessorVendorId();
