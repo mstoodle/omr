@@ -157,7 +157,7 @@ OMR::CompilerEnv::initializeTargetEnvironment()
 void
 OMR::CompilerEnv::destroyTargetEnvironment()
    {
-   TR::CPU::destroyTargetProcessorInfo();
+   //TR::CPU::destroyTargetProcessorInfo();
    }
 
 
