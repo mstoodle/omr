@@ -24,7 +24,8 @@
 
 #include <complex>
 #include "JBCore.hpp"
-#include "Base/BaseTypes.hpp"
+#include "Base/Base.hpp"
+#include "Func/Func.hpp"
 #include "ComplexTypes.hpp"
 
 

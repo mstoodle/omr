@@ -19,12 +19,12 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef COMPLEX_INCL
-#define COMPLEX_INCL
+#ifndef JB2_COMPLEX_INCL
+#define JB2_COMPLEX_INCL
 
 #include "Base/Base.hpp"
 #include "Complex/ComplexExtension.hpp"
 #include "Complex/ComplexOperations.hpp"
 #include "Complex/ComplexTypes.hpp"
 
-#endif // defined(COMPLEX_INCL)
+#endif // defined(JB2_COMPLEX_INCL)

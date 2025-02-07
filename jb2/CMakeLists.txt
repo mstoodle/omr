@@ -118,6 +118,7 @@ if (NOT DEFINED OMR_JB2_PICK_EXTS OR NOT OMR_JB2_PICK_EXTS)
 	endif()
 	set(OMR_JB2_EXT_OMRGEN ON CACHE BOOL "jb2 include omrgen extension")
 	set(OMR_JB2_EXT_VM ON CACHE BOOL "jb2 include vm extension")
+	set(OMR_JB2_EXT_COMPLEX ON CACHE BOOL "jb2 include Complex extension")
 endif()
 
 if (OMR_JB2_EXT_BASE)
@@ -138,4 +139,8 @@ endif()
 
 if (OMR_JB2_EXT_VM)
 	add_subdirectory(vm)
+endif()
+
+if (OMR_JB2_EXT_COMPLEX)
+	add_subdirectory(Complex)
 endif()
