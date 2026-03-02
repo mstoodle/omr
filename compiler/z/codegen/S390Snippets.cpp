@@ -20,14 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
-#include "codegen/CodeGenerator.hpp"
-#include "env/FrontEnd.hpp"
-#include "z/codegen/S390GenerateInstructions.hpp"
-#include "z/codegen/SystemLinkage.hpp"
-#include "codegen/S390Snippets.hpp"
-#include "il/Node.hpp"
-#include "il/Node_inlines.hpp"
-#include "env/IO.hpp"
+#include "z/codegen/S390Snippets.hpp"
 
 uint32_t TR::S390RestoreGPR7Snippet::getLength(int32_t estimatedSnippetStart)
 {
