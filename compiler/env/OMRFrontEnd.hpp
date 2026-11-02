@@ -55,7 +55,7 @@ public:
     FrontEnd();
     virtual ~FrontEnd();
 
-    static TR::FrontEnd *instance();
+    static TR::FrontEnd *instance(bool willCheckForNull=false);
 
     virtual TR_Debug *createDebug(TR::Compilation *comp = NULL);
 

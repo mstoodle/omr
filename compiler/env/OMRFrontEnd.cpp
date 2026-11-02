@@ -63,11 +63,13 @@ OMR::FrontEnd::~FrontEnd()
 {
     _persistentMemory.freePersistentMemory(_codeCacheManager);
     _codeCacheManager = NULL;
+    _instance = NULL;
 }
 
-TR::FrontEnd *OMR::FrontEnd::instance()
+TR::FrontEnd *OMR::FrontEnd::instance(bool willCheckForNull)
 {
-    TR_ASSERT_FATAL(_instance, "FrontEnd not initialized");
+    if (!willCheckForNull)
+        TR_ASSERT_FATAL(_instance, "FrontEnd not initialized");
     return _instance;
 }
 

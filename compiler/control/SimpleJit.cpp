@@ -196,10 +196,14 @@ uint8_t *compileMethod(TR::IlGeneratorMethodDetails &details, TR_Hotness hotness
 
 void shutdownSimpleJit()
 {
-    auto fe = TR::FrontEnd::instance();
+    auto fe = TR::FrontEnd::instance(true);
 
-    TR::CodeCacheManager &codeCacheManager = fe->codeCacheManager();
-    codeCacheManager.destroy();
+    // shutdown can be an abnormal world
+    // is it possible for the FrontEnd to have already been destroyed so test for that
+    if (fe != NULL) {
+        TR::CodeCacheManager &codeCacheManager = fe->codeCacheManager();
+        codeCacheManager.destroy();
+    }
 
     TR::CompilationController::shutdown();
 
