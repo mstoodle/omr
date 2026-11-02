@@ -79,27 +79,36 @@ class Dictionary : public BaseDictionary {
 public:
     Dictionary(Allocator *a, Extension *ext, IR *ir, String name="", KINDTYPE(Extensible) kind=KIND(Extensible))
         : BaseDictionary(a, ext, ir, name, kind)
+        , _numEntries(0)
         , _entries(NULL, ir->mem())
         , _entriesByType(NULL, ir->mem()) {
 
     }
 
     virtual ~Dictionary() {
+        #if 0
         for (auto it = iterator(); it.hasItem(); it++) {
             EntryType *entry = it.item();
             delete entry;
         }
+        #endif
     }
 
-    typename List<EntryType *>::Iterator iterator() const { return _entries.iterator(); }
+    EntryID numEntries() const { return _numEntries; }
+
+    typename List<EntryType *>::Iterator iterator(bool fwd=true, bool detectChanges=true, bool makeCopy=false) const { return _entries.iterator(fwd, detectChanges, makeCopy); }
     virtual void log(TextLogger &lgr) const {
-        lgr.irSectionBegin("dictionary", "D", id(), kind(), name());
-        logContents(lgr);
-        for (auto it = this->iterator();it.hasItem();it++) {
-            EntryType *entry = it.item();
-            entry->log(lgr, true);
+        if (_entries.empty()) {
+            lgr.irSectionOneLiner("dictionary", "D", id(), kind(), name());
+        } else {
+            lgr.irSectionBegin("dictionary", "D", id(), kind(), name());
+            logContents(lgr);
+            for (auto it = this->iterator();it.hasItem();it++) {
+                EntryType *entry = it.item();
+                entry->log(lgr, true);
+            }
+            lgr.irSectionEnd();
         }
-        lgr.irSectionEnd();
     }
 
     virtual void addNewEntry(EntryType *entry) {
@@ -115,6 +124,7 @@ public:
         }
         list->push_back(entry);
         _entries.push_back(entry);
+        _numEntries++;
     }
 
     EntryType *Lookup(EntryID id) {
@@ -128,8 +138,11 @@ public:
 
     void Remove(EntryType *entry) {
         auto it = _entries.find(entry);
-        if (it.hasItem())
+        if (it.hasItem()) {
             _entries.remove(it);
+            _entriesByType.remove(entry->id());
+            _numEntries--;
+        }
     }
 
 protected:
@@ -139,17 +152,32 @@ protected:
         , _entries(NULL, ir()->mem())
         , _entriesByType(NULL, ir()->mem()) {
     
-        // expectation is that IRCloner will call cloneFrom() once this object has been created
+        // expectation is that IR will call cloneFrom() once this object has been created
         // which prevents recursive cloning into the dictionary objects while processing entries
     }
 
     // must be called after this dictionary has been constructed
     void cloneFrom(const Dictionary<EntryType, EntryID, NoEntry, EntryListType> *source, IRCloner *cloner) {
-        Allocator *mem = ir()->mem();
         for (auto it = source->iterator(); it.hasItem(); it++) {
             EntryType *entry = it.item();
-            EntryType *clonedEntry = cloner->clone(entry)->template refine<EntryType>();
-            addNewEntry(clonedEntry);
+            EntryID id = entry->id();
+            // entry may have been cloned already via a link in an earlier entry, don't re-clone in that case
+            if (!_entriesByType.exists(id) || _entriesByType[id] == NULL) {
+                EntryType *clonedEntry = cloner->clone(entry)->template refine<EntryType>();
+                addNewEntry(clonedEntry);
+            }
+        }
+    }
+    // must be called after this dictionary has been constructed
+    void cloneConstFrom(const Dictionary<EntryType, EntryID, NoEntry, EntryListType> *source, IRCloner *cloner) {
+        for (auto it = source->iterator(); it.hasItem(); it++) {
+            EntryType *entry = it.item();
+            EntryID id = entry->id();
+            // entry may have been cloned already via a link in an earlier entry, don't re-clone in that case
+            if (!_entriesByType.exists(id) || _entriesByType[id] == NULL) {
+                EntryType *clonedEntry = cloner->cloneConst(entry)->template refine<EntryType>();
+                addNewEntry(clonedEntry);
+            }
         }
     }
 

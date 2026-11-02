@@ -41,10 +41,13 @@ class OperationCloner : public Allocatable {
     JBALLOC_(OperationCloner)
 
 public:
-    OperationCloner(Allocator *a, Operation *op);
+    OperationCloner(Allocator *a, Operation *op, Allocator *mem);
+    OperationCloner(Operation *op, Allocator *mem);
 
     void init();
     void reset();
+
+    Operation *operation() const { return _op; }
 
     OperationCloner *changeOperand(Value *v, uint32_t i=0) {
         if (i < _numOperands)
@@ -131,6 +134,9 @@ public:
     }
 
 protected:
+    Allocator *mem() const { return _mem; }
+
+    Allocator *_mem;
 
     Operation *_op;
 

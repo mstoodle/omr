@@ -28,6 +28,7 @@
 #include "String.hpp"
 #include "Extensible.hpp"
 #include "Extension.hpp"
+#include "Addon.hpp"
 
 namespace OMR {
 namespace JB2 {

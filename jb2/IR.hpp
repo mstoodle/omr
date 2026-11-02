@@ -40,6 +40,8 @@ class Compilation;
 class Compiler;
 class Context;
 class IRCloner;
+class IRDeserializer;
+class IRSerializer;
 class Literal;
 class LiteralDictionary;
 class Location;
@@ -110,6 +112,10 @@ public:
     // Make a copy of this IR using the provided allocator
     IR *clone(Allocator *mem) const;
 
+    static IR * read(Allocator *mem, Compiler *compiler, IRDeserializer & d);
+    bool read(IRDeserializer & d);
+    void write(IRSerializer & s) const;
+
     void log(Compilation *comp, TextLogger &lgr) const;
 
 protected:
@@ -138,6 +144,7 @@ protected:
 
     // with this call, IR takes ownership of b object
     void registerBuilder(Builder *b);
+    void unregisterBuilder(Builder *b);
 
     // with this call, IR takes ownership of location object
     void registerLocation(Location *location);

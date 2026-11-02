@@ -29,8 +29,8 @@ namespace JB2 {
 
 INIT_JBALLOC_REUSECAT(OperationReplacer, Compilation)
 
-OperationReplacer::OperationReplacer(Allocator *a, Operation *op)
-    : OperationCloner(a, op)
+OperationReplacer::OperationReplacer(Allocator *a, Operation *op, Allocator *mem)
+    : OperationCloner(a, op, mem)
     , _resultMappers(NULL)
     , _operandMappers(NULL)
     , _builderMappers(NULL)
@@ -38,57 +38,73 @@ OperationReplacer::OperationReplacer(Allocator *a, Operation *op)
     , _symbolMappers(NULL)
     , _typeMappers(NULL) {
 
+    init();
+}
+
+OperationReplacer::OperationReplacer(Operation *op, Allocator *mem)
+    : OperationCloner(op, mem)
+    , _resultMappers(NULL)
+    , _operandMappers(NULL)
+    , _builderMappers(NULL)
+    , _literalMappers(NULL)
+    , _symbolMappers(NULL)
+    , _typeMappers(NULL) {
+
+    init();
+}
+
+void
+OperationReplacer::init() {
     if (_numResults > 0) {
-        _resultMappers = a->allocate<ValueMapper *>(_numResults);
+        _resultMappers = _mem->allocate<ValueMapper *>(_numResults);
         for (auto i=0;i < _numResults;i++)
             _resultMappers[i] = NULL;
     }
 
     if (_numOperands > 0) {
-        _operandMappers = a->allocate<ValueMapper *>(_numOperands);
+        _operandMappers = _mem->allocate<ValueMapper *>(_numOperands);
         for (auto i=0;i < _numOperands;i++)
             _operandMappers[i] = NULL;
     }
 
     if (_numBuilders > 0) {
-        _builderMappers = a->allocate<BuilderMapper *>(_numBuilders);
+        _builderMappers = _mem->allocate<BuilderMapper *>(_numBuilders);
         for (auto i=0;i < _numBuilders;i++)
             _builderMappers[i] = NULL;
     }
 
     if (_numLiterals > 0) {
-        _literalMappers = a->allocate<LiteralMapper *>(_numLiterals);
+        _literalMappers = _mem->allocate<LiteralMapper *>(_numLiterals);
         for (auto i=0;i < _numLiterals;i++)
             _literalMappers[i] = NULL;
     }
 
     if (_numSymbols > 0) {
-        _symbolMappers = a->allocate<SymbolMapper *>(_numSymbols);
+        _symbolMappers = _mem->allocate<SymbolMapper *>(_numSymbols);
         for (auto i=0;i < _numSymbols;i++)
             _symbolMappers[i] = NULL;
     }
 
     if (_numTypes > 0) {
-        _typeMappers = a->allocate<TypeMapper *>(_numTypes);
+        _typeMappers = _mem->allocate<TypeMapper *>(_numTypes);
         for (auto i=0;i < _numTypes;i++)
             _typeMappers[i] = NULL;
     }
 }
 
 OperationReplacer::~OperationReplacer() {
-    Allocator *mem = allocator();
     if (_resultMappers)
-        mem->deallocate(_resultMappers);
+        _mem->deallocate(_resultMappers);
     if (_operandMappers)
-        mem->deallocate(_operandMappers);
+        _mem->deallocate(_operandMappers);
     if (_builderMappers)
-        mem->deallocate(_builderMappers);
+        _mem->deallocate(_builderMappers);
     if (_literalMappers)
-        mem->deallocate(_literalMappers);
+        _mem->deallocate(_literalMappers);
     if (_symbolMappers)
-        mem->deallocate(_symbolMappers);
+        _mem->deallocate(_symbolMappers);
     if (_typeMappers)
-        mem->deallocate(_typeMappers);
+        _mem->deallocate(_typeMappers);
 }
 
 Operation *
@@ -103,12 +119,10 @@ OperationReplacer::clone(Builder *b) {
         changeSymbol(symbolMapper(i)->next(), i);
     for (uint32_t i=0;i < _numBuilders;i++)
         changeBuilder(builderMapper(i)->next(), i);
-
-    Operation *clonedOp = OperationCloner::clone(b);
-
     for (uint32_t i=0;i < _numResults;i++)
-        resultMapper(i)->add( result(i) );
+        changeResult(resultMapper(i)->next(), i);
 
+    Operation *clonedOp = this->OperationCloner::clone(b);
     return clonedOp;
 }
 

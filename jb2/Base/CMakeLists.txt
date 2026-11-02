@@ -29,6 +29,7 @@ add_library(jb2base SHARED
 	ArithmeticOperations.cpp
 	BaseAddon.cpp
 	BaseExtension.cpp
+	BaseExtensionIRWriter.cpp
 	BaseFunctionExtensionAddon.cpp
 	BaseIRAddon.cpp
 	BaseIRClonerAddon.cpp

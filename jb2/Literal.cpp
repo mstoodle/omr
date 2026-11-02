@@ -29,6 +29,7 @@
 #include "TextLogger.hpp"
 #include "Type.hpp"
 #include "TypeDictionary.hpp"
+#include "TypeReplacer.hpp"
 
 namespace OMR {
 namespace JB2 {
@@ -42,11 +43,7 @@ Literal::Literal(MEM_LOCATION(a), IR *ir, const Type *type, const LiteralBytes *
     , _litDict(ir->litdict())
     , _type(type) {
 
-    // privatize the literal value
-    size_t numBytes = (type->size() / 8) + (((type->size() & 7) > 0) ? 1 : 0);
-    LiteralBytes *newBytes = reinterpret_cast<LiteralBytes *>(a->allocate(numBytes, NoAllocationCategory));
-    memcpy(newBytes, v, numBytes);
-    _pValue = newBytes;
+    privatizeBytes(v);
 }
 
 // used only by clone()
@@ -57,12 +54,36 @@ Literal::Literal(Allocator *a, const Literal *source, IRCloner *cloner)
     , _litDict(cloner->clonedLiteralDictionary(source->_litDict))
     , _type(cloner->clonedType(source->_type)) {
 
-    size_t numBytes = (_type->size() / 8) + (((_type->size() & 7) > 0) ? 1 : 0);
-    LiteralBytes *newBytes = reinterpret_cast<LiteralBytes *>(a->allocate(numBytes, NoAllocationCategory));
-    memcpy(newBytes, source->_pValue, numBytes);
-    _pValue = newBytes;
+    privatizeBytes(source->_pValue);
 }
 
+Literal::Literal(Allocator *a, const Literal *source, TypeMapper *tm)
+    : ExtensibleIR(a, source, tm)
+    , _id(source->_id)
+    , _creator(source->_creator)
+    , _litDict(source->_litDict) {
+
+    _type = tm->current();
+    
+    size_t offset = tm->offset();
+    privatizeBytes(source->_pValue + offset);
+}
+
+ExtensibleIR *
+Literal::explode(TypeMapper *tm) {
+    IR *ir = this->ir();
+    Allocator *mem = ir->mem();
+    return tm->current()->literal(LOC, _pValue + tm->offset());
+}
+
+void
+Literal::privatizeBytes(const LiteralBytes *pValue) {
+    assert(pValue != NULL); // should be a CompilationException
+    size_t numBytes = (_type->size() / 8) + (((_type->size() & 7) > 0) ? 1 : 0);
+    LiteralBytes *newBytes = reinterpret_cast<LiteralBytes *>(allocator()->allocate(numBytes, NoAllocationCategory));
+    memcpy(newBytes, pValue, numBytes);
+    _pValue = newBytes;
+}
 
 Literal::~Literal() {
     allocator()->deallocate(const_cast<void *>(reinterpret_cast<const void *>(this->_pValue)));

@@ -32,8 +32,29 @@ namespace JB2 {
 
 INIT_JBALLOC_REUSECAT(OperationCloner, Compilation)
 
-OperationCloner::OperationCloner(Allocator *a, Operation *op)
+OperationCloner::OperationCloner(Allocator *a, Operation *op, Allocator *mem)
     : Allocatable(a)
+    , _mem(mem)
+    , _op(op)
+    , _numResults(op->numResults())
+    , _results(NULL)
+    , _numOperands(op->numOperands())
+    , _operands(NULL)
+    , _numTypes(op->numTypes())
+    , _types(NULL)
+    , _numLiterals(op->numLiterals())
+    , _literals(NULL)
+    , _numSymbols(op->numSymbols())
+    , _symbols(NULL)
+    , _numBuilders(op->numBuilders())
+    , _builders(NULL) {
+    init();
+    reset();
+}
+
+OperationCloner::OperationCloner(Operation *op, Allocator *mem)
+    : Allocatable()
+    , _mem(mem)
     , _op(op)
     , _numResults(op->numResults())
     , _results(NULL)
@@ -52,48 +73,44 @@ OperationCloner::OperationCloner(Allocator *a, Operation *op)
 }
 
 OperationCloner::~OperationCloner() {
-    Allocator *mem = allocator();
-
     if (_results)
-        mem->deallocate(_results);
+        _mem->deallocate(_results);
 
     if (_operands)
-        mem->deallocate(_operands);
+        _mem->deallocate(_operands);
 
     if (_types)
-        mem->deallocate(_types);
+        _mem->deallocate(_types);
 
     if (_literals)
-        mem->deallocate(_literals);
+        _mem->deallocate(_literals);
 
     if (_symbols)
-        mem->deallocate(_symbols);
+        _mem->deallocate(_symbols);
 
     if (_builders)
-        mem->deallocate(_builders);
+        _mem->deallocate(_builders);
 }
 
 void
 OperationCloner::init() {
-    Allocator *mem = allocator();
-
     if (_numResults > 0)
-        _results = mem->allocate<Value *>(_numResults);
+        _results = _mem->allocate<Value *>(_numResults);
 
     if (_numOperands > 0)
-        _operands = mem->allocate<Value *>(_numOperands);
+        _operands = _mem->allocate<Value *>(_numOperands);
 
     if (_numTypes > 0)
-        _types = mem->allocate<const Type *>(_numTypes);
+        _types = _mem->allocate<const Type *>(_numTypes);
 
     if (_numLiterals > 0)
-        _literals = mem->allocate<Literal *>(_numLiterals);
+        _literals = _mem->allocate<Literal *>(_numLiterals);
 
     if (_numSymbols > 0)
-        _symbols = mem->allocate<Symbol *>(_numSymbols);
+        _symbols = _mem->allocate<Symbol *>(_numSymbols);
 
     if (_numBuilders > 0)
-        _builders = mem->allocate<Builder *>(_numBuilders);
+        _builders = _mem->allocate<Builder *>(_numBuilders);
 }
 
 void
@@ -119,7 +136,9 @@ OperationCloner::createResult(Builder *b, uint32_t i) {
 
 Operation *
 OperationCloner::clone(Builder *b) {
-    return _op->clone(LOC, b, this);
+    Operation *clonedOp = _op->clone(LOC, b, this);
+    b->add(clonedOp);
+    return clonedOp;
 }
 
 } // namespace JB2

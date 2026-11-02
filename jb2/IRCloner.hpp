@@ -24,6 +24,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <map>
 #include "common.hpp"
 #include "ExtensibleIR.hpp"
 
@@ -69,11 +70,13 @@ public:
     Scope *clonedScope(Scope *s);
     Symbol *clonedSymbol(Symbol *s);
     SymbolDictionary *clonedSymbolDictionary(SymbolDictionary *d);
+    void registerClonedType(const Type *clonedType);
     const Type *clonedType(const Type *t);
     const Type **clonedTypeArray(int32_t numTypes, const Type **typeArray);
     TypeDictionary *clonedTypeDictionary(TypeDictionary *d);
     Value *clonedValue(Value *v);
     ExtensibleIR *clone(const ExtensibleIR *item);
+    const ExtensibleIR *cloneConst(const ExtensibleIR *item);
 
 protected:
     Allocator                 * _mem;
@@ -91,6 +94,8 @@ protected:
     Array<const Type *>         _clonedTypes;
     Array<TypeDictionary *>     _clonedTypeDictionaries;
     Array<Value *>              _clonedValues;
+    std::map<const ExtensibleIR *, ExtensibleIR *> _clonedItems;
+    std::map<const ExtensibleIR *, const ExtensibleIR *> _clonedConstItems;
 };
 
 } // namespace JB2

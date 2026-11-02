@@ -148,7 +148,7 @@ operator<<(TextLogger & log, const Literal *lv) {
 
 TextLogger &
 operator<< (TextLogger &log, const LiteralDictionary *ld) {
-    return log << "L" << ld->id();
+    return log << "D" << ld->id();
 }
 
 TextLogger &
@@ -170,7 +170,7 @@ operator<< (TextLogger &log, const Symbol *sym) {
 
 TextLogger &
 operator<< (TextLogger &log, const SymbolDictionary *sd) {
-    return log << "S" << sd->id();
+    return log << "D" << sd->id();
 }
 
 TextLogger &
@@ -180,7 +180,7 @@ operator<<(TextLogger &log, const Type *t) {
 
 TextLogger &
 operator<<(TextLogger &log, const TypeDictionary *dict) {
-    return log << "T" << dict->id();
+    return log << "D" << dict->id();
 }
 
 TextLogger &
@@ -272,6 +272,13 @@ TextLogger::irListEnd(size_t numEntries) {
 }
 
 TextLogger &
+TextLogger::irSectionOneLiner(String title, String designator, uint64_t id, ExtensibleKind kind, String name) {
+    const String &kindName = Extensible::kindService.getName(kind);
+    indent() << irStart() << title << " " << designator << id << " " << kindName << " \"" << name << "\"" << irSpacedStop() << endl();
+    return *this;
+}
+
+TextLogger &
 TextLogger::irSectionBegin(String title, String designator, uint64_t id, ExtensibleKind kind, String name) {
     const String &kindName = Extensible::kindService.getName(kind);
     indent() << irStart() << title << " " << designator << id << " " << kindName << " \"" << name << "\"" << endl();
@@ -282,7 +289,7 @@ TextLogger::irSectionBegin(String title, String designator, uint64_t id, Extensi
 TextLogger &
 TextLogger::irSectionEnd() {
     indentOut();
-    indent() << irSpacedStop() << endl();
+    indent() << irStop() << endl();
     return *this;
 }
 

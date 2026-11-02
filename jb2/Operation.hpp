@@ -112,8 +112,8 @@ public:
 
     virtual Operation * clone(LOCATION, Builder *b, OperationCloner *cloner) const = 0;
 
-    virtual bool hasExpander() const                       { return false; }
-    virtual bool expand(OperationReplacer *replacer) const { return false; }
+    virtual bool hasExpander() const                                   { return false; }
+    virtual bool expand(Builder *b, OperationReplacer *replacer) const { return false; }
 
     void logFull(TextLogger & log) const;
     const String & name() const { return _name; }

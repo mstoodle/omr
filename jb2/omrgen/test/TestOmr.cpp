@@ -2106,7 +2106,7 @@ protected:
         Base::StructTypeBuilder stb(this->bx(), comp);
         stb.setName("TheStruct");
         addFieldsBefore(comp, &stb);
-        stb.addField("_value", ft, offsetof(struct_cType, _value));
+        stb.addField("_value", ft, 8*offsetof(struct_cType, _value));
         addFieldsAfter(comp, &stb);
         return stb.create(LOC);
     }
@@ -2197,12 +2197,12 @@ public:
         : LoadFieldAtFunc<struct_cType, field_cType>(MEM_PASSLOC(a), name, compiler, log) { }
 protected:
     virtual void addFieldsBefore(Func::FunctionCompilation *comp, Base::StructTypeBuilder *stb) {
-        stb->addField("_pad1", this->bx()->Int64(comp->ir()), offsetof(struct_cType, _pad1));
-        stb->addField("_pad2", this->bx()->Int32(comp->ir()), offsetof(struct_cType, _pad2));
+        stb->addField("_pad1", this->bx()->Int64(comp->ir()), 8*offsetof(struct_cType, _pad1));
+        stb->addField("_pad2", this->bx()->Int32(comp->ir()), 8*offsetof(struct_cType, _pad2));
     }
     virtual void addFieldsAfter(Func::FunctionCompilation *comp, Base::StructTypeBuilder *stb) {
-        stb->addField("_pad3", this->bx()->Float64(comp->ir()), offsetof(struct_cType, _pad3));
-        stb->addField("_pad4", this->bx()->Float32(comp->ir()), offsetof(struct_cType, _pad4));
+        stb->addField("_pad3", this->bx()->Float64(comp->ir()), 8*offsetof(struct_cType, _pad3));
+        stb->addField("_pad4", this->bx()->Float32(comp->ir()), 8*offsetof(struct_cType, _pad4));
     }
     field_cType _notFieldValue;
 };
@@ -4396,7 +4396,7 @@ protected:
         Base::StructTypeBuilder stb(this->bx(), comp);
         stb.setName("TheStruct");
         addFieldsBefore(comp, &stb);
-        stb.addField("_value", ft, offsetof(struct_cType, _value));
+        stb.addField("_value", ft, 8*offsetof(struct_cType, _value));
         addFieldsAfter(comp, &stb);
         return stb.create(LOC);
     }
@@ -4504,12 +4504,12 @@ public:
     }
 protected:
     virtual void addFieldsBefore(Func::FunctionCompilation *comp, Base::StructTypeBuilder *stb) {
-        stb->addField("_pad1", this->bx()->Int64(comp->ir()), offsetof(struct_cType, _pad1));
-        stb->addField("_pad2", this->bx()->Int32(comp->ir()), offsetof(struct_cType, _pad2));
+        stb->addField("_pad1", this->bx()->Int64(comp->ir()), 8*offsetof(struct_cType, _pad1));
+        stb->addField("_pad2", this->bx()->Int32(comp->ir()), 8*offsetof(struct_cType, _pad2));
      }
     virtual void addFieldsAfter(Func::FunctionCompilation *comp, Base::StructTypeBuilder *stb) {
-        stb->addField("_pad3", this->bx()->Float64(comp->ir()), offsetof(struct_cType, _pad3));
-        stb->addField("_pad4", this->bx()->Float32(comp->ir()), offsetof(struct_cType, _pad3));
+        stb->addField("_pad3", this->bx()->Float64(comp->ir()), 8*offsetof(struct_cType, _pad3));
+        stb->addField("_pad4", this->bx()->Float32(comp->ir()), 8*offsetof(struct_cType, _pad3));
      }
 };
 
@@ -4715,4 +4715,247 @@ TEST(omrgenExtension, SubAddressAndInt) {
         sub_addressint64s->test(LOC, tAddress, std::numeric_limits<intptr_t>::min(), tInt64, static_cast<int64_t>(0), tAddress, std::numeric_limits<intptr_t>::min());
         delete sub_addressint64s;
     }
+}
+
+// Test ForLoopUp: counts the number of iterations and returns the counter.
+// Function signature: int32_t f(int32_t initial, int32_t final, int32_t bump)
+class ForLoopUpFunc : public TestFunc {
+public:
+    ForLoopUpFunc(MEM_LOCATION(a), Compiler *compiler, bool log)
+        : TestFunc(MEM_PASSLOC(a), compiler, "ForLoopUpFunc", __FILE__, LINETOSTR(__LINE__), log) {
+    }
+    void run(LOCATION) {
+        typedef int32_t (FuncPrototype)(int32_t, int32_t, int32_t);
+        FuncPrototype *f = body()->template nativeEntryPoint<FuncPrototype>();
+        EXPECT_NE(f, nullptr);
+        EXPECT_EQ(f(0,100,1),   100) << "ForLoopUp(0,100,1) counts 100 iterations";
+        EXPECT_EQ(f(0,100,2),    50) << "ForLoopUp(0,100,2) counts 50 iterations";
+        EXPECT_EQ(f(0,100,3),    34) << "ForLoopUp(0,100,3) counts 34 iterations";
+        EXPECT_EQ(f(1,100,1),    99) << "ForLoopUp(1,100,1) counts 99 iterations";
+        EXPECT_EQ(f(1,100,3),    33) << "ForLoopUp(1,100,3) counts 33 iterations";
+        EXPECT_EQ(f(-100,100,1),200) << "ForLoopUp(-100,100,1) counts 200 iterations";
+        EXPECT_EQ(f(100,-100,1),  0) << "ForLoopUp(100,-100,1) counts 0 iterations";
+        EXPECT_EQ(f(100,-100,5),  0) << "ForLoopUp(100,-100,5) counts 0 iterations";
+        EXPECT_EQ(f(0,0,1),       0) << "ForLoopUp(0,0,1) counts 0 iterations";
+        EXPECT_EQ(f(-100,-1,1),  99) << "ForLoopUp(-100,-1,1) counts 99 iterations";
+    }
+
+protected:
+    virtual bool buildContext(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
+        IR *ir = comp->ir();
+        ctx->DefineParameter("initial", bx()->Int32(ir));
+        ctx->DefineParameter("final",   bx()->Int32(ir));
+        ctx->DefineParameter("bump",    bx()->Int32(ir));
+        ctx->DefineLocal("i",       bx()->Int32(ir));
+        ctx->DefineLocal("counter", bx()->Int32(ir));
+        ctx->DefineReturnType(bx()->Int32(ir));
+        return true;
+    }
+    virtual bool buildIL(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
+        Builder *entry = scope->entryPoint<BuilderEntry>(0)->builder();
+
+        auto counterSym = ctx->LookupLocal("counter");
+        fx()->Store(LOC, entry, counterSym, bx()->ConstInt32(LOC, entry, 0));
+
+        auto iterVarSym = ctx->LookupLocal("i");
+        auto initialSym = ctx->LookupLocal("initial");
+        auto finalSym   = ctx->LookupLocal("final");
+        auto bumpSym    = ctx->LookupLocal("bump");
+        Value *initial  = fx()->Load(LOC, entry, initialSym);
+        Value *final    = fx()->Load(LOC, entry, finalSym);
+        Value *bump     = fx()->Load(LOC, entry, bumpSym);
+
+        Base::ForLoopBuilder loop = bx()->ForLoopUp(LOC, entry, iterVarSym, initial, final, bump); {
+            Builder *loopBody = loop.loopBody();
+            Value *count = fx()->Load(LOC, loopBody, counterSym);
+            fx()->Store(LOC, loopBody, counterSym, bx()->Add(LOC, loopBody, count, bx()->ConstInt32(LOC, loopBody, 1)));
+        }
+
+        fx()->Return(LOC, entry, fx()->Load(LOC, entry, counterSym));
+        return true;
+    }
+};
+
+TEST(omrgenExtension, ForLoopUp) {
+    ForLoopUpFunc *f = new (c->mem()) ForLoopUpFunc(MEM_LOC(c->mem()), c, false);
+    f->compile(LOC);
+    f->run(LOC);
+    delete f;
+}
+
+// IfThen (IfThenElse without else path)
+// Compiled function: if (selector != 0) return 1; return 0;
+template<typename FuncPrototype, typename selector_cType>
+class IfThenFunc : public TestFunc {
+public:
+    IfThenFunc(MEM_LOCATION(a), String name, Compiler *compiler, bool log)
+        : TestFunc(MEM_PASSLOC(a), compiler, name, __FILE__, LINETOSTR(__LINE__), log)
+        , _selectorTid(NoTypeID)
+        , _selectorType(NULL) {
+    }
+    void run(LOCATION) {
+        FuncPrototype *f = body()->template nativeEntryPoint<FuncPrototype>();
+        EXPECT_NE(f, nullptr);
+        EXPECT_EQ(f((selector_cType)0),    0) << "IfThen(0) returns 0";
+        EXPECT_EQ(f((selector_cType)1),    1) << "IfThen(1) returns 1";
+        EXPECT_EQ(f((selector_cType)100),  1) << "IfThen(100) returns 1";
+    }
+    void compile(LOCATION, const TypeID selectorTid) {
+        _selectorTid = selectorTid;
+        this->TestFunc::compile(PASSLOC);
+    }
+
+protected:
+    virtual bool buildContext(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
+        _selectorType = comp->ir()->typedict()->Lookup(_selectorTid);
+        ctx->DefineParameter("selector", _selectorType);
+        ctx->DefineReturnType(bx()->Word(comp->ir()));
+        return true;
+    }
+    virtual bool buildIL(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
+        Builder *entry = scope->entryPoint<BuilderEntry>(0)->builder();
+        auto selectorSym = ctx->LookupLocal("selector");
+        Value *selector = fx()->Load(LOC, entry, selectorSym);
+        Base::IfThenElseBuilder bldr = bx()->IfThenElse(LOC, entry, selector); {
+            Builder *thenPath = bldr.thenPath();
+            fx()->Return(LOC, thenPath, bx()->One(LOC, thenPath, bx()->Word(comp->ir())));
+        }
+        fx()->Return(LOC, entry, bx()->Zero(LOC, entry, bx()->Word(comp->ir())));
+        return true;
+    }
+
+protected:
+    TypeID _selectorTid;
+    const Type *_selectorType;
+};
+
+TEST(omrgenExtension, IfThenInt8) {
+    typedef size_t (FuncProto)(int8_t);
+    IfThenFunc<FuncProto, int8_t> *f = new (c->mem()) IfThenFunc<FuncProto, int8_t>(MEM_LOC(c->mem()), "IfThenInt8", c, false);
+    f->compile(LOC, tInt8);
+    f->run(LOC);
+    delete f;
+}
+
+TEST(omrgenExtension, IfThenInt16) {
+    typedef size_t (FuncProto)(int16_t);
+    IfThenFunc<FuncProto, int16_t> *f = new (c->mem()) IfThenFunc<FuncProto, int16_t>(MEM_LOC(c->mem()), "IfThenInt16", c, false);
+    f->compile(LOC, tInt16);
+    f->run(LOC);
+    delete f;
+}
+
+TEST(omrgenExtension, IfThenInt32) {
+    typedef size_t (FuncProto)(int32_t);
+    IfThenFunc<FuncProto, int32_t> *f = new (c->mem()) IfThenFunc<FuncProto, int32_t>(MEM_LOC(c->mem()), "IfThenInt32", c, false);
+    f->compile(LOC, tInt32);
+    f->run(LOC);
+    delete f;
+}
+
+TEST(omrgenExtension, IfThenInt64) {
+    typedef size_t (FuncProto)(int64_t);
+    IfThenFunc<FuncProto, int64_t> *f = new (c->mem()) IfThenFunc<FuncProto, int64_t>(MEM_LOC(c->mem()), "IfThenInt64", c, false);
+    f->compile(LOC, tInt64);
+    f->run(LOC);
+    delete f;
+}
+
+TEST(omrgenExtension, IfThenAddress) {
+    typedef size_t (FuncProto)(void *);
+    IfThenFunc<FuncProto, void *> *f = new (c->mem()) IfThenFunc<FuncProto, void *>(MEM_LOC(c->mem()), "IfThenAddress", c, false);
+    f->compile(LOC, tAddress);
+    f->run(LOC);
+    delete f;
+}
+
+// IfThenElse (with else path)
+// Compiled function: if (selector != 0) return 1; else return 0; return ~(size_t)0;
+template<typename FuncPrototype, typename selector_cType>
+class IfThenElseFunc : public TestFunc {
+public:
+    IfThenElseFunc(MEM_LOCATION(a), String name, Compiler *compiler, bool log)
+        : TestFunc(MEM_PASSLOC(a), compiler, name, __FILE__, LINETOSTR(__LINE__), log)
+        , _selectorTid(NoTypeID)
+        , _selectorType(NULL) {
+    }
+    void run(LOCATION) {
+        FuncPrototype *f = body()->template nativeEntryPoint<FuncPrototype>();
+        EXPECT_NE(f, nullptr);
+        EXPECT_EQ(f((selector_cType)0),    0) << "IfThenElse(0) returns 0";
+        EXPECT_EQ(f((selector_cType)1),    1) << "IfThenElse(1) returns 1";
+        EXPECT_EQ(f((selector_cType)100),  1) << "IfThenElse(100) returns 1";
+    }
+    void compile(LOCATION, const TypeID selectorTid) {
+        _selectorTid = selectorTid;
+        this->TestFunc::compile(PASSLOC);
+    }
+
+protected:
+    virtual bool buildContext(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
+        _selectorType = comp->ir()->typedict()->Lookup(_selectorTid);
+        ctx->DefineParameter("selector", _selectorType);
+        ctx->DefineReturnType(bx()->Word(comp->ir()));
+        return true;
+    }
+    virtual bool buildIL(LOCATION, Func::FunctionCompilation *comp, Func::FunctionScope *scope, Func::FunctionContext *ctx) {
+        Builder *entry = scope->entryPoint<BuilderEntry>(0)->builder();
+        auto selectorSym = ctx->LookupLocal("selector");
+        Value *selector = fx()->Load(LOC, entry, selectorSym);
+        Base::IfThenElseBuilder bldr = bx()->IfThenElse(LOC, entry, selector); {
+            Builder *thenPath = bldr.thenPath();
+            fx()->Return(LOC, thenPath, bx()->One(LOC, thenPath, bx()->Word(comp->ir())));
+        } {
+            Builder *elsePath = bldr.elsePath();
+            fx()->Return(LOC, elsePath, bx()->Zero(LOC, elsePath, bx()->Word(comp->ir())));
+        }
+        size_t allOnes = ~(size_t)0;
+        const LiteralBytes *p = reinterpret_cast<const LiteralBytes *>(&allOnes);
+        fx()->Return(LOC, entry, bx()->Const(LOC, entry, bx()->Word(comp->ir())->literal(LOC, p)));
+        return true;
+    }
+
+protected:
+    TypeID _selectorTid;
+    const Type *_selectorType;
+};
+
+TEST(omrgenExtension, IfThenElseInt8) {
+    typedef size_t (FuncProto)(int8_t);
+    IfThenElseFunc<FuncProto, int8_t> *f = new (c->mem()) IfThenElseFunc<FuncProto, int8_t>(MEM_LOC(c->mem()), "IfThenElseInt8", c, false);
+    f->compile(LOC, tInt8);
+    f->run(LOC);
+    delete f;
+}
+
+TEST(omrgenExtension, IfThenElseInt16) {
+    typedef size_t (FuncProto)(int16_t);
+    IfThenElseFunc<FuncProto, int16_t> *f = new (c->mem()) IfThenElseFunc<FuncProto, int16_t>(MEM_LOC(c->mem()), "IfThenElseInt16", c, false);
+    f->compile(LOC, tInt16);
+    f->run(LOC);
+    delete f;
+}
+
+TEST(omrgenExtension, IfThenElseInt32) {
+    typedef size_t (FuncProto)(int32_t);
+    IfThenElseFunc<FuncProto, int32_t> *f = new (c->mem()) IfThenElseFunc<FuncProto, int32_t>(MEM_LOC(c->mem()), "IfThenElseInt32", c, false);
+    f->compile(LOC, tInt32);
+    f->run(LOC);
+    delete f;
+}
+
+TEST(omrgenExtension, IfThenElseInt64) {
+    typedef size_t (FuncProto)(int64_t);
+    IfThenElseFunc<FuncProto, int64_t> *f = new (c->mem()) IfThenElseFunc<FuncProto, int64_t>(MEM_LOC(c->mem()), "IfThenElseInt64", c, false);
+    f->compile(LOC, tInt64);
+    f->run(LOC);
+    delete f;
+}
+
+TEST(omrgenExtension, IfThenElseAddress) {
+    typedef size_t (FuncProto)(void *);
+    IfThenElseFunc<FuncProto, void *> *f = new (c->mem()) IfThenElseFunc<FuncProto, void *>(MEM_LOC(c->mem()), "IfThenElseAddress", c, false);
+    f->compile(LOC, tAddress);
+    f->run(LOC);
+    delete f;
 }

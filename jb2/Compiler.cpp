@@ -60,6 +60,7 @@ INIT_JBALLOC(Compiler);
     , _mem(_config->compilerAllocator(_baseAllocator)) \
     , _parent(p) \
     , _nextExtensionID(NoExtension+1) \
+    , _extensionsByID((Allocator *)NULL, _mem) \
     , _extensions() \
     , _nextActionID(NoAction+1) \
     , _actionNames() \
@@ -141,10 +142,13 @@ Compiler::~Compiler() {
     }
     _extensiblesByKind.clear();
 
+    // these should already have been deleted
+    /*
     for (auto it = _extensions.begin();it != _extensions.end();it++) {
         Extension *ext = it->second;
         delete ext;
-     }
+    }
+    */
     _extensions.clear();
 
     for (auto it = _strategies.begin();it != _strategies.end();it++) {
@@ -299,8 +303,8 @@ Compiler::addExtension(Extension *ext) {
         other->notifyNewExtension(ext);
     }
     this->_extensions.insert({ext->name(),ext});
-    //for (auto it2=_extensions.begin(); it2 != this->_extensions.end();it2++) {
-    //}
+    _extensionsByID.assign(ext->id(), ext);
+    registerExtensible(ext, CLASSKIND(Extension, Extensible));
 }
 
 bool
@@ -444,7 +448,6 @@ Compiler::compile(LOCATION, Compilation *comp, StrategyID strategyID) {
         return body->setReturnCode(CompileFail_CompilerError);
 
     if (config()->tracePrototypeIR()) {
-        AllocatorRaw raw;
         irPrototype()->log(comp, *comp->logger());
     }
 
@@ -457,10 +460,13 @@ Compiler::compile(LOCATION, Compilation *comp, StrategyID strategyID) {
 
         if (success) {
             if (config()->traceBuildIL()) {
-                AllocatorRaw raw;
-                TextWriter *writer = new (&raw) TextWriter(&raw, this, *comp->logger());
-                writer->perform(comp);
-                delete writer;
+                TextLogger &lgr = *comp->logger();
+                lgr << "Prepared IL:" << lgr.endl();
+                comp->ir()->log(comp, *comp->logger());
+                //AllocatorRaw raw;
+                //TextWriter *writer = new (&raw) TextWriter(&raw, this, *comp->logger());
+                //writer->perform(comp);
+                //delete writer;
             }
 
             if (strategyID != NoStrategy) {

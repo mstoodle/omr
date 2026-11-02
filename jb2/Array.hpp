@@ -205,6 +205,14 @@ public:
         _items[index] = v;
     }
 
+    void remove(size_t index) {
+        assert(index >= 0);
+        if (index < _length) {
+            _items[index] = 0;
+            _changeID++; // assume A[i] = x but imperfect accounting unless we wrap the T
+        }
+    }
+
     void erase() {
         _length = 0;
         if (_ownItems && _items != NULL)

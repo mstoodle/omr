@@ -42,7 +42,8 @@ class OperationReplacer : public OperationCloner {
     JBALLOC_(OperationReplacer)
 
 public:
-    OperationReplacer(Allocator *a, Operation *op);
+    OperationReplacer(Allocator *a, Operation *op, Allocator *mem);
+    OperationReplacer(Operation *op, Allocator *mem);
 
     void setResultMapper(ValueMapper *m, uint32_t i=0) { if (i < _numResults) _resultMappers[i] = m; }
     void setOperandMapper(ValueMapper *m, uint32_t i=0) { if (i < _numOperands) _operandMappers[i] = m; }
@@ -50,8 +51,6 @@ public:
     void setLiteralMapper(LiteralMapper *m, uint32_t i=0) { if (i < _numLiterals) _literalMappers[i] = m; }
     void setSymbolMapper(SymbolMapper *m, uint32_t i=0) { if (i < _numSymbols) _symbolMappers[i] = m; }
     void setTypeMapper(TypeMapper *m, uint32_t i=0) { if (i < _numTypes) _typeMappers[i] = m; }
-
-    Operation *operation() const { return _op; }
 
     ValueMapper *resultMapper(uint32_t i=0) const { if (i < _numResults) return _resultMappers[i]; return NULL; }
     ValueMapper *operandMapper(uint32_t i=0) const { if (i < _numOperands) return _operandMappers[i]; return NULL; }
@@ -63,7 +62,7 @@ public:
     virtual Operation *clone(Builder *b);
 
 protected:
-    Operation        * _op;
+    void init();
 
     ValueMapper     ** _resultMappers;
     ValueMapper     ** _operandMappers;

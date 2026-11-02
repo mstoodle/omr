@@ -50,6 +50,7 @@ Builder::Builder(Allocator *a, Extension *ext, KINDTYPE(Extensible) kind, IR *ir
     , _operationCount(0)
     , _firstOperation(NULL)
     , _lastOperation(NULL)
+    , _appendPoint(NULL)
     , _myLocation(true)
     , _currentLocation(new (ir->mem()) Location(ir->mem(), ir, "", "", 0) )
     , _boundToOperation(NULL)
@@ -75,6 +76,7 @@ Builder::Builder(Allocator *a, Extension *ext, IR * ir, Scope *scope, String nam
     , _operationCount(0)
     , _firstOperation(NULL)
     , _lastOperation(NULL)
+    , _appendPoint(NULL)
     , _myLocation(true)
     , _currentLocation(new (ir->mem()) Location(ir->mem(), ir, "", "", 0) )
     , _boundToOperation(NULL)
@@ -100,6 +102,7 @@ Builder::Builder(Allocator *a, Extension *ext, Builder *parent, Scope *scope, St
     , _operationCount(0)
     , _firstOperation(NULL)
     , _lastOperation(NULL)
+    , _appendPoint(NULL)
     , _myLocation(false)
     , _currentLocation(parent->location())
     , _boundToOperation(NULL)
@@ -126,6 +129,7 @@ Builder::Builder(Allocator *a, Extension *ext, Builder *parent, Operation *bound
     , _operationCount(0)
     , _firstOperation(NULL)
     , _lastOperation(NULL)
+    , _appendPoint(NULL)
     , _myLocation(false)
     , _currentLocation(parent->location())
     , _boundToOperation(boundToOp)
@@ -152,6 +156,7 @@ Builder::Builder(Allocator *a, const Builder *source, IRCloner *cloner)
     , _operationCount(source->_operationCount)
     , _firstOperation(cloner->clonedOperation(source->_firstOperation))
     , _lastOperation(cloner->clonedOperation(source->_lastOperation))
+    , _appendPoint(cloner->clonedOperation(source->_appendPoint))
     , _myLocation(true)
     , _currentLocation(cloner->clonedLocation(source->_currentLocation))
     , _boundToOperation(cloner->clonedOperation(source->_boundToOperation))
@@ -185,6 +190,16 @@ Builder::~Builder() {
     }
     if (_myLocation)
         delete _currentLocation;
+    ir()->unregisterBuilder(this);
+}
+
+void
+Builder::abandon() {
+    _firstOperation = NULL;
+    _lastOperation = NULL;
+    _appendPoint = NULL;
+    _parent->removeChild(this);
+    _parent = NULL;
 }
 
 void
@@ -192,19 +207,45 @@ Builder::addChild(Builder *child) {
     _children.push_back(child);
 }
 
+void
+Builder::removeChild(Builder *child) {
+    auto it = _children.find(child);
+    if (it.hasItem())
+        _children.remove(it);
+}
+
+Builder *
+Builder::setAppendPoint(Operation *op) {
+    // should be a CompilationException
+    assert(op->parent() == this);
+    _appendPoint = op;
+    return this;
+}
+
 Builder *
 Builder::add(Operation *op) {
     _operations.push_back(op);
-    op->setNext(NULL);
-    if (_firstOperation == NULL) {
+    if (_appendPoint == NULL) {
+        // insert before the first operation (i.e., at the beginning)
+        op->setNext(_firstOperation);
+        op->setPrev(NULL);
+        if (_firstOperation != NULL)
+            _firstOperation->setPrev(op);
+        else
+            _lastOperation = op;
         _firstOperation = op;
-	op->setPrev(NULL);
+    } else {
+        // insert after _appendPoint
+        Operation *after = _appendPoint->next();
+        op->setPrev(_appendPoint);
+        op->setNext(after);
+        _appendPoint->setNext(op);
+        if (after != NULL)
+            after->setPrev(op);
+        else
+            _lastOperation = op;
     }
-    else {
-        _lastOperation->setNext(op);
-	op->setPrev(_lastOperation);
-    }
-    _lastOperation = op;
+    _appendPoint = op;
     _operationCount++;
     return this;
 }

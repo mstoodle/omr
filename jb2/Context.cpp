@@ -146,7 +146,7 @@ Context::~Context() {
 
 void
 Context::addSymbol(Symbol *sym) {
-    _ir->symdict()->addNewEntry(sym);
+    _ir->symdict()->registerSymbol(sym);
     #if 0
     if (_symDict) {
         _symDict->registerSymbol(sym);
@@ -163,10 +163,10 @@ Context::addSymbol(Symbol *sym) {
 
 Symbol *
 Context::lookupSymbol(String name) {
-    return _ir->symdict()->Lookup(name);
+    return _ir->symdict()->LookupName(name);
     #if 0
     if (_symDict) {
-        sym = _symDict->Lookup(name);
+        sym = _symDict->LookupName(name);
     }
 
     if (sym == NULL) {

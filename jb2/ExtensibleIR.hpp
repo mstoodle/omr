@@ -53,6 +53,8 @@ namespace JB2 {
 class Extension;
 class IR;
 class IRCloner;
+template <class T> class Mapper;
+typedef class Mapper<const Type> TypeMapper;
 
 class ExtensibleIR : public Extensible {
     JBALLOC_(ExtensibleIR)
@@ -65,9 +67,14 @@ protected:
     DYNAMIC_ALLOC_ONLY(ExtensibleIR, Extension *ext, IR *ir, KINDTYPE(Extensible)=KIND(Extensible));
     DYNAMIC_ALLOC_ONLY(ExtensibleIR, Extension *ext, Compiler *compiler, KINDTYPE(Extensible)=KIND(Extensible));
 
+    // used only when cloning IR elements
     ExtensibleIR(Allocator *a, const ExtensibleIR *source, IRCloner *cloner);
 
-    virtual ExtensibleIR *clone(Allocator *a, IRCloner *cloner) const;
+    // used only when exploding IR elements
+    ExtensibleIR(Allocator *a, const ExtensibleIR *source, TypeMapper *tm);
+
+    virtual ExtensibleIR *clone(Allocator *a, IRCloner *cloner) const { return NULL; }
+    virtual ExtensibleIR *explode(Allocator *a, TypeMapper *tm) const { return NULL; }
 
 private:
     IR *_ir;

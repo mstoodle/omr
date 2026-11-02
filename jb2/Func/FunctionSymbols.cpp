@@ -59,10 +59,20 @@ FunctionSymbol::FunctionSymbol(Allocator *a, const FunctionSymbol *source, IRClo
 }
 
 Symbol *
-FunctionSymbol::clone(Allocator *mem, IRCloner *cloner) const {
+FunctionSymbol::cloneSymbol(Allocator *mem, IRCloner *cloner) const {
     assert(_kind == KIND(Extensible));
     return new (mem) FunctionSymbol(mem, this, cloner);
 }
+
+#if 0
+FunctionSymbol::FunctionSymbol(Allocator *a, const FunctionSymbol *source, TypeReplacer *repl)
+    : Symbol(a, source, repl)
+    , _fileName(source->_fileName)
+    , _lineNumber(source->_lineNumber)
+    , _entryPoint(source->_entryPoint) {
+
+}
+#endif
 
 const FunctionType *
 FunctionSymbol::functionType() const {
@@ -83,10 +93,30 @@ LocalSymbol::LocalSymbol(Allocator *a, const LocalSymbol *source, IRCloner *clon
 }
 
 Symbol *
-LocalSymbol::clone(Allocator *mem, IRCloner *cloner) const {
+LocalSymbol::cloneSymbol(Allocator *mem, IRCloner *cloner) const {
     assert(_kind == KIND(Extensible));
     return new (mem) LocalSymbol(mem, this, cloner);
 }
+
+#if 0
+LocalSymbol::LocalSymbol(Allocator *mem, const LocalSymbol *source, TypeReplacer *repl)
+    : Symbol(a, source, repl) {
+
+}
+
+void
+LocalSymbol::explode(TypeReplacer *repl) {
+    TypeMapper *tm = repl->typeMapper(_type);
+    if (tm->size() == 1 && tm->current()->type() == _type)
+        return;
+
+    Allocator *mem = ir()->allocator();
+    SymbolMapper *m = repl->symbolMapper(this);
+    for (uint32_t i=0;i < tm->size();i++) {
+        m->add(new (mem) LocalSymbol(mem, kind(), ext(), ir(), name(), tm->next()));
+    }
+}
+#endif
 
 LocalSymbol::~LocalSymbol() {
 
@@ -107,10 +137,32 @@ ParameterSymbol::ParameterSymbol(Allocator *a, const ParameterSymbol *source, IR
 }
 
 Symbol *
-ParameterSymbol::clone(Allocator *mem, IRCloner *cloner) const {
+ParameterSymbol::cloneSymbol(Allocator *mem, IRCloner *cloner) const {
     assert(_kind == KIND(Extensible));
     return new (mem) ParameterSymbol(mem, this, cloner);
 }
+
+#if 0
+ParameterSymbol::ParameterSymbol(Allocator *mem, const ParameterSymbol *source, TypeReplacer *repl)
+    : Symbol(a, source, repl) {
+
+}
+
+void
+ParameterSymbol::explode(TypeReplacer *repl) {
+    TypeMapper *tm = repl->typeMapper(_type);
+    if (tm->size() == 1 && tm->current()->type() == _type)
+        return;
+
+    Allocator *mem = ir()->allocator();
+    SymbolMapper *m = repl->symbolMapper(this);
+    for (uint32_t i=0;i < tm->size();i++) {
+        // minor inaccuracy: keep the index the same for each new ParameterSymbol the same for now
+        //   the index will be later updated by processing the FunctionType
+        m->add(new (mem) ParameterSymbol(mem, kind(), ext(), ir(), name(), tm->next()), index());
+    }
+}
+#endif
 
 ParameterSymbol::~ParameterSymbol() {
 

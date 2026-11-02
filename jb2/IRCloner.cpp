@@ -115,6 +115,10 @@ IRCloner::~IRCloner() {
 
     for (auto it=_clonedValues.iterator();it.hasItem();it++)
         delete (it.item());
+
+    _clonedItems.clear();
+    _clonedConstItems.clear();
+
     #endif
 }
 
@@ -182,8 +186,15 @@ IRCloner::clonedLiteral(Literal *lv) {
         clonedLiteral = _clonedLiterals[id];
     
     if (clonedLiteral == NULL) {
-        clonedLiteral = lv->cloneLiteral(_mem, this);
+        // have to also look in clonedItems
+        auto it = _clonedItems.find(lv);
+        if (it != _clonedItems.end()) {
+            clonedLiteral = it->second->refine<Literal>();
+        } else {
+            clonedLiteral = lv->cloneLiteral(_mem, this);
+        }
         _clonedLiterals.assign(id, clonedLiteral);
+        _clonedItems.insert({lv, clonedLiteral});
     }
 
     return clonedLiteral;
@@ -202,7 +213,7 @@ IRCloner::clonedLiteralDictionary(LiteralDictionary *d) {
     if (clonedDict == NULL) {
         clonedDict = d->cloneDictionary(_mem, this);
         _clonedLiteralDictionaries.assign(id, clonedDict);
-        clonedDict->cloneFrom(d, this);
+        //clonedDict->cloneFrom(d, this);
     }
 
     return clonedDict;
@@ -264,8 +275,15 @@ IRCloner::clonedSymbol(Symbol *s) {
         clonedSymbol = _clonedSymbols[id];
     
     if (clonedSymbol == NULL) {
-        clonedSymbol = s->cloneSymbol(_mem, this);
+        // have to also look in clonedItems
+        auto it = _clonedItems.find(s);
+        if (it != _clonedItems.end()) {
+            clonedSymbol = it->second->refine<Symbol>();
+        } else {
+            clonedSymbol = s->cloneSymbol(_mem, this);
+        }
         _clonedSymbols.assign(id, clonedSymbol);
+        _clonedItems.insert({s, clonedSymbol});
     }
 
     return clonedSymbol;
@@ -284,10 +302,15 @@ IRCloner::clonedSymbolDictionary(SymbolDictionary *d) {
     if (clonedDict == NULL) {
         clonedDict = d->cloneDictionary(_mem, this);
         _clonedSymbolDictionaries.assign(id, clonedDict);
-        clonedDict->cloneFrom(d, this);
     }
 
     return clonedDict;
+}
+
+void
+IRCloner::registerClonedType(const Type *clonedType) {
+    TypeID id=clonedType->id();
+    _clonedTypes.assign(id, clonedType);
 }
 
 const Type *
@@ -298,8 +321,16 @@ IRCloner::clonedType(const Type *type) {
         clonedType = _clonedTypes[id];
     
     if (clonedType == NULL) {
-        clonedType = type->cloneType(_mem, this);
+        // have to also look in clonedConstItems
+        auto it = _clonedConstItems.find(type);
+        if (it != _clonedConstItems.end()) {
+            clonedType = it->second->refine<const Type>();
+        } else {
+            clonedType = type->cloneType(_mem, this);
+        }
         _clonedTypes.assign(id, clonedType);
+        // there must be a better way to do this
+        _clonedConstItems.insert({type, clonedType});
     }
 
     return clonedType;
@@ -328,7 +359,7 @@ IRCloner::clonedTypeDictionary(TypeDictionary *d) {
     if (clonedDict == NULL) {
         clonedDict = d->cloneDictionary(_mem, this);
         _clonedTypeDictionaries.assign(id, clonedDict);
-        clonedDict->cloneFrom(d, this);
+        //clonedDict->cloneFrom(d, this);
     }
 
     return clonedDict;
@@ -349,9 +380,28 @@ IRCloner::clonedValue(Value *v) {
     return clonedValue;
 }
 
+// only used by Dictionary at the moment
 ExtensibleIR *
 IRCloner::clone(const ExtensibleIR *item) {
-    return item->clone(_mem, this);
+    auto it = _clonedItems.find(item);
+    if (it != _clonedItems.end())
+        return it->second;
+
+    ExtensibleIR *clonedItem = item->clone(_mem, this);
+    _clonedItems.insert({item, clonedItem});
+    return clonedItem;
+}
+
+// only used by Dictionary at the moment
+const ExtensibleIR *
+IRCloner::cloneConst(const ExtensibleIR *item) {
+    auto it = _clonedConstItems.find(item);
+    if (it != _clonedConstItems.end())
+        return it->second;
+
+    const ExtensibleIR *clonedItem = item->clone(_mem, this);
+    _clonedConstItems.insert({item, clonedItem});
+    return clonedItem;
 }
 
 } // namespace JB2

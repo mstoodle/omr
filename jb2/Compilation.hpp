@@ -103,8 +103,6 @@ class Compilation : public Extensible {
     void setWriter(TextWriter * w) { _writer = w; }
     TextWriter * writer(bool enabled=true) const { return enabled ? _writer : NULL; }
 
-    BuilderListIterator builders() { return _ir->builders(); }
-
     virtual bool prepareIL(LOCATION);
     virtual void freeIL(LOCATION);
 
@@ -136,8 +134,6 @@ protected:
     TextLogger * _logger;
     TextWriter * _writer;
     String *_string;
-
-    List<Builder *> _builders; // to remove after refactoring
 
     SUBCLASS_KINDSERVICE_DECL(Extensible,Compilation);
 };

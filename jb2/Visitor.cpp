@@ -38,6 +38,7 @@ Visitor::Visitor(Allocator *a, KINDTYPE(Extensible) kind, Extension *ext, String
     : Pass(a, kind, ext, name)
     , _comp(NULL)
     , _errorCode(ext->compiler()->CompileSuccessful)
+    , _nothingToDo(false)
     , _aborted(false)
     , _visitAppendedBuilders(visitAppendedBuilders) {
 }
@@ -67,10 +68,17 @@ Visitor::start(Compilation *comp) {
 
     _comp = comp;
     _aborted = false;
+    _nothingToDo = false;
 
     if (lgr) lgr->sectionStart("visitBegin") << this->to_string() << lgr->endl();
     visitBegin();
     if (lgr) lgr->sectionEnd("visitBegin") << this->to_string() << lgr->endl();
+
+    if (_nothingToDo) {
+        if (lgr) *lgr << "Nothing to do: skipping visitation" << lgr->endl();
+        if (lgr) lgr->taggedSectionEnd("Visitor", this->to_string());
+        return;
+    }
 
     {
         Allocator *mem = comp->mem();

@@ -35,6 +35,7 @@ class IRCloner;
 class LiteralDictionary;
 class TextLogger;
 class Type;
+class TypeReplacer;
 
 class Literal : public ExtensibleIR {
     JBALLOC_(Literal)
@@ -43,6 +44,7 @@ class Literal : public ExtensibleIR {
     friend class IR;
     friend class IRCloner;
     friend class LiteralDictionary;
+    friend class TypeReplacer;
 
 public:
     Literal(MEM_LOCATION(a), IR *ir, const Type *t, const LiteralBytes *v);
@@ -59,10 +61,16 @@ public:
     const double getFloatingPoint() const;
 
 protected:
+    // used only when cloning literals
     Literal(Allocator *a, const Literal *source, IRCloner *cloner);
-
     virtual ExtensibleIR *clone(Allocator *mem, IRCloner *cloner) { return cloneLiteral(mem, cloner); }
     virtual Literal *cloneLiteral(Allocator *mem, IRCloner *cloner);
+
+    // used only when exploding literals
+    Literal(Allocator *a, const Literal *source, TypeMapper *tm);
+    virtual ExtensibleIR *explode(TypeMapper *tm);
+
+    void privatizeBytes(const LiteralBytes *pValue);
 
     LiteralID _id;
     CreateLocation _creator;

@@ -55,6 +55,12 @@ add_library(jb2 SHARED
     AllocatorRaw.cpp
     AllocatorTracer.cpp
     AllocatorTracker.cpp
+    BasicBinaryDeserializer.cpp
+    BasicBinarySerializer.cpp
+    BinaryDeserializer.cpp
+    BinarySerializer.cpp
+    BinaryStreamDeserializer.cpp
+    BinaryStreamSerializer.cpp
     Builder.cpp
     BuilderEntry.cpp
     CodeGenerator.cpp
@@ -68,19 +74,31 @@ add_library(jb2 SHARED
     Config.cpp
     Context.cpp
     CoreExtension.cpp
+    CoreExtensionIRWriter.cpp
     CreateLoc.cpp
     EntryPoint.cpp
     Extensible.cpp
     ExtensibleIR.cpp
     Extension.cpp
+    ExtensionIRWriter.cpp
+    IDSpaceService.cpp
     InputReader.cpp
     IR.cpp
     IRCloner.cpp
+    IRDeserializer.cpp
+    IRSerializer.cpp
+    JBIRBufferReader.cpp
+    JBIRBufferWriter.cpp
+    JBIRFileReader.cpp
+    JBIRFileWriter.cpp
+    JBIRReader.cpp
+    JBIRWriter.cpp
     KindService.cpp
     Literal.cpp
     LiteralDictionary.cpp
     Location.cpp
     Loggable.cpp
+    Mapper.cpp
     NativeEntry.cpp
     Operation.cpp
     OperationCloner.cpp
@@ -92,12 +110,15 @@ add_library(jb2 SHARED
     String.cpp
     Symbol.cpp
     SymbolDictionary.cpp
+    TextDeserializer.cpp
     TextLogger.cpp
+    TextSerializer.cpp
     TextWriter.cpp
     Transformer.cpp
     Type.cpp
     TypeDictionary.cpp
     TypeReplacer.cpp
+    TypeReplacerAddon.cpp
     Value.cpp
     Visitor.cpp
 )

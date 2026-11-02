@@ -66,7 +66,7 @@ Op_StoreAt::~Op_StoreAt() {
 Operation *
 Op_StoreAt::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
     Allocator *mem = b->ir()->mem();
-    return new (mem) Op_StoreAt(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->operand(0), this->operand(1));
+    return new (mem) Op_StoreAt(MEM_PASSLOC(mem), this->_ext, b, this->action(), cloner->operand(0), cloner->operand(1));
 }
 
 
@@ -235,12 +235,6 @@ CoercePointer::CoercePointer(Builder * parent, Value * result, Type * t, Value *
    assert(t->isPointer() && v->type()->isPointer());
    }
 
-void
-CoercePointer::cloneTo(Builder *b, ValueMapper **resultMappers, ValueMapper **operandMappers, TypeMapper **typeMappers, LiteralMapper **literalMappers, SymbolMapper **symbolMappers, BuilderMapper **builderMappers) const
-   {
-   resultMappers[0]->add( b->CoercePointer(typeMappers[0]->next(), operandMappers[0]->next()) );
-   }
-
 Operation *
 CoercePointer::clone(Builder *b, OperationCloner *cloner) const
    {
@@ -256,12 +250,6 @@ CoercePointer::initializeTypeProductions(TypeDictionary * types, TypeGraph * gra
 Add::Add(Builder * parent, Value * result, Value * left, Value * right)
    : OperationR1V2(aAdd, parent, result, left, right)
    {
-   }
-
-void
-Add::cloneTo(Builder *b, ValueMapper **resultMappers, ValueMapper **operandMappers, TypeMapper **typeMappers, LiteralMapper **literalMappers, SymbolMapper **symbolMappers, BuilderMapper **builderMappers) const
-   {
-   resultMappers[0]->add( b->Add(operandMappers[0]->next(), operandMappers[1]->next()) );
    }
 
 Operation *
@@ -288,12 +276,6 @@ Sub::Sub(Builder * parent, Value * result, Value * left, Value * right)
    {
    }
 
-void
-Sub::cloneTo(Builder *b, ValueMapper **resultMappers, ValueMapper **operandMappers, TypeMapper **typeMappers, LiteralMapper **literalMappers, SymbolMapper **symbolMappers, BuilderMapper **builderMappers) const
-   {
-   resultMappers[0]->add( b->Sub(operandMappers[0]->next(), operandMappers[1]->next()) );
-   }
-
 Operation *
 Sub::clone(Builder *b, OperationCloner *cloner) const
    {
@@ -316,12 +298,6 @@ Sub::initializeTypeProductions(TypeDictionary * types, TypeGraph * graph)
 Mul::Mul(Builder * parent, Value * result, Value * left, Value * right)
    : OperationR1V2(aMul, parent, result, left, right)
    {
-   }
-
-void
-Mul::cloneTo(Builder *b, ValueMapper **resultMappers, ValueMapper **operandMappers, TypeMapper **typeMappers, LiteralMapper **literalMappers, SymbolMapper **symbolMappers, BuilderMapper **builderMappers) const
-   {
-   resultMappers[0]->add( b->Mul(operandMappers[0]->next(), operandMappers[1]->next()) );
    }
 
 Operation *
@@ -348,12 +324,6 @@ IndexAt::IndexAt(Builder * parent, Value * result, Type * pointerType, Value * b
    {
    }
 
-void
-IndexAt::cloneTo(Builder *b, ValueMapper **resultMappers, ValueMapper **operandMappers, TypeMapper **typeMappers, LiteralMapper **literalMappers, SymbolMapper **symbolMappers, BuilderMapper **builderMappers) const
-   {
-   resultMappers[0]->add( b->IndexAt(typeMappers[0]->next(), operandMappers[0]->next(), operandMappers[1]->next()) );
-   }
-
 Operation *
 IndexAt::clone(Builder *b, OperationCloner *cloner) const
    {
@@ -363,13 +333,6 @@ IndexAt::clone(Builder *b, OperationCloner *cloner) const
 Load::Load(Builder * parent, Value * result, String localName)
    : OperationR1S1(aLoad, parent, result, parent->fb()->getSymbol(localName))
    {
-   }
-
-void
-Load::cloneTo(Builder *b, ValueMapper **resultMappers, ValueMapper **operandMappers, TypeMapper **typeMappers, LiteralMapper **literalMappers, SymbolMapper **symbolMappers, BuilderMapper **builderMappers) const
-   {
-   Symbol *sym = symbolMappers[0]->next();
-   resultMappers[0]->add( b->Load(sym) );
    }
 
 Operation *
@@ -423,12 +386,6 @@ LoadAt::LoadAt(Builder * parent, Value * result, Type * pointerType, Value * add
    {
    }
 
-void
-LoadAt::cloneTo(Builder *b, ValueMapper **resultMappers, ValueMapper **operandMappers, TypeMapper **typeMappers, LiteralMapper **literalMappers, SymbolMapper **symbolMappers, BuilderMapper **builderMappers) const
-   {
-   resultMappers[0]->add( b->LoadAt(typeMappers[0]->next(), operandMappers[0]->next()) );
-   }
-
 Operation *
 LoadAt::clone(Builder *b, OperationCloner *cloner) const
    {
@@ -441,15 +398,6 @@ LoadAt::expand(OperationReplacer *r) const
    return LoadAtStoreAtExpander(r);
    }
 
-void
-LoadField::cloneTo(Builder *b, ValueMapper **resultMappers, ValueMapper **operandMappers, TypeMapper **typeMappers, LiteralMapper **literalMappers, SymbolMapper **symbolMappers, BuilderMapper **builderMappers) const
-   {
-   Type *t = typeMappers[0]->next();
-   assert(t->isKind<FieldType>());
-   const FieldType *fieldType = t->refine<FieldType>();
-   resultMappers[0]->add( b->LoadField(fieldType, operandMappers[0]->next()) );
-   }
-
 Operation *
 LoadField::clone(Builder *b, OperationCloner *cloner) const
    {
@@ -457,15 +405,6 @@ LoadField::clone(Builder *b, OperationCloner *cloner) const
    assert(t->isKind<FieldType>());
    const FieldType *fieldType = t->refine<FieldType>(t);
    return create(b, cloner->result(), fieldType, cloner->operand());
-   }
-
-void
-LoadIndirect::cloneTo(Builder *b, ValueMapper **resultMappers, ValueMapper **operandMappers, TypeMapper **typeMappers, LiteralMapper **literalMappers, SymbolMapper **symbolMappers, BuilderMapper **builderMappers) const
-   {
-   Type *t = typeMappers[0]->next();
-   assert(t->isKind<FieldType>());
-   const FieldType *fieldType = t->refine<FieldType>(t);
-   resultMappers[0]->add( b->LoadIndirect(fieldType, operandMappers[0]->next()) );
    }
 
 Operation *
@@ -481,12 +420,6 @@ Store::Store(Builder * parent, String name, Value * value)
    : OperationR0S1V1(aStore, parent, parent->fb()->getSymbol(name), value)
       { }
 
-void
-Store::cloneTo(Builder *b, ValueMapper **resultMappers, ValueMapper **operandMappers, TypeMapper **typeMappers, LiteralMapper **literalMappers, SymbolMapper **symbolMappers, BuilderMapper **builderMappers) const
-   {
-   b->Store(symbolMappers[0]->next(), operandMappers[0]->next());
-   }
-
 Operation *
 Store::clone(Builder *b, OperationCloner *cloner) const
    {
@@ -496,12 +429,6 @@ Store::clone(Builder *b, OperationCloner *cloner) const
 StoreAt::StoreAt(Builder * parent, Value * address, Value * value)
    : OperationR0V2(aStoreAt, parent, address, value)
    {
-   }
-
-void
-StoreAt::cloneTo(Builder *b, ValueMapper **resultMappers, ValueMapper **operandMappers, TypeMapper **typeMappers, LiteralMapper **literalMappers, SymbolMapper **symbolMappers, BuilderMapper **builderMappers) const
-   {
-   b->StoreAt(operandMappers[0]->next(), operandMappers[1]->next());
    }
 
 Operation *
@@ -516,15 +443,6 @@ StoreAt::expand(OperationReplacer *r) const
    return LoadAtStoreAtExpander(r);
    }
 
-void
-StoreField::cloneTo(Builder *b, ValueMapper **resultMappers, ValueMapper **operandMappers, TypeMapper **typeMappers, LiteralMapper **literalMappers, SymbolMapper **symbolMappers, BuilderMapper **builderMappers) const
-   {
-   Type *t = typeMappers[0]->next();
-   assert(t->isKind<FieldType>());
-   const FieldType *fieldType = t->refine<FieldType>();
-   b->StoreField(fieldType, operandMappers[0]->next(), operandMappers[1]->next());
-   }
-
 Operation *
 StoreField::clone(Builder *b, OperationCloner *cloner) const
    {
@@ -532,15 +450,6 @@ StoreField::clone(Builder *b, OperationCloner *cloner) const
    assert(t->isKind<FieldType>());
    const FieldType *fieldType = t->refine<FieldType>();
    return create(b, fieldType, cloner->operand(0), cloner->operand(1));
-   }
-
-void
-StoreIndirect::cloneTo(Builder *b, ValueMapper **resultMappers, ValueMapper **operandMappers, TypeMapper **typeMappers, LiteralMapper **literalMappers, SymbolMapper **symbolMappers, BuilderMapper **builderMappers) const
-   {
-   Type *t = typeMappers[0]->next();
-   assert(t->isKind<FieldType>());
-   const FieldType *fieldType = t->refine<FieldType>();
-   b->StoreIndirect(fieldType, operandMappers[0]->next(), operandMappers[1]->next());
    }
 
 Operation *
@@ -555,12 +464,6 @@ StoreIndirect::clone(Builder *b, OperationCloner *cloner) const
 AppendBuilder::AppendBuilder(Builder * parent, Builder * b)
    : OperationB1(aAppendBuilder, parent, b)
    {
-   }
-
-void
-AppendBuilder::cloneTo(Builder *b, ValueMapper **resultMappers, ValueMapper **operandMappers, TypeMapper **typeMappers, LiteralMapper **literalMappers, SymbolMapper **symbolMappers, BuilderMapper **builderMappers) const
-   {
-   b->AppendBuilder(builderMappers[0]->next());
    }
 
 Operation *
@@ -592,18 +495,6 @@ Call::Call(Builder * parent, Value *result, Value *function, int32_t numArgs, Va
    {
    }
 
-void
-Call::cloneTo(Builder *b, ValueMapper **resultMappers, ValueMapper **operandMappers, TypeMapper **typeMappers, LiteralMapper **literalMappers, SymbolMapper **symbolMappers, BuilderMapper **builderMappers) const
-   {
-   Value **arguments = new Value *[_numArgs];
-   Value *function = operandMappers[0]->next();
-   for (int a=0;a < _numArgs;a++)
-      arguments[a] = operandMappers[a+1]->next();
-   Value *result = b->Call(function, _numArgs, arguments);
-   if (NULL != result)
-      resultMappers[0]->add( result );
-   }
-
 Operation *
 Call::clone(Builder *b, OperationCloner *cloner) const
    {
@@ -617,12 +508,6 @@ Call::clone(Builder *b, OperationCloner *cloner) const
 Goto::Goto(Builder * parent, Builder * b)
    : OperationB1(aGoto, parent, b)
    {
-   }
-
-void
-Goto::cloneTo(Builder *b, ValueMapper **resultMappers, ValueMapper **operandMappers, TypeMapper **typeMappers, LiteralMapper **literalMappers, SymbolMapper **symbolMappers, BuilderMapper **builderMappers) const
-   {
-   b->Goto(builderMappers[0]->next());
    }
 
 Operation *
@@ -672,16 +557,6 @@ ForLoop::ForLoop(Builder * parent, bool countsUp, LocalSymbol *loopSym,
    , _end(end)
    , _bump(bump)
    { }
-
-void
-ForLoop::cloneTo(Builder *b, ValueMapper **resultMappers, ValueMapper **operandMappers, TypeMapper **typeMappers, LiteralMapper **literalMappers, SymbolMapper **symbolMappers, BuilderMapper **builderMappers) const
-   {
-   b->ForLoop(literalMappers[0]->next()->getInt8(), symbolMappers[0]->next()->refine<LocalSymbol>(),
-              builderMappers[0]->next(),
-              _loopBreak ? builderMappers[1]->next() : NULL,
-              _loopContinue ? builderMappers[2]->next() : NULL,
-              operandMappers[0]->next(), operandMappers[1]->next(), operandMappers[2]->next());
-   }
 
 Operation *
 ForLoop::clone(Builder *b, OperationCloner *cloner) const
@@ -765,12 +640,6 @@ IfCmpGreaterThan::IfCmpGreaterThan(Builder * parent, Builder * tgt, Value * left
    {
    }
 
-void
-IfCmpGreaterThan::cloneTo(Builder *b, ValueMapper **resultMappers, ValueMapper **operandMappers, TypeMapper **typeMappers, LiteralMapper **literalMappers, SymbolMapper **symbolMappers, BuilderMapper **builderMappers) const
-   {
-   b->IfCmpGreaterThan(builderMappers[0]->next(), operandMappers[0]->next(), operandMappers[1]->next());
-   }
-
 Operation *
 IfCmpGreaterThan::clone(Builder *b, OperationCloner *cloner) const
    {
@@ -791,12 +660,6 @@ IfCmpGreaterThan::initializeTypeProductions(TypeDictionary * types, TypeGraph * 
 IfCmpLessThan::IfCmpLessThan(Builder * parent, Builder * tgt, Value * left, Value * right)
    : OperationB1R0V2(aIfCmpLessThan, parent, tgt, left, right)
    {
-   }
-
-void
-IfCmpLessThan::cloneTo(Builder *b, ValueMapper **resultMappers, ValueMapper **operandMappers, TypeMapper **typeMappers, LiteralMapper **literalMappers, SymbolMapper **symbolMappers, BuilderMapper **builderMappers) const
-   {
-   b->IfCmpLessThan(builderMappers[0]->next(), operandMappers[0]->next(), operandMappers[1]->next());
    }
 
 Operation *
@@ -821,12 +684,6 @@ IfCmpGreaterOrEqual::IfCmpGreaterOrEqual(Builder * parent, Builder * tgt, Value 
    {
    }
 
-void
-IfCmpGreaterOrEqual::cloneTo(Builder *b, ValueMapper **resultMappers, ValueMapper **operandMappers, TypeMapper **typeMappers, LiteralMapper **literalMappers, SymbolMapper **symbolMappers, BuilderMapper **builderMappers) const
-   {
-   b->IfCmpGreaterOrEqual(builderMappers[0]->next(), operandMappers[0]->next(), operandMappers[1]->next());
-   }
-
 Operation *
 IfCmpGreaterOrEqual::clone(Builder *b, OperationCloner *cloner) const
    {
@@ -847,12 +704,6 @@ IfCmpGreaterOrEqual::initializeTypeProductions(TypeDictionary * types, TypeGraph
 IfCmpLessOrEqual::IfCmpLessOrEqual(Builder * parent, Builder * tgt, Value * left, Value * right)
    : OperationB1R0V2(aIfCmpLessOrEqual, parent, tgt, left, right)
    {
-   }
-
-void
-IfCmpLessOrEqual::cloneTo(Builder *b, ValueMapper **resultMappers, ValueMapper **operandMappers, TypeMapper **typeMappers, LiteralMapper **literalMappers, SymbolMapper **symbolMappers, BuilderMapper **builderMappers) const
-   {
-   b->IfCmpLessOrEqual(builderMappers[0]->next(), operandMappers[0]->next(), operandMappers[1]->next());
    }
 
 Operation *
@@ -882,12 +733,6 @@ IfThenElse::IfThenElse(Builder * parent, Builder * thenB, Value * cond)
    : OperationB1R0V1(aIfThenElse, parent, thenB, cond)
    , _elseBuilder(NULL)
    {
-   }
-
-void
-IfThenElse::cloneTo(Builder *b, ValueMapper **resultMappers, ValueMapper **operandMappers, TypeMapper **typeMappers, LiteralMapper **literalMappers, SymbolMapper **symbolMappers, BuilderMapper **builderMappers) const
-   {
-   b->IfThenElse(builderMappers[0]->next(), _elseBuilder ? builderMappers[1]->next() : NULL, operandMappers[0]->next());
    }
 
 Operation *
@@ -960,11 +805,6 @@ Switch::clone(Builder *b, Value **results, Value **operands, Builder **builders)
    return new Switch(b, operands[0], builders[0], numCases(), clonedCases);
    }
 
-void
-Switch::cloneTo(Builder *b, ValueMapper **resultMappers, ValueMapper **operandMappers, TypeMapper **typeMappers, LiteralMapper **literalMappers, SymbolMapper **symbolMappers, BuilderMapper **builderMappers) const {
-    b->Switch(operandMappers[0]->next(), builderMappers[0]->next(), numCases(), (Case **)_cases.data());
-}
-
 Operation *
 Switch::clone(Builder *b, OperationCloner *cloner) const {
     return create(b, cloner->operand(), cloner->builder(), numCases(), (Case **)_cases.data());
@@ -980,11 +820,6 @@ CreateLocalArray::CreateLocalArray(Builder * parent, Value * result, int32_t num
 
 }
 
-void
-CreateLocalArray::cloneTo(Builder *b, ValueMapper **resultMappers, ValueMapper **operandMappers, TypeMapper **typeMappers, LiteralMapper **literalMappers, SymbolMapper **symbolMappers, BuilderMapper **builderMappers) const {
-   resultMappers[0]->add( b->CreateLocalArray(literalMappers[0]->next()->getInt32(), typeMappers[0]->next()) );
-}
-
 Operation *
 CreateLocalArray::clone(Builder *b, OperationCloner *cloner) const {
     return create(b, cloner->result(), cloner->literal()->getInt32(), cloner->type());
@@ -994,11 +829,6 @@ CreateLocalStruct::CreateLocalStruct(Builder * parent, Value * result, Type * st
    : OperationR1T1(aCreateLocalStruct, parent, result, structType) {
 
    }
-
-void
-CreateLocalStruct::cloneTo(Builder *b, ValueMapper **resultMappers, ValueMapper **operandMappers, TypeMapper **typeMappers, LiteralMapper **literalMappers, SymbolMapper **symbolMappers, BuilderMapper **builderMappers) const {
-    resultMappers[0]->add( b->CreateLocalStruct(typeMappers[0]->next()) );
-}
 
 Operation *
 CreateLocalStruct::clone(Builder *b, OperationCloner *cloner) const {

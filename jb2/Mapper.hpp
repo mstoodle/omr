@@ -24,6 +24,8 @@
 
 #include "common.hpp"
 #include "String.hpp"
+#include "Allocatable.hpp"
+#include "TextLogger.hpp"
 
 
 namespace OMR {
@@ -31,10 +33,13 @@ namespace JB2 {
 
 template <typename T>
 class Mapper : public Allocatable {
-    //JBALLOC_NO_DESTRUCTOR_(Mapper)
+    JBALLOC_NO_DESTRUCTOR_(Mapper)
 
 private:
     struct Element : public Allocatable {
+        JBALLOC_NO_DESTRUCTOR(Element, TypeReplacement::allocCat())
+        friend class Mapper;
+
         Element(Allocator *a, T *t, String name="", size_t offset=0)
             : Allocatable(a)
             , _item(t)
@@ -50,21 +55,34 @@ private:
     };
 
 public:
-    Mapper(Allocator *a)
+    Mapper(Allocator *a, TextLogger *lgr=NULL)
         : Allocatable(a)
         , _head(NULL)
         , _tail(NULL)
         , _current(NULL)
-        , _size(0) {
+        , _size(0)
+        , _lgr(lgr) {
 
     }
 
-    Mapper(Allocator *a, T *t, String name="", size_t offset=0)
+    Mapper(Allocator *a, T *t, TextLogger *lgr=NULL)
         : Allocatable(a)
         , _head(NULL)
         , _tail(NULL)
         , _current(NULL)
-        , _size(0) {
+        , _size(0)
+        , _lgr(lgr) {
+
+        add(t, "", 0);
+    }
+
+    Mapper(Allocator *a, T *t, String name, size_t offset, TextLogger *lgr=NULL)
+        : Allocatable(a)
+        , _head(NULL)
+        , _tail(NULL)
+        , _current(NULL)
+        , _size(0)
+        , _lgr(lgr) {
 
         add(t, name, offset);
     }
@@ -90,7 +108,7 @@ public:
     // Expected common scenarios:
     //   1) _items has several item; TypeReplacer calls next() as many times as size()
     //   2) _items has one item and TypeReplacer will call next() many times to reuse that item
-    //          with different items returned by another Mapper (like "scalar" expansion)
+    //          with different items returned by another Mapper (analogous to "scalar" expansion)
 
     void start() { _current = _head; }
     void add(T *t, String name="", size_t offset=0) {
@@ -141,33 +159,36 @@ public:
         return _current->_offset;
     }
 
+    void log(bool traceEnabled = true) {
+        if (traceEnabled && _lgr != NULL) {
+            start();
+            
+        }
+    }
+
 private:
-    Element *_head;
-    Element *_tail;
-    Element *_current;
-    size_t   _size;
+    Element *    _head;
+    Element *    _tail;
+    Element *    _current;
+    size_t       _size;
+    TextLogger * _lgr;
 };
 
 
 class Builder;
 typedef Mapper<Builder> BuilderMapper;
-//INIT_JBALLOC_TEMPLATE(Mapper, Builder, TypeReplacement::allocCat())
 
 class Literal;
 typedef Mapper<Literal> LiteralMapper;
-//INIT_JBALLOC_TEMPLATE(Mapper, Literal, TypeReplacement::allocCat())
 
 class Symbol;
 typedef Mapper<Symbol> SymbolMapper;
-//INIT_JBALLOC_TEMPLATE(Mapper, Symbol, TypeReplacement::allocCat())
 
 class Type;
 typedef Mapper<const Type> TypeMapper;
-//INIT_JBALLOC_TEMPLATE(Mapper, Type, TypeReplacement::allocCat())
 
 class Value;
 typedef Mapper<Value> ValueMapper;
-//INIT_JBALLOC_TEMPLATE(Mapper, Value, TypeReplacement::allocCat())
 
 
 } // namespace JB2

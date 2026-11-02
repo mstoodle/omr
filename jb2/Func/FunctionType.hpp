@@ -51,6 +51,7 @@ public:
     const FunctionType * create(MEM_LOCATION(a), FunctionExtension *fx, IR *ir); 
 
 protected:
+
     IR *ir() const { return _ir; }
     const Type * returnType() const { return _returnType; };
     size_t numParameters() const { return _parameterTypes.length(); }

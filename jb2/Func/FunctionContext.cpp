@@ -169,22 +169,22 @@ FunctionContext::DefineReturnType(const Type * type) {
 
 LocalSymbolList
 FunctionContext::resetLocals() {
-    LocalSymbolList prev = this->_locals;
-    this->_locals.erase();
+    LocalSymbolList prev(&this->_locals);
+    prev.grabItemsAndClear(&this->_locals);
     return prev;
 }
 
 ParameterSymbolList
 FunctionContext::resetParameters() {
-    ParameterSymbolList prev = this->_parameters;
-    this->_parameters.erase();
+    ParameterSymbolList prev(&this->_parameters);
+    prev.grabItemsAndClear(&this->_parameters);
     return prev;
 }
 
 FunctionSymbolList
 FunctionContext::resetFunctions() {
-    FunctionSymbolList prev = _functions;
-    _functions.erase();
+    FunctionSymbolList prev(&this->_functions);
+    prev.grabItemsAndClear(&this->_functions);
     return prev;
 }
 

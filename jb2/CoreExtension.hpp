@@ -33,6 +33,7 @@ class CompileUnit;
 class Config;
 class IR;
 class NoTypeType;
+class TypeReplacer;
 
 class CoreExtension : public Extension {
     JBALLOC_(CoreExtension)
@@ -83,8 +84,11 @@ public:
 protected:
     static const SemanticVersion version;
 
+    TypeReplacer *_typeReplacer;
+
 public:
     // depends on _compiler being initialized
+    TypeReplacer *typeReplacer() { return _typeReplacer; }
 
     SUBCLASS_KINDSERVICE_DECL(Extensible, CoreExtension);
 };

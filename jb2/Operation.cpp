@@ -114,6 +114,7 @@ Operation::replace(Builder *b) {
     if (_next) {
         _next->setPrev(last);
     } else {
+        assert(_parent->_lastOperation == this);
 	_parent->_lastOperation = last;
     }
 
@@ -121,17 +122,24 @@ Operation::replace(Builder *b) {
     if (_prev) {
         _prev->setNext(first);
     } else {
+        assert(_parent->_firstOperation == this);
         _parent->_firstOperation = first;
     }
 
     // update parent operation count with b's operations minus 1 for removing "this"
     _parent->_operationCount += b->_operationCount - 1;
+    for (Operation *op = first;op != NULL;op = op->next()) {
+        op->setParent(_parent);
+    }
 
-    // this is no longer part of parent
+    // "this" is no longer part of parent
     _parent = NULL;
     _next = _prev = NULL;
 
-    return first->prev();
+    // b needs to be dismantled as well
+    b->abandon();
+
+    return first;
 }
 
 void

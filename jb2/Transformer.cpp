@@ -64,17 +64,17 @@ Transformer::performTransformation(Operation * op, Builder * transformed, String
             std::ostringstream oss;
             oss << "( " << number << " ) Transformation: " << msg.c_str();
             trace(oss.str().c_str());
-            TextWriter *w= _comp->writer(traceEnabled());
-            if (w) {
-                TextLogger &lgr = w->logger();
+            TextLogger *lgr = _comp->logger(traceEnabled());
+            if (lgr) {
                 LOG_INDENT_REGION(lgr) {
-                    lgr.indentIn();
-                    w->print(op);
-                    lgr.indent() << "Replaced with operations from : " << lgr.endl();
-                    w->print(transformed);
-                    lgr.indentOut();
+                    lgr->indentIn();
+                    lgr->logOperation(op);
+                    lgr->indent() << "Replaced with operations from : " << lgr->endl();
+                    for (Operation *logOp = transformed->firstOperation(); logOp != NULL; logOp = logOp->next())
+                        lgr->logOperation(logOp);
+                    lgr->indentOut();
                 }
-            LOG_OUTDENT
+                LOG_OUTDENT
             }
         }
         else
@@ -88,29 +88,31 @@ void
 Transformer::visitOperations(Builder *b, BitVector & visited, BuilderList & worklist) {
     TextWriter * w = _comp->writer(traceEnabled());
 
-    // little bit more complicated than usual because we may replace the first operation and have to restart iteration
-    for (Operation *op = b->firstOperation(); op != NULL; op = op ? op->next() : b->firstOperation()) {
+    Operation *nextOp = NULL;
+    for (Operation *op = b->firstOperation(); op != NULL; op = nextOp) {
+        nextOp = op->next(); // may be changed if op is replaced
+
         if (w) {
             w->logger().indent() << String("Visit ");
             w->print(op);
         }
 
         Builder *transformation = transformOperation(op);
-        if (transformation != NULL) {
-            if (performTransformation(op, transformation)) {
-                // reassign parent for each operation in transformation Builder
-                for (Operation *walkOp = op->next(); walkOp->prev() != transformation->lastOperation(); walkOp = walkOp->next()) {
-                    walkOp->setParent(b);
-
-                    // scan transformed operations for builder objects we need to traverse
-                    for (BuilderIterator bIt = walkOp->builders(); bIt.hasItem(); bIt++) {
-                        Builder *inner_b = bIt.item();
-                        if (inner_b && !visited.getBit(inner_b->id()))
-                            worklist.push_front(inner_b);
-                    }
+        if (transformation != NULL && performTransformation(op, transformation)) {
+            // scan transformed operations for builder objects we also need to traverse
+            for (Operation *scanOp = transformation->firstOperation(); scanOp != transformation->lastOperation(); scanOp = scanOp->next()) {
+                for (BuilderIterator bIt = scanOp->builders(); bIt.hasItem(); bIt++) {
+                    Builder *inner_b = bIt.item();
+                    if (inner_b && !visited.getBit(inner_b->id()))
+                        worklist.push_front(inner_b);
                 }
-                op = op->replace(transformation); // op may now be NULL!
             }
+
+            //nextOp = op->replace(transformation); // also visit replaced operations
+            op->replace(transformation); // ignore any replaced operations
+
+            // transformation needs to be dismantled now
+            delete transformation;
         }
         else {
             for (BuilderIterator bIt = op->builders(); bIt.hasItem(); bIt++) {

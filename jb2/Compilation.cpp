@@ -56,12 +56,11 @@ Compilation::Compilation(Allocator *a, Extension *ext, ExtensibleKind kind, Comp
     , _ir(NULL)
     , _passMem(NULL)
     , _logger(NULL)
-    , _writer(NULL)
-    , _builders(NULL, _mem) {
+    , _writer(NULL) {
 
     notifyCreation(KIND(Extensible));
 
-    _string = new (a) String(a, a, "[ compilation C");
+    _string = new (a) String(a, a, "[ Compilation");
     _string->append(String::to_string(a, _id))
             .append(" ]");
 }
@@ -71,27 +70,6 @@ Compilation::~Compilation() {
     if (_myConfig && _config != NULL)
         delete _config;
 }
-
-#if 0
-void
-Compilation::addInitialBuildersToWorklist(BuilderList & worklist) {
-    for (auto it = ir()->builders();it.hasItem(); it++) {
-        Builder *b = it.item();
-        worklist.push_back(b);
-    }
-}
-
-Literal *
-Compilation::registerLiteral(LOCATION, const Type *type, const LiteralBytes *value) {
-    return _ir->registerLiteral(PASSLOC, type, value);
-}
-
-Builder *
-Compilation::registerBuilder(Builder *b) {
-    _builders.push_back(b);
-    return b;
-}
-#endif
 
 void
 Compilation::log(TextLogger &lgr) {

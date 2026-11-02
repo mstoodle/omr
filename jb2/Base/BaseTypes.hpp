@@ -150,9 +150,9 @@ DECL_CONCRETE_BASETYPE(PointerType,AddressType,size,
         const Type * baseType() const { return _baseType; }
         Literal *literal(LOCATION, const void * value) const;
         virtual String to_string(Allocator *mem, bool useHeader=false) const;
-        virtual const Type * replace(TypeReplacer *repl);
     protected:
         DYNAMIC_ALLOC_ONLY(PointerType, LOCATION, PointerTypeBuilder *builder);
+        virtual const Type * replace(TypeReplacer *repl) const;
         const Type * _baseType;
 )
 
@@ -170,13 +170,14 @@ public:
     virtual String to_string(Allocator *mem, bool useHeader=false) const;
     virtual void logValue(TextLogger & lgr, const void *p) const;
     virtual void logLiteral(TextLogger & lgr, const Literal *lv) const;
-    virtual const Type * replace(TypeReplacer *repl);
 
 protected:
     DYNAMIC_ALLOC_ONLY(PointerType, LOCATION, PointerTypeBuilder *builder);
     PointerType(Allocator *a, const PointerType *source, IRCloner *cloner);
 
     virtual const Type *clone(Allocator *a, IRCloner *cloner) const;
+
+    virtual const Type * replace(TypeReplacer *repl) const;
 
     const Type * _baseType;
 
@@ -223,7 +224,7 @@ protected:
     SUBCLASS_KINDSERVICE_DECL(Extensible, FieldType);
 };
 
-typedef std::map<String, const FieldType *>::const_iterator FieldIterator;
+typedef std::map<String, const FieldType *>::const_reverse_iterator FieldIterator;
 
 class StructTypeBuilder;
 typedef void (StructHelperFunction)(const StructType *sType, StructTypeBuilder *builder);
@@ -313,8 +314,8 @@ public:
     virtual void logValue(TextLogger & lgr, const void *p) const;
     virtual void logLiteral(TextLogger & lgr, const Literal *lv) const;
 
-    FieldIterator FieldsBegin() const { return _fieldsByName.cbegin(); }
-    FieldIterator FieldsEnd() const   { return _fieldsByName.cend(); }
+    FieldIterator FieldsBegin() const { return _fieldsByName.crbegin(); }
+    FieldIterator FieldsEnd() const   { return _fieldsByName.crend(); }
     const FieldType *LookupField(String fieldName) const
         {
         auto it = _fieldsByName.find(fieldName);
@@ -323,7 +324,6 @@ public:
         return it->second;
         }
 
-    virtual const Type * replace(TypeReplacer *repl);
     virtual bool canBeLayout() const { return true; }
     virtual void explodeAsLayout(TypeReplacer *repl, size_t baseOffset, TypeMapper *m) const;
 
@@ -337,8 +337,13 @@ protected:
     virtual const FieldType * addField(LOCATION, Extension *ext, String name, const Type *type, size_t offset) {
         return addField(MEM_PASSLOC(allocator()), ext, name, type, offset);
     }
-    void transformFields(TypeReplacer *repl, StructTypeBuilder *stb, StructType *origStruct, String baseName, size_t baseOffset) const;
+    virtual const Type * replace(TypeReplacer *repl) const;
+    virtual void explodeAsLayout(TypeReplacer *repl, String baseName, size_t baseOffset, TypeMapper *m) const;
+    void transformFields(TypeReplacer *repl, StructTypeBuilder *stb, const StructType *origStruct, String baseName, size_t baseOffset) const;
     void mapTransformedFields(TypeReplacer *repl, const StructType *type, String baseName, TypeMapper *mapper) const;
+
+    //virtual LiteralMapper *explode(Literal *literal, TypeMapper *tm, LiteralMapper *m) const;
+    //virtual SymbolMapper *explode(Symbol *sym, TypeMapper *tm, SymbolMapper *m) const;
 
     size_t _structSize;
 

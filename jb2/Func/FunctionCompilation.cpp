@@ -134,7 +134,9 @@ FunctionCompilation::replaceTypes(TypeReplacer *repl) {
     const Type *newReturnType = repl->singleMappedType(returnType);
     if (newReturnType != returnType) {
         fc->DefineReturnType(newReturnType);
-        if (lgr) lgr->indent() << "Return type t" << returnType->id() << " -> t" << newReturnType->id() << lgr->endl();
+        if (lgr) lgr->indent() << "Return type " << returnType << " -> " << newReturnType << lgr->endl();
+    } else {
+        if (lgr) lgr->indent() << "Return type " << returnType << " unchanged" << lgr->endl();
     }
 
     // replace parameters if needed, creating new Symbols if needed
@@ -152,25 +154,26 @@ FunctionCompilation::replaceTypes(TypeReplacer *repl) {
         int32_t parmIndex = 0;
         for (auto pIt = prevParameters.iterator(); pIt.hasItem(); pIt++) {
             ParameterSymbol *parm = pIt.item();
+            repl->removeSymbol(parm);
             const Type *type = parm->type();
             SymbolMapper *parmSymMapper = new (mem()) SymbolMapper(mem());
             if (repl->isModified(type)) {
-                TypeMapper *parmTypeMapper = repl->mapperForType(type);
-                String baseName(mem(), "");
-                if (parmTypeMapper->size() > 1) {
-                    baseName = parm->name();
-                    baseName.append(".");
-                }
+                TypeMapper *parmTypeMapper = repl->typeMapper(type);
+                String baseName(mem(), parm->name());
 
                 LOG_INDENT_REGION(lgr) {
                     for (uint32_t i=0;i < parmTypeMapper->size();i++) {
-                        String newName(baseName + parmTypeMapper->name());
                         const Type *newType = parmTypeMapper->next();
+                        String mappedName = parmTypeMapper->name();
+                        String newName(baseName);
+                        if (mappedName.length() > 0) {
+                            newName.append(".");
+                            newName.append(mappedName);
+                        }
+
                         ParameterSymbol *newSym = fc->DefineParameter(newName, newType);
                         parmIndex++;
                         parmSymMapper->add(newSym);
-                        repl->recordSymbolMapper(newSym, new (mem()) SymbolMapper(mem(), newSym));
-                        if (lgr) lgr->indent() << "now DefineParameter " << newName << " (" << newType->name() << " t" << newType->id() << ")" << lgr->endl();
                     }
                 } LOG_OUTDENT
             }
@@ -186,8 +189,10 @@ FunctionCompilation::replaceTypes(TypeReplacer *repl) {
                 parmSymMapper->add(parm);
                 parmIndex++;
             }
-            repl->recordSymbolMapper(parm, parmSymMapper);
+            repl->recordMapper(parm, parmSymMapper);
         }
+    } else {
+        if (lgr) lgr->indent() << "Parameters did not require modification" << lgr->endl();
     }
 
     // replace locals if needed, creating new Symbols if needed
@@ -204,12 +209,13 @@ FunctionCompilation::replaceTypes(TypeReplacer *repl) {
         LocalSymbolList locals = fc->resetLocals();
         for (auto lIt = locals.iterator(); lIt.hasItem(); lIt++) {
             LocalSymbol *local = lIt.item();
+            repl->removeSymbol(local);
             const Type *type = local->type();
             if (lgr) lgr->indent() << "Local " << local->name() << " (" << type->name() << " t" << type->id() << "):" << lgr->endl();
 
             SymbolMapper *symMapper = new (mem()) SymbolMapper(mem());
             if (repl->isModified(type)) {
-                TypeMapper *typeMapper = repl->mapperForType(type);
+                TypeMapper *typeMapper = repl->typeMapper(type);
                 String baseName("");
                 if (typeMapper->size() > 1) {
                     baseName = local->name();
@@ -222,8 +228,6 @@ FunctionCompilation::replaceTypes(TypeReplacer *repl) {
                         const Type *newType = typeMapper->next();
                         Symbol *newSym = fc->DefineLocal(newName, newType);
                         symMapper->add(newSym);
-                        repl->recordSymbolMapper(newSym, new (mem()) SymbolMapper(mem(), newSym));
-                        if (lgr) lgr->indent() << "now DefineLocal " << newName << " (" << newType->name() << " t" << newType->id() << ")" << lgr->endl();
                     }
                 } LOG_OUTDENT
             }
@@ -232,8 +236,10 @@ FunctionCompilation::replaceTypes(TypeReplacer *repl) {
                 fc->DefineLocal(local);
                 symMapper->add(local);
             }
-            repl->recordSymbolMapper(local, symMapper);
+            repl->recordMapper(local, symMapper);
         }
+    } else {
+        if (lgr) lgr->indent() << "Locals did not require modification" << lgr->endl();
     }
 
 #if 0

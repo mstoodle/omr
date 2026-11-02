@@ -84,8 +84,6 @@ class LoadField : public OperationR1V1T1
         assert(results && operands && NULL == builders);
         return create(b, results[0], getFieldType(), operands[0]);
         }
-    virtual void cloneTo(Builder *b, ValueMapper **resultMappers, ValueMapper **operandMappers, TypeMapper **typeMappers, LiteralMapper **literalMapppers, SymbolMapper **symbolMappers, BuilderMapper **builderMappers) const;
-
     virtual Operation * clone(Builder *b, OperationCloner *cloner) const;
 
     protected:
@@ -112,8 +110,6 @@ class LoadIndirect : public OperationR1V1T1
         assert(results && operands && NULL == builders);
         return create(b, results[0], getFieldType(), operands[0]);
         }
-    virtual void cloneTo(Builder *b, ValueMapper **resultMappers, ValueMapper **operandMappers, TypeMapper **typeMappers, LiteralMapper **literalMapppers, SymbolMapper **symbolMappers, BuilderMapper **builderMappers) const;
-
     virtual Operation * clone(Builder *b, OperationCloner *cloner) const;
 
     protected:
@@ -140,8 +136,6 @@ class StoreField : public OperationR0T1V2
         assert(NULL == results && operands && NULL == builders);
         return create(b, getFieldType(), operands[0], operands[1]);
         }
-    virtual void cloneTo(Builder *b, ValueMapper **resultMappers, ValueMapper **operandMappers, TypeMapper **typeMappers, LiteralMapper **literalMapppers, SymbolMapper **symbolMappers, BuilderMapper **builderMappers) const;
-
     virtual Operation * clone(Builder *b, OperationCloner *cloner) const;
 
     protected:
@@ -168,8 +162,6 @@ class StoreIndirect : public OperationR0T1V2
         assert(NULL == results && operands && NULL == builders);
         return create(b, getFieldType(), operands[0], operands[1]);
         }
-    virtual void cloneTo(Builder *b, ValueMapper **resultMappers, ValueMapper **operandMappers, TypeMapper **typeMappers, LiteralMapper **literalMapppers, SymbolMapper **symbolMappers, BuilderMapper **builderMappers) const;
-
     virtual Operation * clone(Builder *b, OperationCloner *cloner) const;
 
     protected:
@@ -194,8 +186,6 @@ class CreateLocalArray : public OperationR1L1T1
         assert(results && NULL == operands && NULL == builders);
         return create(b, results[0], literal(0)->getInt32(), type(0));
         }
-    virtual void cloneTo(Builder *b, ValueMapper **resultMappers, ValueMapper **operandMappers, TypeMapper **typeMappers, LiteralMapper **literalMapppers, SymbolMapper **symbolMappers, BuilderMapper **builderMappers) const;
-
     virtual Operation * clone(Builder *b, OperationCloner *cloner) const;
 
     protected:
@@ -218,8 +208,6 @@ class CreateLocalStruct : public OperationR1T1
         assert(results && NULL == operands && NULL == builders);
         return create(b, results[0], type(0));
         }
-    virtual void cloneTo(Builder *b, ValueMapper **resultMappers, ValueMapper **operandMappers, TypeMapper **typeMappers, LiteralMapper **literalMapppers, SymbolMapper **symbolMappers, BuilderMapper **builderMappers) const;
-
     virtual Operation * clone(Builder *b, OperationCloner *cloner) const;
 
     protected:

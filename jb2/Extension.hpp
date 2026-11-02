@@ -37,6 +37,8 @@ class Compilation;
 class Compiler;
 class CompileUnit;
 class Context;
+class ExtensionIRWriter;
+class IRSerializer;
 class IR;
 class Location;
 class Operation;
@@ -44,6 +46,7 @@ class Scope;
 class SemanticVersion;
 class Strategy;
 class TypeDictionary;
+class TypeReplacer;
 class Value;
 
 class Extension : public Extensible {
@@ -52,6 +55,7 @@ class Extension : public Extensible {
     friend class Compiler;
     friend class Context;
     friend class Operation;
+    friend class TypeReplacer;
 
 public:
     virtual const SemanticVersion * semver() const { return &version; }
@@ -59,6 +63,10 @@ public:
 
     Compiler *compiler() const { return _compiler; }
     const String & name() const { return _name; }
+    ExtensionID id() const { return _id; }
+
+    ExtensionIRWriter *irWriter() const { return _irWriter; };
+    void setIRWriter(ExtensionIRWriter *w) { _irWriter = w; }
 
     const String actionName(ActionID a) const;
 
@@ -99,6 +107,7 @@ protected:
     Compiler *_compiler;
     CreateLocation _createLoc;
     Array<const Type *> _types;
+    ExtensionIRWriter *_irWriter;
     
     Strategy *_codegenStrategy;
 

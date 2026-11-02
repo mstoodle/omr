@@ -33,7 +33,7 @@ class FunctionType;
 class FunctionSymbol : public Symbol {
     JBALLOC_(FunctionSymbol);
 
-    friend class FunctionExtension;
+    friend class FunctionContext;
     friend class Function;
 public:
     FunctionSymbol(Allocator *a, Extension *ext, IR *ir, const FunctionType *type, String name, String fileName, String lineNumber, void *entryPoint);
@@ -45,8 +45,13 @@ public:
     virtual void logDetails(TextLogger & lgr) const;
 
 protected:
+    // used only when cloning
     FunctionSymbol(Allocator *a, const FunctionSymbol *source, IRCloner *cloner);
-    virtual Symbol *clone(Allocator *a, IRCloner *cloner) const;
+    virtual Symbol *cloneSymbol(Allocator *a, IRCloner *cloner) const;
+
+    // used only when exploding
+    FunctionSymbol(Allocator *mem, const FunctionSymbol *source, TypeReplacer *repl);
+    //virtual void explode(TypeReplacer *repl) = 0;
 
     String _fileName;
     String _lineNumber;
@@ -58,19 +63,26 @@ protected:
 class LocalSymbol : public Symbol {
     JBALLOC_(LocalSymbol)
 
-    friend class FunctionExtension;
+    friend class FunctionContext;
 public:
     LocalSymbol(Allocator *a, Extension *ext, IR *ir, String name, const Type * type)
         : Symbol(a, getExtensibleClassKind(), ext, ir, name, type) {
     }
+
     virtual void logDetails(TextLogger & lgr) const;
 
 protected:
     LocalSymbol(Allocator *a, ExtensibleKind kind, Extension *ext, IR *ir, String name, const Type * type)
         : Symbol(a, kind, ext, ir, name, type) {
     }
+
+    // used only when cloning
     LocalSymbol(Allocator *a, const LocalSymbol *source, IRCloner *cloner);
-    virtual Symbol *clone(Allocator *a, IRCloner *cloner) const;
+    virtual Symbol *cloneSymbol(Allocator *a, IRCloner *cloner) const;
+
+    // used only when exploding
+    LocalSymbol(Allocator *mem, const LocalSymbol *source, TypeReplacer *repl);
+    //virtual void explode(TypeReplacer *repl) = 0;
 
     SUBCLASS_KINDSERVICE_DECL(Extensible, LocalSymbol);
 };
@@ -78,7 +90,7 @@ protected:
 class ParameterSymbol : public LocalSymbol {
     JBALLOC_(ParameterSymbol)
 
-    friend class FunctionExtension;
+    friend class FunctionContext;
 public:
     ParameterSymbol(Allocator *a, Extension *ext, IR *ir, String name, const Type * type, int index)
         : LocalSymbol(a, getExtensibleClassKind(), ext, ir, name, type)
@@ -90,8 +102,13 @@ public:
     virtual void logDetails(TextLogger & lgr) const;
 
 protected:
+    // used only when cloning
     ParameterSymbol(Allocator *a, const ParameterSymbol *source, IRCloner *cloner);
-    virtual Symbol *clone(Allocator *a, IRCloner *cloner) const;
+    virtual Symbol *cloneSymbol(Allocator *a, IRCloner *cloner) const;
+
+    // used only when exploding
+    ParameterSymbol(Allocator *mem, const ParameterSymbol *source, TypeReplacer *repl);
+    //virtual void explode(TypeReplacer *repl) = 0;
 
     int _index;
 

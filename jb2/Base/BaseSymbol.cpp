@@ -53,10 +53,42 @@ FieldSymbol::FieldSymbol(Allocator *mem, const FieldSymbol *source, IRCloner *cl
 }
 
 Symbol *
-FieldSymbol::clone(Allocator *mem, IRCloner *cloner) const {
+FieldSymbol::cloneSymbol(Allocator *mem, IRCloner *cloner) const {
     assert(_kind == KIND(Extensible));
     return new (mem) FieldSymbol(mem, this, cloner);
 }
+
+#if 0
+// only used by explode()
+FieldSymbol::FieldSymbol(Allocator *mem, const Symbol *source, TypeMapper *tm)
+    : Symbol(mem, source, repl)
+    , _structType(tm->next())
+    , _fieldType(tm->next()) {
+
+}
+
+void
+FieldSymbol::explode(TypeMapper *tm) {
+    TypeMapper *tm = repl->typeMapper(_structType);
+    if (tm->size() != 1 || tm->current()->type() != _structType) {
+        // unexpected condition so bail
+        // should probably throw a CompilationException in this case
+        return;
+    }
+
+    tm = repl->typeMapper(_fieldType);
+    if (tm->size() == 1 && tm->current()->type() == _fieldType) {
+        // would just recreate itself, so nothing to do
+        return;
+    }
+
+    tm->start();
+    SynbolMapper *m = repl->symbolMapper(this);
+    for (uint32_t i=0;i < tm->size();tm++) {
+        m->add(new (mem) FieldSymbol(mem, this, repl));
+    }
+}
+#endif
 
 FieldSymbol::~FieldSymbol() {
 

@@ -46,7 +46,7 @@
 #define ADDON_INCL
 
 #include "common.hpp"
-//#include "Extensible.hpp"
+#include "Extensible.hpp"
 #include "KindService.hpp"
 
 namespace OMR {

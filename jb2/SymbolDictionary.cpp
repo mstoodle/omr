@@ -49,13 +49,13 @@ SymbolDictionary::cloneDictionary(Allocator *mem, IRCloner *cloner) const {
 }
 
 void
-SymbolDictionary::addNewEntry(Symbol *symbol) {
+SymbolDictionary::registerSymbol(Symbol *symbol) {
     _symbolsByName.insert({symbol->name(), symbol});
-    this->DictBaseType::addNewEntry(symbol);
+    addNewEntry(symbol);
 }
 
 Symbol *
-SymbolDictionary::Lookup(String name) {
+SymbolDictionary::LookupName(String name) {
     auto it = _symbolsByName.find(name);
     if (it != _symbolsByName.end())
         return it->second;

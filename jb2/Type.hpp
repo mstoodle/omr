@@ -92,12 +92,6 @@ public:
     // returning NULL from the next function means that values of this Type cannot be broken down further
     virtual const Type *layout() const { return _layout; }
 
-    // for Types with non-NULL layout, converts a literal of Type to the literals of the layout type in the LiteralMapper
-    virtual LiteralMapper *explode(Literal *value, LiteralMapper *m=NULL) const { return NULL; }
-
-    // if this Type should be mapped to another, use repl and create that Type if needed and return it (NULL if not mapped to another Type)
-    //virtual const Type * mapIfNeeded(TypeReplacer *repl);
-
     // return true if this Type can be used as a layout
     virtual bool canBeLayout() const { return false; }
 
@@ -105,6 +99,9 @@ public:
     virtual void explodeAsLayout(TypeReplacer *repl, size_t baseOffset, TypeMapper *m) const {
         assert(0); // default must be to assert TODO convert to CompilationException
     }
+
+    // if this Type should be mapped to another, use repl and create that Type if needed and return it (NULL if not mapped to another Type)
+    virtual const Type * replace(TypeReplacer *repl) const;
 
 protected:
     // For Types that should be installed into the prototype IR on the Compiler for Extension
@@ -118,7 +115,7 @@ protected:
 
     Type(Allocator *a, const Type *source, IRCloner *cloner); // used by clone
 
-    void transformTypeIfNeeded(TypeReplacer *repl, const Type *type) const;
+    void setLayout(const Type *layout) { _layout = layout; }
 
     virtual ExtensibleIR *clone(Allocator *mem, IRCloner *cloner) const { return const_cast<ExtensibleIR *>(static_cast<const ExtensibleIR *>(cloneType(mem, cloner))); }
     virtual const Type *cloneType(Allocator *mem, IRCloner *cloner) const;

@@ -44,6 +44,7 @@ class Symbol : public ExtensibleIR {
 
     friend class IRCloner;
     friend class SymbolDictionary;
+    friend class TypeReplacer;
 
 public:
     const String & name() const { return _name; }
@@ -56,10 +57,15 @@ public:
 protected:
     Symbol(Allocator *mem, Extension *ext, IR *ir, String name, const Type * type);
     Symbol(Allocator *mem, ExtensibleKind kind, Extension *ext, IR *ir, String name, const Type * type);
-    Symbol(Allocator *mem, const Symbol *source, IRCloner *cloner);
 
-    virtual ExtensibleIR *clone(Allocator *mem, IRCloner *cloner) { return reinterpret_cast<ExtensibleIR *>(cloneSymbol(mem, cloner)); } // TODO: FIX!
-    virtual Symbol *cloneSymbol(Allocator *mem, IRCloner *cloner);
+    // used only when cloning
+    Symbol(Allocator *mem, const Symbol *source, IRCloner *cloner);
+    virtual ExtensibleIR *clone(Allocator *mem, IRCloner *cloner) { return static_cast<ExtensibleIR *>(cloneSymbol(mem, cloner)); }
+    virtual Symbol *cloneSymbol(Allocator *mem, IRCloner *cloner) const = 0;
+
+    // used only when exploding
+    Symbol(Allocator *mem, const Symbol *source, TypeMapper *tm);
+    //virtual ExtensibleIR *explode(TypeMapper *tm) = 0;
 
     void assignID(SymbolID id) {
         // TODO convert to CompilationException

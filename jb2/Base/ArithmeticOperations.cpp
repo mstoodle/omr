@@ -201,12 +201,6 @@ Op_Sub::clone(LOCATION, Builder *b, OperationCloner *cloner) const {
 ///////////////////////////////////////////////////////////////////////////////////
 #if 0
 // keep these here so they're handy during the migration
-void
-Add::cloneTo(Builder *b, ValueMapper **resultMappers, ValueMapper **operandMappers, TypeMapper **typeMappers, LiteralMapper **literalMappers, SymbolMapper **symbolMappers, BuilderMapper **builderMappers) const
-   {
-   resultMappers[0]->add( b->Add(operandMappers[0]->next(), operandMappers[1]->next()) );
-   }
-
 Operation *
 Add::clone(Builder *b, OperationCloner *cloner) const
    {
@@ -214,24 +208,12 @@ Add::clone(Builder *b, OperationCloner *cloner) const
    }
 
 
-void
-Sub::cloneTo(Builder *b, ValueMapper **resultMappers, ValueMapper **operandMappers, TypeMapper **typeMappers, LiteralMapper **literalMappers, SymbolMapper **symbolMappers, BuilderMapper **builderMappers) const
-   {
-   resultMappers[0]->add( b->Sub(operandMappers[0]->next(), operandMappers[1]->next()) );
-   }
-
 Operation *
 Sub::clone(Builder *b, OperationCloner *cloner) const
    {
    return create(b, cloner->result(), cloner->operand(0), cloner->operand(1));
    }
 
-
-void
-Mul::cloneTo(Builder *b, ValueMapper **resultMappers, ValueMapper **operandMappers, TypeMapper **typeMappers, LiteralMapper **literalMappers, SymbolMapper **symbolMappers, BuilderMapper **builderMappers) const
-   {
-   resultMappers[0]->add( b->Mul(operandMappers[0]->next(), operandMappers[1]->next()) );
-   }
 
 Operation *
 Mul::clone(Builder *b, OperationCloner *cloner) const

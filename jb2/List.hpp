@@ -493,9 +493,25 @@ public:
         change(-len);
         _head = _tail = NULL;
     }
+    void grabItemsAndClear(List<T> *other) {
+        assert(_itemAllocator == other->_itemAllocator);
+        _head = other->_head;
+        _tail = other->_tail;
+        _changeID = other->_changeID;
+        _length = other->_length;
+
+        other->_head = NULL;
+        other->_tail = NULL;
+        other->_changeID = 0;
+        other->_length = 0;
+    }
 
     const List<T> *copy(bool makeCopy=true) const {
-        return makeCopy ? (new (_itemAllocator) List<T>(_itemAllocator, this)) : this;
+        return makeCopy ? clone() : this;
+    }
+
+    List<T> *clone() const {
+        return new (_itemAllocator) List<T>(_itemAllocator, this);
     }
 
     List<T>::Iterator iterator(bool forward=true, bool detectChanges=true, bool makeCopy=false) const {

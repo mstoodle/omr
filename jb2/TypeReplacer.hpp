@@ -26,7 +26,9 @@
 #include <map>
 #include <set>
 #include "Transformer.hpp"
+#include "Literal.hpp"
 #include "Mapper.hpp"
+#include "Symbol.hpp"
 #include "Type.hpp"
 
 namespace OMR {
@@ -42,43 +44,67 @@ class StructType;
 class Type;
 
 class TypeReplacer : public Transformer {
-    JBALLOC(TypeReplacer, NoAllocationCategory)
+    JBALLOC_(TypeReplacer)
 
     friend class Type;
 
 public:
     DYNAMIC_ALLOC_ONLY(TypeReplacer, Compiler * compiler);
 
-    bool traceEnabled() const { return _traceEnabled; }
     Compilation *comp() const { return _comp; }
 
-    // all references of oldType will be changed to newType
-    // when transform() returns, there will be no remaining references to oldType
+    // (NOT YET IMPLEMENTED) all references of oldType will be changed to newType
+    // when transform() returns, there will be no remaining references to oldType in operations or
+    //   in symbols or literals referenced by operations
     // (though the type itself is not erased from the FunctionBuilder's TypeDictionary)
     TypeReplacer *replace(const Type *oldType, const Type *newType=NULL);
 
     // type must return a non-NULL layout()
-    // when transform() returns, there will be no remaining references to type
+    // when transform() returns, there will be no remaining references to type in operations or
+    //   in symbols or literals referenced by operations
     // (though the type itself is not erased from the FunctionBuilder's TypeDictionary)
     TypeReplacer *explode(const Type *type);
+    bool isTypeToExplode(const Type *type) const { return _typesToExplode.find(type->id()) != _typesToExplode.end();  }
 
     void transformTypes(TypeDictionary *dict);
+    void transformLiterals(LiteralDictionary *dict);
+    void transformSymbols(SymbolDictionary *dict);
     void finalCleanup();
 
-    bool isModified(const Type *type) const { return _modifiedType.find(type) != _modifiedType.end(); }
-    bool isExploded(const Type *type) const { return _explodedType.find(type) != _explodedType.end(); }
-    bool isReplacedType(const Type *type) const { return _explodedType.find(type) != _explodedType.end(); }
-    const Type * replacedType(const Type *type);
-    bool isRemovedType(const Type *type) const { return _typesToRemove.find(type) != _typesToRemove.end(); }
-    void removeType(const Type *type) { _typesToRemove.insert(type); }
-    void recordMapper(const Type *type, TypeMapper *mapper);
-    void recordSymbolMapper(Symbol *sym, SymbolMapper *mapper);
-    void recordOriginalType(const Type *type);
-    const Type * singleMappedType(const Type *type);
-    void transformTypeIfNeeded(const Type *type);
-    const Type * transform(const Type *type);
+    bool isModified(const Type *type) const { return _modifiedType.find(type->id()) != _modifiedType.end(); }
+    bool isExploded(const Type *type) const { return _explodedType.find(type->id()) != _explodedType.end(); }
 
-    TypeMapper *mapperForType(const Type *type) const;
+    bool isReplacedType(const Type *type) const { return _explodedType.find(type->id()) != _explodedType.end(); }
+    const Type * replacedType(const Type *type);
+
+    bool isRemovedLiteral(Literal *lv) const { return _literalsToRemove.find(lv->id()) != _literalsToRemove.end(); }
+    void removeLiteral(Literal *lv) { _literalsToRemove.insert(lv->id()); }
+
+    bool isRemovedSymbol(Symbol *s) const { return _symbolsToRemove.find(s->id()) != _symbolsToRemove.end(); }
+    void removeSymbol(Symbol *s) { _symbolsToRemove.insert(s->id()); }
+
+    bool isRemovedType(const Type *type) const { return _typesToRemove.find(type->id()) != _typesToRemove.end(); }
+    void removeType(const Type *type) { _typesToRemove.insert(type->id()); }
+
+    void recordMapper(const Type *type, TypeMapper *mapper);
+    void recordMapper(Symbol *sym, SymbolMapper *mapper);
+    void recordMapper(Literal *lit, LiteralMapper *mapper);
+
+    void recordOriginalType(const Type *type);
+    void recordOriginalLiteral(Literal *lit);
+    void recordOriginalSymbol(Symbol *sym);
+
+    TypeMapper *typeMapper(const Type *type) const;
+    const Type * singleMappedType(const Type *type);
+    const Type * transform(const Type *type);
+    void transformTypeIfNeeded(const Type *type);
+
+    LiteralMapper *literalMapper(Literal *literal) const;
+    void transformLiteralIfNeeded(Literal *literal);
+
+    SymbolMapper *symbolMapper(Symbol *sym) const;
+    void transformSymbolIfNeeded(Symbol *sym);
+
 
 protected:
     // override Transformer and Visitor functions
@@ -92,47 +118,50 @@ protected:
 
     // helper functions
     const Type * mappedLayout(const Type *t);
-    #if 0 // how to handle this?
-    #endif
 
     void explodeLayoutTypes(TypeDictionary *dict, const StructType *layout, size_t baseOOffset, TypeMapper *m);
     void transformExplodedType(const Type *type);
     void transformLiteral(Literal *lv);
 
+    // just recording progress
+    bool                                _literalsTransformed;
+    bool                                _symbolsTransformed;
     bool                                _typesTransformed;
 
-    std::set<const Type *>              _typesToRemove;
-
     std::set<TypeID>                    _typesToExplode;
-    std::map<TypeID,TypeID>             _typesToReplace;
+    std::map<TypeID,const Type *>       _typesToReplace;
 
-    std::map<Literal *,LiteralMapper *> _literalMappers;
-    std::map<Symbol *,SymbolMapper *>   _symbolMappers;
-    std::map<const Type *,TypeMapper *> _typeMappers;
-    std::map<Value *,ValueMapper *>     _valueMappers;
+    std::set<TypeID>                    _typesToRemove;
+    std::set<SymbolID>                  _symbolsToRemove;
+    std::set<LiteralID>                 _literalsToRemove;
 
-    std::set<const Type *>              _explodedType;
-    std::set<const Type *>              _modifiedType;
-    std::set<const Type *>              _examinedType;
+    std::map<LiteralID,LiteralMapper *> _literalMappers;
+    std::map<SymbolID,SymbolMapper *>   _symbolMappers;
+    std::map<TypeID,TypeMapper *>       _typeMappers;
+    std::map<ValueID,ValueMapper *>     _valueMappers;
+
+    std::set<TypeID>                    _explodedType;
+    std::set<TypeID>                    _modifiedType;
+    std::set<TypeID>                    _examinedType;
 
     // below are mappers that will be initialized according to the current operation
-    size_t _mappedResultsSize;
-    ValueMapper **_mappedResults;
-
-    size_t _mappedOperandsSize;
-    ValueMapper **_mappedOperands;
-
-    size_t _mappedSymbolsSize;
-    SymbolMapper **_mappedSymbols;
+    size_t _mappedBuildersSize;
+    BuilderMapper **_mappedBuilders;
 
     size_t _mappedLiteralsSize;
     LiteralMapper **_mappedLiterals;
 
+    size_t _mappedOperandsSize;
+    ValueMapper **_mappedOperands;
+
+    size_t _mappedResultsSize;
+    ValueMapper **_mappedResults;
+
+    size_t _mappedSymbolsSize;
+    SymbolMapper **_mappedSymbols;
+
     size_t _mappedTypesSize;
     TypeMapper **_mappedTypes;
-
-    size_t _mappedBuildersSize;
-    BuilderMapper **_mappedBuilders;
 
     SUBCLASS_KINDSERVICE_DECL(Extensible, TypeReplacer);
 };

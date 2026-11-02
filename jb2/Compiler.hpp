@@ -62,6 +62,7 @@ class Compiler : public Allocatable {
     friend class CompiledBody;
     friend class CompileUnit;
     friend class Context;
+    friend class CoreExtension;
     friend class Executor;
     friend class Extensible;
     friend class ExtensibleIR;
@@ -97,6 +98,22 @@ public:
     T *lookupExtension(String name=T::NAME) {
         return static_cast<T *>(internalLookupExtension(name));
     }
+    template<typename T>
+    T *loadExtension(LOCATION, const SemanticVersion *version) {
+        return static_cast<T *>(internalLoadExtension(PASSLOC, T::NAME, version));
+    }
+    Extension *lookupExtensionByName(String name) {
+        return internalLookupExtension(name);
+    }
+    Extension *loadExtensionByName(LOCATION, String name, const SemanticVersion *version=NULL) {
+        return internalLoadExtension(PASSLOC, name, version);
+    }
+    Extension *extension(ExtensionID id) const {
+        if (id > 0 && id < _extensionsByID.length())
+            return _extensionsByID[id];
+        return NULL;
+    }
+    uint32_t numExtensions() const { return _nextExtensionID - 1; }
     bool validateExtension(String name) const;
 
     void registerExtensible(Extensible *e, KINDTYPE(Extensible) kind);
@@ -121,6 +138,12 @@ public:
         return found->second;
     }
 
+    const ActionID lookupActionFromName(String name) const {
+        auto found = _actionIDs.find(name);
+        assert(found != _actionIDs.end());
+        return found->second;
+    }
+
     const String returnCodeName(CompilerReturnCode c) const {
         assert(c < _nextReturnCode);
         auto found = _returnCodeNames.find(c);
@@ -139,6 +162,9 @@ public:
 
 protected:
     Extension *primordialExtension() const { return _primordialExtension; }
+
+    // used to prevent recursive requests for the core extension pointer during bringup
+    void setCoreExtension(CoreExtension *cx) { _coreExtension = cx; }
 
     void addExtension(Extension *ext);
     void createAnyAddons(Extensible *e, KINDTYPE(Extensible) kind);
@@ -170,6 +196,7 @@ protected:
     Compiler *_parent;
 
     ExtensionID _nextExtensionID;
+    Array<Extension *> _extensionsByID;
     std::map<String, Extension *> _extensions;
 
     std::map<KINDTYPE(Extensible), List<Extensible *> *> _extensiblesByKind;
@@ -178,6 +205,7 @@ protected:
     ActionID assignActionID(String name);
     ActionID _nextActionID;
     std::map<ActionID, String> _actionNames;
+    std::map<String, ActionID> _actionIDs;
 
     PassID _nextPassID;
     std::map<String, PassID> _passNames;

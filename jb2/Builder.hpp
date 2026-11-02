@@ -53,6 +53,7 @@ class Builder : public ExtensibleIR {
     friend class IRCloner;
     friend class Operation;
     friend class OperationBuilder;
+    friend class OperationCloner;
     friend class Transformer;
 
 public:
@@ -72,6 +73,11 @@ public:
     int32_t numOperations() const                       { return _operationCount; }
     Operation *firstOperation() const                   { return _firstOperation; }
     Operation *lastOperation() const                    { return _lastOperation; }
+    Operation *appendPoint() const                      { return _appendPoint; }
+
+    Builder * setAppendAtBeginning()                    { _appendPoint = NULL; return this; }
+    Builder * setAppendAtEnd()                          { _appendPoint = _lastOperation; return this; }
+    Builder * setAppendPoint(Operation *op);
 
     bool isBound() const                                { return _isBound; }
     Operation * boundToOperation() const                { assert(_isBound); return _boundToOperation; }
@@ -109,6 +115,8 @@ protected:
 
     void setParent(Builder *parent);
     void addChild(Builder *child);
+    void removeChild(Builder *child);
+    void abandon();
     Builder * add(Operation * op);
     Builder * setBound(Operation *op) { _isBound = true; _boundToOperation = op; return this; }
 
@@ -125,6 +133,7 @@ protected:
     int32_t              _operationCount;
     Operation          * _firstOperation;
     Operation          * _lastOperation;
+    Operation          * _appendPoint;
     bool                 _myLocation;
     Location           * _currentLocation;
     Operation          * _boundToOperation;

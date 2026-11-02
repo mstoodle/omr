@@ -140,6 +140,7 @@ public:
 
     virtual Builder * thenPath() const { return _builder; }
     virtual Builder * elsePath() const { return _elseBuilder; }
+    virtual Value *selector() const { return operand(); }
 
     virtual size_t numBuilders() const { return 2; }
     virtual Builder * builder(uint32_t i=0) const {

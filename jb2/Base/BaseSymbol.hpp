@@ -44,9 +44,16 @@ public:
 
 protected:
     FieldSymbol(Allocator *a, ExtensibleKind kind, Extension *ext, String name, const StructType *structType, const FieldType *fieldType);
-    FieldSymbol(Allocator *mem, const FieldSymbol *source, IRCloner *cloner);
 
-    virtual Symbol *clone(Allocator *a, IRCloner *cloner) const;
+    // used only when cloning
+    FieldSymbol(Allocator *mem, const FieldSymbol *source, IRCloner *cloner);
+    virtual Symbol *cloneSymbol(Allocator *a, IRCloner *cloner) const;
+
+#if 0
+    // used only when exploding, but implementation can only explode on fieldType not structType
+    FieldSymbol(Allocator *mem, const Symbol *source, TypeMapper *tm);
+    virtual ExtensibleIR *explode(TypeMapper *tm) = 0;
+#endif
 
     const StructType *_structType;
     const FieldType *_fieldType;

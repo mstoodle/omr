@@ -27,6 +27,7 @@
 #include "Config.hpp"
 #include "Dispatcher.hpp"
 #include "Extension.hpp"
+#include "ExtensionIRWriter.hpp"
 #include "IDs.hpp"
 #include "IR.hpp"
 #include "Location.hpp"
@@ -54,6 +55,7 @@ Extension::Extension(MEM_LOCATION(a), KINDTYPE(Extensible) kind, Compiler *compi
     , _compiler(compiler)
     , _createLoc(PASSLOC)
     , _types((Allocator *)NULL, a)
+    , _irWriter(NULL)
     , _codegenStrategy(NULL) {
 
     Config *cfg = compiler->config();
@@ -68,6 +70,9 @@ Extension::~Extension() {
         delete extendedPass;
     }
     _extendedPasses.clear();
+
+    if (_irWriter != NULL)
+        delete _irWriter;
 }
 
 const String

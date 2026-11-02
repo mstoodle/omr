@@ -125,4 +125,43 @@ set(GTEST_DIR $(omr_SOURCE_DIR)/third_party/gtest-1.8.0)
 		COMMAND ${VALGRIND} ${VALGRIND_A1} ${VALGRIND_A2} ${VALGRIND_A3} $<TARGET_FILE:testbv>
 	)
 
+	## testjbirfileheader
+	add_executable(testjbirfileheader
+		JBIRFileHeaderTest.cpp
+	)
+	target_link_libraries(testjbirfileheader
+		jb2
+		omrGtest
+		${CMAKE_DL_LIBS}
+	)
+	target_include_directories(testjbirfileheader PRIVATE
+		${JB2_CORE_DIR}
+		${GTEST_DIR}/include
+	)
+
+	add_test(
+		NAME JB2TestJBIRFileHeader
+		COMMAND ${VALGRIND} ${VALGRIND_A1} ${VALGRIND_A2} ${VALGRIND_A3} $<TARGET_FILE:testjbirfileheader>
+	)
+
+	## testirserialization
+#	add_executable(testirserialization
+#		IRSerializationTest.cpp
+#	)
+#	target_link_libraries(testirserialization
+#		jb2
+#		jb2base
+#		omrGtest
+#		${CMAKE_DL_LIBS}
+#	)
+#	target_include_directories(testirserialization PRIVATE
+#		${JB2_CORE_DIR}
+#		${GTEST_DIR}/include
+#	)
+#
+#	add_test(
+#		NAME JB2TestIRSerialization
+#		COMMAND ${VALGRIND} ${VALGRIND_A1} ${VALGRIND_A2} ${VALGRIND_A3} $<TARGET_FILE:testirserialization>
+#	)
+
 #endif()

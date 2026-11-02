@@ -81,8 +81,8 @@ Type::Type(Allocator *a, const Type *source, IRCloner *cloner)
     , _size(source->_size)
     , _layout(NULL) {
     
-    if (source->_layout)
-        _layout = cloner->clonedType(source->_layout);
+    // helps to curtail cloning recursion
+    cloner->registerClonedType(this);
 }
 
 Type::~Type() {
@@ -125,7 +125,7 @@ Type::log(TextLogger &lgr, bool indent) const {
 
 void
 Type::logContents(TextLogger & lgr) const {
-     lgr << "size " << size() << " " << name() << " primitiveType";
+     lgr << "size " << size() << " " << name() << " " << to_string(_ext->compiler()->mem(), false);
 }
 
 void
@@ -138,18 +138,20 @@ Type::logType(TextLogger &lgr, bool useHeader) const {
 String
 Type::to_string(Allocator *mem, bool useHeader) const {
     String s(mem);
-    s.append(base_string(mem, useHeader));
+    //s.append(base_string(mem, useHeader));
     s.append("primitiveType");
     if (_layout)
         s.append(" layout t").append(String::to_string(mem, _layout->id())).append(String(mem, " ")).append(_layout->name());
     return s;
 }
 
-void
-Type::transformTypeIfNeeded(TypeReplacer *repl, const Type *type) const {
-    repl->transformTypeIfNeeded(type);
+const Type *
+Type::replace(TypeReplacer *repl) const {
+    // by default, types just map to themselves
+    // override where necessary but this is a good default
+    repl->recordOriginalType(this);
+    return this;
 }
-
 
 //
 // NoType

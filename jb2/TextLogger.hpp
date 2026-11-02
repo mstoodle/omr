@@ -93,6 +93,7 @@ public:
     String irSpacedStop();
     TextLogger & irListBegin(String name, size_t numEntries);
     TextLogger & irListEnd(size_t numEntries);
+    TextLogger & irSectionOneLiner(String title, String designator, uint64_t id, ExtensibleKind kind, String name);
     TextLogger & irSectionBegin(String title, String designator, uint64_t id, ExtensibleKind kind, String name);
     TextLogger & irSectionEnd();
     TextLogger & irOneLinerBegin(String title, String designator, uint64_t id);

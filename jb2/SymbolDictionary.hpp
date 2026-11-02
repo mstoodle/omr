@@ -42,8 +42,8 @@ class SymbolDictionary : public Dictionary<Symbol, SymbolID, NoSymbol, SymbolLis
 public:
     DYNAMIC_ALLOC_ONLY(SymbolDictionary, IR *ir, String name);
 
-    virtual void addNewEntry(Symbol *symbol);
-    Symbol *Lookup(String name);
+    virtual void registerSymbol(Symbol *symbol);
+    Symbol *LookupName(String name);
 
 protected:
     SymbolDictionary(Allocator *a, const SymbolDictionary *source, IRCloner *cloner);

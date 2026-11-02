@@ -69,6 +69,7 @@ protected:
 
     Compilation *_comp;
     CompilerReturnCode _errorCode;
+    bool _nothingToDo;
     bool _aborted;
     bool _visitAppendedBuilders;
 

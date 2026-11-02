@@ -56,12 +56,16 @@ ExtensibleIR::ExtensibleIR(Allocator *a, const ExtensibleIR *source, IRCloner *c
     }
 }
 
-ExtensibleIR::~ExtensibleIR() {
+ExtensibleIR::ExtensibleIR(Allocator *a, const ExtensibleIR *source, TypeMapper *tm)
+    : Extensible(a, source->ext(), source->kind())
+    , _ir(source->ir()) {
+
+    assert(a == source->allocator());
+    if (source->addons())
+        setAddons(source->addons()->clone());
 }
 
-ExtensibleIR *
-ExtensibleIR::clone(Allocator *a, IRCloner *cloner) const {
-    return new (a) ExtensibleIR(a, this, cloner);
+ExtensibleIR::~ExtensibleIR() {
 }
 
 } // namespace JB2

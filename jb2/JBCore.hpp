@@ -70,6 +70,7 @@
 #include "Type.hpp"
 #include "TypeDictionary.hpp"
 #include "TypeReplacer.hpp"
+#include "TypeReplacerAddon.hpp"
 #include "Value.hpp"
 #include "Visitor.hpp"
 #include "String.hpp"

@@ -302,12 +302,18 @@ DEFINE_CONCRETE_BASETYPE_CLASS(PointerType, Pointer, AddressType, ext->compiler(
     }
 
     const Type *
-    PointerType::replace(TypeReplacer *repl) {
+    PointerType::replace(TypeReplacer *repl) const {
         const Type *currentBaseType = baseType();
-        const Type *newBaseType = repl->replacedType(currentBaseType);
-        Compilation *comp = repl->comp();
-        const Type *newPtrType = baseExt()->PointerTo(LOC, newBaseType);
-        return newPtrType;
+        if (repl->isModified(currentBaseType) || repl->isExploded(currentBaseType)) {
+            const Type *newBaseType = repl->replacedType(currentBaseType);
+
+            PointerTypeBuilder bldr(baseExt(), ir());
+            bldr.setBaseType(newBaseType);
+            const Type *newPtrType = bldr.create(LOC);
+            repl->removeType(this);
+            return newPtrType;
+        }
+        return this;
     }
 )
 
@@ -499,7 +505,7 @@ StructType::addField(MEM_LOCATION(a), Extension *ext, String name, const Type *t
 String
 StructType::to_string(Allocator *mem, bool useHeader) const {
     String s(Type::base_string(mem, useHeader));
-    s.append(String(mem, " structType size ")).append(String::to_string(mem, size()));
+    s.append(String(mem, "structType size ")).append(String::to_string(mem, size()));
     for (auto it = FieldsBegin(); it != FieldsEnd(); it++) {
         auto field = it->second;
         s.append(String(mem, " t")).append(String::to_string(mem, field->id()));
@@ -529,31 +535,49 @@ StructType::logLiteral(TextLogger & lgr, const Literal *lv) const {
 }
 
 void
-StructType::explodeAsLayout(TypeReplacer *repl, size_t baseOffset, TypeMapper *m) const {
+StructType::explodeAsLayout(TypeReplacer *repl, String baseName, size_t baseOffset, TypeMapper *m) const {
     for (auto fIt = this->FieldsBegin(); fIt != this->FieldsEnd(); fIt++) {
-        const FieldType *fType = fIt->second;
+        const FieldType *fieldType = fIt->second;
+        bool isReplaced = repl->isModified(fieldType) || repl->isExploded(fieldType);
+        const FieldType *fType = (isReplaced) ? repl->replacedType(fieldType)->template refine<const FieldType>() : fieldType;
+
         const Type *t = fType->type();
-        transformTypeIfNeeded(repl, t);
+        if (repl->isModified(t) || repl->isExploded(t))
+            t = repl->replacedType(t);
  
         size_t fieldOffset = baseOffset + fType->offset();
+        String fieldName = fType->name();
+        if (baseName.length() > 0)
+            fieldName = baseName + "." + fieldName;
+
         if (repl->isExploded(t)) {
             //if (_typesToExplode.find(t->id()) != _typesToExplode.end())
             const StructType *innerLayout = static_cast<const StructType *>(t->layout());
             assert(innerLayout);
-            innerLayout->explodeAsLayout(repl, fieldOffset, m);
+            innerLayout->explodeAsLayout(repl, fieldName, fieldOffset, m);
         }
         else {
-            const Type *mappedType = repl->replacedType(t);
-            String fieldName = mappedType->name();
-            m->add(mappedType, fieldName, fieldOffset);
+            repl->transformTypeIfNeeded(t);
+            if (!repl->isModified(t) && !repl->isExploded(t))
+                m->add(t, fieldName, fieldOffset);
+            else {
+                const Type *mappedType = repl->replacedType(t);
+                m->add(mappedType, fieldName, fieldOffset);
+            }
         }
     }
+}
+
+void
+StructType::explodeAsLayout(TypeReplacer *repl, size_t baseOffset, TypeMapper *m) const {
+    String baseName("");
+    explodeAsLayout(repl, baseName, baseOffset, m);
 }
  
 void
 StructType::transformFields(TypeReplacer *repl,
                             StructTypeBuilder *stb,
-                            StructType *origStruct,
+                            const StructType *origStruct,
                             String baseName,
                             size_t baseOffset) const {
 
@@ -607,7 +631,7 @@ StructType::mapTransformedFields(TypeReplacer *repl,
 }
 
 const Type *
-StructType::replace(TypeReplacer *repl) {
+StructType::replace(TypeReplacer *repl) const {
     Base::BaseExtension *base = baseExt();
 
     bool needToReplace = false;

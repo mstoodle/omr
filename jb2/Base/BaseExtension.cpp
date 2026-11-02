@@ -26,6 +26,7 @@
 #include "Base/ArithmeticOperations.hpp"
 #include "Base/BaseIRAddon.hpp"
 #include "Base/BaseExtension.hpp"
+#include "Base/BaseExtensionIRWriter.hpp"
 #include "Base/BaseFunctionExtensionAddon.hpp"
 #include "Base/BaseIRClonerAddon.hpp"
 #include "Base/BaseSymbol.hpp"
@@ -85,8 +86,6 @@ BaseExtension::BaseExtension(MEM_LOCATION(a), Compiler *compiler, bool extended,
     , aCreateLocalArray(registerAction(String(a, "CreateLocalArray")))
     , aCreateLocalStruct(registerAction(String(a, "CreateLocalStruct")))
     , aIndexAt(registerAction(String(a, "IndexAt")))
-    , aCall(registerAction(String(a, "Call")))
-    , aCallVoid(registerAction(String(a, "CallVoid")))
     , aForLoopUp(registerAction(String(a, "ForLoopUp")))
     , aGoto(registerAction(String(a, "Goto")))
     , aIfCmpEqual(registerAction(String(a, "IfCmpEqual")))
@@ -136,6 +135,8 @@ BaseExtension::BaseExtension(MEM_LOCATION(a), Compiler *compiler, bool extended,
     if (!extended) {
         _checkers.push_back(new (a) BaseExtensionChecker(a, this));
     }
+
+    setIRWriter(new (a) BaseExtensionIRWriter(a, this));
 
     registerForExtensible(CLASSKIND(IR,Extensible), this);
     createAddon(compiler->irPrototype());

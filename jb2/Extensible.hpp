@@ -79,8 +79,10 @@ public:
     void attach(Addon *addon);
 
 protected:
+    void clearAddons();
     void notifyCreation(KINDTYPE(Extensible) kind);
     const List<Addon *> *addons() const { return _addons; }
+    void setAddons(List<Addon *> *a) { clearAddons(); _addons = a; }
 
 private:
     Extension *_ext;

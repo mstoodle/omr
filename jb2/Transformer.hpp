@@ -34,12 +34,12 @@ class Transformer : public Visitor {
     DYNAMIC_ALLOC_ONLY(Transformer, KINDTYPE(Extensible) kind, Extension *ext, String name="Transformer");
  
     Transformer * setTraceEnabled(bool v=true) { _traceEnabled = v; return this; }
+    bool traceEnabled() { return _traceEnabled; }
 
 protected:
     virtual void visitOperations(Builder *b, BitVector & visited, BuilderList & worklist);
 
     protected:
-    bool traceEnabled() { return _traceEnabled; }
 
     // To implement any Operation transformation, subclass Transformer
     //   and override the virtual functions below as needed

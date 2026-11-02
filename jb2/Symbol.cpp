@@ -26,6 +26,7 @@
 #include "TextLogger.hpp"
 #include "Type.hpp"
 #include "TypeDictionary.hpp"
+#include "TypeReplacer.hpp"
 
 namespace OMR {
 namespace JB2 {
@@ -41,6 +42,7 @@ Symbol::Symbol(Allocator *mem, Extension *ext, IR *ir, String name, const Type *
     , _name(name)
     , _type(type) {
 
+    _name.provideAllocator(mem);
 }
 
 Symbol::Symbol(Allocator *mem, ExtensibleKind kind, Extension *ext, IR *ir, String name, const Type * type)
@@ -50,9 +52,10 @@ Symbol::Symbol(Allocator *mem, ExtensibleKind kind, Extension *ext, IR *ir, Stri
     , _name(name)
     , _type(type) {
 
+    _name.provideAllocator(mem);
 }
 
-// only used by clone()
+// only used by subclasses via clone()
 Symbol::Symbol(Allocator *mem, const Symbol *source, IRCloner *cloner)
     : ExtensibleIR(mem, source, cloner)
     , _ext(source->_ext)
@@ -60,12 +63,18 @@ Symbol::Symbol(Allocator *mem, const Symbol *source, IRCloner *cloner)
     , _name(source->_name)
     , _type(cloner->clonedType(source->_type)) {
 
+    _name.provideAllocator(mem);
 }
 
-Symbol *
-Symbol::cloneSymbol(Allocator *mem, IRCloner *cloner) {
-    assert(_kind == KIND(Extensible));
-    return new (mem) Symbol(mem, this, cloner);
+// only used by subclasses via explode()
+Symbol::Symbol(Allocator *mem, const Symbol *source, TypeMapper *tm)
+    : ExtensibleIR(mem, source, tm)
+    , _ext(source->_ext)
+    , _id(source->_id)
+    , _name(source->_name)
+    , _type(tm->current()) {
+
+    _name.provideAllocator(mem);
 }
 
 Symbol::~Symbol() {

@@ -113,8 +113,6 @@ public:
     const ActionID aSub;
 
     // Control actions
-    const ActionID aCall;
-    const ActionID aCallVoid;
     const ActionID aForLoopUp;
     const ActionID aGoto;
     const ActionID aIfCmpEqual;

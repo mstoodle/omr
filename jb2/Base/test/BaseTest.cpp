@@ -137,11 +137,7 @@ protected:
         c.config()->setTraceBuildIL(); \
     }
     
-
-//    TextWriter *writer = c.textWriter(logger); \
-
-//    cfg.setTraceCompilerAllocations() \
-//       ->setLogger(&logger); \
+//        c.config()->setTraceCompilerAllocations() \
 
 
 #define COMPILE_TO_SUCCEED(fl,ln,fn,c,FuncClass,cx,fx,wrt,body,FuncProto,f) \

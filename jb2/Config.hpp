@@ -89,7 +89,7 @@ public:
     // when true, turn on logging for allocations made by the Compiler
     Config * setTraceCompilerAllocations(bool v=true)         { _traceCompilerAllocations = v; return this; }
 
-    // when true, turn logging on when CodeGenerator runs
+    // when true, turn logging on when TypeReplacer runs
     bool traceTypeReplacer() const                            { return _traceTypeReplacer; }
     Config * setTraceTypeReplacer(bool v=true)                { _traceTypeReplacer = v; return this; }
 

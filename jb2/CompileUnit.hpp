@@ -93,7 +93,8 @@ protected:
     CompileUnit                         * _outerUnit;
     std::map<StrategyID,CompiledBody *>   _bodies;
 
-    //List<Location *>        _locations;
+    //List<Location *>                      _locations;
+
     SUBCLASS_KINDSERVICE_DECL(Extensible,CompileUnit);
 };
 

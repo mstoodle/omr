@@ -24,6 +24,7 @@
 #include "Compilation.hpp"
 #include "Compiler.hpp"
 #include "CoreExtension.hpp"
+#include "CoreExtensionIRWriter.hpp"
 #include "Dispatcher.hpp"
 #include "IR.hpp"
 #include "Location.hpp"
@@ -32,6 +33,7 @@
 #include "Strategy.hpp"
 #include "Type.hpp"
 #include "TypeDictionary.hpp"
+#include "TypeReplacer.hpp"
 #include "Value.hpp"
 
 namespace OMR {
@@ -53,8 +55,18 @@ CoreExtension::CoreExtension(Allocator *a, LOCATION, Compiler *compiler)
     , CompileFail_CodeGeneratorMissingOperationHandler(registerReturnCode(String(a, "CompileFail_CodeGeneratorMissingOperationHandler")))
     , strategyCodegen(_codegenStrategy->id()) {
 
+    // prevents recursive calls to get the core extension while initializing TypeReplacer
+    // maybe TypeReplacer should be a part of Code Generator dispatching?
+    compiler->setCoreExtension(this);
+
+    TypeReplacer *repl = new (a) TypeReplacer(a, compiler);
+    _codegenStrategy->addPass(repl);
+    _typeReplacer = repl;
+
     _dispatcher = new (a) Dispatcher<CodeGenerator>(a, this, "CodeGenDispatcher");
     _codegenStrategy->addPass(_dispatcher);
+
+    setIRWriter(new (a) CoreExtensionIRWriter(a, this));
 }
 
 CoreExtension::~CoreExtension() {
